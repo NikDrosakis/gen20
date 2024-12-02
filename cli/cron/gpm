@@ -1,0 +1,3 @@
+#!/bin/bash
+/bin/bash /var/www/gs/cli/logging.sh
+0 0 * * * /var/www/gs/cli/bin/backup.sh

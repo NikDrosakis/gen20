@@ -1,0 +1,92 @@
+version: '3.9'
+
+services:
+  core:
+    build: ./core
+  cubos:
+    build: ./cubos
+  vivalibro:
+    build: public/vivalibro
+    ports:
+      - "80:80"
+    depends_on:
+      - mariadb
+      - api
+      - core
+      - cubos
+    volumes:
+      - ./vivalibro:/var/www/html
+      - ./core:/var/www/core
+      - ./cubos:/var/www/cubos
+  poetabook:
+    build: ./poetabook
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+      - core
+      - cubos
+  admin:
+    build: ./admin
+    ports:
+      - "81:80"
+    depends_on:
+      - mariadb
+      - api
+      - redis
+    volumes:
+      - ./admin:/var/www/html
+      - ./core:/var/www/core
+  api:
+    build: ./apiv1
+    ports:
+      - "8080:80"
+    depends_on:
+      - mariadb
+    volumes:
+      - ./apiv1:/var/www/html
+      - ./core:/var/www/html/core
+
+  ermis:
+    build: ./ermis
+    ports:
+      - "9000:9000"
+    depends_on:
+      - redis
+      - mariadb
+
+  kronos:  # Add the kronos (FastAPI) service
+    build: ./kronos
+    ports:
+      - "3006:3006"
+    depends_on:
+      - mariadb
+      - redis
+
+  mariadb:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: ""  # Set your root password here
+      MYSQL_DATABASE: vivalibro         # Optional: Create a default database
+      MYSQL_USER: "root"                       # Optional: Create a new user
+      MYSQL_PASSWORD: "n130177!"
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./cli/deploy/vivalibro.sql:/docker-entrypoint-initdb.d/vivalibro.sql
+
+  phpmyadmin:  # Add the phpMyAdmin service
+    image: phpmyadmin/phpmyadmin:latest
+    environment:
+      PMA_HOST: mariadb  # Your MySQL service name
+      PMA_PASSWORD: "n130177!"   # Empty password
+    ports:
+      - "8081:80"  # Port for accessing phpMyAdmin UI
+    depends_on:
+      - mariadb
+
+  redis:
+    image: redis:latest
+
+volumes:
+  db_data:

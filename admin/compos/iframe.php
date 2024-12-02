@@ -1,0 +1,2 @@
+<!--IFRAME to include external links-->
+<iframe id="sandbox" src="<?=$this->G['sub']?>" width="100%" height="1000px" sandbox="allow-scripts allow-same-origin allow-forms" style="border:1px solid black;"></iframe>

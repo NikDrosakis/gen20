@@ -1,0 +1,24 @@
+# Kronos > GEN20
+accessed in APY, python fastapi runs with uvicorn in venv
+## v.1 August2024
+1. Rewritten Apifast from Fast API python
+2. Router & Service logic of integration
+3. Generative AIs experimenting with Gemini
+4. Core.Maria rewritten in python and tried as the Core API with gs.apy but Pedantic problems
+5. Swagger docs added 
+
+## v.2 September 2024
+1. Generative AIs experimentations
+2. Solved pedantic 
+3. Guvicorn running uvicorn
+4. gpu.sh automation and then gscli fast functions
+5. Added Transformers, Tensorflow and Solr along with 10 not active AIs 
+6. javascript accessed from browser console.
+
+## v.3 WORKING October 2024
+1. Activate & organize generative AIs tasks
+2. Automate processes & communication
+2. Scrape automation (together WITH GSCLI) service as Soup
+3. Kafka connect communication
+4. WS connect communication
+5. Use OpenCV, Pillow python job for kronos

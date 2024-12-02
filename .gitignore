@@ -1,0 +1,32 @@
+# Ignore environment files
+.env
+.vscode
+# Python cache files
+*/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# Media files
+media/
+template/
+backup/
+core/test/
+public/
+template/
+setup/
+vendor/
+rus/target/
+# Specific directories and files
+kronos/__pycache__/
+kronos/newenv/
+ermis/node_modules/
+cubos/node_modules/
+venus/node_modules/
+ermis/services/aistudio/.env
+ermis/services/botpress/.env
+ermis/services/huggingface/.env
+ermis/services/openai/.env
+venus/services/openai/.env
+

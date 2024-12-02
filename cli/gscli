@@ -1,0 +1,223 @@
+#!/bin/bash
+# Define the global GSROOT path
+GSROOTCLI="/var/www/gs/cli"
+
+# Function to show help information
+show_help() {
+    clear
+    echo "Help Information:"
+    echo "1) Run Logs - Executes logging.sh to manage and view logs."
+    echo "2) Manage Versioning - Executes versioning.sh to handle versioning tasks."
+    echo "3) Build Application - Executes builder.sh to build the application."
+    echo "4) Backup System - Executes backup.sh to back up the system."
+    echo "5) kronos - Manages Generative services via kronos.sh."
+    echo "6) Ermis - Manages WSI services via ermis.sh."
+    echo "7) GPM - Manages GPM services via gpm.sh."
+    echo "8) Github Push - Pushes changes to GitHub using gitpush.sh."
+    echo "9) Workflows - Manages workflows using workflows.sh."
+    echo "10) Install - Runs install.sh to handle installation tasks."
+    echo "11) Health Check - Executes check_services.sh to verify system health."
+    echo "12) Exit - Exits the CLI menu."
+    echo "Press any key to return to the menu."
+    read -n 1
+}
+
+# Function to display the main menu
+show_menu() {
+    clear
+    echo "============================================================================"
+    echo "    GEN20 CLI Menu"
+    echo "============================================================================"
+    echo "1) Run Logs      2) Manage Versioning  3) Build Application  4) Backup System"
+    echo "5) kronos        6) Ermis             7) GPM                8) Github Push"
+    echo "9) Workflows     10) Install           11) Health Check     12) Help"
+    echo "13) Exit"
+    echo -n "Choose an option: "
+}
+# Function to display logs
+view_logs() {
+    echo "Viewing logs..."
+    # Replace 'logs' with the actual path to your log files or logging script
+    LOGS_PATH="$GSROOTCLI/logs" # Adjust this path as necessary
+    if [ -d "$LOGS_PATH" ]; then
+        ls -lh "$LOGS_PATH"  # List log files
+        echo "Enter log filename to view (or 'exit' to go back): "
+        read log_file
+        if [[ "$log_file" != "exit" ]]; then
+            if [ -f "$LOGS_PATH/$log_file" ]; then
+                cat "$LOGS_PATH/$log_file"  # Display the log content
+            else
+                echo "Log file not found."
+            fi
+        fi
+    else
+        echo "Log directory does not exist."
+    fi
+    read -n 1 -s -r -p "Press any key to continue..."
+}
+
+# Function to read and execute user options
+read_options() {
+    local choice
+    read choice
+    echo "You chose option: $choice"
+    case $choice in
+        1)
+             echo "Running logging.sh..."
+               if [ -x "$GSROOTCLI/bin/logging.sh" ]; then
+                   # Capture the output of logging.sh into a variable
+                   LOG_OUTPUT=$($GSROOTCLI/bin/logging.sh)
+
+                   # Clear the screen and show the menu again
+                   clear
+                   show_menu
+
+                   # Show the captured log output after the menu
+                   echo "===== Logs Output ====="
+                   echo "$LOG_OUTPUT"
+                   echo "========================"
+               else
+                   echo "Error: logging.sh not found or not executable"
+               fi
+               ;;
+        2)
+            echo "Running versioning.sh..."
+            if [ -x "$GSROOTCLI/bin/versioning.sh" ]; then
+                $GSROOTCLI/bin/versioning.sh
+            else
+                echo "Error: versioning.sh not found or not executable"
+            fi
+            ;;
+        3)
+            echo "Running builder.sh..."
+            if [ -x "$GSROOTCLI/bin/builder.sh" ]; then
+                $GSROOTCLI/bin/builder.sh
+            else
+                echo "Error: builder.sh not found or not executable"
+            fi
+            ;;
+        4)
+            echo "Running backup.sh..."
+            if [ -x "$GSROOTCLI/bin/backup.sh" ]; then
+                $GSROOTCLI/bin/backup.sh
+            else
+                echo "Error: backup.sh not found or not executable"
+            fi
+            ;;
+    5)
+        echo -n "Enter kronos service name: "
+        read service_name
+        echo -n "Enter kronos action (new|delete): "
+        read action
+        if [[ "$action" != "new" && "$action" != "delete" ]]; then
+            echo "Invalid action. Please use 'new' or 'delete'."
+            return
+        fi
+        echo "Running kronos.sh with $service_name and $action..."
+        if [ -x "$GSROOTCLI/bin/kronos.sh" ]; then
+            # Capture the output of kronos.sh
+            KRONOS_OUTPUT=$($GSROOTCLI/bin/kronos.sh "$service_name" "$action")
+
+            # Clear the screen and show the menu again
+            clear
+            show_menu
+
+            # Show the captured output under the menu
+            echo "===== Kronos Output ====="
+            echo "$KRONOS_OUTPUT"
+            echo "========================="
+        else
+            echo "Error: kronos.sh not found or not executable"
+        fi
+        ;;
+
+    6)
+        echo -n "Enter Ermis service name: "
+        read service_name
+        echo -n "Enter action (new|delete): "
+        read action
+        if [[ "$action" != "new" && "$action" != "delete" ]]; then
+            echo "Invalid action. Please use 'new' or 'delete'."
+            return
+        fi
+        echo "Running ermis.sh with $service_name and $action..."
+        if [ -x "$GSROOTCLI/bin/ermis.sh" ]; then
+            # Capture the output of ermis.sh
+            ERMIS_OUTPUT=$($GSROOTCLI/bin/ermis.sh "$service_name" "$action")
+
+            # Clear the screen and show the menu again
+            clear
+            show_menu
+
+            # Show the captured output under the menu
+            echo "===== Ermis Output ====="
+            echo "$ERMIS_OUTPUT"
+            echo "========================="
+        else
+            echo "Error: ermis.sh not found or not executable"
+        fi
+        ;;
+        7)
+            echo "Running gpm.sh..."
+            if [ -x "$GSROOTCLI/bin/gpm.sh" ]; then
+                $GSROOTCLI/bin/gpm.sh
+            else
+                echo "Error: gpm.sh not found or not executable"
+            fi
+            ;;
+        8)
+            echo "Running gitpush.sh..."
+            if [ -x "$GSROOTCLI/bin/gitpush.sh" ]; then
+                $GSROOTCLI/bin/gitpush.sh
+            else
+                echo "Error: gitpush.sh not found or not executable"
+            fi
+            ;;
+        9)
+            echo "Running workflows.sh..."
+            if [ -x "$GSROOTCLI/bin/workflows.sh" ]; then
+                $GSROOTCLI/bin/workflows.sh
+            else
+                echo "Error: workflows.sh not found or not executable"
+            fi
+            ;;
+        10)
+        echo -n "Enter the domain name (e.g., example.com): "
+        read DOMAIN
+
+        echo "Running install.sh for domain: $DOMAIN"
+            echo "Running install.sh..."
+            if [ -x "$GSROOTCLI/bin/install.sh" ]; then
+                $GSROOTCLI/bin/install.sh
+            else
+                echo "Error: install.sh not found or not executable"
+            fi
+            ;;
+        11)
+            echo "Running check_services.sh..."
+            if [ -x "$GSROOTCLI/bin/check_services.sh" ]; then
+                $GSROOTCLI/bin/check_services.sh
+            else
+                echo "Error: check_services.sh not found or not executable"
+            fi
+            ;;
+        12)
+            show_help
+            ;;
+        13)
+            exit 0
+            ;;
+        *)
+            echo "Invalid option!" && sleep 1
+    esac
+}
+
+# Trap CTRL+C, CTRL+Z, and quit signals
+#trap '' SIGINT SIGQUIT SIGTSTP
+
+# Main loop
+#while true
+#do
+show_menu
+read_options
+#done

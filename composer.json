@@ -1,0 +1,38 @@
+{
+    "name": "gen20/core",
+    "version": "0.4.5",
+    "license": "proprietary",
+    "description": "Core PHP library running in PHP8.3",
+    "require": {
+        "php": "^8.3",
+        "erusev/parsedown": "^1.7",
+        "guzzlehttp/guzzle": "^7.9",
+        "ratchet/pawl": "^0.4.1",
+        "mongodb/mongodb": "^1.20",
+        "solarium/solarium": "^6.3",
+        "reprovinci/solr-php-client": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Core\\": "core/",
+            "Vivalibro\\": "vivalibro/",
+            "Apiv1\\": "apiv1/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Core\\Tests\\": "core/tests/",
+            "Vivalibro\\Tests\\": "vivalibro/tests/",
+            "Apiv1\\Tests\\": "apiv1/tests/"
+        }
+    },
+    "require-dev": {
+        "phpdocumentor/phpdocumentor": "^3.1",
+        "phpunit/phpunit": "^9"
+    },
+    "config": {
+        "allow-plugins": {
+            "symfony/flex": true
+        }
+    }
+}

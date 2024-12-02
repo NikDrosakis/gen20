@@ -1,0 +1,20 @@
+# .air.toml
+
+root = "/var/www/gs/gor/"
+tmp_dir = "tmp"
+
+build = {
+cmd = "go build -o ./tmp/main ./main.go",
+include_ext = ["go", "tpl", "html", "env"],
+exclude_dir = ["assets", "vendor"],
+}
+
+run = {
+cmd = "./tmp/main",
+include_ext = ["go", "tpl", "html", "env"],
+}
+
+watch_dir = [
+    ".env",      # Ensure to watch the .env file
+    "services",  # Your service directory
+]
