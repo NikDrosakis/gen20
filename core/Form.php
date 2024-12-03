@@ -243,8 +243,9 @@ $tableHtml .= '<div style="display:none" id="new_'.$subpage.'_box">
 $tableHtml .= $this->formSearch($table);
 
 $tableHtml .= $this->buildCoreTable($tableName,$params);
-
+if($this->totalRes > 0){
 $tableHtml .= $this->formPagination($this->totalRes, $this->currentPage);
+}
 
      if($table=='post'){   $tableHtml .= $this->buildCharts($table); }
     $tableHtml .= '</div>';
@@ -256,7 +257,7 @@ protected function buildCoreTable($tableName) {
     $table = is_array($tableName) ? $tableName['table'] : $tableName;
     $subpage=explode('.',$table)[1];
     $searchTerm=is_array($tableName) ? $tableName['q'] : null;
-    $orderbyTerm=$tableName['orderby'] ?? null;
+    $orderbyTerm=$tableName['orderby'] ?? false;
    // Fetch current page from query parameters (default to 1)
     $this->currentPage =is_array($tableName) && $tableName['pagenum'] ? str_replace($subpage,'',$tableName['pagenum']) : 1;
 
@@ -296,8 +297,9 @@ protected function buildCoreTable($tableName) {
 //xecho($countQuery);
 //xecho($this->totalRes);
     //create the table container
-    $tableHtml .= '<table  id="' . $subpage . '_table" class="styled-table">';
+    $tableHtml = '<table  id="' . $subpage . '_table" class="styled-table">';
 
+    $tableHtml .= $query;
     $tableHtml .= '<thead>';
     $tableHtml .= '<tr>';
 
@@ -483,6 +485,8 @@ $subpage=explode('.',$table)[1];
  $page = $this->G['subparent'][$subpage];
 return '<h3>
             <input id="cms_panel" class="red indicator">
+           <button onclick="openPanel(\'compos/doc.php\')"><span class="glyphicon glyphicon-info-sign"></span></button>
+           <button onclick="openPanel(\'compos/guide.php\')"><span class="glyphicon glyphicon-question-sign"></span></button>
             <a href="/admin/'.$page.'/'.$subpage.'"><span class="glyphicon glyphicon-edit"></span>'.ucfirst($table).'</a>
   </h3>';
 }
@@ -697,7 +701,7 @@ protected function renderFormField(string $col, array $fieldData, $value = ''): 
         case 'img':  // File upload field
           $imgPath = $this->validateImg($value);
             return "<div class='gs-span' id='drop-zone' ondrop='handleDrop(event)' ondragover='handleDragOver(event)'><label for='$col'>$col</label>
-                <button onclick='openMedia()'><img src='$imgPath' style='height:250px;width: 229px;margin: -21px 0 0 -21px;' draggable='false'></button>
+                <button onclick='openPanel(\'compos/mediac.php\')'><img src='$imgPath' style='height:250px;width: 229px;margin: -21px 0 0 -21px;' draggable='false'></button>
             </div>";
         break;
         /*

@@ -1,25 +1,37 @@
 // Separate async function for file upload //tab a
 // Function to apply a layout schema
-async function openMedia() {
-// Get the mainpage element
+async function openPanel(filepath) {
+    // Get the mainpage element
     const mainpage = document.getElementById('mainpage');
-// Modify the style to switch to 2-column grid layout
+
+    // Modify the style to switch to 2-column grid layout
     mainpage.style.gridTemplateColumns = '2fr 1fr';
     mainpage.style.gridTemplateRows = '1fr';
-// Create a new div element for ch1
-    const ch2 = document.createElement('div');
+
+    // Check if ch2 already exists
+    let ch2 = document.getElementById('ch2');
+    if (ch2) {
+        // If it exists, clean its content and remove it
+        ch2.remove();
+    }
+
+    // Create a new div element for ch2
+    ch2 = document.createElement('div');
     ch2.id = 'ch2';
     ch2.title = 'CHANNEL 2';
     ch2.style.display = 'block';
     ch2.className = 'channel top-right';
-// Append ch2 after ch1
+
+    // Append ch2 after ch1
     const ch1 = document.getElementById('ch1');
     ch1.after(ch2);
 
-    await gs.loadfile(G.ADMIN_ROOT + "compos/mediac.php", 'ch2', function () {
+    // Load the file into ch2
+    await gs.loadfile(G.ADMIN_ROOT + filepath, 'ch2', function () {
         const folder = !!gs.coo('current_folder') ? gs.coo('current_folder') : G.MEDIA_ROOT;
-    })
+    });
 }
+
 
 // This function will trigger when dragging starts on an image
 function handleDragStart(event) {
@@ -368,11 +380,13 @@ async function updateRow(event, table) {
 async function insertNewRow(event) {
     // Extract the 'name' attribute from the event target (button)
     const field = event.target.name;  // Use event.target to access the button's name attribute
+
     console.log(field);
 
     // Split 'gen_admin.domain' into 'gen_admin' and 'domain'
     const db = field.split('.')[0].replace('gen_', '');  // Extract the database name, e.g., 'admin'
     const tableName = field.split('.')[1];  // Extract the table name, e.g., 'domain'
+
     console.log(db);
     console.log(tableName);
 
@@ -391,7 +405,8 @@ async function insertNewRow(event) {
         // Check if the db exists and is valid
         if (!!db) {
             // Insert the new row into the database/table using gs.api
-            const newRow = await gs.api[db].inse(tableName, params);  // Use tableName here
+            const dbcalled= G.TEMPLATE==db ? 'maria' : db;
+            const newRow = await gs.api[dbcalled].inse(tableName, params);  // Use tableName here
             console.log(newRow);  // Log the result of the insert
             // Find the table body and rows
             if(newRow.success){
@@ -417,8 +432,9 @@ async function deleteRow(event, tableName) {
         const suredelete = await gs.confirm(`You are going to delete id ${id}. Are you sure?`);
         if (suredelete.isConfirmed) {
             try {
-                console.log(`DELETE from ${table} WHERE id = ?`)
-                const deleted = await gs.api[db].q(`DELETE from ${table} WHERE id = ?`, [id]);
+                console.log(`DELETE from ${table} WHERE id = ?`);
+                const dbcalled= G.TEMPLATE==db ? 'maria' : db;
+                const deleted = await gs.api[dbcalled].q(`DELETE from ${table} WHERE id = ?`, [id]);
                 if (deleted.success) {
                     document.getElementById(`${tableName}_${id}`).remove();
                 }

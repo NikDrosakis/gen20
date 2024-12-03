@@ -382,6 +382,7 @@ protected function generateFkReport(string $table,string $column) {
          )
  */
 protected function getSchemaTable($tableName): ?array {
+xecho($tableName);
 $table = is_array($tableName) ? $tableName['table'] : $tableName;
     // Fetch all columns from the query result
     $database=$this->getDB($table);
@@ -389,12 +390,10 @@ $table = is_array($tableName) ? $tableName['table'] : $tableName;
     try {
         $columns = $maria->tableMeta($table);
         $schema = [];
-
         // Map the column details to a schema definition
         foreach ($columns as $column) {
             $columnName = $column['COLUMN_NAME'];
             $columnType = $column['COLUMN_TYPE'];
-
             // Check for nullability
             $isNullable = ($column['IS_NULLABLE'] === 'NO') ? 'NOT NULL' : 'DEFAULT NULL';
 
@@ -408,15 +407,12 @@ $table = is_array($tableName) ? $tableName['table'] : $tableName;
                     $default = "DEFAULT '{$column['COLUMN_DEFAULT']}'";
                 }
             }
-
             // Set comment if it exists
             $comment = !empty($column['COLUMN_COMMENT']) ? "COMMENT '{$column['COLUMN_COMMENT']}'" : '';
-
             // Build the column definition string
             $columnDefinition = trim("$columnType $default $comment");
             $schema[$columnName] = trim($columnDefinition); // Trim to avoid extra spaces
         }
-
         return $schema;
     } catch (PDOException $e) {
         echo "Error retrieving schema for table `$table` in database `$database`: " . $e->getMessage() . "\n";

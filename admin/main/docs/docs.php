@@ -70,27 +70,33 @@
 <div class="sidebar">
     <ul class="nav-menu">
     <?php
-    $systms= file_get_contents(GSROOT."SYSTEMS.md");
-    $mdsystems= $this->md_decode($systms);
-    $lines = explode(PHP_EOL, $mdsystems);
-    foreach ($lines as $line){
-    $title=explode(':',$line)[0];
-    $description=explode(':',$line)[1];
-    $link=strtolower(trim(explode(':',$line)[0]));
+    $sys= $this->admin->fa("select * from systems");
+    //xecho($sys);
+    //$subdoc= $this->admin->f("select doc from admin_sub where name=?",[$sub]);
+ //   $systms= file_get_contents(GSROOT."SYSTEMS.md");
+   // $mdsystems= $this->md_decode($systms);
+//    $lines = explode(PHP_EOL, $mdsystems);
+//    foreach ($lines as $line){
+//    $title=explode(':',$line)[0];
+  //  $description=explode(':',$line)[1];
+//    $link=strtolower(trim(explode(':',$line)[0]));
+foreach($sys as $sysdat){
     ?>
-    <a href="/docs/<?=$link?>"><?=$title?></a>
+    <a href="/admin/docs/<?=$sysdat['name']?>"><?=$sysdat['name']?></a>
     <?php } ?>
     </ul>
 </div>
 <main>
         <section id="content">
-            <!-- Page content goes here -->
-            <h1>[<?=strtoUpper($this->sub)?>]</h1>
-            <p>[Page Description]</p>
             <?php
-                $sub= file_get_contents(GSROOT.$this->sub."/README.md");
-                echo $this->md_decode($sub);
-                ?>
+            $sub=$this->sub;
+               $subdoc= $this->admin->f("select * from systems where name=?",[$sub]);
+            ?>
+            <!-- Page content goes here -->
+            <h1>[<?=$subdoc['name']?>]</h1>
+
+            <p>[Page Description]</p>
+            <?php echo $this->md_decode($subdoc['doc']); ?>
         </section>
     </main>
 

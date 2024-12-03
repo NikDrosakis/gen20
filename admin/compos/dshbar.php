@@ -2,7 +2,7 @@
     <nav class="navbar">
     <div id="progressBarContainer"><div id="progressBar"><p id="progressText"></p></div></div>
     <div class="logo_image_id">
-        <img src="<?=isset($_COOKIE['GSIMG']) ? MEDIA_URL.$_COOKIE['GSIMG'] : "/img/user.png"?>" width="48" height="48" style="margin-top: 3px;border-radius:50px">
+        <img src="<?=isset($_COOKIE['GSIMG']) ? MEDIA_URL.$_COOKIE['GSIMG'] : '/img/user.png'?>" width="48" height="48" style="margin-top: 3px;border-radius:50px">
     </div>
 
 <!-------------         HORIZONTAL MENU     ------------------------------------>

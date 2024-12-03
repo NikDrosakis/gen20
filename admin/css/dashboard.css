@@ -11419,7 +11419,7 @@ ul.tabs li.current {
   position: relative;
   display: flex;
   align-items: center;
-  width: 98%; /* Adjust as needed */
+  width: 68%; /* Adjust as needed */
 }
 
 .search-input {

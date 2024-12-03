@@ -123,8 +123,8 @@ protected function adminDomWrap() {
 
       //1channel grid-template-columns:2fr 1fr 1fr;grid-template-rows:1fr;
       //2 right thin channels grid-template-columns:2fr 1fr 1fr;grid-template-rows:1fr;
-        //echo '<div id="mainpage" style="grid-template-columns:'.$columns.';grid-template-rows:'.$rows.';">';
-        echo '<div id="'.$mainpageName.'">';
+        echo '<div id="mainpage" style="grid-template-columns:'.$columns.';grid-template-rows:'.$rows.';">';
+        //echo '<div id="'.$mainpageName.'">';
 
         //mainpage dom php file in channels default ONE
          //CHANNEL(s) HTML
@@ -174,8 +174,8 @@ protected function channelCheck($chanfile) {
 protected function produce6channel($name,$ch,$page,$type,$table){
     $Position=['1'=>'top-left','2'=>'top-right','3'=>'top-center','4'=>'bottom-center','5'=>'bottom-left','6'=>'bottom-right'];
     $html='';
-    //$html .='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'" class="channel '.$Position[$ch].'">';
-    $html .='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'">';
+    $html .='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'" class="channel '.$Position[$ch].'">';
+    //$html .='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'">';
 
    if($type=='iframe'){
         $html .='<iframe src='.$name.'

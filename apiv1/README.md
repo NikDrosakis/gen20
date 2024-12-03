@@ -1,4 +1,4 @@
-#CLI > GEN20
+#APIV1 > GEN20
 ## v.1 September 2024
 1. Extended Gaia 
 2. Routing for API (instead of ajax requests) 
