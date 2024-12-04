@@ -100,6 +100,7 @@ echo $this->buildTable($table);
         $colType = strtolower($column['COLUMN_TYPE']); // Get the SQL type (e.g., varchar, int)
         $colComment = $column['COLUMN_COMMENT']; // Get the comment
         $list = [];
+        $filters = [];
 
             if (strpos($colType, 'enum') !== false){
                     $htmlType = 'select';
@@ -223,13 +224,20 @@ protected function buildTable($tableName,array $params=[]): string {
 $table = is_array($tableName) ? $tableName['table'] : $tableName;
 //instantiate those public vars
 $cols = $params['cols'] ?? [];
+xecho($table);
 $this->dbForm=$this->getDBInstance($table);
 $this->table=$table;
 $subpage=explode('.',$table)[1];
+$cols = $params['cols'] ?? [];
 $searchTerm=$params['q'];
 $style = $this->sub!=''
         ? "margin:0;" //in subpage large
         : "zoom:0.8;";  //in 6channel small
+// Fetch column types and definitions via getInputType
+if (empty($cols)) {
+$cols = $this->getInputType($table); // Get column metadata
+}
+
 $tableHtml =  $this->renderFormHead($table);
 $tableHtml .= '<div class="table-container" style="'.$style.'">';
 //handleNewRow(event, \'' . $table . '\', {0: {row: \'name\', placeholder: \'Give a Name\'}, 1: {row: \'created\', type: \'hidden\', value: gs.date(\'Y-m-d H:i:s\')}})
@@ -242,35 +250,40 @@ $tableHtml .= '<div style="display:none" id="new_'.$subpage.'_box">
     </div></div>';
 $tableHtml .= $this->formSearch($table);
 
-$tableHtml .= $this->buildCoreTable($tableName,$params);
+//formFilter with renderSelectField and inputype if has COMMENT =='selectjoin', status
+foreach ($cols as $colName => $colData) {
+    // Skip 'textarea', 'MEDIUMTEXT', and 'LONGTEXT' columns entirely
+        if (strpos($colData['comment'], 'selectjoin') !== false) {
+        $tableHtml .= $this->formFilters($colData);
+    }
+}
+
+$tableHtml .= $this->buildCoreTable($tableName,$cols);
 if($this->totalRes > 0){
 $tableHtml .= $this->formPagination($this->totalRes, $this->currentPage);
 }
 
-     if($table=='post'){   $tableHtml .= $this->buildCharts($table); }
+  if($table=='post'){   $tableHtml .= $this->buildCharts($table); }
     $tableHtml .= '</div>';
     return $tableHtml;
 }
 
-protected function buildCoreTable($tableName) {
+protected function buildCoreTable($tableName,$cols) {
 
     $table = is_array($tableName) ? $tableName['table'] : $tableName;
     $subpage=explode('.',$table)[1];
     $searchTerm=is_array($tableName) ? $tableName['q'] : null;
     $orderbyTerm=$tableName['orderby'] ?? false;
+
    // Fetch current page from query parameters (default to 1)
     $this->currentPage =is_array($tableName) && $tableName['pagenum'] ? str_replace($subpage,'',$tableName['pagenum']) : 1;
 
     $searchTerm=is_array($tableName) ? $tableName['q'] : null;
     //instantiate those public vars
-    $cols = $params['cols'] ?? [];
     $this->dbForm=$this->getDBInstance($table);
     $this->table=$table;
     $subtable = explode('.',$this->table)[1];
-    // Fetch column types and definitions via getInputType
-    if (empty($cols)) {
-        $cols = $this->getInputType($table); // Get column metadata
-    }
+
     // Calculate the starting row for the current page
    // $offset = ((int)$this->currentPage - 1) * $this->resultsPerPage;
 
@@ -281,21 +294,18 @@ protected function buildCoreTable($tableName) {
         }
       //include pagination
       if($orderbyTerm){
-        $query .= " ORDER BY  $orderbyTerm";
+        $q .= " ORDER BY $orderbyTerm desc";
       }elseif(in_array('sort',array_keys($cols))){
-        $query .= " ORDER BY sort";
+        $q .= " ORDER BY sort ASC";
       }
-        //$query .=" LIMIT $offset, $this->resultsPerPage ";
+       //$query .=" LIMIT $offset, $this->resultsPerPage ";
+       // Fetch paginated rows based on current page and results per page
+       $rows = $this->dbForm->fetch($query,[],$this->resultsPerPage,$this->currentPage,$orderbyTerm);
+       // Fetch total number of rows in the table
+       $this->totalRes = $rows['total'];
+        $data= $rows['data'];
 
-         // Fetch paginated rows based on current page and results per page
-         $rows = $this->dbForm->fetch($query,[],$this->resultsPerPage,$this->currentPage);
-       //  xecho($rows);
-        // Fetch total number of rows in the table
-         $this->totalRes = $rows['total'];
-         $data= $rows['data'];
 
-//xecho($countQuery);
-//xecho($this->totalRes);
     //create the table container
     $tableHtml = '<table  id="' . $subpage . '_table" class="styled-table">';
 
@@ -305,7 +315,6 @@ protected function buildCoreTable($tableName) {
 
     //loop of head
     foreach ($cols as $colName => $colData) {
-     //       xecho($colData['type']);
         // Skip 'textarea', 'MEDIUMTEXT', and 'LONGTEXT' columns entirely
         if (in_array($colData['type'], ['textarea', 'editor'])) {
             continue;
@@ -366,12 +375,12 @@ protected function buildCoreTable($tableName) {
 
            }elseif ($inputType === 'select') {
 
-            if($colData['sql_type']=='enum'){
-                $options=$colData['list'];
-            }else{
-                $options=$this->getSelectOptions($colData['comment'],$row[$colName]);
-            }
-                $tableHtml .= $this->renderSelectField($colName, $row[$colName], $options);
+                if($colData['sql_type']=='enum'){
+                    $options=$colData['list'];
+                }else{
+                    $options=$this->getSelectOptions($colData['comment'],$row[$colName]);
+                }
+                    $tableHtml .= $this->renderSelectField($colName, $row[$colName], $options);
 
             // Render an image for img fields
             }elseif ($inputType === 'img') {
@@ -412,6 +421,16 @@ protected function buildCoreTable($tableName) {
     return $tableHtml;
 }
 
+protected function formFilters($colData) {
+                        $rowtable = str_replace('selectjoin-', '', $colData['comment']);
+                        $tableName = explode('.', $rowtable)[0];
+                        $rowId = explode('.', $rowtable)[1];
+                        $link=$this->page==$tableName ? $tableName.'?id=' . $row[$rowId] : $this->page.'/'.$tableName.'?id=' . $row[$rowId];
+                        $tableHtml .= '<a href="/admin/' . $link . '"><span class="glyphicon glyphicon-link"></span></a> ';
+                        $options=$this->getSelectOptions($colData['comment'],$row[$colName]);
+                        return  $this->renderSelectField($colName, $row[$colName], $options);
+
+}
 protected function formSearch($table): string {
     $params = [];
     $params['q'] = htmlspecialchars($this->searchTerm ?? ''); // Keep the previous search term

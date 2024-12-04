@@ -41,6 +41,7 @@ class Admin extends Gaia {
 use Cubo;
 use Head;
 use Ermis;
+use Lang;
 use Tree;
 use Form;
 use Domain;
@@ -185,6 +186,8 @@ protected function produce6channel($name,$ch,$page,$type,$table){
         ></iframe>';
 
    }elseif($type=='table'){
+
+    //then insert the table
         $html .= $this->buildTable($table);
         $html .= '<script>gs.ui.sort(`UPDATE '.$table.' SET sort=? WHERE id = ?`, "list", "'.$table.'");</script>';
    }else{
@@ -235,11 +238,20 @@ protected function produce6channel($name,$ch,$page,$type,$table){
             $html .=  $this->buildForm($table);
 
          }elseif($this->mode !=''){
+           //then insert table
            $filename=$this->ADMIN_ROOT . "main/" . $this->page . "/" .$this->sub ."_".$this->mode. ".php";
            if(file_exists($filename)){
             $html .= include_buffer($filename);
            }
+
          }else{
+       //RUN TABLE SUB
+       //firrst the file contents
+           $chanfile = ADMIN_ROOT."main/".$this->page."/".$name.".php" ;
+               if (file_exists($chanfile)){
+               $buffer = $this->include_buffer($chanfile);
+               if($buffer!=''){$html .= $buffer;}}
+       //THEN RUN THE TABLE
             $html .=  $this->buildTable($table);
          }
       }elseif ($this->admin_sub['type'] == 'cubos') {

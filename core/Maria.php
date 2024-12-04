@@ -175,18 +175,23 @@ public function inse(string $table, array $params = []): int|bool {
 		if(!$res) return FALSE;
             return $res->fetchAll(PDO::FETCH_ASSOC);
     }
-public function fetch(string $q, array $params = [], int $limit = 10, int $currentPage = 1): bool|array
+public function fetch(string $q, array $params = [], int $limit = 10, int $currentPage = 1,
+    $orderBy="" , // Default order column
+    $orderDir="" // Default order direction
+): bool|array
 {
-    $queryType = strtoupper(strtok(trim($q), ' ')); // Validate the query type
-    if ($queryType !== 'SELECT' && $queryType !== 'DESCRIBE') {
-        return false;
-    }
-
+//    $queryType = strtoupper(strtok(trim($q), ' ')); // Validate the query type
+  //  if ($queryType !== 'SELECT' && $queryType !== 'DESCRIBE') {
+    //    return false;
+    //}
     // Calculate the offset for pagination
     $offset = ($currentPage - 1) * $limit;
-
+    $order ="";
+    if ($orderBy!="") {
+            $order = " ORDER BY $orderBy $orderDir";
+        }
     // Modify the query to include the window function for total count
-    $q = "SELECT *, COUNT(*) OVER () AS total FROM ($q) AS subquery LIMIT :limit OFFSET :offset";
+    $q = "SELECT *, COUNT(*) OVER () AS total FROM ($q) AS subquery $order LIMIT :limit OFFSET :offset";
 
     // Add `limit` and `offset` to the params array
     $params[':limit'] = $limit;
@@ -210,9 +215,8 @@ public function fetch(string $q, array $params = [], int $limit = 10, int $curre
     // Extract total count from the first row
     $totalCount = $results[0]['total'];
     foreach ($results as &$row) {
-        unset($row['total']); // Remove the redundant total column
+       unset($row['total']);
     }
-
     // Return paginated data with metadata
     return [
         'query' => $q,

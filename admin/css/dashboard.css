@@ -4608,7 +4608,13 @@ h2,
 }
 h3,
 .h3 {
-  font-size: 18px;
+  font-size: 15px;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  font-weight: 700;
+  margin: 3px;
+  gap: 8px;
 }
 h4,
 .h4 {
