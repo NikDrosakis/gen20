@@ -58,7 +58,7 @@ protected $layout_selected;
 protected $layout;
 protected $layouts=[
       '1'=>['name'=>'1','columns'=>"1fr", 'rows'=>"1fr",'channels'=>1],
-      '2'=>['name'=>'1X2','columns'=>"1fr", 'rows'=>"1fr",'channels'=>2],  //70-30
+      '2'=>['name'=>'1X2','columns'=>"2fr 1fr", 'rows'=>"1fr",'channels'=>2],  //70-30
       '3'=>['name'=>'2X1','columns'=>"2fr 1fr 1fr", 'rows'=>"1fr",'channels'=>3],  //50%
       '4'=>['name'=>'3','columns'=>"1fr 1f 1fr", 'rows'=>"1fr",'channels'=>3],
       '5'=>['name'=>'4','columns'=>"1fr 1fr", 'rows'=>"1fr 1fr",'channels'=>4],
@@ -221,8 +221,16 @@ protected function produce6channel($name,$ch,$page,$type,$table){
      $html .='</div>';
      return $html;
  }
+ protected function channelRenderDoc($table,$ch='2'){
+  $Position=['1'=>'top-left','2'=>'top-right','3'=>'top-center','4'=>'bottom-center','5'=>'bottom-left','6'=>'bottom-right'];
+     $html='';
+     $html .='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'" class="channel '.$Position[$ch].'">';
+        $html .= $this->renderDoc($table);
+     $html .='</div>';
+     return $html;
+ }
 
- protected function channelRender($name,$table,$ch=1){
+ protected function channelRender($name,$table,$ch='1'){
  $Position=['1'=>'top-left','2'=>'top-right','3'=>'top-center','4'=>'bottom-center','5'=>'bottom-left','6'=>'bottom-right'];
   if($this->sub!=''){
        $this->admin_sub=$this->admin->f("SELECT * FROM admin_sub where name=?",[$name]);
@@ -231,7 +239,7 @@ protected function produce6channel($name,$ch,$page,$type,$table){
     $html .='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'" class="channel '.$Position[$ch].'">';
 
       //CHANNEL FILE SUB FILE
-      if ($this->admin_sub['type'] == 'table') {
+    if ($this->admin_sub['type'] == 'table') {
           //select * from admin_page  and sub=$this->sub
              //add also the file after the table
          if($this->id !='' && $this->mode ==''){
@@ -272,7 +280,6 @@ protected function channelDispatch() {
     //this is for 6 channels
  $this->admin_page = $this->admin->f("SELECT * FROM admin_page where name=?",[$this->page]);
     //add automatice table and forms based on metadata admin.admin_sub.type=='table'
-   //    xecho($this->admin_page);
 //NO SUBPAGE - MULTIPLE CHANNELS 6
 if($this->sub==''){
     $admin_pageid = $this->admin_page['id'];
@@ -287,8 +294,6 @@ if($this->sub==''){
       $name = $content['name'];
       $table=$this->has_maria($name);
       //$table = $content['has_maria']!=null ?  $this->has_maria($content['has_maria']) : $name;
-      //xecho($content['has_maria']);
-      //xecho($table);
       $ch = strval($channel+1);
       //get parent page of sub
 
@@ -298,7 +303,6 @@ if($this->sub==''){
       //include _edit page
       //or normal main php file
       //$mp['mainfile'.$ch]= $this->ADMIN_ROOT . "main/" . $this->page . "/" . $this->page . ".php";
-//xecho($table);
       $html .= $this->produce6channel($name,$ch,$page,$content['type'],$table);
       }
       return $html;
@@ -312,6 +316,8 @@ if($this->sub==''){
     //  $html .= $this->channelRenderFile($this->notification_file,2);
       //add doc bar if type==table select doc from table with form input
    //   $html .= $this->channelRenderFile($this->notification_file,3);
+           //channel doc
+      $html .= $this->channelRenderDoc($name);
       return $html;
     }
 }

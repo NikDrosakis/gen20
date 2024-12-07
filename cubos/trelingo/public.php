@@ -1,4 +1,15 @@
 <?php
+/**
+Trelingo Cubo
+View1: buildTable (Form method)|cubo_trelingo_word (tableName param) (orderby type= verb)
+Read English
+Input italian (onkeyup Input checker italian)
+Sound italian
+Input checker italian
+Input spanish (onkeyup Input checker spanish)
+Sound spanish
+Input checker spanish
+*/
 namespace Core;
 trait CuboLogic {
     // Protected function to check if the Italian word is correct
@@ -22,9 +33,8 @@ trait CuboLogic {
         ];
     }
 }
-namespace Core;
 
-class CuboTrilingo extends Gen{
+class CuboTrilingo {
     use CuboLogic; // Include the CuboLogic trait
 public function __construct() {
            parent::__construct();

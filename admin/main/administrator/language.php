@@ -16,4 +16,5 @@ body.grid-enabled {
 }
 </style>
 this is the language
+<?php echo $this->pugTest();?>
 <?php //xecho($this->buildNewlangColumns()); ?>

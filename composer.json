@@ -10,7 +10,8 @@
         "ratchet/pawl": "^0.4.1",
         "mongodb/mongodb": "^1.20",
         "solarium/solarium": "^6.3",
-        "reprovinci/solr-php-client": "^1.0"
+        "reprovinci/solr-php-client": "^1.0",
+        "pug/pug": "^0.2.0"
     },
     "autoload": {
         "psr-4": {
@@ -32,7 +33,8 @@
     },
     "config": {
         "allow-plugins": {
-            "symfony/flex": true
+            "symfony/flex": true,
+            "nodejs-php-fallback/nodejs-php-fallback": true
         }
     }
 }

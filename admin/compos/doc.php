@@ -7,3 +7,5 @@ $doc= $this->admin->f("select doc from $sub where name=?",[$sub])['doc'];
 $doc= $this->admin->f("select doc from admin_sub where name=?",[$this->sub])['doc'];
 }
 echo $doc;
+
+

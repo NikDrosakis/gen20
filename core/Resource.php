@@ -2,6 +2,8 @@
 namespace Core;
 /**
 Get Resources from the web
+Check standard nulls of DB and suggest to complete
+Check all resources if active
 
 TODO
 ====

@@ -112,7 +112,6 @@ $domain = is_array($domainame) ? $domainame['key'] : $domainame;
     // Execute the command
     $output = shell_exec($command);
 
-
     // Check if the output contains an error or success message
     if (strpos($output, 'Congratulations') !== false) {
         // Define the folder where Certbot stores the certificates

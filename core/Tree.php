@@ -30,6 +30,11 @@ child: subscribe
 
 6) add language title description
 
+TODO
+====
+doc standard to admin_sub admin_page and visible only to TEMPLATE.?grp tables
+
+
  */
 
 trait Tree {
@@ -40,8 +45,8 @@ protected $standardSchema=[
     "`sort` INT UNSIGNED NOT NULL DEFAULT 0",
     "`img` VARCHAR(200) DEFAULT NULL COMMENT 'img-upload'",
     "`name` VARCHAR(300) NOT NULL",
-    "`title` VARCHAR(200) DEFAULT NULL",
-    "`description` TEXT DEFAULT NULL",
+    "`title` VARCHAR(200) DEFAULT NULL COMMENT 'loc'",
+    "`description` TEXT DEFAULT NULL COMMENT 'loc'",
     "`status` TINYINT(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'selectG-status'",
     "`created` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'readonly'"
 ];

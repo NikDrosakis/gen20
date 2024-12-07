@@ -499,6 +499,13 @@ public function renderTwigContent($post) {
     }
 }
 
+protected function renderDoc(string $table){
+$html = "<h3>Documentation $table</h3>";
+$doc= $this->admin->f("select doc from admin_sub where name=?",[$table])['doc'];
+$html .="<p>$doc</p>";
+return $html;
+}
+
 protected function renderFormHead($table){
 $subpage=explode('.',$table)[1];
  $page = $this->G['subparent'][$subpage];
@@ -525,6 +532,7 @@ return '<h3>
          ];
          // Merge provided params with defaults
          $params = array_merge($defaults, $params);
+
          $this->dbForm = $this->getDBInstance($table);
         //set db
        // $this->dbForm=$params['db']=="gen_".TEMPLATE ? $this->db: $this->admin;
@@ -564,8 +572,7 @@ return '<h3>
 
         $tableMeta = $this->getInputType($table);  // Get column type and related info
         // Loop through each column to build form fields
-//        xecho($tableMeta);
-        if(empty($cols)){
+       if(empty($cols)){
         $cols=array_keys($tableMeta);
         }
         foreach ($cols as $col) {
@@ -743,8 +750,6 @@ return '<div class="gs-span">
             // Handle Twig preview (rendered HTML)
             //$value = json_decode($value, true)['Archive'];
             $renderedTwigContent = $this->renderTwigContent($value);  // Render the Twig content here
-      //      xecho($renderedTwigContent);
-        //    xecho($value);
             return '
                 <div class="gs-span">
                     <label for="' . $col . '">' . $col . '</label>
@@ -798,6 +803,7 @@ return '<div class="gs-span">
                        <code><textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'><code>$value</code></textarea></code>
                        </div><button class='button save-button' onclick='saveContent(\"$col\", \"$table\")' type='button' id='save_$col'>Save Content</button>";
         break;
+        case 'pug':
         case 'textarea':
         $col = htmlspecialchars($col, ENT_QUOTES, 'UTF-8');
         $table = htmlspecialchars($this->table, ENT_QUOTES, 'UTF-8');
