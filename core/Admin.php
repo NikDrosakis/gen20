@@ -51,6 +51,7 @@ use Resource;
 use Template;
 use Bundle;
 use Media;
+use Filemeta;
 use My;
 
 protected $database;

@@ -10,7 +10,7 @@ cubo lang
 ADD LANGUAGE
 1) FIND ALL COMMENTS LOC
 2) alter table with field_[LOC]
-3) update table of active languages 
+3) update table of active languages
  */
 trait Lang {
 use Form;
