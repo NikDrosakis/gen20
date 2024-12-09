@@ -1,7 +1,7 @@
 <?php
 // Usage example
 $tags = 'books, libraries';
-$images = $this->fetchImages($tags);
+$images = $this->fetchResource($tags);
 
 if (isset($images['error'])) {
     echo 'Error fetching images: ' . implode(', ', $images['error']);
