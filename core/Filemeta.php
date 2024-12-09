@@ -1,84 +1,108 @@
 <?php
+/** @filemetacore.description creates file to db dynamic mechanism **/
+
+/**
+@filemetacore.updatelog
+v.1 basic Trait, batch saving all files, changing all the style writing, having basic functionality & automating documentation and logging
+*/
+
+/** @filemetacore.features all classes and methods lists documented */
+
+/**
+@filemetacore.todo
+- connect to Ermis for auto-update each file
+- logging all load data
+- having sense
+*/
 namespace Core;
 
 trait Filemeta {
-    // Extract dependent classes (from `use` statements)
+    // @filemetacore.description Extract dependent classes (from `use` statements)
     protected function extractDependencies($content) {
         preg_match_all('/^use\s+(.+);$/m', $content, $matches);
         return implode(',', $matches[1] ?? []);
     }
 
-    // Extract PHP content
+    // @filemetacore.description  Extract PHP content
     protected function extractPHP($content) {
         return preg_match('/<\?php(.*?)(?:\?>|$)/s', $content, $matches) ? trim($matches[1]) : null;
     }
 
-    // Extract Pug content
+    // @filemetacore.description  Extract Pug content
     protected function extractPug($content) {
         return preg_match('/<template lang="pug">(.*?)<\/template>/s', $content, $matches) ? trim($matches[1]) : null;
     }
 
-    // Extract CSS styles
+    // @filemetacore.description  Extract CSS styles
     protected function extractStyle($content) {
         return preg_match('/<style.*?>(.*?)<\/style>/s', $content, $matches) ? trim($matches[1]) : null;
     }
 
-    // Extract JavaScript
+    // @filemetacore.description Extract JavaScript
     protected function extractJS($content) {
         return preg_match('/<script.*?>(.*?)<\/script>/s', $content, $matches) ? trim($matches[1]) : null;
     }
 
-/**
- * Extract comments from the content and separate DOC, TODO, and description fields.
- */
+// @filemetacore.description Extract structured metadata (e.g., @version, @description) and general comments from content.
 protected function extractComments($content) {
-    // Regex to extract PHP doc comments (/** ... */)
+    // @filemetacore.features Regex to extract PHP doc comments (/** ... */)
     preg_match_all('/\/\*\*(.*?)\*\//s', $content, $matches);
 
-    // Clean and trim the comments, removing /** and */
+    // @filemetacore.features Clean and trim the comments, removing /** and */
     $cleaned = array_map(function ($comment) {
-        return trim(preg_replace(['/^\/\*\*/', '/\*\//'], '', $comment));
+        return trim(preg_replace(['/^\/\*\*/', '/\*\//', '/^\s*\*\s?/m'], '', $comment));
     }, $matches[1] ?? []);
+
+    // @filemetacore.features Metadata fields we are looking for
+    $metadataFields = ['version', 'description', 'todo', 'updatelog', 'features'];
+    $metadata = array_fill_keys($metadataFields, '');
 
     $doc = [];
     $todo = [];
     $description = '';
 
     foreach ($cleaned as $comment) {
-        if (stripos($comment, 'TODO') === 0) {
+        // @filemetacore.features Extract metadata fields using @field syntax
+        foreach ($metadataFields as $field) {
+            if (preg_match('/@' . $field . '\s+(.*)/sU', $comment, $match)) {
+                $metadata[$field] .= trim($match[1]) . "\n";
+            }
+        }
+
+        // @filemetacore.features Handle TODO separately for other non-structured comments
+        if (stripos($comment, '@todo') !== false) {
             $todo[] = $comment;
-        } elseif (stripos($comment, 'DOC') === 0) {
-            $doc[] = $comment;
-        } else {
-            // Treat all other comments as general description
+        } elseif (!preg_match('/@\w+/', $comment)) {
+            // @filemetacore.features Treat as general description if no metadata tags are found
             $description .= $comment . "\n";
         }
     }
 
-    // Extract function comments with method names (for DOC)
+    // @filemetacore.features Extract function-level comments (optional feature)
     preg_match_all('/\/\*\*\s*(.*?)\*\//s', $content, $functionMatches);
     $functionDocs = [];
-
     foreach ($functionMatches[1] ?? [] as $functionComment) {
-        preg_match('/function\s+(\w+)/', $functionComment, $funcNameMatches);
-        if (isset($funcNameMatches[1])) {
+        if (preg_match('/function\s+(\w+)/', $functionComment, $funcNameMatches)) {
             $functionDocs[$funcNameMatches[1]] = trim(preg_replace(['/^\/\*\*/', '/\*\//'], '', $functionComment));
         }
     }
 
-    // Combine DOC comments with function-specific DOC comments
+    // @filemetacore.features Combine DOC comments with function-specific DOC comments
     $doc = array_merge($doc, $functionDocs);
 
     return [
+        'version' => trim($metadata['version']),
+        'description' => trim($metadata['description']) ?: trim($description),
+        'todo' => trim($metadata['todo']),
+        'updatelog' => trim($metadata['updatelog']),
+        'features' => trim($metadata['features']),
         'doc' => implode("\n", $doc),
-        'todo' => implode("\n", $todo),
-        'description' => trim($description),
     ];
 }
 
-
     /**
-     * General function to extract content between tags.
+     @filemetacore.description
+     General function to extract content between tags.
      */
     protected function extractSection($content, $startTag, $endTag) {
         preg_match("/$startTag(.*?)$endTag/s", $content, $matches);
@@ -86,9 +110,10 @@ protected function extractComments($content) {
     }
 
     /**
-     * Insert metadata for a single file into the database.
+     @filemetacore.description
+     Insert metadata for a single file into the database.
      */
-    protected function insertFile(string $file,$cols,$version) {
+    protected function insertFile(string $file,$cols=[]) {
         $content = file_get_contents($file);
         $comments=$this->extractComments($content);
         $cols = [
@@ -104,14 +129,17 @@ protected function extractComments($content) {
             'dependent' => $this->extractDependencies($content),
             'created' => date('Y-m-d H:i:s'),
             'updated' => date('Y-m-d H:i:s'),
-            'version' => $version,
+            'version' => $comments['version'],
             'status' => 'PENDING',
+            'features' => $comments['features'],
+            'updatelog' => $comments['updatelog']
         ];
         $this->admin->inse("filemeta", $cols);
     }
 
 /**
- * Update metadata for an existing file in the database.
+     @filemetacore.description
+     Update metadata for an existing file in the database.
  */
 protected function updateFile(string $file, $cols = []) {
     // Fetch the current metadata from the database
@@ -123,7 +151,7 @@ protected function updateFile(string $file, $cols = []) {
     // Extract the comments once and reuse for description, doc, and todo
     $comments = $this->extractComments($content);
 
-    // Prepare the new metadata
+    // @filemetacore.features Prepare the new metadata
     $newCols = [
         'description' => $comments['description'],
         'style' => $this->extractStyle($content),
@@ -138,7 +166,7 @@ protected function updateFile(string $file, $cols = []) {
         'file' => $file
     ];
 
-    // Compare each field and check if it's different from the current database value
+    // @filemetacore.features Compare each field and check if it's different from the current database value
     $changes = false;
     foreach ($newCols as $column => $newValue) {
         if ($currentMetadata[$column] != $newValue) {
@@ -147,20 +175,21 @@ protected function updateFile(string $file, $cols = []) {
         }
     }
 
-    // If there are changes, update the database
+    // @filemetacore.features If there are changes, update the database
     if ($changes) {
         $this->admin->q(
             "UPDATE filemeta SET description = ?, style = ?, php = ?, pug = ?, js = ?, doc = ?, todo = ?, dependent = ?, updated = ?, status = ? WHERE name = ?",
             array_values($newCols)
         );
     } else {
-        // If no changes, log or handle as necessary
+        // @filemetacore.features If no changes, log or handle as necessary
         xecho("No changes detected for file: $file");
     }
 }
 
 /**
- * Commit and push changes to Git.
+@filemetacore.description
+Commit and push changes to Git.
  */
 protected function gitPush($report,$system,$version) {
     // Escape variables for shell safety
@@ -176,13 +205,13 @@ protected function gitPush($report,$system,$version) {
         shell_exec($cmd); // Execute command
     }
 }
-    /**
-     * Process all files recursively in the specified directory.
-     */
+/**
+@filemetacore.description
+Process all files recursively in the specified directory.
+*/
     protected function runFilemeta($directory = '/var/www/gs/core') {
         $inserted = 0;
         $updated = 0;
-        $version=$this->admin->f("select version from systems where name=?",[$system])['version'];
         $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory));
         foreach ($files as $file) {
             if ($file->isFile() && in_array($file->getExtension(), ['php', 'html', 'css', 'js', 'pug'])) {
@@ -190,16 +219,16 @@ protected function gitPush($report,$system,$version) {
                 $cols = $this->admin->f("SELECT * FROM filemeta WHERE name = ?", [basename($filepath)]);
 
                 if (!$cols) {
-                    $this->insertFile($filepath,$cols,$version);
+                    $this->insertFile($filepath,$cols);
                     $inserted++;
                 } else {
-                    $this->updateFile($filepath,$cols,$version);
+                    $this->updateFile($filepath,$cols);
                     $updated++;
                 }
             }
         }
 
-        // Logging the results
+        // @filemetacore.features Logging the results
         $report= "Files Inserted=$inserted,Updated=$updated";
         $this->gitPush($report,$exists['system'],$version);
     }

@@ -1,3 +1,4 @@
+<!-- @deprecated now routed by Admin core.Head -->
 <!DOCTYPE html>
 <html>
 <head>

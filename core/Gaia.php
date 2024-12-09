@@ -89,7 +89,7 @@ abstract class Gaia {
         }
 		//$this->G['is'] = $this->redis->get("is");
 		//if(!$this->G['is']){        
-        $this->G['is'] = $this->db->flist("SELECT name, en from globs");
+        $this->G['is'] = $this->db->flist("SELECT name, val from globs");
 		//$this->redis->set("is",$this->G['is']);
 		//}
         $this->G['usergrps'] = $this->db->fl(["id", "name"], "usergrp");

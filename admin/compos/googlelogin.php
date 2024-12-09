@@ -1,3 +1,5 @@
+<!-- @filemeta.description used with under login to login with google -->
+<!-- @filemeta.todo old ajax style needs update -->
 <script>
   const CLIENT_ID = G.is.GOOGLE_DRIVE_CLIENT_ID;
           const API_KEY = G.is.GOOGLE_PICKER_API_KEY;

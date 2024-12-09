@@ -15,6 +15,32 @@ body.grid-enabled {
   background-color: transparent;
 }
 </style>
-this is the language
-<?php echo $this->pugTest();?>
-<?php //xecho($this->buildNewlangColumns()); ?>
+<?php
+$current_code=$this->G['is']['lang_primary'];
+$langList=$this->db->flist("select code,name from language");
+$dropNewLangs=$this->drop($langList,"language",'addLangColumn');
+?>
+<h2>Current Language: <?=$langList[$current_code]?><h2>
+
+<h2>Add new Language: <?=$dropNewLangs?><h2>
+
+<button style="display:none" id="activationButton" data-lang="" class="button">Activate New Language</button>
+
+<script>
+
+</script>
+
+
+
+<?php
+
+//echo $this->pugTest();
+
+//xecho($this->buildNewlangColumns());
+//logging();
+
+//set_error_handler('customErrorHandler');
+
+//captureFunctionCalls();
+?>
+

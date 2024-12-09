@@ -1,3 +1,4 @@
+<-- @deprecated with core php8.3 API Gateway -->
 <?php
 ///assign to default TEMPLATE database of assign to other requested
 $db=!isset($_REQUEST['db']) ? $this->db : $this->{$_REQUEST['db']};
@@ -19,7 +20,7 @@ if($a=='exec'){
     if(!empty($select)){
         $query=$db->q("UPDATE globs SET en=? WHERE name=? and tag=?",[$c,$b,'widget']);
     }else{
-        $query=$db->inse('globs',['name'=>$b,'en'=>$c,'tag'=>'widget']);
+        $query=$db->inse('globs',['name'=>$b,'lang'=>$c,'tag'=>'widget']);
     }
     echo !$query ? 'NO':'OK';
 }elseif( $a=='gaia_update'){

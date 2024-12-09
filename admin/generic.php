@@ -1,12 +1,81 @@
 <?php
-/*
-procedural library 
-developed by Nikos Drosakis (c)2019
-v2.0
-updated with geocode,gps2Num,get_image_location functions
+/** @filemeta.description starting file common for PUBLIC,ADMIN,API systems with nginx and core */
+/**
+@filemeta.updatelog
+v1 procedural library
+v2 geocode,gps2Num,get_image_location functions
+v3 logging functions
 */
+// @filemeta.features logging function execution with magic constants
+function logging() {
+    $doc = "#doc: Function exampleFunction executed in file " . __FILE__ . " on line " . __LINE__."\n";
+    $doc .= " with method " . __METHOD__."\n";
+    $doc .= " at " . date('Y-m-d H:i:s');
+    error_log($doc); // Log to PHP error log or to a custom log file
+}
 
-   // Function to remove folders and files 
+// @filemeta.features logging with debug_backtrace()
+function logCall() {
+    $backtrace = debug_backtrace();
+    $logData = "#doc: Function call stack at " . date('Y-m-d H:i:s') . "\n";
+
+    foreach ($backtrace as $call) {
+        $logData .= "#file: " . $call['file'] . " | #line: " . $call['line'] . " | #function: " . $call['function'] . "\n";
+    }
+
+    error_log($logData); // Log to PHP error log or to a custom log file
+}
+
+// @filemeta.features logging as a middleware
+function middlewareLog($handler) {
+    return function() use ($handler) {
+        // Log the initial request, such as the route hit
+        $route = $_SERVER['REQUEST_URI']; // or another routing mechanism
+        error_log("#doc: Incoming request to route " . $route . " at " . date('Y-m-d H:i:s')."\n");
+
+        // Call the handler (the actual controller function)
+        $response = call_user_func($handler);
+
+        // Log the response or function execution details
+        $backtrace = debug_backtrace();
+        $logData = "#doc: Function call stack after request\n";
+
+        foreach ($backtrace as $call) {
+            $logData .= "#file: " . $call['file'] . " | #line: " . $call['line'] . " | #function: " . $call['function'] . "\n";
+        }
+
+        error_log($logData);
+
+        return $response;
+    };
+}
+
+// @filemeta.features logging as error handling
+function customErrorHandler($errno, $errstr, $errfile, $errline) {
+    $logData = "#doc: Error caught at " . date('Y-m-d H:i:s') . " | File: $errfile | Line: $errline | Error: $errstr";
+    error_log($logData); // Log to PHP error log or a custom log file
+}
+
+// @filemeta.features logging as buffer
+function captureFunctionCalls() {
+    ob_start();
+    register_shutdown_function(function() {
+        $output = ob_get_clean();
+
+        // Capture backtrace or other relevant data
+        $backtrace = debug_backtrace();
+        $logData = "#doc: Function call stack at the end of script\n";
+
+        foreach ($backtrace as $call) {
+            $logData .= "#file: " . $call['file'] . " | #line: " . $call['line'] . " | #function: " . $call['function'] . "\n";
+        }
+
+        error_log($logData); // Log to PHP error log or custom log file
+    });
+}
+
+
+// @filemeta.features Function to remove folders and files
     function rrmdir($dir) {
         if (is_dir($dir)) {
             $files = scandir($dir);
@@ -17,7 +86,7 @@ updated with geocode,gps2Num,get_image_location functions
         else if (file_exists($dir)) unlink($dir);
     }
 
-    // Function to Copy folders and files       
+// @filemeta.features Function to Copy folders and files
     function rcopy($src, $dst) {
         if (file_exists ( $dst ))
             rrmdir ( $dst );
@@ -31,36 +100,41 @@ updated with geocode,gps2Num,get_image_location functions
             copy ( $src, $dst );
     }
 
+// @filemeta.features is associative array
 function is_assoc(array $arr){
     if (array() === $arr) return false;
     return array_keys($arr) !== range(0, count($arr) - 1);
 }
 
-//json parse from php 
+// @filemeta.features json parse from php
 function link_exist($link){
 if (@fopen($link,'r') !='') {return true;} else{ return false;}
 }
 
+// @filemeta.features limit for pagination
 function limit($text, $limit=10){
    return substr( $text,0,$limit );  
 }
-
+// @filemeta.features limit for pagination with space
 function limit_text_with_space( $text, $limit){
   if( strlen($text)>$limit )	{
     return substr( $text,0,-(strlen(strrchr($text,' '))) );
   }  
 }
-	
+
+// @filemeta.features parse string
 function contains($str,$sub){
     return strpos($str, $sub)!== false ? true : false;
 }
 
+// @filemeta.features convert to greek chars
 function greeklish($str){
 $greekLetters=array('"',"'",'<','>','?',':','*','(',')',' ','-','α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π','ρ','σ','τ','υ','φ','χ','ψ','ω','Α','Β','Γ','Δ','Ε','Ζ','Η','Θ','Ι','Κ','Λ','Μ','Ν','Ξ','Ο','Π','Ρ','Σ','Τ','Υ','Φ','Χ','Ψ','Ω','ά','έ','ή','ί','ό','ύ','ώ','ς');
 $enLetters=array('','','','','','','_','_','_','_','_','a','v','g','d','e','z','i','th','i','k','l','m','n','x','o','p','r','s','t','u','f','h','ps','o','A','B','G','D','E','Z','I','Th','I','K','L','M','N','X','O','P','R','S','T','Y','F','Ch','Ps','O','a','e','i','i','o','u','o','s');
 return str_replace($greekLetters, $enLetters,$str);
 }
-	
+
+// @filemeta.features systime left from current timestamp
 function systime($tstamp,$fromnow=false,$report=false){
     $tstamp = $fromnow==true ? time() - $tstamp : $tstamp;
 	$time='';
@@ -92,7 +166,8 @@ function systime($tstamp,$fromnow=false,$report=false){
 		}
 		return $timeMsg;
 	}	
-	
+
+// @filemeta.features sortArrayByArray
 function sortArrayByArray($array,$orderArray) {
     $ordered = array();
     foreach($orderArray as $key) {
@@ -104,6 +179,7 @@ function sortArrayByArray($array,$orderArray) {
     return $ordered;
 }
 
+// @filemeta.features save file with full privileges
 function write_file($filename,$filedata=''){
 if (!file_exists($filename)){
         file_put_contents($filename, $filedata);
@@ -113,6 +189,7 @@ file_put_contents($filename,$filedata, FILE_APPEND | LOCK_EX);
     chmod($filename, 0777);
 }
 
+// @filemeta.features read file
 function read_file($file){
 header('Content-type: text/html; charset=UTF-8');
 $fh = fopen($file, 'r');
@@ -120,9 +197,8 @@ $data=fread($fh, filesize($file));
 fclose($fh);
 return $data;
 }
-/*
- * return filesize in kb
- * */
+
+// @filemeta.features return filesize in kb
 function file_size($path){
     $io = popen('/usr/bin/du -sk ' . $path, 'r');
     $size = fgets($io, 4096);
@@ -131,20 +207,21 @@ function file_size($path){
     return round($size/1024);
 }
 
+// @filemeta.features echoes with pre tag for arrays with button to save clipboard
 function xecho($quer){
     echo '<button onclick="navigator.clipboard.writeText(this.nextElementSibling.innerText || this.nextElementSibling.value)" class="glyphicon glyphicon-copy"></button><pre>';
     print_r($quer);
 echo '</pre>';
 }
 
+// @filemeta.features Start output buffering to capture print_r output
 function xechox($quer) {
-    // Start output buffering to capture print_r output
     ob_start();
     print_r($quer);
     $printedQuery = ob_get_clean();
-    // Safely escape the printed query for HTML output
+    // @filemeta.features  Safely escape the printed query for HTML output
     $escapedQuery = htmlspecialchars($printedQuery, ENT_QUOTES, 'UTF-8');
-    // Build and return the output string
+    // @filemeta.features  Build and return the output string
     return '<div class="gs-preview">
                 <button onclick="navigator.clipboard.writeText(this.nextElementSibling.innerText || this.nextElementSibling.value)"
                         class="glyphicon glyphicon-copy">
@@ -154,6 +231,7 @@ function xechox($quer) {
             </div>';
 }
 
+// @filemeta.features creates excerpt from string
 function excerpt($str, $link='', $startPos=0, $maxLength=300) {
 		if(strlen($str) > $maxLength) {
 			$excerpt   = substr($str, $startPos, $maxLength-3);
@@ -165,7 +243,8 @@ function excerpt($str, $link='', $startPos=0, $maxLength=300) {
 		}
 		return $excerpt;
 	}
-	
+
+// @filemeta.features  converts array to ini file
 function write_ini($array, $file){
     $res = array();
     foreach($array as $key => $val) {
@@ -177,10 +256,12 @@ function write_ini($array, $file){
    if(file_put_contents($file, implode("\r\n", $res))){return true;}else{return false;}
 } 
 
+// @filemeta.features  htmlencode
 function htmlencode($value, $flags=ENT_QUOTES, $encoding ="UTF-8"){
 	return htmlentities($value, $flags, $encoding);
 }
 
+// @filemeta.features  htmldecode
 function htmldecode($value, $flags=ENT_QUOTES, $encoding ="UTF-8"){
 	$elements = array("\r", "\n");
 	$result = array(" ", " ");
@@ -189,6 +270,7 @@ function htmldecode($value, $flags=ENT_QUOTES, $encoding ="UTF-8"){
 	return ($decoded);
 }
 
+// @filemeta.features  delete recursively
 function delTree($dir) {
    $files = array_diff(scandir($dir), array('.','..')); 
     foreach ($files as $file) { 
@@ -196,7 +278,8 @@ function delTree($dir) {
     } 
     return rmdir($dir); 
   } 
-  
+
+// @filemeta.features  get total size
 function format_size($size) {
     global $action, $units;
     $units = explode(' ', 'B KB MB GB TB PB');
@@ -207,9 +290,8 @@ function format_size($size) {
     $endIndex = strpos($size, ".")+3;
     return substr( $size, 0, $endIndex).' '.$units[$i];
 }
-/*
- * in kbs
- * */
+
+// @filemeta.features  get total size in kb
 function folder_size($path,$round=false) {
     $total_size = 0;
     $files = scandir($path);
@@ -231,6 +313,7 @@ function folder_size($path,$round=false) {
     return $round==true ? round($total_size/1024) : $total_size/1024;
 }
 
+// @filemeta.features  get dir size
 function dirSize($directory,$round=false) {
     $size = 0;
     foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory)) as $file){
@@ -239,6 +322,7 @@ function dirSize($directory,$round=false) {
     return $round==true ? round($size/1024) : $size/1024;
 }
 
+// @filemeta.features  get files with pattern to array
 function rglob($pattern, $flags = 0) {
     $files = glob($pattern, $flags); 
     foreach (glob(dirname($pattern).'/*', GLOB_ONLYDIR|GLOB_NOSORT) as $dir) {
@@ -247,11 +331,13 @@ function rglob($pattern, $flags = 0) {
     return $files;
 }
 
+// @filemeta.features  get files with pattern to array
 function glob_($pattern=''){
 $files=array_filter(glob($pattern), 'is_file');
 return $files;
 }
 
+// @filemeta.features  read_folder
 function read_folder($directory, $except = array(), $uniqueID = false, $sort = false) {
     $return = array();
 
@@ -301,7 +387,7 @@ function read_folder($directory, $except = array(), $uniqueID = false, $sort = f
     return $return;
 }
 
-
+// @filemeta.features  read_folder_recursive
 function read_folder_recursive($dir,&$results = array()){
     $files = scandir($dir);
 
@@ -321,6 +407,7 @@ function read_folder_recursive($dir,&$results = array()){
     return $results;
 }
 
+// @filemeta.features get lines of file
 function filelines($file){
 $linecount = 0;
 $handle = fopen($file, "r");
@@ -332,6 +419,7 @@ return (int)$linecount;
 fclose($handle);
 }
 
+// @filemeta.features read_line
 function read_line($file, $line){
 if (file_exists($file) && $line !==null) {
 $lines=file($file);
@@ -339,6 +427,7 @@ return $lines[$line];
 }
 }
 
+// @filemeta.features dir_tree
 function dir_tree($dir){
 	$path = '';
 	$stack[] = $dir;
@@ -370,6 +459,7 @@ function dir_tree($dir){
 	return $path;
 }
 
+// @filemeta.features delete_dir
 function delete_dir($dir) {
 
     if (!file_exists($dir)) return true;
@@ -402,12 +492,14 @@ function xrmdir($path)
     return false;
 }
 
+// @filemeta.features explode with multiple params
 function multiexplode ($delimiters,$string) { 
     $ready = str_replace($delimiters, $delimiters[0], $string);
     $launch = explode($delimiters[0], $ready);
     return  $launch;
 }
 
+// @filemeta.features sanitize tags
 function striptags($textarea){
 $textarea=str_replace("'",'&#39;',$textarea);
 //$textarea1=str_replace("\xA0", ' ', $textarea);
@@ -422,6 +514,7 @@ return implode(' ',$textArray);
 
 }
 
+// @filemeta.features get_client_ip
 function get_client_ip() {
     $ipaddress = '';
     if (getenv('HTTP_CLIENT_IP'))
@@ -440,9 +533,7 @@ function get_client_ip() {
         $ipaddress = 'UNKNOWN';
     return $ipaddress;
 }
-/*
-profanity_filter SEARCH THE TEXT AND FIND DIRTY WORDS
-*/
+// @filemeta.features profanity_filter SEARCH THE TEXT AND FIND DIRTY WORDS
 function profanity_filter($textarea,$dirt=array()){
 	//multi explode all the text to array
 	$textarea= multiexplode(array("|"," ","//"),$textarea);
@@ -455,9 +546,7 @@ function profanity_filter($textarea,$dirt=array()){
 	}
 	return implode(' ',$textArray);
 }
-/*
-profanity_counter SEARCH THE TEXT AND COUNT DIRTY WORDS
-*/
+// @filemeta.features profanity_counter SEARCH THE TEXT AND COUNT DIRTY WORDS
 function profanity_counter($textarea,$dirt=array()){
 $counter =0;
 $textArray=array();
@@ -472,6 +561,7 @@ $counter +=1;
 return (int)$counter;
 }
 
+// @filemeta.features recurse_copy
 function recurse_copy($src,$dst) { 
     $dir = opendir($src); 
     @mkdir($dst); 
@@ -488,6 +578,8 @@ function recurse_copy($src,$dst) {
     } 
     closedir($dir); 
 }
+
+// @filemeta.features update dir privileges
 function chmod_r($path) {
     $dir = new DirectoryIterator($path);
     foreach ($dir as $item) {
@@ -497,6 +589,8 @@ function chmod_r($path) {
         }
     }
 }
+
+// @filemeta.features update permissions and privileges
 function fsmodify($obj) {
     $chunks = explode('/', $obj);
     chmod($obj, is_dir($obj) ? 0777 : 0777);
@@ -504,7 +598,7 @@ function fsmodify($obj) {
     chgrp($obj, $chunks[2]);
 }
 
-
+// @filemeta.features file system modify
 function fsmodifyr($dir)
 {
     if($objs = glob($dir."/*")) {
@@ -516,13 +610,9 @@ function fsmodifyr($dir)
 
     return fsmodify($dir);
 }
-/*
-ZIP ONE OR MORE FILES
-//USAGE zipfiles('classes',array('DBA.class.php','DB.class.php'));
-*/
+// @filemeta.features ZIP ONE OR MORE FILES USAGE zipfiles('classes',array('DBA.class.php','DB.class.php'));
 function zipfiles($filename,$zipfiles=array()){
 $zip = new ZipArchive();
-
 
 foreach ($zipfiles as $zipfile){ 
 if ($zip->open($filename, ZipArchive::CREATE)!== TRUE) {
@@ -537,6 +627,7 @@ $zip->close();
 }
 }
 
+// @filemeta.features sanitize filename
 function sanitizeFilename(string $filename): string {
     // 1. Remove invalid characters
     $filename = preg_replace('/[^a-zA-Z0-9_\.\-]/', '', $filename);
@@ -546,16 +637,13 @@ function sanitizeFilename(string $filename): string {
     $filename = str_replace('..', '', $filename);
     return $filename;
 }
-/*
-ZIP FOLDER
-*/
+// @filemeta.features zipfolder
 function zipfolder($rootPath){
 // Initialize archive object
 $zip = new ZipArchive();
 $zip->open($rootPath.'.zip', ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
-
- $files = new RecursiveIteratorIterator(
+$files = new RecursiveIteratorIterator(
     new RecursiveDirectoryIterator($rootPath),
     RecursiveIteratorIterator::LEAVES_ONLY
 ); 
@@ -573,8 +661,7 @@ foreach ($files as $name => $file)
         $zip->addFile($filePath, $relativePath);
     }
 } 
-
-// Zip archive will be created only after closing object
+// @filemeta.features  Zip archive will be created only after closing object
 $zip->close();
 }
 function unzip_folder($zipfile,$source,$target){
@@ -607,7 +694,7 @@ for($i=0; $i<$zip->numFiles; $i++) {
 }
 }
 
-
+// @filemeta.features unzip
 function unzip($zipfile,$dst){
 	$zip = new ZipArchive;
 	if ($zip->open($zipfile) === TRUE) {
@@ -620,12 +707,13 @@ function unzip($zipfile,$dst){
 	}
 }
 
+// @filemeta.features write_onfile
 function write_onfile($file,$txt){
 	$myfile = fopen($file, "w") or die("Unable to open file!");
 	fwrite($myfile, $txt);
 	fclose($myfile);
 }
-
+// @filemeta.features send_download
 function send_download($file){
     $basename = basename($file);
     $length   = sprintf("%u", filesize($file));
@@ -643,11 +731,11 @@ function send_download($file){
     set_time_limit(0);
     readfile($file);
 }
-
+// @filemeta.features randomPostCode
 function randomPostCode($length = 5) {
 return substr(str_shuffle("0123456789ACCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, $length);
 }
-
+// @filemeta.features query_string_rewrite
 	function query_string_rewrite($url){
 		$rewriten= multiexplode(array("=","&"),$url);
 		//echo SITE_URL;
@@ -656,7 +744,7 @@ return substr(str_shuffle("0123456789ACCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, $length);
 		//echo '/';
 		}
 	}
-
+// @filemeta.features redirect
 function redirect($to=null,$permanent = false) {
 	global $action,$lang;
  	if($permanent) {
@@ -672,7 +760,7 @@ function redirect($to=null,$permanent = false) {
 	}
 }
 
-
+// @filemeta.features is_json
 function is_json(string $string) {
     // First check if the input is a string, as only strings can be valid JSON
     if (!is_string($string)) {
@@ -681,7 +769,7 @@ function is_json(string $string) {
  json_decode($string);
     return (json_last_error() === JSON_ERROR_NONE);
 }
-//rootpath
+// @filemeta.features jsonget read & decode file
 function jsonget($file){
 	if(file_exists($file)){
 	$content= file_get_contents($file);
@@ -690,6 +778,7 @@ function jsonget($file){
 	return false;
 	}
 }
+// @filemeta.features encode and save file
 function jsonset($array, $filePath) {
     // Convert the array to a JSON string
     $jsonString = json_encode($array, JSON_PRETTY_PRINT);
@@ -712,19 +801,12 @@ function jsonset($array, $filePath) {
     // Return success
     return true;
 }
-
+// @filemeta.features remove_whitespace
 function remove_whitespace($str){
     return str_replace("  "," ",str_replace("\xc2\xa0",'',$str));
 }
 
-/*
- *
- *  new functions jan2017
- *
- *
- * */
-
-// Main function file
+// @filemeta.features  Main function file
 function file_tree($directory, $return_link, $extensions = array()) {
     // Generates a valid XHTML list of all directories, sub-directories, and files in $directory
     // Remove trailing slash
@@ -732,7 +814,7 @@ function file_tree($directory, $return_link, $extensions = array()) {
     $code .= file_tree_dir($directory, $return_link, $extensions);
     return $code;
 }
-
+// @filemeta.features file_tree_dir
 function file_tree_dir($directory, $return_link, $extensions = array(), $first_call = true) {
     // Recursive function called by php_file_tree() to list directories/files
 
@@ -782,42 +864,13 @@ function file_tree_dir($directory, $return_link, $extensions = array(), $first_c
     return $php_file_tree;
 }
 
-// For PHP4 compatibility
-function php4_scandir($dir) {
-    $dh  = opendir($dir);
-    while( false !== ($filename = readdir($dh)) ) {
-        $files[] = $filename;
-    }
-    sort($files);
-    return($files);
-}
-
-/* find if array is multidimesional */
+// @filemeta.features find if array is multidimesional
 function is_multi($a) {
     $rv = array_filter($a,'is_array');
     if(count($rv)>0) return true;
     return false;
 }
-/*
- * UI
- *
- * */
-
-function dropdown($id,$loop,$selected=''){
-    $drop = '<select id="'.$id.'" style="color:white;background:black">';
-    if(is_multi($loop)) {
-        foreach ($loop as $key => $details) {
-            $drop .= '<option value="' . $key . '" ' . ($selected != '' && $selected == $key ? "selected=selected" : "") . '>' . $key . '</option>';
-        }
-    }else{
-        foreach ($loop as $key) {
-            $drop .= '<option value="' . $key . '" ' . ($selected != '' && $selected == $key ? "selected=selected" : "") . '>' . $key . '</option>';
-        }
-    }
-    $drop .= '</select>';
-    return $drop;
-}
-
+// @filemeta.features get_class_methods_noparent
 function get_class_methods_noparent($class){
     $f = new ReflectionClass($class);
     $methods = array();
@@ -828,7 +881,7 @@ function get_class_methods_noparent($class){
     }
     return $methods;
 }
-
+// @filemeta.features del_reset_array
 function del_reset_array($arr,$delkey){
     reset($arr);
     $key= key($arr);
@@ -842,10 +895,7 @@ function del_reset_array($arr,$delkey){
     return $b;
 }
 
-
-/*
- * create subarray from keys
- * */
+// @filemeta.features create subarray from keys
 function sublist($array,$list=array()){
     $new=array();
     foreach($list as $li){
@@ -853,7 +903,7 @@ function sublist($array,$list=array()){
     }
     return $new;
 }
-
+// @filemeta.features ismobile
 function ismobile () {
     $user_agent = strtolower ( $_SERVER['HTTP_USER_AGENT'] );
     // matches popular mobile devices that have small screens and/or touch inputs
@@ -869,43 +919,19 @@ function ismobile () {
         return false;
     }
 }
-//any conf json
+// @filemeta.features json2array any conf json
 function json2array($file){
     if(file_exists($file)) {
         $json = file_get_contents($file);
         return json_decode($json, true);
     }
 }
-//configuration file
-function config($DOMAIN='',$rootconfig=false){
-//        $this->conf = parse_ini_file('/var/www/setup.ini',true);
-	   if(file_exists(SITE_ROOT.'gaia.json')){	   
-	   $conf= jsonget(SITE_ROOT.'gaia.json');
 
-	   //if in localhost/gaia catch the first domain of the setup.json
-	$alldomains=array_keys($conf['domains']);
-	//xecho($alldomains);
-	//xecho($_SERVER['HTTP_HOST']);
-	//xecho($alldomains);
-   // $DOMAIN= $DOMAIN!='' ? $DOMAIN:(!in_array($_SERVER['SERVER_NAME'],$alldomains) ? array_key_first($conf['domains']):$_SERVER['SERVER_NAME']);
-	//xecho($DOMAIN);
-    //$DOMAIN= $DOMAIN!='' ? $DOMAIN : $_SERVER['HTTP_HOST'];
- //   if($rootconfig==true){
-   //     return $conf;
-  //  }else {
-        //return !$conf['domains'][$DOMAIN] ? $conf['domains'][SERVERBASE] : $conf['domains'][$DOMAIN];
-       // return !$conf['domains'][$DOMAIN] ? $conf['domains'][SERVERBASE] : $conf['domains'][$DOMAIN];
-        return $conf['domains'][$DOMAIN];
-  //  }
-	   }else{
-		   return false;
-	  }
-}
-//get timed
+// @filemeta.features get timed
 function timed(){
     return date('YmdHis');
 }
-//convert timed to datetime format
+// @filemeta.features convert timed to datetime format
 function timedt($timed,$format='YmdHis'){
     $dt= str_split($timed);
     $Y= $dt[0].$dt[1].$dt[2].$dt[3];
@@ -919,11 +945,11 @@ function timedt($timed,$format='YmdHis'){
     end($fm);$lastkey=$fm[key($fm)]; foreach($fm as $f){$ft[]=$$f.($f==$lastkey ? '' :$fmafter[$f]);}
     return implode('',$ft);
 }
-//convert unix timed to timestamp (database use)
+// @filemeta.features convert unix timed to timestamp (database use)
 function timedx($timed){
     return strtotime(timedt($timed));
 }
-
+// @filemeta.features filelistbycrit
 function filelistbycrit($fileName, $crits=array()) {
     $lines = file($fileName);
     $list=array();
@@ -939,8 +965,8 @@ function filelistbycrit($fileName, $crits=array()) {
     }
     return $list;
 }
-
-	function geocode($address){
+// @filemeta.features geocode
+function geocode($address){
 
     // url encode the address
  //   $address = urlencode($address);
@@ -971,35 +997,13 @@ function filelistbycrit($fileName, $crits=array()) {
         $suburb = isset($resp['address']['suburb']) ? $resp['address']['suburb'] : "";
         $city = isset($resp['address']['city']) ? $resp['address']['city'] : "";
         $state = isset($resp['address']['state']) ? $resp['address']['state'] : "";
-    //    $longi = isset($resp['results'][0]['geometry']['location']['lng']) ? $resp['results'][0]['geometry']['location']['lng'] : "";
-   //     $formatted_address = isset($resp['results'][0]['formatted_address']) ? $resp['results'][0]['formatted_address'] : "";
-         
-        // verify if data is complete
-    //    if($lati && $longi && $formatted_address){
-         
-            // put the data in the array
-          //  $data_arr = array();            
-             
-           // array_push(
-             //   $data_arr, 
-               //     $lati, 
-                 //   $longi, 
-                   // $formatted_address
-                //);
-             
-            //return $data_arr;
 			return "$road $suburb $city $state";
 	            
         }else{
             return false;
         }
-         
-    //}else{
-        ///echo "<strong>ERROR: {$resp['status']}</strong>";
-        //return false;
-    //}
 }
-
+// @filemeta.features gps2Num
 function gps2Num($coordPart){
     $parts = explode('/', $coordPart);
     if(count($parts) <= 0)
@@ -1008,6 +1012,7 @@ function gps2Num($coordPart){
     return $parts[0];
     return floatval($parts[0]) / floatval($parts[1]);
 }
+// @filemeta.features get_imgloc
 function get_imgloc($exif = ''){
 	    if($exif!=false && (isset($exif['GPS']) || isset($exif['GPSLatitude']))){
         $GPSLatitudeRef = !empty($exif['GPS']) ? $exif['GPS']['GPSLatitudeRef'] :  $exif['GPSLatitudeRef'];
@@ -1032,6 +1037,7 @@ function get_imgloc($exif = ''){
         return false;
     }
 }
+// @filemeta.features get_image_location
 function get_image_location($image = ''){
     $exif = @exif_read_data($image, 0, true);
     if($exif && isset($exif['GPS'])){
@@ -1059,7 +1065,7 @@ function get_image_location($image = ''){
         return false;
     }
 }
-
+// @filemeta.features include_buffer
 function include_buffer($file,$sel=array(),$params=array()){
     ob_start();
     include $file;
@@ -1067,23 +1073,19 @@ function include_buffer($file,$sel=array(),$params=array()){
     flush();
     ob_end_clean();
 }
-
-	/*
-        COOKIES
-    */
-
+// @filemeta.features cookieSet
 	function cookieSet($con,$row,$domain=SERVERNAME){
 		//if(!isset($_COOKIE[$con])){
 		setcookie($con,$row,time()+(365*24*60*60),'/',$domain);
 		//}
 	}
-
+// @filemeta.features cookieUnset
 	function cookieUnset($name){
 		setcookie($name, '', time()-1000);
 		setcookie($name, '', time()-1000, '/');
 		setcookie($name, '', time()-1000, '/home');
 	}
-
+// @filemeta.features cookieClear
 	function cookieClear(){
 		if (isset($_SERVER['HTTP_COOKIE'])) {
 			$cookies = explode(';', $_SERVER['HTTP_COOKIE']);
@@ -1093,9 +1095,4 @@ function include_buffer($file,$sel=array(),$params=array()){
 				$this->cookieUnset($name);
 			}
 		}
-	}
-
-	
-	function clean($html){
-	return strip_tags($html);
 	}

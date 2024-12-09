@@ -1,3 +1,4 @@
+<!-- @filemeta.description Compo UI used by Venus chat-->
 <style>
 #chatbox{
 color:black;
@@ -83,6 +84,7 @@ display: table;
         background-color: #45a049;
     }
 </style>
+<!-- <html/> -->
 <div id="chatbox">
       <button onclick="gs.scrollToBottom('chatresponse')">Scroll to Bottom</button>
     <div id="chatresponse">
@@ -210,5 +212,4 @@ display: table;
          sendMessage(message);
      }
  });
-
 </script>

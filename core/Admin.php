@@ -51,7 +51,7 @@ use Resource;
 use Template;
 use Bundle;
 use Media;
-use Filemeta;
+use Filemeta2;
 use My;
 
 protected $database;
@@ -175,9 +175,8 @@ protected function channelCheck($chanfile) {
 
 protected function produce6channel($name,$ch,$page,$type,$table){
     $Position=['1'=>'top-left','2'=>'top-right','3'=>'top-center','4'=>'bottom-center','5'=>'bottom-left','6'=>'bottom-right'];
-    $html='';
-    $html .='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'" class="channel '.$Position[$ch].'">';
-    //$html .='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'">';
+ $html = '<div id="ch'.$ch.'" title="CHANNEL '.$ch.'" class="channel '.$Position[$ch].'">';
+ $html .= '<button onclick="navigator.clipboard.writeText(this.nextElementSibling.innerText || this.nextElementSibling.value)" class="glyphicon glyphicon-copy toprightcorner"></button>';
 
    if($type=='iframe'){
         $html .='<iframe src='.$name.'
@@ -218,6 +217,7 @@ protected function produce6channel($name,$ch,$page,$type,$table){
   $Position=['1'=>'top-left','2'=>'top-right','3'=>'top-center','4'=>'bottom-center','5'=>'bottom-left','6'=>'bottom-right'];
      $html='';
      $html .='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'" class="channel '.$Position[$ch].'">';
+
         $html .= $this->channelCheck($file);
      $html .='</div>';
      return $html;
@@ -226,6 +226,8 @@ protected function produce6channel($name,$ch,$page,$type,$table){
   $Position=['1'=>'top-left','2'=>'top-right','3'=>'top-center','4'=>'bottom-center','5'=>'bottom-left','6'=>'bottom-right'];
      $html='';
      $html .='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'" class="channel '.$Position[$ch].'">';
+       $html .= '<button onclick="this.parentElement.style.display=\'none\'" class="close-btn toprightcorner">X</button>'; // Close button
+
         $html .= $this->renderDoc($table);
      $html .='</div>';
      return $html;

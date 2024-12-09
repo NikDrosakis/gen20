@@ -1,4 +1,17 @@
-<!--------POST TABLE-------------->
+<!-- @filemeta.description media panel to preview external links-->
+<!--
+@filemeta.updatelog
+v1 created with ajax
+v2 switch to inline tag fired, added Toolbox, Dig,Generate, Google Drive
+v3 updated to filemeta
+-->
+<!--
+@filemeta.todo
+- add more resources, compined with core.Resources
+- fix & update custom
+- add video and more media types
+-->
+<!-- @filemeta.features POST TABLE -->
 <h3>
     <input id="media_panel" class="red indicator">
     <a href="/media/media"><span class="glyphicon glyphicon-edit"></span>Media</a>
@@ -10,7 +23,7 @@
    $folder= $this->G['MEDIA_ROOT'];
 ?>
 
-<!---------TABS MENU ------------>
+<!---------@filemeta.features TABS MENU ------------>
     <ul class="tabs mediatabs">
         <li class="tab-link current" onclick="tab(this)" data-tab="tab-media_manager">Media Manager</li>
         <li class="tab-link" data-tab="tab-upload_image" onclick="tab(this)" >Upload Image</li>
@@ -21,7 +34,7 @@
         <li class="tab-link" data-tab="tab-findimage" onclick="tab(this)" >Generate</li>
     </ul>
 
-<!---------TABS CONTAINERS ------------>
+<!-- @filemeta.features TABS CONTAINERS -->
     <!-- Form for adding a new slide -->
     <div id="tab-media_manager" class="tab-content current">
         <button id="chooseButton">Add from Media Folder</button>
@@ -33,7 +46,6 @@
                         <option value="<?=$fold?>"><?=basename($fold)?></option>
                       <?php } ?>
                     </select>
-
             </label>
         <form id="chooseForm">
             <input type="hidden" name="a" value="upload_media">
@@ -48,13 +60,7 @@
         <div id="imagePreviewContainer">
             <img id="imagePreview" src="" alt="Image Preview" style="max-width:100%; height:auto; display:none; margin-top:10px;">
         </div>
-
-
-
-
-
     </div>
-
 
     <div id="tab-upload_image" class="tab-content">
         <form id="uploadForm" enctype="multipart/form-data">
@@ -87,8 +93,6 @@
      <?php include CUBOS_ROOT."findimage/public.php"; ?>
     </div>
 
-
-
 <script>
       //document.addEventListener('DOMContentLoaded', async function () {
       console.log("loading...",gs)
@@ -103,13 +107,8 @@
                 const formData = new FormData(this);
                 await uploadFile(formData);
             })
-
       //})
-
-
-/*
-* MEDIA COMMON FUNCTIONS
-* */
+/** @filemeta.features MEDIA COMMON FUNCTIONS */
 
 async function uploadFile(formData) {
     // Log FormData contents
@@ -132,7 +131,7 @@ async function uploadFile(formData) {
     }
 }
 
-// Handle selection from media folder (Tab B)
+// @filemeta.features Handle selection from media folder (Tab B)
 async function selectFromMediaFolder(id) {
     event.preventDefault();
     const filename = document.getElementById(id).value;
@@ -152,7 +151,7 @@ async function selectFromMediaFolder(id) {
 }
 
 
-// Handle adding an image from a URL (Tab C)
+// @filemeta.features Handle adding an image from a URL (Tab C)
 async function addImageFromUrl(id) {
     const url = document.getElementById('url_image').value;
     const caption = document.getElementById('caption_url').value;
@@ -168,7 +167,6 @@ async function addImageFromUrl(id) {
         return {success: false};
     }
 }
-
 
 /**
  * General function to append a media item to a specified table
@@ -186,7 +184,7 @@ function appendToPlace(tableId, mediaItem, customTemplate) {
     table.insertAdjacentHTML('beforeend', rowHTML);
 }
 
-// Function to append slide to the table
+// @filemeta.features Function to append slide to the table
 function appendMediaToPlace(slide) {
     let table = `<tr id="slide_${slide.id}">
       <td class="sort-order">${slide.sort}</td>
@@ -199,7 +197,7 @@ function appendMediaToPlace(slide) {
     document.querySelector('#sortableMedia tbody').insertAdjacentHTML('beforeend', table);
 }
 
-// Populate the media select dropdown with images from the media/slideshow folder
+// @filemeta.features Populate the media select dropdown with images from the media/slideshow folder
 async function loadMedia(folder = '', pag = 1, limit = 8) {
     const params = {folder: folder, pag: pag, limit: limit};
     const getMedia = await gs.loadLocalMethod.get("loadMedia", params);
@@ -272,5 +270,4 @@ async function loadMedia(folder = '', pag = 1, limit = 8) {
         createPagination(totalPages, pag, folder, limit);
     }
 }
-
 </script>

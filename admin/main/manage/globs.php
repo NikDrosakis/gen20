@@ -7,17 +7,9 @@
 <div class="table-container">
 <div class="gs-databox">
 
-<?php if($this->G['mode']!=''){
-$mode=$this->G['mode'];
-?>
-
-<button id="globtitle<?=$mode?>>" class="button<?=isset($_COOKIE['globs_tab']) && $_COOKIE['globs_tab']==$mode ? " active":""?>"><?=ucfirst($mode)?></button>
-
-<?php
-}else{
-foreach($globlist as $tag => $tagcount){ ?>
+<?php foreach($globlist as $tag => $tagcount){ ?>
 <button id="globtitle<?=$tag?>" class="button<?=isset($_COOKIE['globs_tab']) && $_COOKIE['globs_tab']==$tag ? " active":""?>"><?=$tag?></button>
-<?php }} ?>
+<?php } ?>
 
 </div>
 
@@ -43,11 +35,11 @@ $type=$sel[$i]['type'];
 	        <label class="profile_title"><?=$sel[$i]['name']?></label>
 
 			<?php if($type=='textarea' || $type=='html'){ ?>
-				<textarea class="form-control input-sm" class="lang12" id="set<?=$id?>"><?=urldecode($sel[$i]["en"])?></textarea>
+				<textarea class="form-control input-sm" class="lang12" id="set<?=$id?>"><?=urldecode($sel[$i]["val"])?></textarea>
 
 			<?php }elseif($type=='json'){ ?>
  <div id="jsoneditor-container-<?= $sel[$i]['id'] ?>" class="jsoneditor-container"></div>
- <textarea id="jsoneditor-<?=$sel[$i]['id'] ?>" style="display:none;" class="jsoneditor-textarea"> <?=json_encode($sel[$i]["en"], JSON_PRETTY_PRINT)?></textarea>
+ <textarea id="jsoneditor-<?=$sel[$i]['id'] ?>" style="display:none;" class="jsoneditor-textarea"> <?=json_encode($sel[$i]["val"], JSON_PRETTY_PRINT)?></textarea>
  <button id="save-json<?=$sel[$i]['id'] ?>" class="jsonvalidator btn btn-primary">Validate JSON</button>
 
 			<?php }elseif($type=='code'){ ?>
@@ -79,7 +71,7 @@ $type=$sel[$i]['type'];
 					<input type="hidden" name="id" value="<?=$id?>">
 					<input class="btn btn-xs" type="submit" style="display:none" name="submitUpload" id="submitAttach<?=$id?>" value="Upload" data-toggle="tooltip">
 					</form>
-			<a class="viewImage" href="<?=$sel[$i]['lang']?>">
+			<a class="viewImage" href="<?=$sel[$i]['val']?>">
 				<div id="imgView<?=$id?>">
 					<img id="img<?=$id?>" class="img-thumbnail" src="<?=!$sel[$i]["en"] ? "/admin/img/post.jpg": urldecode($sel[$i]["en"])?>" style="max-height:150px;">
 				</div>
@@ -289,6 +281,8 @@ document.querySelectorAll("button[id^='globtitle']").forEach(function(button) {
             } catch (e) {
                 console.log('textarea mistake')
             }
+
+
         })
 
         })

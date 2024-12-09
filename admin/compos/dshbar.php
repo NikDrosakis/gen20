@@ -1,11 +1,22 @@
+<!--
+    @filemeta.updatelog
+    v.1 manual with json class navigate
+    v.2 automatical from admin_page & admin_sub
+    v.3 updated to filemeta style
+-->
+<!--
+    @filemeta.description
+    admin horizontal & vertical navigation
+    fired by Admin navigation method
+-->
+<!--<html>-->
 <header>
     <nav class="navbar">
     <div id="progressBarContainer"><div id="progressBar"><p id="progressText"></p></div></div>
     <a href="/admin/home/profile" class="logo_image_id">
         <img src="<?=isset($_COOKIE['GSIMG']) ? MEDIA_URL.$_COOKIE['GSIMG'] : '/admin/img/user.png'?>" width="48" height="48" style="margin-top: 3px;border-radius:50px">
     </a>
-
-<!-------------         HORIZONTAL MENU     ------------------------------------>
+<!------------- @filemeta.features HORIZONTAL_MENU ------------------------------------>
     <div class="gs-desktop">
         <p><?=!isset($_COOKIE['GSGRP']) ? '' : $this->usergrps[$_COOKIE['GSGRP']]?></p>
         <p><?=isset($_COOKIE['GSNAME']) ?  $_COOKIE['GSNAME'] : ''?></p>
@@ -29,11 +40,10 @@
             </li>
         </ul>
 
-
         <div id="indicator" class="red indicator"></div>
         <div id="c_active_users"></div>
 <div id="signInDiv"></div>
-<!--
+<!-- @filemeta.doc dynamic change of layout currently not used.
 <div id="layout-buttons">
     <button data-layout="1" class="buttonChannel" onclick="switchChannels(this.dataset.layout)" title="Single Channel"><span>Ⅰ</span></button>
     <button data-layout="2" class="buttonChannel" onclick="switchChannels(this.dataset.layout)" title="70/30 Layout"><span>⋮⋮|⋮</span></button>
@@ -47,7 +57,7 @@
     </nav>
 
 </header>
-<!----------------------------VERTICAL MENU---------------------------->
+<!----------------------------@filemeta.features VERTICAL_MENU with Admin navigate method---------------------------->
 <div id="dashbar">
 	<div id="menuwrapper">
          <ul id="mainmenu">
@@ -73,11 +83,9 @@
 						<?=$subvals['slug']?></a>
 						</li>
 					<?php }}
-					//<!--------ADD EXPERIMENTAL PAGES -->
-
+/** @filemeta.features EXPERIMENTAL_PAGES */
 						if($mainpage=='lab'){
 						$experimental_pages=$this->experimental_pages($mainpage);
-					//	xecho($experimental_pages);
 						if(!empty($experimental_pages)){
 						 foreach($this->experimental_pages($mainpage) as $exp_page){
 						?>
@@ -85,12 +93,11 @@
                             <?=ucfirst($exp_page)?>
                             </a></li>
 					<?php }}} ?>
-
 					</ul>
 				<?php } ?>
             </li>
-
               <?php } ?>
         </ul>
     </div>
 </div>
+<!--</html>-->

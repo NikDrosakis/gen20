@@ -64,441 +64,451 @@ buildArchive
     font-size: 1rem;
     color: #444;
 }
-
-/*
-gs.ui.modal
-*/
-.modal-open {
-    overflow: hidden;
-}
-.modal {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 1050;
-    display: none;
-    overflow: hidden;
-    -webkit-overflow-scrolling: touch;
-    outline: 0;
-}
-.modal.fade .modal-dialog {
-    -webkit-transition: -webkit-transform .3s ease-out;
-    -o-transition:      -o-transform .3s ease-out;
-    transition:         transform .3s ease-out;
-    -webkit-transform: translate(0, -25%);
-    -ms-transform: translate(0, -25%);
-    -o-transform: translate(0, -25%);
-    transform: translate(0, -25%);
-}
-.modal.in .modal-dialog {
-    -webkit-transform: translate(0, 0);
-    -ms-transform: translate(0, 0);
-    -o-transform: translate(0, 0);
-    transform: translate(0, 0);
-}
-.modal-open .modal {
-    overflow-x: hidden;
-    overflow-y: auto;
-}
-.modal-dialog {
-    position: relative;
-    width: auto;
-    margin: 10px;
-}
-.modal-content {
-    position: relative;
-    background-color: #fff;
-    -webkit-background-clip: padding-box;
-    background-clip: padding-box;
-    border: 1px solid #999;
-    border: 1px solid rgba(0, 0, 0, .2);
-    border-radius: 6px;
-    outline: 0;
-    -webkit-box-shadow: 0 3px 9px rgba(0, 0, 0, .5);
-    box-shadow: 0 3px 9px rgba(0, 0, 0, .5);
-}
-.modal-backdrop {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 1040;
-    background-color: #000;
-}
-.modal-backdrop.fade {
-    filter: alpha(opacity=0);
-    opacity: 0;
-}
-.modal-backdrop.in {
-    filter: alpha(opacity=50);
-    opacity: .5;
-}
-.modal-header {
-    padding: 15px;
-    border-bottom: 1px solid #e5e5e5;
-}
-.modal-header .close {
-    margin-top: -2px;
-    /*updates*/
-    top: 10px;
-    right: 10px;
-}
-.modal-title {
-    margin: 0;
-    line-height: 1.42857143;
-}
-.modal-body {
-    position: relative;
-    /*padding: 15px;*/
-}
-.modal-footer {
-    padding: 15px;
-    text-align: right;
-    border-top: 1px solid #e5e5e5;
-}
-.modal-footer .btn + .btn {
-    margin-bottom: 0;
-    margin-left: 5px;
-}
-.modal-footer .btn-group .btn + .btn {
-    margin-left: -1px;
-}
-.modal-footer .btn-block + .btn-block {
-    margin-left: 0;
-}
-.modal-scrollbar-measure {
+.toprightcorner {
+    background: transparent;
+    border: none;
     position: absolute;
-    top: -9999px;
-    width: 50px;
-    height: 50px;
-    overflow: scroll;
+    margin-top: 6px;
 }
-@media (min-width: 768px) {
+.bare{
+    background: transparent;
+    border: none;
+}
+    /*
+    gs.ui.modal
+    */
+    .modal-open {
+        overflow: hidden;
+    }
+    .modal {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1050;
+        display: none;
+        overflow: hidden;
+        -webkit-overflow-scrolling: touch;
+        outline: 0;
+    }
+    .modal.fade .modal-dialog {
+        -webkit-transition: -webkit-transform .3s ease-out;
+        -o-transition:      -o-transform .3s ease-out;
+        transition:         transform .3s ease-out;
+        -webkit-transform: translate(0, -25%);
+        -ms-transform: translate(0, -25%);
+        -o-transform: translate(0, -25%);
+        transform: translate(0, -25%);
+    }
+    .modal.in .modal-dialog {
+        -webkit-transform: translate(0, 0);
+        -ms-transform: translate(0, 0);
+        -o-transform: translate(0, 0);
+        transform: translate(0, 0);
+    }
+    .modal-open .modal {
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
     .modal-dialog {
-        width: 90%;
-        /* width: 600px; */
-        margin: 30px auto;
+        position: relative;
+        width: auto;
+        margin: 10px;
     }
     .modal-content {
-        -webkit-box-shadow: 0 5px 15px rgba(0, 0, 0, .5);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, .5);
-    }
-    .modal-sm {
-        width: 300px;
-    }
-}
-@media (min-width: 992px) {
-    .modal-lg {
-        width: 900px;
-    }
-}
-
-/* gs.ui.editor */
-.toolbar {
-    background-color: #f0f0f0; // Light gray
-padding: 5px;
-    border-bottom: 1px solid #ccc;
-}
-
-.toolbar button {
-    border: none;
-    background: none;
-    padding: 5px 10px;
-    cursor: pointer;
-    font-size: 1em;
-}
-
-/* PAGINATION */
-/* Basic styling for the tabs */
-#pagination,.pagination {
-    margin-top: 20px;
-    text-align: center;
-}
-
-.page-link, .prev-link, .next-link {
-    margin: 2px 2px;
-    padding: 3px 7px;
-    text-decoration: none;
-    color: #646464;
-    cursor: pointer;
-}
-
-.page-link.active {
-    font-weight: bold;
-    border: 1px solid gray;
-    color: #fff;
-    background-color: #646464;
-    border-radius: 3px;
-}
-
-.prev-link, .next-link {
-    font-weight: bold;
-    color: #007bff;
-    background-color: #646464;
-    border-radius: 3px;
-}
-
-.prev-link:hover, .next-link:hover, .page-link:hover {
-    text-decoration: underline;
-}
-
-/* gs form */
-/* Flexbox container to hold the preview and textarea side by side */
-.gs-preview-container {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-/* Style for the Twig preview container */
-.twig-editor{
-    border: 1px solid gray;
-    width:50%;
-}
-.gs-twig-preview, .gs-preview {
-    flex: 1; /* Take up 50% of the space */
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    min-height: 100px;
-    max-width: 48%;
-    max-height: 300px;
-    overflow: auto;
-}
-
-/* Style for the textarea */
-.gs-textarea {
-    flex: 1; /* Take up 50% of the space */
-    min-height: 100px;
-    width: 48%; /* Ensures the textarea doesn't stretch beyond its box */
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 1em;
-    resize: vertical;
-    background-color: #fff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.gs-span {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    margin: 6px 6px 6px 6px;
-}
-
-.gs-input,.gs-textarea {
-    padding: 10px 15px;
-    font-size: 16px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    transition: border-color 0.3s ease;
-    background-color: #fff;
-    width: 100%;
-    box-sizing: border-box;
-}
-.gs-select{
-    padding: 1px 15px;
-    font-size: 16px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    transition: border-color 0.3s ease;
-    background-color: #fff;
-    width: 123px;
-    box-sizing: border-box;
-}
-.gs-input:focus,.gs-textarea:focus,.gs-select:focus   {
-    border-color: #007bff;
-    outline: none;
-}
-
-label {
-    margin-bottom: 8px;
-    font-weight: 600;
-    font-size: 18px;
-    color: #555555;
-}
-
-
-/* CKEditor textarea */
-textarea.editor {
-    height: 300px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 12px;
-    font-size: 16px;
-}
-/* Select field */
-select.gs-input {
-    padding: 12px 15px;
-    font-size: 16px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background-color: #fff;
-    appearance: none;
-    background-image: url('data:image/svg+xml;base64,...'); /* Optional arrow icon for select */
-    background-repeat: no-repeat;
-    background-position: right 15px center;
-    background-size: 10px;
-}
-
-select.gs-input:focus {
-    border-color: #007bff;
-    outline: none;
-}
-
-.table-container {
-    width: 100%;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    background-color: #fff;
-}
-
-.styled-table {
-    border-collapse: collapse;
-    margin: 5px 0;
-    font-size: 1.2em;
-    min-width: 400px;
-    width: 98%;
-    border-radius: 8px 8px 0 0;
-    overflow: hidden;
-}
-
-.styled-table thead tr {
-    background-color: #ffffff;
-    color: #000000;
-    text-align: left;
-    font-weight: bold;
-    border-bottom: 2px dotted #adadad;
-}
-
-.styled-table th, .styled-table td {
-    padding: 4px 4px;
-    text-align: center;
-}
-
-.styled-table tbody tr {
-    border-bottom: 1px solid #dddddd;
-}
-
-.styled-table tbody tr:nth-of-type(even) {
-    background-color: #f3f3f3;
-}
-
-.styled-table tbody tr:last-of-type {
-    border-bottom: 2px solid #009879;
-}
-
-.styled-table tbody tr.active-row {
-    font-weight: bold;
-    color: #009879;
-}
-
-.styled-table tbody tr:hover {
-    background-color: #f1f1f1;
-    cursor: pointer;
-}
-
-/* Responsive Design */
-@media (max-width: 600px) {
-    .styled-table thead {
-        display: none;
-    }
-    table tr {
-        pointer-events: none; /* Disables pointer events (including drag-and-drop) */
-    }
-    .styled-table, .styled-table tbody, .styled-table tr, .styled-table td {
-        display: block;
-        width: 100%;
-    }
-
-    .styled-table tr {
-        margin-bottom: 15px;
-    }
-
-    .styled-table td {
-        text-align: right;
-        padding-left: 50%;
         position: relative;
+        background-color: #fff;
+        -webkit-background-clip: padding-box;
+        background-clip: padding-box;
+        border: 1px solid #999;
+        border: 1px solid rgba(0, 0, 0, .2);
+        border-radius: 6px;
+        outline: 0;
+        -webkit-box-shadow: 0 3px 9px rgba(0, 0, 0, .5);
+        box-shadow: 0 3px 9px rgba(0, 0, 0, .5);
     }
-
-    .styled-table td::before {
-        content: attr(data-label);
-        position: absolute;
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
         left: 0;
-        width: 50%;
-        padding-left: 15px;
-        font-weight: bold;
-        text-align: left;
+        z-index: 1040;
+        background-color: #000;
     }
-}
-input,
-button,
-select,
-textarea {
-    font-family: inherit;
-    font-size: inherit;
-    line-height: inherit;
-    border:1px solid #d3d3d3;
-    height: 30px;
-}
-/* Date input */
-input[type="date"].gs-input {
-    padding: 12px 15px;
-    font-size: 16px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background-color: #fff;
-    width: 100%;
-}
-
-/* Responsive adjustments */
-@media (min-width: 768px) {
-    .gs-span {
-        width: calc(50% - 10px);
+    .modal-backdrop.fade {
+        filter: alpha(opacity=0);
+        opacity: 0;
     }
-}
-
-@media (min-width: 992px) {
-    .gs-span {
-        width: calc(33.333% - 10px);
+    .modal-backdrop.in {
+        filter: alpha(opacity=50);
+        opacity: .5;
     }
-}
-
-/* Make the table scrollable on small screens */
-@media screen and (max-width: 600px) {
-    table {
-        width: 100%;
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
+    .modal-header {
+        padding: 15px;
+        border-bottom: 1px solid #e5e5e5;
     }
-
-    th, td {
-        padding: 8px;
-        font-size: 14px;
+    .modal-header .close {
+        margin-top: -2px;
+        /*updates*/
+        top: 10px;
+        right: 10px;
     }
-    .styled-table td {
-        text-align: left;
+    .modal-title {
+        margin: 0;
+        line-height: 1.42857143;
+    }
+    .modal-body {
         position: relative;
-        padding-left: 2%;
+        /*padding: 15px;*/
+    }
+    .modal-footer {
+        padding: 15px;
+        text-align: right;
+        border-top: 1px solid #e5e5e5;
+    }
+    .modal-footer .btn + .btn {
+        margin-bottom: 0;
+        margin-left: 5px;
+    }
+    .modal-footer .btn-group .btn + .btn {
+        margin-left: -1px;
+    }
+    .modal-footer .btn-block + .btn-block {
+        margin-left: 0;
+    }
+    .modal-scrollbar-measure {
+        position: absolute;
+        top: -9999px;
+        width: 50px;
+        height: 50px;
+        overflow: scroll;
+    }
+    @media (min-width: 768px) {
+        .modal-dialog {
+            width: 90%;
+            /* width: 600px; */
+            margin: 30px auto;
+        }
+        .modal-content {
+            -webkit-box-shadow: 0 5px 15px rgba(0, 0, 0, .5);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, .5);
+        }
+        .modal-sm {
+            width: 300px;
+        }
+    }
+    @media (min-width: 992px) {
+        .modal-lg {
+            width: 900px;
+        }
+    }
+
+    /* gs.ui.editor */
+    .toolbar {
+        background-color: #f0f0f0; // Light gray
+    padding: 5px;
+        border-bottom: 1px solid #ccc;
+    }
+
+    .toolbar button {
+        border: none;
+        background: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        font-size: 1em;
+    }
+
+    /* PAGINATION */
+    /* Basic styling for the tabs */
+    #pagination,.pagination {
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .page-link, .prev-link, .next-link {
+        margin: 2px 2px;
+        padding: 3px 7px;
+        text-decoration: none;
+        color: #646464;
+        cursor: pointer;
+    }
+
+    .page-link.active {
+        font-weight: bold;
+        border: 1px solid gray;
+        color: #fff;
+        background-color: #646464;
+        border-radius: 3px;
+    }
+
+    .prev-link, .next-link {
+        font-weight: bold;
+        color: #007bff;
+        background-color: #646464;
+        border-radius: 3px;
+    }
+
+    .prev-link:hover, .next-link:hover, .page-link:hover {
+        text-decoration: underline;
+    }
+
+    /* gs form */
+    /* Flexbox container to hold the preview and textarea side by side */
+    .gs-preview-container {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    /* Style for the Twig preview container */
+    .twig-editor{
+        border: 1px solid gray;
+        width:50%;
+    }
+    .gs-twig-preview, .gs-preview {
+        flex: 1; /* Take up 50% of the space */
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        min-height: 100px;
+        max-width: 48%;
+        max-height: 300px;
+        overflow: auto;
+    }
+
+    /* Style for the textarea */
+    .gs-textarea {
+        flex: 1; /* Take up 50% of the space */
+        min-height: 100px;
+        width: 48%; /* Ensures the textarea doesn't stretch beyond its box */
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 1em;
+        resize: vertical;
+        background-color: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .gs-span {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        margin: 6px 6px 6px 6px;
+    }
+
+    .gs-input,.gs-textarea {
+        padding: 10px 15px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        transition: border-color 0.3s ease;
+        background-color: #fff;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .gs-select{
+        padding: 1px 15px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        transition: border-color 0.3s ease;
+        background-color: #fff;
+        width: 123px;
+        box-sizing: border-box;
+    }
+    .gs-input:focus,.gs-textarea:focus,.gs-select:focus   {
+        border-color: #007bff;
+        outline: none;
+    }
+
+    label {
+        margin-bottom: 8px;
+        font-weight: 600;
+        font-size: 18px;
+        color: #555555;
+    }
+
+
+    /* CKEditor textarea */
+    textarea.editor {
+        height: 300px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 12px;
+        font-size: 16px;
+    }
+    /* Select field */
+    select.gs-input {
+        padding: 12px 15px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #fff;
+        appearance: none;
+        background-image: url('data:image/svg+xml;base64,...'); /* Optional arrow icon for select */
+        background-repeat: no-repeat;
+        background-position: right 15px center;
+        background-size: 10px;
+    }
+
+    select.gs-input:focus {
+        border-color: #007bff;
+        outline: none;
+    }
+
+    .table-container {
+        width: 100%;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        background-color: #fff;
+    }
+
+    .styled-table {
+        border-collapse: collapse;
+        margin: 5px 0;
+        font-size: 1.2em;
+        min-width: 400px;
+        width: 98%;
+        border-radius: 8px 8px 0 0;
+        overflow: hidden;
+    }
+
+    .styled-table thead tr {
+        background-color: #ffffff;
+        color: #000000;
+        text-align: left;
+        font-weight: bold;
+        border-bottom: 2px dotted #adadad;
+    }
+
+    .styled-table th, .styled-table td {
+        padding: 4px 4px;
+        text-align: center;
+    }
+
+    .styled-table tbody tr {
+        border-bottom: 1px solid #dddddd;
+    }
+
+    .styled-table tbody tr:nth-of-type(even) {
+        background-color: #f3f3f3;
+    }
+
+    .styled-table tbody tr:last-of-type {
+        border-bottom: 2px solid #009879;
+    }
+
+    .styled-table tbody tr.active-row {
+        font-weight: bold;
+        color: #009879;
+    }
+
+    .styled-table tbody tr:hover {
+        background-color: #f1f1f1;
+        cursor: pointer;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 600px) {
+        .styled-table thead {
+            display: none;
+        }
+        table tr {
+            pointer-events: none; /* Disables pointer events (including drag-and-drop) */
+        }
+        .styled-table, .styled-table tbody, .styled-table tr, .styled-table td {
+            display: block;
+            width: 100%;
+        }
+
+        .styled-table tr {
+            margin-bottom: 15px;
+        }
+
+        .styled-table td {
+            text-align: right;
+            padding-left: 50%;
+            position: relative;
+        }
+
+        .styled-table td::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 0;
+            width: 50%;
+            padding-left: 15px;
+            font-weight: bold;
+            text-align: left;
+        }
+    }
+    input,
+    button,
+    select,
+    textarea {
+        font-family: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        border:1px solid #d3d3d3;
+        height: 30px;
+    }
+    /* Date input */
+    input[type="date"].gs-input {
+        padding: 12px 15px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #fff;
         width: 100%;
     }
-}
-.menu-text {
-    display: inline;
-}
-/* Hide text under 800px */
-@media screen and (max-width: 900px) {
-    #dashbar {width:10%;}
-    #mainpage {width:90%;}
-    .menu-text {
-        display: none;
+
+    /* Responsive adjustments */
+    @media (min-width: 768px) {
+        .gs-span {
+            width: calc(50% - 10px);
+        }
     }
-    .gs-select{width: 96%;}
+
+    @media (min-width: 992px) {
+        .gs-span {
+            width: calc(33.333% - 10px);
+        }
+    }
+
+    /* Make the table scrollable on small screens */
+    @media screen and (max-width: 600px) {
+        table {
+            width: 100%;
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        th, td {
+            padding: 8px;
+            font-size: 14px;
+        }
+        .styled-table td {
+            text-align: left;
+            position: relative;
+            padding-left: 2%;
+            width: 100%;
+        }
+    }
+    .menu-text {
+        display: inline;
+    }
+    /* Hide text under 800px */
+    @media screen and (max-width: 900px) {
+        #dashbar {width:10%;}
+        #mainpage {width:90%;}
+        .menu-text {
+            display: none;
+        }
+        .gs-select{width: 96%;}
+    }
 }

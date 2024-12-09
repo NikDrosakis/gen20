@@ -39,9 +39,9 @@ class Maria:
             raise Exception(f"Failed to switch database: {e}")
 
     def is_(self, name: str) -> Union[str, bool]:
-        fetch = self.f("SELECT en FROM globs WHERE name = %s", (name,))
+        fetch = self.f("SELECT val FROM globs WHERE name = %s", (name,))
         if fetch:
-            return fetch[0]['en']  # Assuming 'en' is the column you want
+            return fetch[0]['val']  # Assuming 'en' is the column you want
         else:
             return False
 

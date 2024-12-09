@@ -231,8 +231,7 @@ public function fetch(string $q, array $params = [], int $limit = 10, int $curre
 
  //update of fetchRowList and fetchCoupleList
 public function flist(string $query): bool|array {
-    $list = array();
-
+    $list = [];
     // Execute the query
     $fetch = $this->fa($query);
     if (empty($fetch)) {
@@ -248,26 +247,25 @@ public function flist(string $query): bool|array {
         foreach ($fetch as $row) {
             $list[] = reset($row); // Get the single column value
         }
-        return $list;
-
     // Case 2: Two columns (key-value pair)
     } elseif ($columnCount === 2) {
-        $keys = array_keys($firstRow); // Get the column names
-        $keyColumn = $keys[0];
-        $valueColumn = $keys[1];
         foreach ($fetch as $row) {
-            $list[$row[$keyColumn]] = $row[$valueColumn]; // Key-value pair
+            $list[array_values($row)[0]] = array_values($row)[1];
         }
-        return $list;
-    // Case 3: More than two columns (assume * and id as key)
+    // Case 3: More than two columns (assume 'id' as key, if exists)
     } else {
         foreach ($fetch as $row) {
-            $id = $row['id']; // Assuming 'id' is the first column
-            $list[$id] = $row; // Use 'id' as the key and the entire row as value
+            if (isset($row['id'])) {
+                $list[$row['id']] = $row; // Use 'id' as the key
+            } else {
+                $list[] = $row; // Default to numeric indexing
+            }
         }
-        return $list;
     }
+
+    return $list;
 }
+
 
 public function fl(string|array $rows, string $table, $clause=''): bool|array {
     $list = array();
@@ -309,7 +307,7 @@ public function fl(string|array $rows, string $table, $clause=''): bool|array {
 	public   function is(string $name): bool|string{
 		$fetch = $this->db->f("SELECT en FROM globs WHERE name=?", array($name));
 		if (!empty($fetch)) {
-			return urldecode($fetch['en']);
+			return urldecode($fetch['val']);
 		} else {
 			return false;
 		}
@@ -357,6 +355,7 @@ get max value from table
         }
         return $sel;
     }
+
 public function tableMeta(string $tableName): ?array {
 $exp=explode('.',$tableName);
 if(!empty($exp)){
