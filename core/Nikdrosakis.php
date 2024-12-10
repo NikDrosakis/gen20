@@ -2,7 +2,6 @@
 namespace Core;
 
 class Nikdrosakis extends Gaia {
-use Cubo;
 
 
  public $bookdefaultimg= "/img/empty.png";

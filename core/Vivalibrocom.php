@@ -3,7 +3,6 @@ namespace Core;
 
 class Vivalibrocom extends Gaia {
 use Head;
-use Cubo;
 use Form;
 use Media;
 use My;

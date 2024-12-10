@@ -4,7 +4,6 @@ use Parsedown;
 use DOMDocument;
 
 abstract class Gaia {
- use Cubo;
  use Tree;
 	 protected $db;
 	 protected $dbm;
@@ -316,68 +315,46 @@ protected function parse_systems_md($systems_content) {
 /**
 add switch-on param
 */
-protected function include_buffer($file,array $sel=[],array $params=[]){
-    //get
-  //  $buffer_name=explode('.',basename($file))[0];
-  //  xecho($buffer_name);
-  //  xecho(array_keys($this->G['is']));
-   // if(!in_array($this->G['is'][$buffer_name."_active"],array_keys($this->G['is']))){
-   // $this->db->inse("globs",["name"=>$buffer_name."_active","en"=>"1","tag"=>"switch","type"=>"boolean"]);
-  //  }
-  //  if($this->G['is'][$buffer_name."_active"]=='1'){
+protected function include_buffer(string $file, array $sel = [], array $params = []) {
     // Get the file extension
-//xecho($file);
     $extension = pathinfo($file, PATHINFO_EXTENSION);
-
-    // Handle PHP files as before
-    if ($extension == 'php') {
-    if (ob_get_level()) {
-        ob_end_clean();  // Clears existing buffer
-    }
+    // Handle PHP files with output buffering
+    if ($extension === 'php') {
+        if (ob_get_level()) {
+            ob_end_clean(); // Clears existing buffer
+        }
         ob_start();
-        $sel = $sel;
-        $params = $params;
+        // Include the file
         include $file;
-        return ob_get_clean();
-        flush();
-        ob_end_clean();
-    } elseif ($extension == 'md')  {
+
+        $output = ob_get_clean(); // Capture the output
+        flush(); // Ensure all output is flushed
+        return $output;
+    }
+
+    // Handle Markdown files
+    elseif ($extension === 'md') {
         $buffer = file_get_contents($file);
         $parsedown = new Parsedown();
         return $parsedown->text($buffer);
-    } elseif ($extension == 'html')  {
-     //   $ch = curl_init();
-       // curl_setopt($ch, CURLOPT_URL, 'https://vivalibro.com/admin/store/templates/massively/index.html');
-        //curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        //$html = curl_exec($ch);
-        //curl_close($ch);
-        return "<iframe src='https://vivalibro.com/admin/store/templates/massively/index.html'></iframe>";
-    } elseif ($extension == 'json')  {
+    }
+
+    // Handle HTML files
+    elseif ($extension === 'html') {
         $buffer = file_get_contents($file);
         return $buffer;
-    }else{ //including html
-        $output = file_get_contents($file);
+    }
 
-// Highlight the output using highlight_string
-     //   $highlightedOutput = highlight_string($output, true);
+    // Handle JSON files
+    elseif ($extension === 'json') {
+        $buffer = file_get_contents($file);
+        return $buffer;
+    }
 
-        // Create a shadow root and append the output to it
-    /*    $dom = new DOMDocument();
-        $shadowRoot = $dom->createElement('div');
-        $shadowRoot->setAttribute('id', 'shadow-root');
-
-        $body = $dom->getElementsByTagName('body')->item(0);
-
-        // Check if the $body variable is null
-        if ($body) {
-            $body->appendChild($shadowRoot);
-        }
-    */
-        return $output;
-        }
-//        return $buffer;
-
-//}
+    // Default: return raw content for unsupported formats
+    else {
+        return file_get_contents($file);
+    }
 }
 /**
 Handle XHR request.
@@ -463,7 +440,26 @@ Handle XHR request.
             });
     }
 
-protected function makefile($path){}
-protected function makefolder($path){}
+   protected function getMaincuboBypage(): bool|array {
+      $page=$this->page;
+      $list=[];
+        $fetch = $this->db->fa("SELECT maincubo.area, cubo.name as cubo
+        FROM maincubo
+        left join main on main.id=maincubo.mainid
+        left join cubo on cubo.id=maincubo.cuboid
+        where main.name=?",[$page]);
+            if (!empty($fetch)) {
+                    foreach ($fetch as $row) {
+                        $list[$row['area']] = $row['cubo'];
+                    }
+                    return $list;
+                } else {
+                    return false;
+                }
+    }
+
+  protected function getLinks() {
+            return $this->db->fa("SELECT * FROM links WHERE linksgrpid=2 ORDER BY sort");
+    }
 
 }

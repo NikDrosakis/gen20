@@ -7,16 +7,18 @@ float:left;
         background: lightgray;
     }
     #areas > div{
-        list-style: none;
-        margin: 2%;
-        padding: 2px;
-        height: auto;
-        border-radius: 10px;
-        border-bottom: 1px solid black;
+    list-style: none;
+    margin: 1%;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    height: auto;
+    border-radius: 10px;
+    border-bottom: 1px solid black;
+    overflow:hidden;
     }
-    .unwid{background: wheat}
+    .unwid{background: wheat;}
     #wid{
-width: 90%;
+width: 80%;
 float: left;
         display: inline-block;
     }
@@ -65,7 +67,7 @@ float: left;
     }
     .list-group-item,.widheader{
 background: aliceblue;
-    font-size: 1.1em;
+    font-size: 1em;
     color: #333;
     height: 100%;
     width: 100%;
@@ -81,26 +83,9 @@ background: aliceblue;
     <button onclick='location.href="/cms/menu"' class="bare" id="groups">Menus</button>
 </h3>
 
-<!---------TABS MENU ------------>
-    <ul class="tabs layouttabs">
-        <li class="tab-link current" data-tab="tab-layout" onclick="tab(this)" >Layout</li>
-        <li class="tab-link" data-tab="tab-page_table" onclick="tab(this)" >Pages</li>
-    </ul>
-
-    <div id="tab-page_table" class="tab-content">
-
-
-<script>
-(function(){
-let table="maincubo";
-const newformlist= {0: { row: 'main', placeholder: "Main Cubo", params: "required" }};
-})();
-</script>
-
-</div>
-    <div id="tab-layout" class="tab-content current">
-	<div>
-	Main Area cubo:
+<!-- DROPDOWN OF MAIN -->
+<div>
+	Main Area:
 	<select style="width:60%" class="form-control" id="layoutpage">
         <?php
         //$pages=read_folder($this->MAINURI);
@@ -112,12 +97,30 @@ const newformlist= {0: { row: 'main', placeholder: "Main Cubo", params: "require
             <option value="<?=$pages[$i]['id']?>" <?=$selectpageid==$pages[$i]['id'] ? "selected='selected'":""?>><?=$pages[$i]['name']?></option>
         <?php } ?>
     </select>
-	</div>
+</div>
 
-    <!----------------------------------------------------------------------------------
-                       WIDGETIZED AREAS
-   ----------------------------------------------------------------------------------->
-    <div id="wid" class="list-group-item nested-1">
+<!-- WIDGETs -->
+    <div id="areas" class="list-group nested-sortable">
+        <?php
+        $cubos= $this->db->fa("SELECT * from cubo order by name ASC LIMIT 10");
+        for($i=0;$i<count($cubos);$i++){
+            //$wid=explode('.',basename($wid))[0];
+            ?>
+            <div style="cursor:pointer" class="draggable list-group-item global nested-<?=$cubos[$i]['name']?> wid" id="<?=$cubos[$i]['id']?>">
+                <div class="widheader" cubo_id="<?=$cubos[$i]['id']?>">
+                    <?=$cubos[$i]['name']?>
+                 <?php if ($insideLayout) { ?>
+                <span type="delete" value="1" title="delete" class="glyphicon glyphicon-trash" style="float:right;font-size: 12px;margin: 4px 0 0 0;"></span>
+                <?php } ?>
+                </div>
+                <div style="background:antiquewhite;font-size: 12px;"></div>
+
+            </div>
+        <?php } ?>
+    </div>
+
+<!-- WIDGETIZED AREAS -->
+<div id="wid" class="list-group-item nested-1">
         <!--Header(H)-->
         <div id="h">
             <label>Header H</label>
@@ -130,7 +133,6 @@ const newformlist= {0: { row: 'main', placeholder: "Main Cubo", params: "require
             <div id="sl2" class="droppable">SL2</div>
             <div id="sl3" class="droppable">SL3</div>
         </div>
-
         <!--MAIN(M)-->
         <div id="m_container"  >
          <label>Main M</label>
@@ -138,7 +140,6 @@ const newformlist= {0: { row: 'main', placeholder: "Main Cubo", params: "require
 <!---			<div id="m1" class="droppable">M1</div>----->
         </div>
         </div>
-
         <!--Sidebar Left(SL)-->
         <div id="sr">
             <label>Sidebar SR</label>
@@ -156,14 +157,10 @@ const newformlist= {0: { row: 'main', placeholder: "Main Cubo", params: "require
             </div>
         </div>
     </div>
-    <!----------------------------------------------------------------------------------
-                            WIDGETs
-    ----------------------------------------------------------------------------------->
-    <div id="areas" class="list-group nested-sortable">
-        <!--appended loop from localstorage-->
 
+    <div id="areas" class="list-group nested-sortable">
         <?php
-        $cubos= $this->getMaincubo();
+        $cubos= $this->db->fa("SELECT * from cubo order by name DESC LIMIT 10");
         for($i=0;$i<count($cubos);$i++){
             //$wid=explode('.',basename($wid))[0];
             ?>
@@ -175,15 +172,10 @@ const newformlist= {0: { row: 'main', placeholder: "Main Cubo", params: "require
                 <?php } ?>
                 </div>
                 <div style="background:antiquewhite;font-size: 12px;"></div>
-
-            </div>
+       </div>
         <?php } ?>
-        <!-- Add two empty divs -->
-        <div class="wid"></div>
-    </div>
-
-
 </div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
 
@@ -330,9 +322,4 @@ console.log(item.cubo)
         console.error('Error restoring state:', error);
     }
 }
-
-
-
-
-
 </script>

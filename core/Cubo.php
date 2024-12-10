@@ -1,7 +1,73 @@
 <?php
 namespace Core;
+use Exception;
+use Imagick;
 
-trait Cubo {
+class Cubo extends Gaia {
+public function __construct() {
+           parent::__construct();
+    }
+public function handleRequest() {
+  // if ($this->isApiRequest()) {
+   // Now calls isApiRequest() from Gaia
+   //   $this->api->startAPI();
+   //  } else
+if ($this->isXHRRequest()) {
+               $this->handleXHRRequest();
+
+        } else if($this->isCuboRequest()){
+          $this->handleCuboRequest();
+
+        } else if($this->isWorkerRequest()){
+                $this->handleWorkerRequest();
+        }else{
+        // VL-specific normal request handling:
+        if ($_SERVER['SYSTEM'] == 'admin') {
+
+            $this->adminDomWrap();
+        }
+	  //else{
+         //   $this->publicUI_router();
+     //      }
+        }
+    }
+protected function updateCuboImg($current_cubo = '') {
+    $cuboFolder = $this->G['CUBOS_ROOT'] . $current_cubo . "/";
+    $publicFilePath = $cuboFolder . "public.php";
+
+    // Validate Cubo folder and file
+    if (!file_exists($publicFilePath)) {
+        throw new Exception("Cubo file not found: " . $publicFilePath);
+    }
+
+    // Generate the HTML output
+    $htmlOutputPath = $cuboFolder . "render.html";
+    $html = $this->include_buffer($publicFilePath);
+
+    if (empty($html)) {
+        throw new Exception("Failed to load HTML from: " . $publicFilePath);
+    }
+
+    // Save the rendered HTML to a file
+    file_put_contents($htmlOutputPath, $html);
+
+    // Define output image path
+    $outputImagePath = $cuboFolder . 'output_' . $current_cubo . '.png';
+
+    // Use wkhtmltoimage to convert HTML to PNG
+    $command = escapeshellcmd("wkhtmltoimage --quality 90 $htmlOutputPath $outputImagePath");
+    exec($command, $output, $resultCode);
+
+    if ($resultCode !== 0) {
+        throw new Exception("Error executing wkhtmltoimage: " . implode("\n", $output));
+    }
+
+    // Update the database with the new image path
+    $this->db->q("UPDATE cubo SET img = ? WHERE name = ?", [$outputImagePath, $current_cubo]);
+
+    return "Image successfully saved as $outputImagePath";
+}
+
 
     protected function getCuboBuffer(): array {
         $buffer = array();
@@ -265,9 +331,6 @@ protected function getUsers() {
             return $sel;
         }
 
-    protected function getLinks() {
-            return $this->db->fa("SELECT * FROM links WHERE linksgrpid=2 ORDER BY sort");
-    }
 
     protected function getMaincubo() {
         return $this->db->fa("SELECT * from cubo order by name");

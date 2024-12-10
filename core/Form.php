@@ -209,8 +209,12 @@ $style = $this->sub!=''
 if (empty($cols)) {
 $cols = $this->getInputType($table); // @filemetacore.features Get column metadata
 }
-
-$tableHtml =  $this->renderFormHead($table);
+$tableHtml='';
+$custom_tools_beforetable = ADMIN_ROOT."main/".$this->page."/".$subpage.".php";
+if(file_exists($custom_tools_beforetable)){
+$tableHtml .= $this->include_buffer($custom_tools_beforetable,$cols,$params);
+}
+$tableHtml .=  $this->renderFormHead($table);
 $tableHtml .= '<div class="table-container" style="'.$style.'">';
 #handleNewRow(event, \'' . $table . '\', {0: {row: \'name\', placeholder: \'Give a Name\'}, 1: {row: \'created\', type: \'hidden\', value: gs.date(\'Y-m-d H:i:s\')}})
 $tableHtml .= '<button class="bare right" onclick="gs.ui.switcher(\'#new_' . $subpage . '_box\')">
@@ -230,7 +234,7 @@ foreach ($cols as $colName => $colData) {
     }
 }
 
-$tableHtml .= $this->buildCoreTable($tableName,$cols);
+$tableHtml .= $this->buildCoreTable($tableName,$cols=[]);
 if($this->totalRes > 0){
 $tableHtml .= $this->formPagination($this->totalRes, $this->currentPage);
 }
@@ -240,13 +244,15 @@ $tableHtml .= $this->formPagination($this->totalRes, $this->currentPage);
     return $tableHtml;
 }
 
-#
-protected function buildCoreTable($tableName,$cols) {
+// @filemetacore.features only the core table without top inputs
+protected function buildCoreTable($tableName,$cols=[]) {
     $table = is_array($tableName) ? $tableName['table'] : $tableName;
     $subpage=explode('.',$table)[1];
     $searchTerm=is_array($tableName) ? $tableName['q'] : null;
     $orderbyTerm=$tableName['orderby'] ?? false;
-
+if (empty($cols)) {
+$cols = $this->getInputType($table); // @filemetacore.features Get column metadata
+}
    // @filemetacore.features Fetch current page from query parameters (default to 1)
     $this->currentPage =is_array($tableName) && $tableName['pagenum'] ? str_replace($subpage,'',$tableName['pagenum']) : 1;
 
@@ -281,7 +287,6 @@ protected function buildCoreTable($tableName,$cols) {
     #create the table container
     $tableHtml = '<table  id="' . $subpage . '_table" class="styled-table">';
 
-    $tableHtml .= $query;
     $tableHtml .= '<thead>';
     $tableHtml .= '<tr>';
 
@@ -337,7 +342,7 @@ protected function buildCoreTable($tableName,$cols) {
                         $tableName = explode('.', $rowtable)[0];
                         $rowId = explode('.', $rowtable)[1];
                         $link=$this->page==$tableName ? $tableName.'?id=' . $row[$rowId] : $this->page.'/'.$tableName.'?id=' . $row[$rowId];
-                        $tableHtml .= '<a href="/admin/' . $link . '"><span class="glyphicon glyphicon-link"></span></a> ';
+                        $tableHtml .= '<a style="position: absolute;" href="/admin/' . $link . '"><span class="glyphicon glyphicon-link"></span></a> ';
                         $options=$this->getSelectOptions($colData['comment'],$row[$colName]);
                         $tableHtml .=  $this->renderSelectField($colName, $row[$colName], $options);
 
@@ -357,7 +362,9 @@ protected function buildCoreTable($tableName,$cols) {
             // @filemetacore.features Render an image for img fields
             }elseif ($inputType === 'img') {
                 $imgPath = $this->validateImg($row[$colName]);
-                $tableHtml .= '<img src="' . htmlspecialchars($imgPath) . '" alt="' . $colName . '" style="height:50px; max-width:100px;" />';
+                $tableHtml .= '<img src="' . htmlspecialchars($imgPath) . '" alt="' . $colName . '" style="height:40px; max-width:100px;" />';
+         $tableHtml .= '<button onclick="gs.form.loadButton(\'updateCuboImg\', \'' . $row['name'] . '\')"><span class="bare" style="position:absolute" class="glyphicon glyphicon-refresh"></span></button>';
+
 
           }elseif ($inputType == 'datetime-local') {
                           $tableHtml .= '<input type="' . htmlspecialchars($inputType) . '"
@@ -489,9 +496,9 @@ $subpage=explode('.',$table)[1];
  $page = $this->G['subparent'][$subpage];
 return '<h3>
             <input id="cms_panel" class="red indicator">
-           <button onclick="openPanel(\'compos/doc.php\')"><span class="glyphicon glyphicon-info-sign bare"></span></button>
-           <button onclick="openPanel(\'compos/guide.php\')"><span class="glyphicon glyphicon-question-sign bare"></span></button>
-            <a href="/admin/'.$page.'/'.$subpage.'"><span class="glyphicon glyphicon-edit"></span>'.ucfirst($table).'</a>
+           <button class="bare" onclick="openPanel(\'compos/doc.php\')"><span class="glyphicon glyphicon-info-sign bare"></span></button>
+           <button class="bare" onclick="openPanel(\'compos/guide.php\')"><span class="glyphicon glyphicon-question-sign"></span></button>
+            <a href="/admin/'.$page.'/'.$subpage.'"><span class="glyphicon glyphicon-edit"></span>'.ucfirst($subpage).'</a>
   </h3>';
 }
 
@@ -648,7 +655,7 @@ protected function renderButtonField($comment,$value): string {
         return "
         <div id='{$loadCommand}_container'>
             <div id='{$loadCommand}'>$icon</div>
-               <button class='button' onclick=\"const val = document.getElementById('name').value; gs.form.loadButton('$loadCommand', '{$this->table}', val)\">{$loadCommand}</button>
+               <button class='button' onclick=\"const val = document.getElementById('name').value; gs.form.loadButton('$loadCommand', '{$this->table}')\">{$loadCommand}</button>
         </div>";
 }
 

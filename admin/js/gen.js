@@ -1369,7 +1369,7 @@ prepare the baby
          * Core form update
          * go to  page 1 with search is clicked
          * */
-        loadButton: async function(method, table, value) {
+        loadButton: async function(method, value) {
             const params={key:value}
             console.log(params);
             try {

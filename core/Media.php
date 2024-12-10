@@ -4,7 +4,7 @@ namespace Core;
 trait Media {
 
 protected function validateImg($img){
-return !$img ? "/img/myface.jpg" : (strpos($img, 'https://') === false ? MEDIA_URL . $img: $img);
+return !$img ? "/admin/img/myface.jpg" : (strpos($img, 'https://') === false ? MEDIA_URL . $img: $img);
 }
 
 

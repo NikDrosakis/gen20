@@ -25,7 +25,6 @@
 html,body{
   font-family: system-ui, ui-monospace;
   font-size: 14px;
-  line-height: 1.2;
   color: #333;
   background-color:#f2f2f2;
   overflow-y:scroll;
@@ -45,7 +44,7 @@ li{
 font-size:14px;
 }
 .right{float:right;}
-.bare{border:none;background:transparent;margin: 5px 10px 5px 10px;}
+.bare{border:none;background:transparent;}
 /* aninate css start */
 @charset "UTF-8";
 .animated {
@@ -3617,14 +3616,13 @@ th {
 .glyphicon {
   position: relative;
 float:left;
-  top: 1px;
-  padding-right: 3px;
+  padding-right: 2px;
   display: inline-block;
   font-family: 'Glyphicons Halflings';
   font-style: normal;
   font-weight: normal;
   line-height: 1;
-  font-size:18px;
+  font-size:20px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -10234,7 +10232,7 @@ font-size: 12px;
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  margin: 0 10px 0 10px;
+  margin: 0 4px 0 4px;
 }
 
 .green {
@@ -10900,6 +10898,7 @@ label.flag_bottom{
   text-decoration: none;
   color: #fff;
   transition: background 0.3s;
+  margin:10px 10px 0 10px;
 }
 .menu-item > a:hover {
   background: #555;

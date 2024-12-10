@@ -1,8 +1,23 @@
 // Separate async function for file upload //tab a
 // Function to apply a layout schema
+async function closePanel(channel=2) {
+    // Get the mainpage element
+    const ch='ch'+channel;
+    const mainpage = document.getElementById('mainpage');
+    // Modify the style to switch to 2-column grid layout
+    mainpage.style.gridTemplateColumns = '1fr';
+    mainpage.style.gridTemplateRows = '1fr';
+    // Check if ch2 already exists
+    let chId = document.getElementById(ch);
+    if (chId) {
+        // If it exists, clean its content and remove it
+        chId.remove();
+    }
+}
+
 async function openPanel(filepath) {
     // Get the mainpage element
-    const mainpage = document.getElementById('mainpage');
+    const mainpage = document.getElementById('mainpage');zz
 
     // Modify the style to switch to 2-column grid layout
     mainpage.style.gridTemplateColumns = '2fr 1fr';

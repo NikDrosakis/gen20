@@ -17,18 +17,14 @@
         <img src="<?=isset($_COOKIE['GSIMG']) ? MEDIA_URL.$_COOKIE['GSIMG'] : '/admin/img/user.png'?>" width="48" height="48" style="margin-top: 3px;border-radius:50px">
     </a>
 <!------------- @filemeta.features HORIZONTAL_MENU ------------------------------------>
-    <div class="gs-desktop">
-        <p><?=!isset($_COOKIE['GSGRP']) ? '' : $this->usergrps[$_COOKIE['GSGRP']]?></p>
-        <p><?=isset($_COOKIE['GSNAME']) ?  $_COOKIE['GSNAME'] : ''?></p>
-    </div>
-            <li class="menu-item">
-                     <a class="menu-text">View</a>
-        					<ul class="submenu">
-        					<li><input style="float:left" type="checkbox" switch="" class="switcher">Short Sidebar</li>
-        					<li><input style="float:left" type="checkbox" switch="" class="switcher">Short Navigation</li>
-        					<li><input style="float:left" type="checkbox" switch="" class="switcher">Dark</li>
-        					</ul>
-            </li>
+    <li class="menu-item">
+         <a class="menu-text">View</a>
+         <ul class="submenu">
+                    <li><input style="float:left" type="checkbox" switch="" class="switcher">Short Sidebar</li>
+                    <li><input style="float:left" type="checkbox" switch="" class="switcher">Short Navigation</li>
+                    <li><input style="float:left" type="checkbox" switch="" class="switcher">Dark</li>
+         </ul>
+    </li>
             <li class="menu-item">
                      <a class="menu-text">Settings</a>
         					<ul class="submenu">
@@ -66,7 +62,7 @@
             $targ= $mainpage == $this->page ? 'style="color:darkred;"' : '';
             ?>
             <li <?=$mainpage==$this->page ? $targ : ''?>>
-                <button ondblclick="location.href='/admin/<?=$mainpage?>'" id="<?=$mainpage?>_page" ><span style="margin:0 4px 0 0" class="glyphicon glyphicon-<?=$vals['icon']?>" aria-hidden="true"></span>
+                <button style="border:none;background:transparent;" ondblclick="location.href='/admin/<?=$mainpage?>'" id="<?=$mainpage?>_page" ><span style="margin:0 4px 0 0" class="glyphicon glyphicon-<?=$vals['icon']?>" aria-hidden="true"></span>
                 <span class="menu-text"><?=$vals['title']?></span>
                 </button>
               <?php
