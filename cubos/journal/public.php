@@ -113,8 +113,18 @@
     </style>
 <div id="output">
     <?php
-    $main= $this->db->f("select template,query from main where name=?",[basename(__DIR__)]);
-    echo $this->buildTemplateArchive($main);
+    $cubo=$this->db->f("SELECT id,query from cubo where name=?",["journal"]);
 
+    //$query= json_decode($cubo['query'],true);
+    $templates= $this->db->flist("select name,template from cubo_template where cuboid=?",[$cubo['id']]);
+
+   // echo $this->buildTemplateArchive($main);
+   $posts = $this->db->fa("select post.* from post LEFT JOIN postgrp on postgrp.id=post.postgrpid where postgrp.name=?",['journal']);
+    foreach ($posts as $key => $value) {
+
+   // xecho($templates[$value['type']]);
+        //echo $this->buildTemplateArchive($templates[$value['type']],$value);
+        echo $this->renderTemplatePug(CUBOS_ROOT.'journal/template.pug',$value);
+    }
     ?>
 </div>

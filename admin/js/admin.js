@@ -13,11 +13,12 @@ async function closePanel(channel=2) {
         // If it exists, clean its content and remove it
         chId.remove();
     }
+    gs.cooDel('openDocChannel');gs.cooDel('openGuideChannel');
 }
 
 async function openPanel(filepath) {
     // Get the mainpage element
-    const mainpage = document.getElementById('mainpage');zz
+    const mainpage = document.getElementById('mainpage');
 
     // Modify the style to switch to 2-column grid layout
     mainpage.style.gridTemplateColumns = '2fr 1fr';

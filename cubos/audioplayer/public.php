@@ -60,6 +60,11 @@
 </style>
 
 <?php
+// Replace with your Spotify API credentials
+$clientId = 'caac2219a35a466c8aa59c4420d627f1';
+$clientSecret = '79cc4a7faddd4fec9379952c6e1325fb';
+
+if(!function_exists('getSpotifyAccessToken')){
 function getSpotifyAccessToken($clientId, $clientSecret) {
     $url = 'https://accounts.spotify.com/api/token';
     $headers = [
@@ -73,13 +78,13 @@ function getSpotifyAccessToken($clientId, $clientSecret) {
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
     $response = curl_exec($ch);
     curl_close($ch);
     return json_decode($response, true)['access_token'];
 }
+}
 
-function searchSpotifySong($songName, $clientId, $clientSecret) {
+$searchSpotifySong = function($songName, $clientId, $clientSecret) {
     $token = getSpotifyAccessToken($clientId, $clientSecret);
     $url = 'https://api.spotify.com/v1/search?q=' . urlencode($songName) . '&type=track';
 
@@ -94,12 +99,7 @@ function searchSpotifySong($songName, $clientId, $clientSecret) {
     $response = curl_exec($ch);
     curl_close($ch);
     return json_decode($response, true);
-}
-
-// Replace with your Spotify API credentials
-$clientId = 'caac2219a35a466c8aa59c4420d627f1';
-$clientSecret = '79cc4a7faddd4fec9379952c6e1325fb';
-
+};
 // Array of songs to search
 $songs = [
     "Shape of You",
@@ -108,12 +108,10 @@ $songs = [
     "Someone You Loved",
     "Rockstar",
 ];
-
 $songLinks = [];
-
 // Loop through each song and get the Spotify link
 foreach ($songs as $song) {
-    $songData = searchSpotifySong($song, $clientId, $clientSecret);
+    $songData = $searchSpotifySong($song, $clientId, $clientSecret);
     
     // Check if tracks are returned
     if (!empty($songData['tracks']['items'])) {

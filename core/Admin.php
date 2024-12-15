@@ -52,6 +52,7 @@ use Bundle;
 use Media;
 use Filemeta;
 use My;
+use Cubo;
 
 protected $database;
 protected $layout_selected;
@@ -105,6 +106,9 @@ protected function adminDomWrap() {
            if($this->sub==''){
                      $this->layout_selected="6";
                      $mainpageName='mainpage';
+                 }else if($_COOKIE['openDocChannel']=='1' || $_COOKIE['openGuideChannel']!='1'){
+                            $this->layout_selected="1";
+                            $mainpageName='mainpage2';
                  }else{
                      $this->layout_selected="2";
                      $mainpageName='mainpage2';
@@ -138,7 +142,7 @@ protected function adminDomWrap() {
         //FOOTER
         echo '</div>';
         //end of container-->
-        include_once CUBOS_ROOT."venus/public.php";
+   //     include_once CUBOS_ROOT."venus/public.php";
         echo '<script src="/admin/js/start.js"></script>';
         echo '</body>';
         echo '</html>';
@@ -319,7 +323,9 @@ if($this->sub==''){
       //add doc bar if type==table select doc from table with form input
    //   $html .= $this->channelRenderFile($this->notification_file,3);
            //channel doc
+
       $html .= $this->channelRenderDoc($name);
+
       return $html;
     }
 }

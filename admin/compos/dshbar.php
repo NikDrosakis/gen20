@@ -39,6 +39,8 @@
         <div id="indicator" class="red indicator"></div>
         <div id="c_active_users"></div>
 <div id="signInDiv"></div>
+<button class="bare" onclick="openPanel('compos/guide.php');gs.coo('openGuideChannel',1)"><span class="glyphicon glyphicon-question-sign"></span></button>
+<button class="bare" onclick="openPanel('compos/doc.php');gs.coo('openDocChannel',1)"><span class="glyphicon glyphicon-info-sign bare"></span></button>
 <!-- @filemeta.doc dynamic change of layout currently not used.
 <div id="layout-buttons">
     <button data-layout="1" class="buttonChannel" onclick="switchChannels(this.dataset.layout)" title="Single Channel"><span>Ⅰ</span></button>

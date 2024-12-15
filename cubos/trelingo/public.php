@@ -34,27 +34,15 @@ trait CuboLogic {
     }
 }
 
-class CuboTrilingo {
-    use CuboLogic; // Include the CuboLogic trait
-public function __construct() {
-           parent::__construct();
-    }
 
-    public function getWords() {
-        // Example: Fetch words from the database
-        $words = $this->db->fa("SELECT * FROM cubo_trilingo_word");
 
-        return $words;
-    }
-
-    public function checkUserInput($input_italian, $input_spanish, $word_id) {
+ function checkUserInput($input_italian, $input_spanish, $word_id) {
         // Fetch the correct words from the database using the word ID
         $word = $this->db->fa("SELECT italian, spanish FROM cubo_trilingo_word WHERE id = ?", [$word_id]);
 
         // Get the feedback (correct or incorrect)
         return $this->getFeedback($input_italian, $input_spanish, $word['italian'], $word['spanish']);
     }
-}
 ?>
 <h1>Trilingo Cubo: Learn Italian & Spanish</h1>
     <style>
@@ -79,8 +67,7 @@ public function __construct() {
               <tbody id="words-table">
                   <!-- Dynamically filled by PHP -->
                   <?php
-                  $tri= new CuboTrilingo();
-                  $words = $tri->getWords(); // Fetch words from the database
+                  $words=$this->db->fa("SELECT * FROM cubo_trelingo_word"); // Fetch words from the database
                   foreach ($words as $word) {
                       echo "<tr>
                           <td>" . htmlspecialchars($word['english']) . "</td>
@@ -92,7 +79,6 @@ public function __construct() {
                   ?>
               </tbody>
           </table>
-
     <script>
          document.querySelectorAll('.italian, .spanish').forEach(input => {
                     input.addEventListener('keyup', function() {

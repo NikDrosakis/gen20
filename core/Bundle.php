@@ -88,19 +88,6 @@ trait Bundle {
             }
    }
 
-    //compos
-    protected function outputBundledCompos(): void {
-    if (!file_exists(BUILD_ROOT.'compos')) {
-                mkdir(BUILD_ROOT.'compos', 0755, true);
-            }
-                // Bundle each each file in each folder
-               $files = glob(PUBLIC_ROOT_WEB."compos/*.php");
-                   foreach ($files as $file) {
-                         $this->bundlePHPFile($file,CUBO_ROOT.$cubo);
-                   }
-                echo "Compos bundling complete!\n";
-    }
-
     //css
     protected function outputBundledCSS(): void {
         $directory = PUBLIC_ROOT_WEB . 'css/';
@@ -177,7 +164,6 @@ trait Bundle {
             }
 
         $this->outputBundledCubos();
-        $this->outputBundledCompos();
         $this->outputBundledCSS();
         $this->outputBundledJS();
         $this->outputBundledMain();

@@ -41,6 +41,7 @@ namespace Core;
 use CKEditor\CKEditor;
 use Twig\Environment;
 use Twig\Loader\ArrayLoader;
+use Pug\Pug;
 
 trait Form {
 

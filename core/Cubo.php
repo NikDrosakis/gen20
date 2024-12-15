@@ -3,34 +3,12 @@ namespace Core;
 use Exception;
 use Imagick;
 
-class Cubo extends Gaia {
-public function __construct() {
-           parent::__construct();
+trait Cubo {
+
+  protected function getLinks() {
+            return $this->db->fa("SELECT * FROM links WHERE linksgrpid=2 ORDER BY sort");
     }
-public function handleRequest() {
-  // if ($this->isApiRequest()) {
-   // Now calls isApiRequest() from Gaia
-   //   $this->api->startAPI();
-   //  } else
-if ($this->isXHRRequest()) {
-               $this->handleXHRRequest();
 
-        } else if($this->isCuboRequest()){
-          $this->handleCuboRequest();
-
-        } else if($this->isWorkerRequest()){
-                $this->handleWorkerRequest();
-        }else{
-        // VL-specific normal request handling:
-        if ($_SERVER['SYSTEM'] == 'admin') {
-
-            $this->adminDomWrap();
-        }
-	  //else{
-         //   $this->publicUI_router();
-     //      }
-        }
-    }
 protected function updateCuboImg($current_cubo = '') {
     $cuboFolder = $this->G['CUBOS_ROOT'] . $current_cubo . "/";
     $publicFilePath = $cuboFolder . "public.php";

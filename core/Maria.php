@@ -230,10 +230,10 @@ public function fetch(string $q, array $params = [], int $limit = 10, int $curre
 
 
  //update of fetchRowList and fetchCoupleList
-public function flist(string $query): bool|array {
+public function flist(string $query, array $params = []): bool|array {
     $list = [];
     // Execute the query
-    $fetch = $this->fa($query);
+    $fetch = $this->fa($query,$params);
     if (empty($fetch)) {
         return false; // Return false if no result is found
     }

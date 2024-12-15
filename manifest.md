@@ -6,9 +6,16 @@
 <style> 		save/update/bundle to filemeta.css  starting <style> endofcontent </style>
 <head> 			filemeta.head starting <head> endofcontent </head>
 @cron 			create/update cron 
+@filemeta.description	update filemeta.description
+@filemeta.todo          update filemeta.todo
+@filemeta.features      update filemeta.features
+@filemeta.doc           update filemeta.doc
 
 ## filemetacore
-@[method]		filemetacore.description of class method
+@filemetacore.description	update filemetacore.description
+@filemetacore.todo          update filemetacore.todo
+@filemetacore.features      update filemetacore.features
+@filemetacore.doc           update filemetacore.doc
 
 ## sql COMMENT  
 readonly      set not edited

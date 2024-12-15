@@ -17,7 +17,7 @@ display:grid;margin:35px 0px 35px 0px;color:#000000;font-size:15px;
 
       // $sel=$this->booklists($params);
        //SERVER RENDER WORKS LIKE THAT?
-       include PUBLIC_ROOT_WEB."main/{$page}/{$page}_archive.php";
+       include CUBOS_ROOT."{$page}/{$page}_archive.php";
 
        ?>
 

@@ -2,3 +2,5 @@
 <?php
 $doc= $this->admin->f("select guide from admin_sub where name=?",[$this->sub])['guide'];
 echo $doc;
+?>
+<button onclick="closePanel()" class="close-btn toprightcorner">X</button>

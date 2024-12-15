@@ -11,7 +11,10 @@
         "mongodb/mongodb": "^1.20",
         "solarium/solarium": "^6.3",
         "reprovinci/solr-php-client": "^1.0",
-        "pug/pug": "^0.2.0"
+        "pug/pug": "*",
+        "pug-php/pug": "^3.5",
+        "symfony/flex": "*",
+        "twig/twig": "^2.16"
     },
     "autoload": {
         "psr-4": {
@@ -35,6 +38,12 @@
         "allow-plugins": {
             "symfony/flex": true,
             "nodejs-php-fallback/nodejs-php-fallback": true
+        }
+    },
+    "scripts": {
+        "auto-scripts": {
+            "cache:clear": "symfony-cmd",
+            "assets:install %PUBLIC_DIR%": "symfony-cmd"
         }
     }
 }

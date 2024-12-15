@@ -440,26 +440,4 @@ Handle XHR request.
             });
     }
 
-   protected function getMaincuboBypage(): bool|array {
-      $page=$this->page;
-      $list=[];
-        $fetch = $this->db->fa("SELECT maincubo.area, cubo.name as cubo
-        FROM maincubo
-        left join main on main.id=maincubo.mainid
-        left join cubo on cubo.id=maincubo.cuboid
-        where main.name=?",[$page]);
-            if (!empty($fetch)) {
-                    foreach ($fetch as $row) {
-                        $list[$row['area']] = $row['cubo'];
-                    }
-                    return $list;
-                } else {
-                    return false;
-                }
-    }
-
-  protected function getLinks() {
-            return $this->db->fa("SELECT * FROM links WHERE linksgrpid=2 ORDER BY sort");
-    }
-
 }

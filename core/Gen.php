@@ -8,6 +8,7 @@ use Media;
 use My;
 use GSocket;
 use Template;
+use Cubo;
 
  public $bookdefaultimg= "/img/empty.png";
  public $book_status=["0"=>"lost","1"=>"not owned","2"=>"desired","3"=>"shelve"];
@@ -35,19 +36,8 @@ use Template;
         }elseif ($_SERVER['SYSTEM'] == 'vivalibrocom') {
 
 				$this->publicRouter();
-
-   //     }elseif ($_SERVER['SYSTEM'] == 'api' && $this->resource=='local') {
-	//	    $this->apiAccess();
-      //  }
     }
-
-	//public function apiAccess() {
-		//	$request = $_GET;
-//			$executeMethod=$this->{this->id}($request);
-	//		header("HTTP/2 $status $status_message");
-      //      header("Content-Type: application/json; charset=UTF-8");
-        //   return ["status"=>200,"success"=>true,"code"=>'LOC1',"data"=>$executeMethod];
-	}
+    }
 
 	protected function publicRouter() {
 
@@ -88,7 +78,7 @@ use Template;
 			<script src="' . ADMIN_URL . 'js/gen.js"></script>
 			<script src="/js/index.js"></script>';
 		echo '<div id="h">';
-		include PUBLIC_ROOT_WEB . "compos/menuweb.php";
+		include PUBLIC_ROOT_WEB . "main/menuweb.php";
 		if($this->page!='home'){include PUBLIC_ROOT_WEB . "compos/searchbox.php"; }
 		echo '</div>';
 		// Left sidebar
@@ -109,13 +99,23 @@ if (!$has_not_sl) {
 
 // Main content
 echo '<div id="m" style="width:' . $main_width . '%">';
+
     if (!$has_not_m) {
+
       foreach ($pc['m'] as $cubo) {
            echo '<div id="' . $cubo . '" class="row archive-content">';
-              include CUBOS_ROOT.$cubo."/public.php";
+              //include CUBOS_ROOT.$cubo."/public.php";
+              $main= $this->db->f("select * from main where name=?",[$this->page]);
+              echo  $this->buildTemplateArchive($main);
               echo '</div>';  // Correctly closing div
       }
-  }
+  }elseif(!empty($this->G['PAGECUBOS'])){
+                      $pageTemplate= $this->db->f("select * from main where name=?",[$this->page]);
+                   //   xecho($pageTemplate);
+ }else{
+     $template= $this->db->f("select template_read from main where name=?",['404'])['template_read'];
+     echo $this->renderTemplatePug($template);
+ }
   /*
     if($this->G['has_maria']){
     //if($this->page!='book'){
@@ -169,39 +169,4 @@ if (!$has_not_f) {
           </body>
           </html>';
 	}
-/**
- contained INSIDE compos/body.php
-*/
-  protected function route() {
-    $page=$this->page;
-    $id=$this->id;
-    $action=$this->action;
-  $first_path=PUBLIC_ROOT_WEB."main/$page/$page.php";
-  $second_path=PUBLIC_ROOT_WEB."main/$page/$id/read.php";  //ie id
-  $second_path_file=PUBLIC_ROOT_WEB."main/$page/read.php";  //ie id
-  $third_path=PUBLIC_ROOT_WEB."main/$page/$id/$action.php";  //ie id
-  $third_path_file=PUBLIC_ROOT_WEB."main/$page/$action.php";  //ie id
-
-
-          if($page!='' && $id!='' && $action!='' && file_exists($third_path_file)){
-             $route= $third_path_file;
-                }elseif($page!='' && $id!='' && file_exists($second_path_file)){
-                    $route= $second_path_file;
-                }elseif($page!='' && file_exists($first_path)){
-                    $route= $first_path;
-
-            //CATCH CASE 404 typed after domain anything, any levels
-            }else{
-            $route= PUBLIC_ROOT_WEB."main/404.php"; //echo "<h2>404 - Page Not Found<h2>";
-
-            }
-//xecho($route);
-
-            //and the load all widgets of the page to the body in any async way from top top bottom
-            //in order to create the body
-
-
-                return $route;
-
-    }
 }

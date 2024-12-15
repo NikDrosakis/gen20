@@ -2,6 +2,7 @@
 namespace Core;
 use Twig\Loader\FilesystemLoader;
 use Twig\Environment;
+use Pug\Pug;
 /**
 DOC
 ===
@@ -16,6 +17,7 @@ trait Template {
 protected $postType;
 protected $templateData;
 protected $twig;
+protected $pug;
 
     protected function listTemplates() {
        return read_folder(GSROOT."template");
@@ -32,31 +34,40 @@ protected $twig;
         $query=json_decode($fetch['query_archive'],true);
 
         $params=[];
-        if(!empty($query['params'])){foreach($query['params'] as $param){
+        if(!empty($query['params'])){
+        foreach($query['params'] as $param){
         $params[]=$this->G[$param];
         }}
-        $totalRes = $this->db->fa($query['query'],$params);
+            $totalRes = $this->db->fa($query['query'],$params);
+
         $paginatedQuery =$query['query'].$limit;
         // Fetch posts and templates from database
         $posts = $this->db->fa($paginatedQuery,$params);
+
 
         // Load templates from JSON file
        // $this->templateData = jsonget($templateFile);
      //  xecho($templateHTML['template']);
 
-    $htmlPagination=$this->formPagination(count($totalRes), $cur);
+
        // Compile each post with the chosen template
         $output = "";
 
         foreach ($posts as $post) {
     // Load templates from provided HTML or database
-            $this->postType= $post['type'] ?? "";
+            $this->postType= $post['type'] ?? "pug";
             $templateSource = $fetch['template_archive'];
-            $this->templateData=json_decode($templateSource, true) ? json_decode($templateSource, true)[$this->postType] : $templateSource;
+            //add template.pug method
 
-             $output .= $this->renderTemplate3($post,$this->templateData);
+            $post['page']=$this->page;
+
+            $this->templateData= json_decode($templateSource, true)
+                ? json_decode($templateSource, true)[$this->postType]
+                : ($templateSource ? $templateSource : CUBOS_ROOT.$post['page'].'/template.pug');
+
+             $output .= $this->renderTemplatePug($this->templateData,$post);
         }
-        $output .= $htmlPagination;
+        $output .= $this->formPagination(count($totalRes), $cur);
         return $output;
     }
 
@@ -68,19 +79,22 @@ protected function buildTemplateRead(array $fetch): ?string {
     $this->templateData = json_decode($templateSource, true) ? json_decode($templateSource, true)[$this->postType] : $templateSource;
 
     $params=[];
-    if(!empty($query['params'])){foreach($query['params'] as $param){
+    if(!empty($query['params'])){
+    foreach($query['params'] as $param){
     $params[]=$this->G[$param];
     }}
-
+//xecho($params);
+//xecho($this->templateData);
     $post = $this->db->f($query['query'],$params);
+            $post['page']=$this->page;
     // Compile each post with the chosen template
       $output = "";
     // Load templates from provided HTML or database
-      $output .= $this->renderTemplate3($post,$this->templateData);
+      $output .= $this->renderTemplatePug($this->templateData,$post);
         return $output;
     }
-
-protected function renderTemplate3(array $post, ?string $template): string {
+//Twig Render
+protected function renderTemplateTwig(array $post, ?string $template): string {
     if (!$template) {
         return "<div>Template not found for post type.</div>";
     }
@@ -99,6 +113,17 @@ protected function renderTemplate3(array $post, ?string $template): string {
     } catch (\Twig\Error\SyntaxError $e) {
         return "<div>Syntax error in template: {$e->getMessage()}</div>";
     }
+}
+//Pug Render
+protected function renderTemplatePug(string $template,array $post=[]): string {
+    if (!$template) {
+        return "<div>Template not found for post type.</div>";
+    }
+    $pug = new Pug([
+     ' pretty ' => true
+    ]);
+    // Render a Pug template as a string
+     return $pug->render($template, $post);
 }
 
     // Function to compile a template with data
