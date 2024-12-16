@@ -38,7 +38,7 @@ abstract class Gaia {
     public $IMG;
     public $TEMPLATE ;
     public $ADMIN_ROOT;
-    public $CUBOS_ROOT;
+    public $CUBO_ROOT;
     public $MEDIA_ROOT;
     public $SYSTEM;
     public $SITE_ROOT;
@@ -61,8 +61,8 @@ abstract class Gaia {
     public $chat_file= "/var/www/gs/admin/compos/chat_panel.php";
 
     public function __construct() {
-	include ADMIN_ROOT.'config.php';
-	include ADMIN_ROOT."generic.php";
+	include ROOT.'config.php';
+	include ROOT."generic.php";
         /*****
          * START MARIADB in ABSTRACTED GAIA
          *****/
@@ -134,7 +134,7 @@ abstract class Gaia {
 //https://vivalibro.com/cubos/index.php?cubo=menuweb&file=public.php
 protected function handleCuboRequest(): void {
     // Define the root directory for cubos
-    $cubosRoot = CUBOS_ROOT;
+    $cubosRoot = CUBO_ROOT;
     // Retrieve and sanitize the file path parameters
     $cubo = basename($_GET['cubo'] ?? '');
     $file = basename($_GET['file'] ?? '');
@@ -185,7 +185,7 @@ to be updated to $_post AND json content
 
 protected function renderCubo(string $name): string {
          $cubo = $this->db->fa('SELECT * FROM cubo WHERE name=?',[$name]);
-         $uri=CUBOS_ROOT.$name."/public.php";
+         $uri=CUBO_ROOT.$name."/public.php";
          return $this->include_buffer($uri);
 }
 /**

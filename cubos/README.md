@@ -1,4 +1,4 @@
-# CUBOS > GEN20
+# CUBO > GEN20
 UI reusable modules
 
 ## v.1 August-September 2024

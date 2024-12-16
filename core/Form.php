@@ -217,13 +217,13 @@ $tableHtml .= $this->include_buffer($custom_tools_beforetable,$cols,$params);
 }
 $tableHtml .=  $this->renderFormHead($table);
 $tableHtml .= '<div class="table-container" style="'.$style.'">';
-#handleNewRow(event, \'' . $table . '\', {0: {row: \'name\', placeholder: \'Give a Name\'}, 1: {row: \'created\', type: \'hidden\', value: gs.date(\'Y-m-d H:i:s\')}})
+#gs.form.handleNewRow(event, \'' . $table . '\', {0: {row: \'name\', placeholder: \'Give a Name\'}, 1: {row: \'created\', type: \'hidden\', value: gs.date(\'Y-m-d H:i:s\')}})
 $tableHtml .= '<button class="bare right" onclick="gs.ui.switcher(\'#new_' . $subpage . '_box\')">
     <span class="glyphicon glyphicon-plus"></span> New ' . $subpage . '</button>';
 $tableHtml .= '<div style="display:none" id="new_'.$subpage.'_box">
     <div class="gform"><div class="gs-span"><label for="name">Name</label>
     <input class="gs-input" name="name" placeholder="Give a Name" id="' . $subpage . '_name" type="text" value=""></div>
-        <button class="button" name="' . $table . '" onclick="insertNewRow(event)">DO</button>
+        <button class="button" name="' . $table . '" onclick="gs.form.insertNewRow(event)">DO</button>
     </div></div>';
 $tableHtml .= $this->formSearch($table);
 
@@ -303,7 +303,7 @@ $cols = $this->getInputType($table); // @filemetacore.features Get column metada
         $tableHtml .= '<button class="orderby" onclick="gs.form.updateTable(this, \'buildCoreTable\');" data-table="'.$table.'" data-orderby="'.$colName . '" id="order:' . $subtable.':'.$colName . '">' . $label . '</button>';
         $tableHtml .= '</th>';
     }
-    $tableHtml .= '<th>Action</th></tr>';
+    $tableHtml .= '<th></th></tr>';
     $tableHtml .= '</thead>'; // @filemetacore.features End header row
     // @filemetacore.features Build table body
     $tableHtml .= '<tbody id="list">';
@@ -349,7 +349,7 @@ $cols = $this->getInputType($table); // @filemetacore.features Get column metada
 
             // @filemetacore.features Render select field (fetch options using getSelectOptionsFromComment)
             }elseif ($inputType === 'checkbox') {
-                $tableHtml .= '<input id="'.$colName.$row['id'].'"   onchange="updateRow(this, \'' . $table . '\')" type="checkbox" switch="" '.($row[$colName] ? "checked":"").' class="switcher">';
+                $tableHtml .= '<input id="'.$colName.$row['id'].'"   onchange="gs.form.updateRow(this, \'' . $table . '\')" type="checkbox" switch="" '.($row[$colName] ? "checked":"").' class="switcher">';
 
            }elseif ($inputType === 'select') {
 
@@ -364,25 +364,29 @@ $cols = $this->getInputType($table); // @filemetacore.features Get column metada
             }elseif ($inputType === 'img') {
                 $imgPath = $this->validateImg($row[$colName]);
                 $tableHtml .= '<img src="' . htmlspecialchars($imgPath) . '" alt="' . $colName . '" style="height:40px; max-width:100px;" />';
-         $tableHtml .= '<button onclick="gs.form.loadButton(\'updateCuboImg\', \'' . $row['name'] . '\')"><span class="bare" style="position:absolute" class="glyphicon glyphicon-refresh"></span></button>';
-
+                $actions = json_encode([
+                  ['method' => 'updateCuboImg', 'params' => ['name' => $row['name']]]
+                  ]);
+            //       ['method' => 'buildTable', 'params' => ['table' => 'gen_vivalibro.tasks']],
+            //instead of gs.form.loadButton(\'updateCuboImg\', \'' . $row['name'] . '\')
+$tableHtml .= '<button onclick="gs.form.loadButton(\'updateCuboImg\', \'' . $table . '\', \'' . $row['name'] . '\')"><span style="position:absolute" class="bare glyphicon glyphicon-refresh"></span></button>';
 
           }elseif ($inputType == 'datetime-local') {
                           $tableHtml .= '<input type="' . htmlspecialchars($inputType) . '"
-                                         onchange="updateRow(this, \'' . $table . '\')"
+                                         onchange="gs.form.updateRow(this, \'' . $table . '\')"
                                          name="' . $colName . '"
                                          id="' . $colName . $row['id'] . '"
                                          value="' . ($row[$colName] != '' ? htmlspecialchars($row[$colName]) : '') . '" />';
 
           }elseif ($inputType == 'text') {
                     $tableHtml .= '<input type="' . htmlspecialchars($inputType) . '"
-                                         onkeyup="updateRow(this, \'' . $table . '\')"
+                                         onkeyup="gs.form.updateRow(this, \'' . $table . '\')"
                                          name="' . $colName . '"
                                          id="' . $colName . $row['id'] . '"
                                          value="' . ($row[$colName] != '' ? htmlspecialchars($row[$colName]) : '') . '" />';
           }elseif ($inputType !== 'editor') {
       $tableHtml .= '<textarea type="' . htmlspecialchars($inputType) . '"
-                                               onkeyup="updateRow(this, \'' . $table . '\')"
+                                               onkeyup="gs.form.updateRow(this, \'' . $table . '\')"
                                                name="' . $colName . '"
                                                id="' . $colName . $row['id'] . '"/>' . ($row[$colName] != '' ? htmlspecialchars($row[$colName]) : '') . '</textarea>';
 
@@ -391,7 +395,7 @@ $cols = $this->getInputType($table); // @filemetacore.features Get column metada
             $tableHtml .= '</td>';
         }
         $tableHtml .= '<td><button id="del' . $row['id'] . '" type="button" value="' . $row['id'] . '" title="delete"
-          onclick="deleteRow(this, \'' . $table . '\')"
+          onclick="gs.form.deleteRow(this, \'' . $table . '\')"
         class="bare"><span class="glyphicon glyphicon-trash"></span></button></td></tr>';
     }
     $tableHtml .= '</tbody>';
@@ -633,7 +637,7 @@ protected function renderFileFormList(array $list, string $title = "File List"):
 #$this->getMariaTree(),$domain,'getMariaTree',"listMariaTables","listMariaTables"
 #$this->drop($this->listMariaTables($domain),'','listMariaTables',"buildTable")
 protected function renderSelectField($fieldName, $selectedValue, array $options): string {
-        $select= "<select class='gs-select' onchange='updateRow(this, \"$this->table\")' name='$fieldName' id='$fieldName$this->formid'><option value=0>Select</option>";
+        $select= "<select class='gs-select' onchange='gs.form.updateRow(this, \"$this->table\")' name='$fieldName' id='$fieldName$this->formid'><option value=0>Select</option>";
                   foreach ($options as $key => $label) {
                      $selected = ($key == $selectedValue) ? 'selected="selected"' : '';
                       $select .= "<option value='$key' $selected>$label</option>";
@@ -719,9 +723,8 @@ protected function renderFormField(string $col, array $fieldData, $value = ''): 
         break;
         case 'img':  // @filemetacore.features File upload field
           $imgPath = $this->validateImg($value);
-            return "<div class='gs-span' id='drop-zone' ondrop='handleDrop(event)' ondragover='handleDragOver(event)'><label for='$col'>$col</label>
-                <button onclick='openPanel(\'compos/mediac.php\')'><img src='$imgPath' style='height:250px;width: 229px;margin: -21px 0 0 -21px;' draggable='false'></button>
-            </div>";
+            return "<label for='$col'>$col</label><button ondblclick='openPanel(`compos/mediac.php`)' class='gs-span' id='drop-zone' ondrop='handleDrop(event)' ondragover='handleDragOver(event)'>
+                <img src='$imgPath' style='height: 100%;width:100%;' draggable='false'></button>";
         break;
         /*
          case 'twig':
@@ -753,34 +756,13 @@ return '<div class="gs-span">
                     </div>
                 </div>
                 <button class="button save-button" onclick="saveContent(\'' . $col . '\', \'' . $table . '\')" type="button" id="save_' . $col . '">Save Content</button>
-                <script>
-                    const editor = CodeMirror(document.getElementById("twig-editor' . $col . '"), {
-                        mode: "twig",
-                        lineNumbers: true,
-                        theme: "dracula",
-                        value: `' . addslashes($value) . '`, // @filemetacore.features Set initial content from the $value variable
-                    });
-                    document.getElementById("save_' . $col . '").addEventListener("click", () => {
-                        const template = editor.getValue();
-                        fetch("/api/save-template", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ template })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log(data);
-                            alert("Template saved successfully!");
-                        })
-                        .catch(error => console.error("Error:", error));
-                    });
-                </script>
             ';
             break;
 
         case 'sql':
                 // @filemetacore.features Handle SQL preview (raw SQL code)
-                $preview= xechox($this->db->fetch($value));
+              //  $preview= xechox($this->db->fetch($value));
+                $preview= xechox($value);
                 return "<div class='gs-span'>
     <label for='$col'>$col</label>
     <div class='gs-preview-container'>
@@ -831,7 +813,7 @@ return '<div class="gs-span">
                 </script>";
         break;
         case 'number':  // @filemetacore.features Numeric input (int, float, etc.)
-            return "<div class='gs-span'><label for='$col'>$col</label><input class='gs-input'  onkeyup='updateRow(this, \"$this->table\")'  onchange='updateRow(this, \"$this->table\")' type='number' name='$col' id='$col' value='$value'></div>";
+            return "<div class='gs-span'><label for='$col'>$col</label><input class='gs-input'  onkeyup='gs.form.updateRow(this, \"$this->table\")'  onchange='gs.form.updateRow(this, \"$this->table\")' type='number' name='$col' id='$col' value='$value'></div>";
         break;        case 'date':  // @filemetacore.features Date input
         case 'datetime-local':  // @filemetacore.features Datetime input
               $datevalue = date('Y-m-d', strtotime($value));
@@ -841,11 +823,11 @@ return '<div class="gs-span">
         break;
         case 'checkbox':  // @filemetacore.features Boolean input (checkbox)
             $checked = ($value) ? 'checked' : '';
-            return "<div class='gs-span'><label for='$col'>$col</label><input class='gs-input' onclick='updateRow(this, \"$this->table\")'  type='checkbox' name='$col' id='$col' $checked></div>";
+            return "<div class='gs-span'><label for='$col'>$col</label><input class='gs-input' onclick='gs.form.updateRow(this, \"$this->table\")'  type='checkbox' name='$col' id='$col' $checked></div>";
          break;
         case 'text':  // @filemetacore.features Default text input
         default:
-            return "<div class='gs-span'><label for='$col'>$col</label><input class='gs-input' onkeyup='updateRow(this, \"$this->table\")'  type='text' name='$col' id='$col' value='$value'></div>";
+            return "<div class='gs-span'><label for='$col'>$col</label><input class='gs-input' onkeyup='gs.form.updateRow(this, \"$this->table\")'  type='text' name='$col' id='$col' value='$value'></div>";
         break;
     }
 }

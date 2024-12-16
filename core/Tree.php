@@ -337,7 +337,7 @@ protected function compareWithStandardReport($table) {
         // Report the modification list and provide an apply button
         if (!empty($compare['modificationList'])) {
             $report[] = "MODIFICATION LIST for table `$table`:\n" . implode("\n", $compare['modificationList']);
-            $report[] = "<button onclick='gs.loadLocalMethod.post(\"applySchemaStandards\", { table: \"$table\" })'>Apply</button>";
+            $report[] = "<button onclick='gs.callapi.post(\"applySchemaStandards\", { table: \"$table\" })'>Apply</button>";
         }
 
         // Report any extra columns (common list)

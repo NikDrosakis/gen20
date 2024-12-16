@@ -12,7 +12,7 @@ no jquery, no bookstrap
 - soc
 - api
 - apy
-- loadLocalMethod
+- callapi
 - loadCumbo
 - loadfile
 - ui
@@ -715,7 +715,7 @@ var gs= {
 
         console.log(params);
 
-        const login = await gs.api.loadLocalMethod.post("login",params);
+        const login = await gs.callapi.post("login",params);
 
                 console.log(login.data);
                 if (login.data == 'no_account') {
@@ -1251,15 +1251,69 @@ prepare the baby
  */
 
     rus : {},
+/*    const
+actions = [
+        { method: 'buildTable', params: { table: 'gen_vivalibro.tasks' } },
+        { method: 'updateUI', params: { section: 'taskList' } },
+        { method: 'showMessage', params: { message: 'Table built successfully!' } }
+
+        USAGE INLINE PHP     $actions = json_encode([
+        ['method' => 'buildTable', 'params' => ['table' => 'gen_vivalibro.tasks']],
+        ['method' => 'updateUI', 'params' => ['section' => 'taskList']],
+        ['method' => 'showMessage', 'params' => ['message' => 'Table built successfully!']]
+    ]);
+    onchange="handleActions(' . $actions . ')" SO SIMPLE!
+    ];
+ sequence of actions used to pass from one the result to other function
+ UPDATE COMBINE PHP AND JS ACTIONS IN THE SEQUENCE IN A CHAINED WAY
+ now
+ usage $actions = json_encode([
+    ['method' => 'buildTable', 'params' => ['table' => 'gen_vivalibro.tasks']],
+    ['method' => 'js:updateUI', 'params' => ['section' => 'taskList']],
+    ['method' => 'showMessage', 'params' => ['message' => 'Table built successfully!']],
+    ['method' => 'js:highlightRow', 'params' => ['rowId' => 5]]
+      onchange="seq(' . $actions . ')"
+]);
+ */
+    seq : async function(actions) {
+        let lastResult = null;
+
+        for (const action of actions) {
+            // Inject the result of the previous action into the parameters if needed
+            if (lastResult) {
+                action.params.previousResult = lastResult;
+            }
+
+            // Check if method exists before calling startsWith
+            if (action.method) {
+                // If it's a JavaScript function (starts with 'js:')
+                if (action.method.startsWith('js:')) {
+                    const jsFunctionName = action.method.slice(3); // Remove 'js:' prefix
+                    if (typeof window[jsFunctionName] === 'function') {
+                        lastResult = await window[jsFunctionName](action.params);
+                    } else {
+                        console.error(`JavaScript function "${jsFunctionName}" not defined.`);
+                    }
+                } else {
+                    // Call the PHP method via the API
+                    const result = await callapi.get(action.method, action.params);
+                    console.log(`Result of ${action.method}:`, result);
+                    lastResult = result; // Store result for next action
+                }
+            } else {
+                console.error('Action method is undefined:', action);
+            }
+        }
+    },
     /**
-     loadLocalMethod
+     callapi
      executes and gets data any core method
-*/
-    loadLocalMethod : {
-        get: async function(classmethod, params) {
+     */
+    callapi : {
+        get: async function(method, params) {
             try {
                 const queryParams = new URLSearchParams(params).toString();
-                const url = `${G.SITE_URL}api/v1/local/${classmethod}?${queryParams}`;
+                const url = `${G.SITE_URL}api/v1/local/${method}?${queryParams}`;
                 console.log(url);
                 const response = await fetch(url, {
                     method: 'GET',
@@ -1287,9 +1341,9 @@ prepare the baby
             }
         },
 
-        post: async function(classmethod, params) {
+        post: async function(method, params) {
             try {
-                const url = `${G.SITE_URL}api/v1/local/${classmethod}`;
+                const url = `${G.SITE_URL}api/v1/local/${method}`;
                 console.log(url);
                 const response = await fetch(url, {
                     method: 'POST',
@@ -1307,26 +1361,6 @@ prepare the baby
             } catch (error) {
                 console.error("Error updating content:", error);
             }
-        }
-    },
-    /***
-     loadCubo
-     CUBO FUNCTIONALITY
-     USAGE:
-     */
-    loadCubo: async function (wrap, url) {
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                //        console.log(`HTTP error: ${response.status}`);
-            }
-            const html = await response.text();
-            //    console.log(html)
-            if (html && document.querySelector(wrap)) {
-                document.querySelector(wrap).innerHTML = html;
-            }
-        } catch (error) {
-            console.warn('Error loading widget:', error);
         }
     },
     /***
@@ -1369,12 +1403,12 @@ prepare the baby
          * Core form update
          * go to  page 1 with search is clicked
          * */
-        loadButton: async function(method, value) {
+        loadButton : async function(method, value) {
             const params={key:value}
             console.log(params);
             try {
                 // Make the API request
-                const getResult = await gs.loadLocalMethod.get(method, params);
+                const getResult = await gs.callapi.get(method, params);
 
                 // Retrieve the target element by id
                 const nextMethodElement = document.getElementById(method);
@@ -1385,6 +1419,89 @@ prepare the baby
                     : '<span style="color: red; font-size: 1.2em;">❌</span>';
             } catch (error) {
                 console.error("Error loading button data:", error);
+            }
+        },
+        updateRow: async function (event, table) {
+            const field = event.name;
+            //if in subpage
+            const db = table.split('.')[0].replace('gen_','');
+            //if in 6channel
+            const id = G.id!='' ? G.id : event.id.replace(field, '');
+            const value = event.value;
+            try {
+                if(!!db) {
+                    await gs.api[db].q(`UPDATE ${table}
+                                SET ${field}=?
+                                WHERE id = ?`, [value, id]);
+                }
+            } catch (error) {
+                console.error(`Error updating ${field}:`, error);
+            }
+        },
+        insertNewRow : async function (event) {
+            // Extract the 'name' attribute from the event target (button)
+            const field = event.target.name;  // Use event.target to access the button's name attribute
+
+            console.log(field);
+
+            // Split 'gen_admin.domain' into 'gen_admin' and 'domain'
+            const db = field.split('.')[0].replace('gen_', '');  // Extract the database name, e.g., 'admin'
+            const tableName = field.split('.')[1];  // Extract the table name, e.g., 'domain'
+
+            console.log(db);
+            console.log(tableName);
+
+            // Get the name value from the input field dynamically (based on tableName)
+            const nameValue = document.getElementById(tableName + '_name').value;  // Assuming your input has an ID like 'domain_name'
+            console.log(nameValue);
+
+            // Prepare the parameters to send to the API
+            const params = {
+                name: nameValue,
+                created: gs.date('Y-m-d H:i:s')  // Use gs.date() to generate a timestamp
+            };
+            console.log(params);
+
+            try {
+                // Check if the db exists and is valid
+                if (!!db) {
+                    // Insert the new row into the database/table using gs.api
+                    const dbcalled= G.TEMPLATE==db ? 'maria' : db;
+                    const newRow = await gs.api[dbcalled].inse(tableName, params);  // Use tableName here
+                    console.log(newRow);  // Log the result of the insert
+                    // Find the table body and rows
+                    if(newRow.success){
+                        //location.reload();
+                        const page= G.subparent[tableName];
+                        location.href=`/admin/${page}/${tableName}?id=${newRow.data}`;
+                    }
+                }
+            } catch (error) {
+                // Catch any errors and log them
+                console.error(`Error inserting new row into ${db}.${tableName}:`, error);
+            }
+        },
+        handleNewRow : async function (event, tableName, list) {
+            // Check for 'globs_tab' in cookies
+            const table=tableName.split('.')[1];
+            const db=tableName.split('.')[0];
+            const new_box = document.getElementById(`new_${table}_box`);
+            if (new_box.innerHTML === "") {
+                try {
+                    const params={adata: table, database:db,nature: "new", append: `#new_${table}_box`, list};
+                    console.log(params);
+                    const new_postgrp = await gs.form.generate(params)
+                    if (new_postgrp.success) {
+                        console.log("running reload")
+                        // new_box.innerHTML = '';
+                        //    window.location.reload();
+                    }
+                    ;
+                } catch (error) {
+                    console.warn('Error loading:', error);
+                }
+            } else {
+                new_box.innerHTML = '';
             }
         },
         updateTable: async function(selectElement, method) {
@@ -1401,7 +1518,7 @@ prepare the baby
             console.log(method);
             console.log(params);
             // Make an API request using the method and parameters
-            const getResult = await gs.loadLocalMethod.get(method, params);
+            const getResult = await gs.callapi.get(method, params);
 
             // Get the table element by ID (based on table name)
             const id = tableName.split('.')[1] + '_table';  // Assuming table name format is "db.table"
@@ -1415,6 +1532,29 @@ prepare the baby
                 gs.form.gotopage(1);
             }else{
                 gs.form.gotopage(pagenum);
+            }
+        },
+
+        deleteRow : async function (event, tableName) {
+            if (event.id.includes('del')) {
+                const id = event.id.replace('del', '');
+                const table=tableName.split('.')[1];
+                const db = tableName.split('.')[0].replace('gen_', '');
+                console.log(table)
+                console.log(db)
+                const suredelete = await gs.confirm(`You are going to delete id ${id}. Are you sure?`);
+                if (suredelete.isConfirmed) {
+                    try {
+                        console.log(`DELETE from ${table} WHERE id = ?`);
+                        const dbcalled= G.TEMPLATE==db ? 'maria' : db;
+                        const deleted = await gs.api[dbcalled].q(`DELETE from ${table} WHERE id = ?`, [id]);
+                        if (deleted.success) {
+                            document.getElementById(`${tableName}_${id}`).remove();
+                        }
+                    } catch (error) {
+                        console.error(`Error delete ${table}:`, error);
+                    }
+                }
             }
         },
         gotopage: function(page) {

@@ -85,8 +85,8 @@ background: aliceblue;
 
 <!-- DROPDOWN OF MAIN -->
 <div>
-	Main Area:
-	<select style="width:60%" class="form-control" id="layoutpage">
+	Main Name:
+	<select class="form-control" id="layoutpage">
         <?php
         //$pages=read_folder($this->MAINURI);
         $pages = $this->db->fa("SELECT * FROM main");
@@ -98,7 +98,7 @@ background: aliceblue;
         <?php } ?>
     </select>
 </div>
-
+<div style="width: 100%;">
 <!-- WIDGETs -->
     <div id="areas" class="list-group nested-sortable">
         <?php
@@ -158,6 +158,7 @@ background: aliceblue;
         </div>
     </div>
 
+
     <div id="areas" class="list-group nested-sortable">
         <?php
         $cubos= $this->db->fa("SELECT * from cubo order by name DESC LIMIT 10");
@@ -172,8 +173,9 @@ background: aliceblue;
                 <?php } ?>
                 </div>
                 <div style="background:antiquewhite;font-size: 12px;"></div>
-       </div>
+                </div>
         <?php } ?>
+</div>
 </div>
 
 <script>

@@ -1,0 +1,491 @@
+<h1>Trilingo Cubo: Learn Italian & Spanish</h1>
+    <style>
+        .correct {
+            color: green;
+            font-size: 20px;
+        }
+        .incorrect {
+            color: red;
+            font-size: 20px;
+        }
+    </style>
+       <table border="1">
+              <thead>
+                  <tr>
+                      <th>English</th>
+                      <th>Italian</th>
+                      <th>Spanish</th>
+                      <th>Feedback</th>
+                  </tr>
+              </thead>
+              <tbody id="words-table">
+                  <!-- Dynamically filled by PHP -->
+                  <tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='1' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='1' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='2' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='2' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='3' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='3' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='4' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='4' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='5' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='5' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='6' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='6' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='7' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='7' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='8' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='8' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='9' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='9' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='10' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='10' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='11' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='11' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='12' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='12' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='13' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='13' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='14' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='14' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='15' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='15' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='16' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='16' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='17' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='17' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='18' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='18' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='19' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='19' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='20' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='20' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='21' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='21' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='22' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='22' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='23' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='23' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='24' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='24' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='25' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='25' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='26' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='26' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='27' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='27' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='28' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='28' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='29' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='29' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='30' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='30' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='31' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='31' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='32' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='32' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='33' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='33' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='34' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='34' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='35' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='35' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='36' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='36' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='37' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='37' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='38' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='38' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='39' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='39' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='40' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='40' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='41' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='41' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='42' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='42' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='43' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='43' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='44' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='44' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='45' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='45' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='46' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='46' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='47' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='47' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='48' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='48' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='49' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='49' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='50' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='50' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='51' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='51' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='52' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='52' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='53' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='53' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='54' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='54' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='55' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='55' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='56' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='56' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='57' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='57' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='58' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='58' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='59' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='59' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='60' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='60' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='61' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='61' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='62' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='62' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='63' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='63' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='64' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='64' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='65' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='65' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='66' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='66' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='67' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='67' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='68' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='68' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='69' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='69' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='70' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='70' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='71' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='71' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='72' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='72' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='73' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='73' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='74' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='74' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='75' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='75' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='76' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='76' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='77' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='77' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='78' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='78' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='79' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='79' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='80' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='80' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='81' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='81' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='82' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='82' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='83' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='83' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='84' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='84' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='85' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='85' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='86' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='86' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='87' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='87' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr><tr>
+                          <td></td>
+                          <td><input type='text' class='italian' data-id='88' placeholder='Italian'></td>
+                          <td><input type='text' class='spanish' data-id='88' placeholder='Spanish'></td>
+                          <td><span class='feedback'></span></td>
+                      </tr>              </tbody>
+          </table>
+    <script>
+         document.querySelectorAll('.italian, .spanish').forEach(input => {
+                    input.addEventListener('keyup', function() {
+                        const row = input.closest('tr');
+                        const italianInput = row.querySelector('.italian');
+                        const spanishInput = row.querySelector('.spanish');
+                        const feedback = row.querySelector('.feedback');
+                        const wordId = input.getAttribute('data-id');
+                        const italianValue = italianInput.value;
+                        const spanishValue = spanishInput.value;
+
+                        // Call PHP backend for checking
+                        fetch(`check_input.php?word_id=${wordId}&italian=${italianValue}&spanish=${spanishValue}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                // Show tick or cross based on feedback
+                                if (data.feedback_italian === 'correct' && data.feedback_spanish === 'correct') {
+                                    feedback.innerHTML = '✔️';
+                                    feedback.className = 'correct';
+                                } else {
+                                    feedback.innerHTML = '❌';
+                                    feedback.className = 'incorrect';
+                                }
+                            });
+                    });
+                });
+    </script>

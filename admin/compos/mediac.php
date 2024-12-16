@@ -90,7 +90,7 @@ v3 updated to filemeta
       <?php include ADMIN_ROOT."main/media/generate.php"; ?>
     </div>
 <div id="tab-findimage" class="tab-content">
-     <?php include CUBOS_ROOT."findimage/public.php"; ?>
+     <?php include CUBO_ROOT."findimage/public.php"; ?>
     </div>
 
 <script>
@@ -118,7 +118,7 @@ async function uploadFile(formData) {
     }
     console.log(params)
     try {
-        const upload = await gs.loadLocalMethod.post("upload_file", formData);
+        const upload = await gs.callapi.post("upload_file", formData);
         if (upload.success) {
             //oldajax url: '/widgets/slideshow/post_xhr.php',
             console.log(upload)
@@ -139,7 +139,7 @@ async function selectFromMediaFolder(id) {
     const params = {a: "upload_media", filename: filename, folder: folder};
     console.log(params);
     try {
-        const uploadMedia = await gs.loadLocalMethod.post("upload_media", params);
+        const uploadMedia = await gs.callapi.post("upload_media", params);
         console.log(uploadMedia)
         if (uploadMedia.success) {
             appendMediaToPlace(uploadMedia.data);
@@ -157,7 +157,7 @@ async function addImageFromUrl(id) {
     const caption = document.getElementById('caption_url').value;
     const params = {url: url, caption: caption, folder: folder};
     try {
-        const uploadUrl = await gs.loadLocalMethod.post("upload_url", params);
+        const uploadUrl = await gs.callapi.post("upload_url", params);
         console.log(uploadUrl)
         if (uploadUrl.success) {
             appendMediaToPlace(uploadUrl.data);
@@ -189,7 +189,7 @@ function appendMediaToPlace(slide) {
     let table = `<tr id="slide_${slide.id}">
       <td class="sort-order">${slide.sort}</td>
       <td>${slide.sort}</td>
-      <td><img src="${G.SITE_URL}media/slideshow/${slide.filename}" alt="${slide.filename}" style="max-width: 100px;"></td>
+      <td><img src="${G.SITE_URL}media/${slide.filename}" alt="${slide.filename}" style="max-width: 100px;"></td>
       <td>${slide.filename}</td>
       <td><input name="caption" id="cubo_slideshow${slide.id}" value="${slide.caption}"></td>
       <td><input type="checkbox" class="delete-checkbox" value="${slide.id}"></td>
@@ -200,7 +200,7 @@ function appendMediaToPlace(slide) {
 // @filemeta.features Populate the media select dropdown with images from the media/slideshow folder
 async function loadMedia(folder = '', pag = 1, limit = 8) {
     const params = {folder: folder, pag: pag, limit: limit};
-    const getMedia = await gs.loadLocalMethod.get("loadMedia", params);
+    const getMedia = await gs.callapi.get("loadMedia", params);
     console.log(getMedia)
     if (getMedia.success) {
 

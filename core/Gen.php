@@ -43,7 +43,7 @@ use Cubo;
 
      echo  $this->renderPublicHead();
       try {
-          $this->G['PAGECUBOS'] = $this->getMaincuboBypage();
+          $this->G['PAGECUBO'] = $this->getMaincuboBypage();
 		} catch (Exception $e) {
           // Handle exception and set error in buffer
           $this->catch_errors();
@@ -54,7 +54,7 @@ use Cubo;
 
 	protected function getBody() {
 		// Check if there are cubos for the current page
-		$pc=$this->G['PAGECUBOS'];
+		$pc=$this->G['PAGECUBO'];
 		$has_not_sl=!$pc['sl1'] && !$pc['sl2'] && !$pc['sl3'];
 		$has_not_sr=!$pc['sr1'] && !$pc['sr2'] && !$pc['sr3'];
 		$has_not_f=!$pc['fc'] && !$pc['fr'] && !$pc['fl'];
@@ -91,7 +91,7 @@ if (!$has_not_sl) {
     foreach ($slArray as $sl) {
     foreach ($sl as $cubo) {
         echo '<div id="' . $cubo . '" class="cubo">';
-        include CUBOS_ROOT.$cubo."/public.php";
+        include CUBO_ROOT.$cubo."/public.php";
         echo '</div>';  // Correctly closing div
     }}
     echo '</div>';
@@ -104,12 +104,12 @@ echo '<div id="m" style="width:' . $main_width . '%">';
 
       foreach ($pc['m'] as $cubo) {
            echo '<div id="' . $cubo . '" class="row archive-content">';
-              //include CUBOS_ROOT.$cubo."/public.php";
+              //include CUBO_ROOT.$cubo."/public.php";
               $main= $this->db->f("select * from main where name=?",[$this->page]);
               echo  $this->buildTemplateArchive($main);
               echo '</div>';  // Correctly closing div
       }
-  }elseif(!empty($this->G['PAGECUBOS'])){
+  }elseif(!empty($this->G['PAGECUBO'])){
                       $pageTemplate= $this->db->f("select * from main where name=?",[$this->page]);
                    //   xecho($pageTemplate);
  }else{
@@ -145,7 +145,7 @@ if (!$has_not_sr) {
     foreach ($srArray as $sr) {
     foreach ($sr as $cubo) {
         echo '<div id="' . $cubo . '" class="cubo">';
-        include CUBOS_ROOT.$cubo."/public.php";
+        include CUBO_ROOT.$cubo."/public.php";
         echo '</div>';  // Correctly closing div
     }}
     echo '</div>';
@@ -158,7 +158,7 @@ if (!$has_not_f) {
     foreach ($fArray as $f) {
     foreach ($f as $cubo) {
         echo '<div id="' . $cubo . '" class="cubo">';
-        include CUBOS_ROOT.$cubo."/public.php";
+        include CUBO_ROOT.$cubo."/public.php";
         echo '</div>';  // Correctly closing div
     }
 }

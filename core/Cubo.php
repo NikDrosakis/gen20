@@ -9,8 +9,11 @@ trait Cubo {
             return $this->db->fa("SELECT * FROM links WHERE linksgrpid=2 ORDER BY sort");
     }
 
-protected function updateCuboImg($current_cubo = '') {
-    $cuboFolder = $this->G['CUBOS_ROOT'] . $current_cubo . "/";
+protected function updateCuboImg($table = '',$current_name = '') {
+$cubo = is_array($current_cubo) ? $current_cubo['key'] : $current_cubo;
+$db=explode('.',$table)[0];
+
+    $cuboFolder = $db=='gen_admin' ? ADMIN_IMG_ROOT . $cubo . "/" : $this->G['CUBO_ROOT'] . $cubo . "/";
     $publicFilePath = $cuboFolder . "public.php";
 
     // Validate Cubo folder and file
@@ -30,7 +33,7 @@ protected function updateCuboImg($current_cubo = '') {
     file_put_contents($htmlOutputPath, $html);
 
     // Define output image path
-    $outputImagePath = $cuboFolder . 'output_' . $current_cubo . '.png';
+    $outputImagePath = $cuboFolder . 'output_' . $cubo . '.png';
 
     // Use wkhtmltoimage to convert HTML to PNG
     $command = escapeshellcmd("wkhtmltoimage --quality 90 $htmlOutputPath $outputImagePath");
@@ -41,7 +44,7 @@ protected function updateCuboImg($current_cubo = '') {
     }
 
     // Update the database with the new image path
-    $this->db->q("UPDATE cubo SET img = ? WHERE name = ?", [$outputImagePath, $current_cubo]);
+    $this->db->q("UPDATE $table SET img = ? WHERE name = ?", [$outputImagePath, $cubo]);
 
     return "Image successfully saved as $outputImagePath";
 }
@@ -219,7 +222,7 @@ protected function addMetric(array $params = []): ?array {
     // Other methods (existing)...
     protected function createNewCubo(string $name, string $description, string $ideally): bool|int {
         // Create folder and public.php as in the previous code...
-        $cuboDir = CUBOS_ROOT . $name . '/';
+        $cuboDir = CUBO_ROOT . $name . '/';
 
         if (!mkdir($cuboDir, 0777, true)) {
             return false;

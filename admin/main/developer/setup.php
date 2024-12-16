@@ -9,7 +9,7 @@
             case 'listMariaTables':
                 //provide listMariaTables
                 name = { "table" : selectElement.value}
-                getResult = await gs.loadLocalMethod.get(method, name);
+                getResult = await gs.callapi.get(method, name);
                 console.log(selectElement.value)
                 gs.coo('selected_db',selectElement.value);
                 gs.cooDel('selected_table');
@@ -20,17 +20,17 @@
             //switch tables and select columns table (buildTable)
             case 'buildTable':
                 name = { "table" : gs.coo('selected_db')+'.'+selectElement.value}
-                getResult = await gs.loadLocalMethod.get(method, name);
+                getResult = await gs.callapi.get(method, name);
                 gs.coo('selected_table',selectElement.value);
                 //provide compareWithStandardReport
-                const compareWithStandardReport= await gs.loadLocalMethod.get("compareWithStandardReport",name);
+                const compareWithStandardReport= await gs.callapi.get("compareWithStandardReport",name);
                 const buildTableID = document.getElementById('compareWithStandardReport');
                 if(compareWithStandardReport.data){
                     buildTableID.innerHTML=compareWithStandardReport.data.join('<br/>');
                 }
 
                 //provide buildSchema
-                const buildSchema= await gs.loadLocalMethod.get("buildSchema",name);
+                const buildSchema= await gs.callapi.get("buildSchema",name);
                 const buildSchemaID = document.getElementById('buildSchema');
                 if(buildSchema.data){
                     buildSchemaID.innerHTML=buildSchema.data;
@@ -41,7 +41,7 @@
         console.log(name)
         // Fetch the corresponding tables for the selected database
         try {
-            const getResult = await gs.loadLocalMethod.get(method,name);
+            const getResult = await gs.callapi.get(method,name);
             //append result to id ...table-container
             // Ensure the container element exists
             // Get the next dropdown where the result will be appended

@@ -10685,6 +10685,7 @@ header {
   display: inline;
   color: black;
   height: 35px;
+  max-width: 200px;
 }
 
 #progressBarContainer {
@@ -11452,7 +11453,7 @@ ul.tabs li.current {
 
 #drop-zone {
   border: 2px dashed #ccc;
-  padding: 20px;
+  height: 254px;
 }
 
 #drop-zone.dragover {

@@ -1,7 +1,7 @@
 - ## GEN20 update log
 1) PUBLIC_WEB : PHP & REACT > vivalibro, poetabook, nikdrosakis, all integrated domains 
 2) PUBLIC_MOB : REACT NATIVE > vivalibro, all android applications
-3) CUBOS : PHP & REACT > REUSABLE modules FOR PUBLIC
+3) CUBO : PHP & REACT > REUSABLE modules FOR PUBLIC
 4) CORE  : PHP classes + COMPOSER 
 5) ADMIN : PHP COMMON DASHBOARD merge with GPM using also maria.gpm 
 6) GPY   : COMMON python INTEGRATOR 

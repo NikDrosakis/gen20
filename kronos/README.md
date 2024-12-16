@@ -1,5 +1,6 @@
 # Kronos > GEN20
 accessed in APY, python fastapi runs with uvicorn in venv
+
 ## v.1 August2024
 1. Rewritten Apifast from Fast API python
 2. Router & Service logic of integration
@@ -19,6 +20,5 @@ accessed in APY, python fastapi runs with uvicorn in venv
 1. Activate & organize generative AIs tasks
 2. Automate processes & communication
 2. Scrape automation (together WITH GSCLI) service as Soup
-3. Kafka connect communication
-4. WS connect communication
-5. Use OpenCV, Pillow python job for kronos
+3. WS connect communication
+4. Use OpenCV, Pillow python job for kronos

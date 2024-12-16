@@ -1,5 +1,5 @@
 <?php
-$directory = '/var/www/vivalibro/media/slideshow';
+$directory = MEDIA_ROOT;
 if (!is_dir($directory)) {
     echo json_encode(['error' => 'Directory does not exist']);
     exit;

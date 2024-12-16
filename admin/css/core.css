@@ -462,19 +462,6 @@ buildArchive
         width: 100%;
     }
 
-    /* Responsive adjustments */
-    @media (min-width: 768px) {
-        .gs-span {
-            width: calc(50% - 10px);
-        }
-    }
-
-    @media (min-width: 992px) {
-        .gs-span {
-            width: calc(33.333% - 10px);
-        }
-    }
-
     /* Make the table scrollable on small screens */
     @media screen and (max-width: 600px) {
         table {
@@ -507,4 +494,11 @@ buildArchive
         }
         .gs-select{width: 96%;}
     }
+
+#ch1{
+    display: flex;
+    align-content: center;
+    align-items: center;
+    width: 96%;
+    flex-direction: column;
 }

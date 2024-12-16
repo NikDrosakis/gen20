@@ -63,7 +63,7 @@ protected $pug;
 
             $this->templateData= json_decode($templateSource, true)
                 ? json_decode($templateSource, true)[$this->postType]
-                : ($templateSource ? $templateSource : CUBOS_ROOT.$post['page'].'/template.pug');
+                : ($templateSource ? $templateSource : CUBO_ROOT.$post['page'].'/template.pug');
 
              $output .= $this->renderTemplatePug($this->templateData,$post);
         }

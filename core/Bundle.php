@@ -3,7 +3,7 @@ namespace Core;
 use MatthiasMullie\Minify;
 /**
 BUNDLE
-1. CUBOS folders method, bundle cubos to build folder according to list > output folder to PUBLIC_BUILD
+1. CUBO folders method, bundle cubos to build folder according to list > output folder to PUBLIC_BUILD
 2. COMPOS folders method, bundle main public app and used folders to build folder > output folder to PUBLIC_BUILD
 3. CSS folders method minify   > output folder to PUBLIC_BUILD
 4. JS folders method minify > output folder to PUBLIC_BUILD
@@ -36,7 +36,7 @@ trait Bundle {
                 mkdir(BUILD_ROOT.'cubos', 0755, true);
             }
 
-            // GET LIST OF CUBOS used in domain
+            // GET LIST OF CUBO used in domain
             $cubosToBundle = $this->db->fa("SELECT * from maincubo");
 
             // Bundle each each file in each folder

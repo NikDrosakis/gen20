@@ -58,7 +58,7 @@ Gaia.js is the only js library, else CDNs.
 Month 1: Foundations and Data Acquisition:
 Great Progress: Laying the groundwork for VLMOB, VLWEB, installing databases (Solr, Neo4j), and acquiring a significant dataset are huge wins.
 Month 2: Admin Panel & Modularity:
-Solid Direction: Refactoring ADMIN with the GaiaCMS dashboard, introducing CUBOS and async buffers, centralizing core logic, and exploring APIs and AI are excellent steps toward a more maintainable and scalable system.
+Solid Direction: Refactoring ADMIN with the GaiaCMS dashboard, introducing CUBO and async buffers, centralizing core logic, and exploring APIs and AI are excellent steps toward a more maintainable and scalable system.
 Month 3: CI/CD, Docker, and Refinement:
 Focus on Automation and Tooling: GPM development, dockerization, workflows, and initial kronos/ermis work are crucial for efficiency and deployment.
 Experimentation (AI): Trying out 5 AI setups shows your commitment to exploring new technologies.
@@ -495,7 +495,7 @@ We are committed to exploring and refining AI technologies to continually improv
 
 #An other Glossary
 VLMOB (Vivalibro Mobile): A React Native mobile app for cataloging and managing books using custom classifications and open resources.
-VLCUBOS: Public UI widgets that form the core layout elements in both public and admin pages.
+VLCUBO: Public UI widgets that form the core layout elements in both public and admin pages.
 ermis (WebSocket Interface): A Node.js subsystem for handling notifications and interactions across public and admin systems.
 GPY: A FastAPI service integrating with external AI systems like Gemini and Cohere to handle advanced data processing and notifications.
 Core API: PHP-based API that serves as the backbone, integrating with various frontend and backend systems.
@@ -521,7 +521,7 @@ no jquery, no bootstrap
 - soc
 - api
 - apy
-- loadLocalMethod
+- callapi
 - loadCumbo
 - loadfile
 - ui
@@ -1109,11 +1109,11 @@ console.error("Worker Error:", error);
   }
   },
   /**
-  loadLocalMethod
+  callapi
   executes and gets data any core method
   USAGE:
 
-  loadLocalMethod: async function (classmethod, params) {
+  callapi: async function (classmethod, params) {
   try {
   const queryParams = new URLSearchParams(params).toString();
   const url = `${G.SITE_URL}api/v1/local/${classmethod}?${queryParams}`;
@@ -1132,7 +1132,7 @@ console.error("Worker Error:", error);
   console.error("Error updating content:", error);
   }
   },    */
-  loadLocalMethod : {
+  callapi : {
   get: async function(classmethod, params) {
   try {
   const queryParams = new URLSearchParams(params).toString();

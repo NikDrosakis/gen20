@@ -101,7 +101,7 @@ button {
           $('#currentDate').text(formatDate(currentDate));
         };
 
-        const updateTable = () => {
+        const updateDiary = () => {
           const formattedDate = formatDate(currentDate);
           $('input, textarea, select').each(function() {
             const name = $(this).attr('class');
@@ -129,7 +129,7 @@ button {
         });
 
         $('#processTable').on('input change', 'input, textarea, select', function() {
-          updateTable();
+          updateDiary();
         });
 
         updateDateDisplay();

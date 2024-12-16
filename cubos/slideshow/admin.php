@@ -24,7 +24,7 @@
               <?php foreach ($slides as $slide): ?>
                   <tr id="slide_<?php echo $slide['id']; ?>">
                       <td class="sort-order"><?php echo $slide['sort']; ?></td>
-                      <td><img src="<?=SITE_URL?>media/slideshow/<?php echo htmlspecialchars($slide['filename']); ?>" style="max-width:100px;"></td>
+                      <td><img src="<?=SITE_URL?>media/<?php echo htmlspecialchars($slide['filename']); ?>" style="max-width:100px;"></td>
                       <td><?=$slide['filename']?></td>
                       <td><input name="caption" id="cubo_slideshow<?=$slide['id']?>" value="<?=$slide['caption']?>"></td>
                       <td><button class="delete-button" id="del<?=$slide['id']?>">Delete</td>

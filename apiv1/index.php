@@ -15,7 +15,9 @@ header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-W
 header('Content-Type: application/json');
 define('DOMAIN',$_SERVER['SERVER_NAME']);
 define('TEMPLATE', 'vivalibrocom');
-define('ADMIN_ROOT', '/var/www/gs/admin/');
+define('ROOT', '/var/www/gs/');
+define('ADMIN_ROOT', ROOT.'admin/');
+define('CUBO_ROOT', ROOT.'cubo/');
 require '/var/www/gs/vendor/autoload.php';
 require_once __DIR__ . '/../autoload.php'; // Adjust the path based on your structure
 use Core\API;

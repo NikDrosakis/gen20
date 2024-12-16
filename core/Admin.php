@@ -142,7 +142,7 @@ protected function adminDomWrap() {
         //FOOTER
         echo '</div>';
         //end of container-->
-   //     include_once CUBOS_ROOT."venus/public.php";
+   //     include_once CUBO_ROOT."venus/public.php";
         echo '<script src="/admin/js/start.js"></script>';
         echo '</body>';
         echo '</html>';
@@ -195,7 +195,7 @@ protected function produce6channel($name,$ch,$page,$type,$table){
    }else{
         switch($type){
                 case "compos" : $chanfile = ADMIN_ROOT."compos/".$name.".php" ; break;
-                case "cubos" : $chanfile = CUBOS_ROOT.$name."/public.php" ; break;
+                case "cubos" : $chanfile = CUBO_ROOT.$name."/public.php" ; break;
                 default:   $chanfile = ADMIN_ROOT."main/".$page."/".$name.".php" ; break;
         }
 

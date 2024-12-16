@@ -308,7 +308,7 @@ async function updateForm(selectElement, method, table='') {
         // Fetch the result from the local method
    const tableName = {"table":table}
         console.log(method, tableName)
-        const getResult = await gs.loadLocalMethod.get(method, tableName);
+        const getResult = await gs.callapi.get(method, tableName);
         console.log(getResult);
         // Handle response based on method
         if (getResult.data) {
@@ -340,12 +340,12 @@ function handleMethodSpecificParams(method, selectElement, table) {
 }
 async function updateSchemaAndTable(table) {
     // Fetch and update the schema and comparison report
-    const compareWithStandardReport = await gs.loadLocalMethod.get("compareWithStandardReport", table);
+    const compareWithStandardReport = await gs.callapi.get("compareWithStandardReport", table);
     const buildTableID = document.getElementById('compareWithStandardReport');
     if (compareWithStandardReport.data) {
         buildTableID.innerHTML = compareWithStandardReport.data.join('<br/>');
     }
-    const buildSchema = await gs.loadLocalMethod.get("buildSchema", table);
+    const buildSchema = await gs.callapi.get("buildSchema", table);
     const buildSchemaID = document.getElementById('buildSchema');
     if (buildSchema.data) {
         buildSchemaID.innerHTML = buildSchema.data;
@@ -376,114 +376,6 @@ function updateUI(data, output, method) {
 }
       */
 
-async function updateRow(event, table) {
-    const field = event.name;
-    //if in subpage
-    const db = table.split('.')[0].replace('gen_','');
-    //if in 6channel
-    const id = G.id!='' ? G.id : event.id.replace(field, '');
-    const value = event.value;
-    try {
-        if(!!db) {
-            await gs.api[db].q(`UPDATE ${table}
-                                SET ${field}=?
-                                WHERE id = ?`, [value, id]);
-        }
-    } catch (error) {
-        console.error(`Error updating ${field}:`, error);
-    }
-}
-async function insertNewRow(event) {
-    // Extract the 'name' attribute from the event target (button)
-    const field = event.target.name;  // Use event.target to access the button's name attribute
-
-    console.log(field);
-
-    // Split 'gen_admin.domain' into 'gen_admin' and 'domain'
-    const db = field.split('.')[0].replace('gen_', '');  // Extract the database name, e.g., 'admin'
-    const tableName = field.split('.')[1];  // Extract the table name, e.g., 'domain'
-
-    console.log(db);
-    console.log(tableName);
-
-    // Get the name value from the input field dynamically (based on tableName)
-    const nameValue = document.getElementById(tableName + '_name').value;  // Assuming your input has an ID like 'domain_name'
-    console.log(nameValue);
-
-    // Prepare the parameters to send to the API
-    const params = {
-        name: nameValue,
-        created: gs.date('Y-m-d H:i:s')  // Use gs.date() to generate a timestamp
-    };
-    console.log(params);
-
-    try {
-        // Check if the db exists and is valid
-        if (!!db) {
-            // Insert the new row into the database/table using gs.api
-            const dbcalled= G.TEMPLATE==db ? 'maria' : db;
-            const newRow = await gs.api[dbcalled].inse(tableName, params);  // Use tableName here
-            console.log(newRow);  // Log the result of the insert
-            // Find the table body and rows
-            if(newRow.success){
-                //location.reload();
-                const page= G.subparent[tableName];
-                location.href=`/admin/${page}/${tableName}?id=${newRow.data}`;
-            }
-        }
-    } catch (error) {
-        // Catch any errors and log them
-        console.error(`Error inserting new row into ${db}.${tableName}:`, error);
-    }
-}
-
-
-async function deleteRow(event, tableName) {
-    if (event.id.includes('del')) {
-        const id = event.id.replace('del', '');
-        const table=tableName.split('.')[1];
-        const db = tableName.split('.')[0].replace('gen_', '');
-        console.log(table)
-        console.log(db)
-        const suredelete = await gs.confirm(`You are going to delete id ${id}. Are you sure?`);
-        if (suredelete.isConfirmed) {
-            try {
-                console.log(`DELETE from ${table} WHERE id = ?`);
-                const dbcalled= G.TEMPLATE==db ? 'maria' : db;
-                const deleted = await gs.api[dbcalled].q(`DELETE from ${table} WHERE id = ?`, [id]);
-                if (deleted.success) {
-                    document.getElementById(`${tableName}_${id}`).remove();
-                }
-            } catch (error) {
-                console.error(`Error delete ${table}:`, error);
-            }
-        }
-    }
-}
-
-async function handleNewRow(event, tableName, list) {
-    // Check for 'globs_tab' in cookies
-    const table=tableName.split('.')[1];
-    const db=tableName.split('.')[0];
-    const new_box = document.getElementById(`new_${table}_box`);
-    if (new_box.innerHTML === "") {
-        try {
-            const params={adata: table, database:db,nature: "new", append: `#new_${table}_box`, list};
-            console.log(params);
-            const new_postgrp = await gs.form.generate(params)
-            if (new_postgrp.success) {
-                console.log("running reload")
-                // new_box.innerHTML = '';
-            //    window.location.reload();
-            }
-            ;
-        } catch (error) {
-            console.warn('Error loading:', error);
-        }
-    } else {
-        new_box.innerHTML = '';
-    }
-}
 
 function createPagination(totalPages, currentPage, folder, limit) {
     const pagination = document.getElementById('pagination');

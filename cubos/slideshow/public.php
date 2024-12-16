@@ -98,7 +98,7 @@
     <?php for($i=0;$i<count($slides);$i++){ ?>
     <div class="mySlides fade">
         <div class="numbertext"><?=$i+1?> / <?=count($slides)?></div>
-        <img src="/media/slideshow/<?=$slides[$i]['name']?>" style="width:100%">
+        <img src="/media/<?=$slides[$i]['name']?>" style="width:100%">
         <div class="text"><?=$slides[$i]['caption']?></div>
     </div>
     <?php } ?>

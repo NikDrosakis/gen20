@@ -124,7 +124,7 @@
 
    // xecho($templates[$value['type']]);
         //echo $this->buildTemplateArchive($templates[$value['type']],$value);
-        echo $this->renderTemplatePug(CUBOS_ROOT.'journal/template.pug',$value);
+        echo $this->renderTemplatePug(CUBO_ROOT.'journal/template.pug',$value);
     }
     ?>
 </div>
