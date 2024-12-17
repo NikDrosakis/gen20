@@ -14,7 +14,8 @@
         "pug/pug": "*",
         "pug-php/pug": "^3.5",
         "symfony/flex": "*",
-        "twig/twig": "^2.16"
+        "twig/twig": "^2.16",
+        "symfony/yaml": "^5.4"
     },
     "autoload": {
         "psr-4": {

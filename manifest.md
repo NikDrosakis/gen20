@@ -19,8 +19,12 @@
 
 ## sql COMMENT  
 readonly      set not edited
-img 		  set an <img> by Form/Template
-img-upload 	  set an <img> + upload by Form/Template
+img 		  set <img> 
+img-icon 	  set <img> for icon library
+img-photo 	  set <img> for user photo library
+img-graph 	  set <img> for Graph creation
+img-graph 	  set <img> for Graph creation
+meta          comma separated words
 twig	   	  set twig editor  by Form/Template
 pug 	   	  set pug editor by Form/Template
 sql 	   	  read as sql by Form/Template

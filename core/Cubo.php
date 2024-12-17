@@ -2,6 +2,7 @@
 namespace Core;
 use Exception;
 use Imagick;
+use Symfony\Component\Yaml\Yaml;
 
 trait Cubo {
 
@@ -333,6 +334,53 @@ protected function getUsers() {
                     return false;
                 }
     }
+
+
+//yaml methods
+
+protected function loadConfig($filePath) {
+    return Yaml::parseFile($filePath);
+}
+
+protected function executeSQL($query) {
+    $pdo = new PDO("mysql:host=localhost;dbname=yourdb", "root", "password");
+    $pdo->exec($query);
+}
+
+protected function sendWsNotification($message) {
+    $wsUrl = "ws://localhost:3000";
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $wsUrl);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $message);
+    curl_exec($ch);
+    curl_close($ch);
+}
+
+protected function executeCuboAction($action) {
+    $config = loadConfig(__DIR__ . '/../configs/cubo_example.yml');
+
+    switch ($action) {
+        case 'setup':
+            executeSQL($config['setup']['sql']);
+            echo "Setup Complete: " . $config['description'];
+            sendWsNotification($config['notifications']['ws']);
+            break;
+        case 'update':
+            executeSQL($config['update']['sql']);
+            echo $config['update']['message'];
+            sendWsNotification($config['notifications']['ws']);
+            break;
+        case 'uninstall':
+            executeSQL($config['uninstall']['sql']);
+            echo $config['uninstall']['message'];
+            break;
+        default:
+            echo "Invalid action.";
+    }
+}
+
+
 
 }
 

@@ -1,11 +1,25 @@
-# GEN20 v0.46
+# GEN20 v0.48
+
+## Installation of Gen20 in linux console (existing domain) 
+Already running your domain with nginx, follow the steps:
+### Step 1
+Download and install git & run presetup with: 
+```sudo apt install git && git clone https://github.com/NikDrosakis/gen20.git && cd gen20 && bash presetup.sh``` 
+
+### Step 2
+At the Browser enter to the url  [your_domain]/admin
+
+Step 2
+In the browser open [domain]/admin
+
+
+
 
 ## Introduction
 The purpose of this system is to develop smart applications that harness the power of AI and modern web technologies to enhance mental and scientific knowledge. The goal is to utilize the vast resources available online while integrating AI capabilities to create useful, scalable applications. These tools aim to improve the way people interact with information, providing smarter, faster, and more insightful solutions.
 By using a combination of PHP, Node.js, React Native, and FastAPI, along with AI resources such as Gemini and Cohere, the system bridges the gap between raw data and practical, intelligent applications. The overall vision is to empower users to unlock the potential of digital resources, elevating both individual and collective understanding.
 
 ### Overview
-
 GEN20 is an advanced, modular system designed to facilitate the development of interactive and dynamic applications. It integrates multiple technologies, including PHP, FastAPI, Node.js, and React Native, to provide a comprehensive solution for various web and mobile needs. The system comprises several key components, each serving a specific role, and leverages AI technologies to enhance functionality and user experience.
 
 ###The main goal
@@ -24,6 +38,20 @@ how to create and IPFS subsystem for getting and sharing knowledge 2) how Blockc
 - The admin as it progresses
 - The admin > grid with the channels is small and disfunctional
 - the 270k vivalibrocom book titles saved in db in one night
+
+## Systems
+PUBLIC:vivalibro, poetabook, nikdrosakis, all integrated domains
+PUBLIC_MOB:REACT NATIVE > vivalibro, all android applications
+CUBO:PHP & REACT > REUSABLE modules FOR PUBLIC
+CORE:PHP classes + COMPOSER
+ADMIN:PHP COMMON DASHBOARD  
+KRONOS:COMMON python INTEGRATOR
+ERMIS:COMMON nodejs INTEGRATOR
+CLI:low level, crons, backups, tasks using also maria.gpm
+RUS:INTEGRATOR rust
+GO:INTEGRATOR golang
+VENUS:GLOBAL chat nodejs/ws app
+
 
 ### Key Technologies
 

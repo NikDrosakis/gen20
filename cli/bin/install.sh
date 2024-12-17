@@ -22,14 +22,14 @@ DOMAINIP=$(hostname -I | awk '{print $1}')  # Get the first IP address of the ho
 echo "Setting up the system for domain: $DOMAIN"
 
 cd /var/www/gs || { echo "Failed to navigate to /var/www/gs"; exit 1; }
-mkdir -m 755 "$DOMAIN" || { echo "Failed to create directory for $DOMAIN"; exit 1; }
+mkdir -m 755 "public/$DOMAIN" || { echo "Failed to create directory for $DOMAIN"; exit 1; }
 
 # Step 2: Install the database (this should be customized as needed)
 echo "Setting up the database for $DOMAIN..."
 mysql -uroot -e "CREATE DATABASE IF NOT EXISTS ${DOMAIN//./_};" || { echo "Database creation failed"; exit 1; }
 
 # Load the core SQL file
-mysql -uroot -D "${DOMAIN//./_}" < /var/www/gs/setup/maria/core_branch_042.sql || { echo "Failed to load core SQL file"; exit 1; }
+mysql -uroot -D "${DOMAIN//./_}" < /var/www/gs/setup/maria/gen_template_043.sql || { echo "Failed to load core SQL file"; exit 1; }
 
 # Step 3: Configure DNS bind for the domain
 echo "Configuring DNS for $DOMAIN..."

@@ -42,7 +42,9 @@ $type=$sel[$i]['type'];
 	</select>
 	        <label class="profile_title"><?=$sel[$i]['name']?></label>
 
-			<?php if($type=='textarea' || $type=='html'){ ?>
+			<?php if($type=='pug'){ ?>
+			<textarea class="form-control input-sm" class="lang12" id="set<?=$id?>"><?=urldecode($sel[$i]["en"])?></textarea>
+			<?php if($type=='textarea'){ ?>
 				<textarea class="form-control input-sm" class="lang12" id="set<?=$id?>"><?=urldecode($sel[$i]["en"])?></textarea>
 
 			<?php }elseif($type=='json'){ ?>
