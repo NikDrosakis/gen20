@@ -52,7 +52,7 @@ git add .
 git commit -m "$COMMIT_MESSAGE"
 
 # Push changes and tag to GitHub
-git push origin main --set-upstream origin main
+git push --set-upstream origin main
 #git push origin "$NEW_VERSION"
 
 
