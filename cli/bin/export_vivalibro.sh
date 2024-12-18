@@ -2,7 +2,7 @@
 
 source /var/www/gs/cli/configs/.env
 
-mysql -u "$DB_USER" -p"$DB_PASSWORD" -h "$DB_HOST" "$DB_NAME" <<EOF
+mysql -u "$DB_USER" -p"$DB_PASS" -h "$DB_HOST" "$DB_NAME" <<EOF
 SELECT
     vl_book.id AS id,
     vl_book.title AS title,

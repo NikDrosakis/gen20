@@ -30,7 +30,7 @@ if [ "$ACTION" = "new" ]; then
     echo "Updating the database..."
     $QUERY="INSERT INTO $INTEGRATION_TABLE (system_id, status, name) VALUES (7, 1, '$SERVICE_NAME');"
     echo $QUERY
-    mysql -u "$DB_USER" -p"$DB_PASSWORD" -h "$DB_HOST" -D "$DB_NAME" -e $QUERY || { echo "Database update failed"; exit 1; }
+    mysql -u "$DB_USER" -p"$DB_PASS" -h "$DB_HOST" -D "$DB_NAME" -e $QUERY || { echo "Database update failed"; exit 1; }
 
     # Update the main FastAPI app with the new service integration
     echo "Updating main app..."
@@ -47,7 +47,7 @@ elif [ "$ACTION" = "delete" ]; then
 
     # Remove from the database (use correct credentials)
     echo "Removing from database..."
-    mysql -u "$DB_USER" -p"$DB_PASSWORD" -h "$DB_HOST" -D "$DB_NAME" -e "DELETE FROM $INTEGRATION_TABLE WHERE name='$SERVICE_NAME';" || { echo "Failed to remove service from database"; exit 1; }
+    mysql -u "$DB_USER" -p"$DB_PASS" -h "$DB_HOST" -D "$DB_NAME" -e "DELETE FROM $INTEGRATION_TABLE WHERE name='$SERVICE_NAME';" || { echo "Failed to remove service from database"; exit 1; }
 
     # Remove the lines from main.py
     echo "Updating main app..."

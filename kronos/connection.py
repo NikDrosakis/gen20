@@ -5,7 +5,7 @@ def get_db_connection():
     return mysql.connector.connect(
         host=settings.DB_HOST,
         user=settings.DB_USERNAME,
-        password=settings.DB_PASSWORD,
+        password=settings.DB_PASS,
         database=settings.DATABASE_VIVALIBRO,
         use_unicode=True,
         charset="utf8mb4",

@@ -12,16 +12,16 @@ process_changes() {
     local file="$3"
     echo "Processing change: $path $action $file" >> $GSROOT/log/widget_monitor_debug.log
     widget_name=$(basename "$(dirname "$path")")
-    widget_id=$(mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST -se "SELECT id FROM cubos WHERE name='$widget_name'" $DB_NAME)
+    widget_id=$(mysql -u $DB_USER -p$DB_PASS -h $DB_HOST -se "SELECT id FROM cubos WHERE name='$widget_name'" $DB_NAME)
     
     if [ -z "$widget_id" ]; then
-        mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST $DB_NAME <<EOF
+        mysql -u $DB_USER -p$DB_PASS -h $DB_HOST $DB_NAME <<EOF
         INSERT INTO widgets (name) VALUES ('$widget_name');
 EOF
-        widget_id=$(mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST -se "SELECT id FROM cubos WHERE name='$widget_name'" $DB_NAME)
+        widget_id=$(mysql -u $DB_USER -p$DB_PASS -h $DB_HOST -se "SELECT id FROM cubos WHERE name='$widget_name'" $DB_NAME)
     fi
     
-    mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST $DB_NAME <<EOF
+    mysql -u $DB_USER -p$DB_PASS -h $DB_HOST $DB_NAME <<EOF
     INSERT INTO cubo_actions (widget_id, file, action, timestamp) 
     VALUES ('$widget_id', '$file', '$action', NOW())
     ON DUPLICATE KEY UPDATE 

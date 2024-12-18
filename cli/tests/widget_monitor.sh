@@ -5,7 +5,7 @@ MONITOR_DIR="/var/www/gs/public/cubos"
 
 # Database credentials
 DB_USER="root"
-DB_PASSWORD="n130177!"
+DB_PASS="n130177!"
 DB_NAME="gen_admin"
 DB_HOST="localhost"
 
@@ -15,14 +15,14 @@ process_changes() {
     local file="$3"
     echo "Processing change: $path $action $file" >> /var/log/widget_monitor_debug.log
     widget_name=$(basename "$(dirname "$path")")
-    widget_id=$(mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST -se "SELECT id FROM cubos WHERE name='$widget_name'" $DB_NAME)
+    widget_id=$(mysql -u $DB_USER -p$DB_PASS -h $DB_HOST -se "SELECT id FROM cubos WHERE name='$widget_name'" $DB_NAME)
     if [ -z "$widget_id" ]; then
-        mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST $DB_NAME <<EOF
+        mysql -u $DB_USER -p$DB_PASS -h $DB_HOST $DB_NAME <<EOF
         INSERT INTO cubos (name) VALUES ('$widget_name');
 EOF
-        widget_id=$(mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST -se "SELECT id FROM cubos WHERE name='$widget_name'" $DB_NAME)
+        widget_id=$(mysql -u $DB_USER -p$DB_PASS -h $DB_HOST -se "SELECT id FROM cubos WHERE name='$widget_name'" $DB_NAME)
     fi
-    mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST $DB_NAME <<EOF
+    mysql -u $DB_USER -p$DB_PASS -h $DB_HOST $DB_NAME <<EOF
     INSERT INTO cubos_logs (widget_id, file, action, timestamp)
     VALUES ('$widget_id', '$file', '$action', NOW())
     ON DUPLICATE KEY UPDATE 

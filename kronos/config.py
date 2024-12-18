@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     DB_HOST: str
     DB_PORT: int
     DB_USERNAME: str
-    DB_PASSWORD: str
+    DB_PASS: str
     ENVIRONMENT: str
     LOG_LEVEL: str
     API_KEY: str

@@ -2,7 +2,7 @@
 
 # Database credentials
 DB_USER="root"
-DB_PASSWORD="n130177!"
+DB_PASS="n130177!"
 DB_NAME="gen_admin"
 DB_HOST="localhost"
 
@@ -20,7 +20,7 @@ process_widget() {
     local update_log_file="$widget_dir/update.log"
 
     # Check if the widget exists; if not, insert it
-    mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST $DB_NAME <<EOF
+    mysql -u $DB_USER -p$DB_PASS -h $DB_HOST $DB_NAME <<EOF
     INSERT INTO widgets (name, version, created) 
     SELECT '$widget_name', 0.01, NOW() 
     WHERE NOT EXISTS (SELECT 1 FROM widgets WHERE name='$widget_name');
@@ -64,7 +64,7 @@ done <<< "$modified_files"
         summary=$(echo "$modified_files" | xargs -I{} basename {} | tr '\n' ', ')
         summary=${summary::-2} # Remove the trailing comma and space
 
-        mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST $DB_NAME <<EOF
+        mysql -u $DB_USER -p$DB_PASS -h $DB_HOST $DB_NAME <<EOF
         INSERT INTO cubo_actions (widget_id, version, summary, modified) 
         VALUES (
             (SELECT id FROM widgets WHERE name='$widget_name'), 
@@ -75,7 +75,7 @@ done <<< "$modified_files"
 EOF
 
         # Update the widgets table with the new version and latest modification time
-        mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST $DB_NAME <<EOF
+        mysql -u $DB_USER -p$DB_PASS -h $DB_HOST $DB_NAME <<EOF
         UPDATE widgets 
         SET version='$new_version', modified='$latest_mod_time' 
         WHERE name='$widget_name';
@@ -88,10 +88,10 @@ find "$WIDGETS_DIR" -mindepth 1 -maxdepth 1 -type d | while read -r widget_dir; 
     widget_name=$(basename "$widget_dir")
 
     # Get the most recent modification time of any file in the widget's directory
-    last_update_time=$(mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST -se "SELECT modified FROM widgets WHERE name='$widget_name'" $DB_NAME)
+    last_update_time=$(mysql -u $DB_USER -p$DB_PASS -h $DB_HOST -se "SELECT modified FROM widgets WHERE name='$widget_name'" $DB_NAME)
 
     # Fetch the current version from the database
-    current_version=$(mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST -se "SELECT version FROM cubo_actions WHERE widget_id = (SELECT id FROM widgets WHERE name='$widget_name') ORDER BY modified DESC LIMIT 1;" $DB_NAME)
+    current_version=$(mysql -u $DB_USER -p$DB_PASS -h $DB_HOST -se "SELECT version FROM cubo_actions WHERE widget_id = (SELECT id FROM widgets WHERE name='$widget_name') ORDER BY modified DESC LIMIT 1;" $DB_NAME)
     
     # If there's no current version, start at 0.01
     if [ -z "$current_version" ]; then
