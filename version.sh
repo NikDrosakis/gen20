@@ -65,4 +65,4 @@ echo "Git pushed, Versioning completed successfully."
 #4 download new version of db to mysqldump with IF NOT EXIST WITHOUT ALTER setup/maria/gen_${NEW_VERSION}.sql
 DUMP_DIR="setup/maria/"
 SQL_FILE="${DUMP_DIR}/gen_${NEW_VERSION}.sql"
-mysqldump -u $DB_USER -p$DB_PASSWORD --no-set-names --skip-triggers --routines --create-options --if-exists $DB_NAME > $SQL_FILE
+mysqldump -u $DB_USER -p$DB_PASSWORD --no-set-names --skip-triggers --routines --create-options $DB_NAME > $SQL_FILE
