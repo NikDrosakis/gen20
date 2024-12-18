@@ -66,3 +66,10 @@ echo "Git pushed, Versioning completed successfully."
 DUMP_DIR="setup/maria/"
 SQL_FILE="${DUMP_DIR}/gen_${NEW_VERSION}.sql"
 mysqldump -u $DB_USER -p$DB_PASS --no-set-names --skip-triggers --routines --create-options $DB_NAME > $SQL_FILE
+
+if [ ! -e "$SQL_FILE" ] || [ ! -w "$SQL_FILE" ]; then
+    echo "File does not exist or is not writable: $SQL_FILE"
+    exit 1
+else
+    echo "File setup/maria/$SQL_FILE created"
+fi
