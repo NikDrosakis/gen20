@@ -7,7 +7,7 @@ use Symfony\Component\Yaml\Yaml;
 trait Cubo {
 
   protected function getLinks() {
-            return $this->db->fa("SELECT * FROM links WHERE linksgrpid=2 ORDER BY sort");
+            return $this->db->fa("SELECT * FROM links WHERE linksgrpid=1 ORDER BY sort");
     }
 
 protected function updateCuboImg($table = '',$current_name = '') {
@@ -317,8 +317,8 @@ protected function getUsers() {
     protected function getMaincubo() {
         return $this->db->fa("SELECT * from cubo order by name");
     }
-    protected function getMaincuboBypage(): bool|array {
-      $page=$this->page;
+    protected function getMaincuboBypage(string $page): bool|array {
+
       $list=[];
         $fetch = $this->db->fa("SELECT maincubo.area, cubo.name as cubo
         FROM maincubo

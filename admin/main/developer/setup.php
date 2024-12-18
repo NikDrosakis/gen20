@@ -80,10 +80,9 @@
 </script>
 <h3>Database Migrate Standardize (Tree)</h3>
 <?php
-$db = $_COOKIE['selected_db'];
-$table = $_COOKIE['selected_table'];
+$db = $_COOKIE['selected_db'] ?? "gen_".TEMPLATE;
+$table = $_COOKIE['selected_table'] ?? 'post';
 $dbtable = $db.'.'.$table;
-
 ?>
 <!---------DATABASE DROP DOWN--------------->
 <?=$this->drop($this->getMariaTree(),$dbtable,'getMariaTree',"listMariaTables")?>

@@ -1,9 +1,14 @@
 #!/bin/bash
-#1 PHP INTALLATION
+#1 PHP & MODULES INTALLATION
 #2 COMPOSER INSTALLATION
 #3 MARIA INSTALLATION
-#4 GENDB INSTALLATION
-#5 NGINX HOST INSTALLATION
+#4 GENDB MYSQL INSTALLATION
+#5 PUBLIC PHP OR REACT
+#6 DB MYSQL
+#7 ERMIS
+#8 VENUS
+#9 KRONOS
+#10 PERMISSIONS
 
 #1 Check for PHP Version > 8.0
 PHP_VERSION=$(php -v 2>/dev/null | grep -oP '^PHP \K[0-9]+\.[0-9]+')
@@ -13,7 +18,24 @@ if [[ -z "$PHP_VERSION" || $(echo "$PHP_VERSION < 8.0" | bc) -eq 1 ]]; then
     if [[ "$INSTALL_PHP" == "yes" ]]; then
         sudo apt update
         sudo apt install -y php8.3 php8.3-fpm php8.3-mysql
-        echo "PHP 8.3 installed successfully!"
+        sudo apt install -y \
+            php8.3-bz2 php8.3-calendar php8.3-core php8.3-ctype php8.3-curl php8.3-date \
+            php8.3-dom php8.3-exif php8.3-ffi php8.3-fileinfo php8.3-filter php8.3-ftp \
+            php8.3-gd php8.3-gettext php8.3-hash php8.3-iconv php8.3-igbinary php8.3-imagick \
+            php8.3-intl php8.3-json php8.3-libxml php8.3-mbstring php8.3-mcrypt php8.3-mongodb \
+            php8.3-mysqli php8.3-mysqlnd php8.3-openssl php8.3-pcntl php8.3-pcre php8.3-pdo \
+            php8.3-pdo-mysql php8.3-pdo-sqlite php8.3-phar php8.3-posix php8.3-random \
+            php8.3-readline php8.3-redis php8.3-reflection php8.3-session php8.3-shmop \
+            php8.3-simplexml php8.3-sockets php8.3-sodium php8.3-spl php8.3-sqlite3 php8.3-standard \
+            php8.3-sysvmsg php8.3-sysvsem php8.3-sysvshm php8.3-tokenizer php8.3-xml php8.3-xmlreader \
+            php8.3-xmlwriter php8.3-xsl php8.3-opcache php8.3-zip php8.3-zlib
+      sudo apt install -y php-pear php8.3-dev
+      sudo pecl install mongodb
+      sudo pecl install igbinary
+      sudo pecl install redis
+      sudo systemctl enable php8.3-fpm
+      sudo systemctl start php8.3-fpm
+        echo "PHP 8.3 & Modules installed successfully!"
     else
         echo "PHP 8.0+ is required. Exiting."
         exit 1
@@ -87,8 +109,6 @@ else
         fi
     fi
 fi
-
-
 
 #4 Nginx - Ask for the domain
 echo "Enter the domain name to configure the database (e.g., example.com):"
@@ -170,7 +190,7 @@ else
     exit 1
 fi
 
-# 6. Load settings SQL file
+#Load settings SQL file
 SETTINGS_SQL="setup/maria/gen_settings_048.sql"
 if [ -f "$SETTINGS_SQL" ]; then
     echo "Loading settings SQL file '$SETTINGS_SQL' into database '$DB_NAME'..."
@@ -186,4 +206,137 @@ else
     exit 1
 fi
 
+#6. PUBLIC Choose system php|react Create public filesystem public/${DOMAIN}
+# if php just insert this <?php
+                          #define('DOMAIN',$_SERVER['SERVER_NAME']);
+                          #$servernameArray=explode('.',${DOMAIN});
+                          #define('TEMPLATE', 'vivalibrocom');
+                          #define('ROOT', '${CURRENT_DIR}');
+                          #define('ADMIN_ROOT', ROOT.'admin/');
+                          #require '/var/www/gs/vendor/autoload.php';
+                          #use Core\Gen;
+                          #$gaia = new Gen();
+                          #?>
+# if react just insert this <?php
+# cd public && yarn create react-app ${DOMAIN}
+echo "Choose system (php/react): "
+read SYSTEM
+if [[ "$SYSTEM" == "php" ]]; then
+    mkdir -p "public/${DOMAIN}"
+    # PHP setup: Insert PHP code into the public/${DOMAIN} folder
+    echo "<?php
+    define('DOMAIN', \$_SERVER['SERVER_NAME']);
+    \$servernameArray = explode('.', \${DOMAIN});
+    define('TEMPLATE', 'vivalibrocom');
+    define('ROOT', '${CURRENT_DIR}');
+    define('ADMIN_ROOT', ROOT . 'admin/');
+    require '/var/www/gs/vendor/autoload.php';
+    use Core\Gen;
+    \$gaia = new Gen();
+    ?>" > "public/${DOMAIN}/index.php"
+    echo "${DOMAIN} powered by Gen20, completed for ${DOMAIN} in 'public/${DOMAIN}/index.php'."
+
+elif [[ "$SYSTEM" == "react" ]]; then
+  NODE_VERSION=$(node -v 2>/dev/null)
+  REQUIRED_NODE_VERSION="v20"
+  # Function to compare Node.js versions
+  compare_versions() {
+      printf '%s\n%s' "$1" "$2" | sort -V | head -n1
+  }
+  if [[ "$SYSTEM" == "react" ]]; then
+      # Check if Node.js version is greater than or equal to 20.x
+      if [[ -z "$NODE_VERSION" || "$(compare_versions "$NODE_VERSION" "$REQUIRED_NODE_VERSION")" != "$REQUIRED_NODE_VERSION" ]]; then
+          echo "Node.js version 20.x or higher is required. Installing Node.js and Yarn..."
+
+          # Install Node.js (if not installed or if the version is less than 20)
+          curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+
+          # Install Yarn
+          npm install -g yarn
+
+          echo "Node.js and Yarn installed successfully."
+      else
+          echo "Node.js version $NODE_VERSION is sufficient."
+      fi
+
+    # React setup: Create a new React app in the public/${DOMAIN} folder
+    cd "public" && yarn create react-app "${DOMAIN}"
+    echo "React app setup completed for ${DOMAIN} in 'public/${DOMAIN}'."
+
+else
+    echo "Invalid system choice. Please choose 'php' or 'react'."
+    exit 1
+fi
 echo "Presetup finished successfully"
+
+#7: ERMIS Install Ermis Node.js dependencies if node_modules doesn't exist
+if [ ! -d "ermis/node_modules" ]; then
+    echo "Ermis Node.js dependencies not found. Installing..."
+    cd ermis && yarn install
+    echo "Ermis Node.js dependencies installed."
+    # Start Ermis using nodemon
+    nodemon start
+else
+    echo "Ermis Node.js dependencies already installed."
+fi
+
+#8: VENUS Install Venus Node.js dependencies if node_modules doesn't exist
+if [ ! -d "venus/node_modules" ]; then
+    echo "Venus Node.js dependencies not found. Installing..."
+    cd venus && yarn install
+    echo "Venus Node.js dependencies installed."
+else
+    echo "Venus Node.js dependencies already installed."
+fi
+
+#9: Install Kronos Python virtualenv if newenv doesn't exist
+if [ ! -d "kronos/newenv" ]; then
+    echo "Kronos virtual environment not found. Creating new virtualenv and installing dependencies..."
+    cd kronos
+    if ! command -v python3 &>/dev/null; then
+        echo "Python 3 is not installed. Please install Python 3."
+        exit 1
+    else
+        echo "Python 3 is installed."
+    fi
+    # Check if venv is installed (for Python 3)
+    if ! python3 -m venv --help &>/dev/null; then
+        echo "venv is not installed. Installing python3-venv..."
+        sudo apt update
+        sudo apt install -y python3-venv
+        echo "venv installed successfully."
+    else
+        echo "venv is already installed."
+    fi
+
+    python3 -m venv newenv
+    source newenv/bin/activate
+    pip install -r requirements.txt
+    echo "Kronos virtual environment set up and dependencies installed."
+    echo "Starting Kronos with Uvicorn..."
+    cd kronos
+    source newenv/bin/activate
+    nohup uvicorn main:app --host 0.0.0.0 --port 3006 --reload &
+    deactivate
+    cd ${CURRENT_DIR}
+else
+    echo "Kronos virtual environment already exists."
+fi
+
+#10 Permissions find nginx user Directories to 755 (rwxr-xr-x) Files to 644 (rw-r--r--)
+find ${CURRENT_DIR} -type d -exec chmod 755 {} \;
+find ${CURRENT_DIR} -type f -exec chmod 644 {} \;
+# Extract user from /etc/nginx/nginx.conf
+USER=$(grep -oP '^user\s+\K\w+' /etc/nginx/nginx.conf)
+
+# Check if the user was found
+if [ -z "$USER" ]; then
+    echo "Error: Could not find Nginx user in /etc/nginx/nginx.conf"
+    exit 1
+fi
+# Set the correct ownership for the directory and its contents
+sudo chown -R "$USER:$USER" "${CURRENT_DIR}"
+echo "Permissions and ownership set for ${CURRENT_DIR} using user $USER."
+
+echo "Presetup finished successfully."

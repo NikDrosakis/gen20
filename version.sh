@@ -1,7 +1,7 @@
 #!/bin/bash
 # Load environment variables
-if [ -f ./cli/configs/.env ]; then
-    export $(grep -v '^#' ./cli/configs/.env | xargs)
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
 fi
  #debian12 shell script versioning.sh with two params  $1 for commit message to  # repository  https://github.com/NikDrosakis/GEN20.git
  # with GITHUB_ACCESS_TOKEN=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
@@ -32,8 +32,6 @@ fi
 # Parameters
 COMMIT_MESSAGE=$1
 
-
-
 # Navigate to the local repository
 cd "$GSROOT" || exit 1
 
@@ -51,17 +49,17 @@ LATEST_COMMIT_MESSAGE=$(git log -1 --pretty=%B)
 TOTAL_CHANGES=$(git rev-list --count HEAD)
 
 # Commit and tag the new version
+git tag "$NEW_VERSION"
 git add .
 git commit -m "$COMMIT_MESSAGE"
-git tag "$NEW_VERSION"
 
 # Push changes and tag to GitHub
-git push origin main
-git push origin "$NEW_VERSION"
+git push origin main --set-upstream origin main
+#git push origin "$NEW_VERSION"
 
 # Step 3: Insert the new version into the database
 MYSQL_QUERY="INSERT INTO versions (version_tag, title, summary, total_changes) VALUES ($NEW_VERSION, '$COMMIT_MESSAGE', '$LATEST_COMMIT_MESSAGE', $TOTAL_CHANGES);"
 mysql -u$DB_USER -p$DB_PASS -h$DB_HOST -D$DB_NAME -e "$MYSQL_QUERY"
 
-echo "Versioning completed successfully."
+echo "Git pushed, Versioning completed successfully."
 

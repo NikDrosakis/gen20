@@ -333,7 +333,7 @@ $cols = $this->getInputType($table); // @filemetacore.features Get column metada
 
             // @filemetacore.features Render label for readonly fields
             } elseif ($inputType === 'label') {
-                $tableHtml .= htmlspecialchars($row[$colName]);
+                $tableHtml .= is_string($value) ? htmlspecialchars($value, ENT_QUOTES, 'UTF-8') : '';
 
             } elseif ($inputType === 'button') {
                 $tableHtml .= $this->renderButtonField($colData['comment'],$row[$colName]);
@@ -412,10 +412,13 @@ protected function formFilters($colData) {
                         $rowId = explode('.', $rowtable)[1];
                         $link=$this->page==$tableName ? $tableName.'?id=' . $row[$rowId] : $this->page.'/'.$tableName.'?id=' . $row[$rowId];
                         $tableHtml .= '<a href="/admin/' . $link . '"><span class="glyphicon glyphicon-link"></span></a> ';
-                        $options=$this->getSelectOptions($colData['comment'],$row[$colName]);
-                        return  $this->renderSelectField($colName, $row[$colName], $options);
-
+                        $options = $this->getSelectOptions($colData['comment'], $row[$colName]);
+                        if($options){
+                        return $this->renderSelectField($colName, $row[$colName], $options);
+                        }
+                        return '';
 }
+
 // @filemetacore.description form search bar
 protected function formSearch($table): string {
     $params = [];
@@ -636,7 +639,7 @@ protected function renderFileFormList(array $list, string $title = "File List"):
 // @filemetacore.features Helper to render select dropdowns
 #$this->getMariaTree(),$domain,'getMariaTree',"listMariaTables","listMariaTables"
 #$this->drop($this->listMariaTables($domain),'','listMariaTables',"buildTable")
-protected function renderSelectField($fieldName, $selectedValue, array $options): string {
+protected function renderSelectField($fieldName, $selectedValue, array $options=[]): string {
         $select= "<select class='gs-select' onchange='gs.form.updateRow(this, \"$this->table\")' name='$fieldName' id='$fieldName$this->formid'><option value=0>Select</option>";
                   foreach ($options as $key => $label) {
                      $selected = ($key == $selectedValue) ? 'selected="selected"' : '';
@@ -666,7 +669,7 @@ protected function renderButtonField($comment,$value): string {
 
 
 // @filemetacore.features Function to handle select dropdown options from comment or subtable
-protected function getSelectOptions(string $comment): array {
+protected function getSelectOptions(string $comment): array|false {
     // @filemetacore.features If selectG or selectjoin, parse and fetch options dynamically from a subtable
     if (strpos($comment, 'selectG') !== false) {
         // @filemetacore.features Handle logic to fetch dynamic options from a table or predefined array

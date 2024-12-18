@@ -37,7 +37,7 @@ echo "Collecting logs..."
 # Your log management commands here
 EOL
 
-cat << 'EOL' > $ROOT_DIR/bin/versioning.sh
+cat << 'EOL' > $ROOT_DIR/bin/version.sh
 #!/bin/bash
 # Versioning management script
 echo "Managing versioning..."

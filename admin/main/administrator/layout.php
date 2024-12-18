@@ -90,10 +90,10 @@ background: aliceblue;
         <?php
         //$pages=read_folder($this->MAINURI);
         $pages = $this->db->fa("SELECT * FROM main");
-        $selectpageid=!empty($_COOKIE['page_selected']) ? (int)$_COOKIE['page_selected'] : 11;
+        $selectpageid=!empty($_COOKIE['page_selected']) ? (int)$_COOKIE['page_selected'] : 1;
         for($i=0;$i<count($pages);$i++){
-            //$page=explode('.',$pagefile)[0];
-            ?>
+        $selectedPageName=$selectpageid==$pages[$i]['id'] ? $pages[$i]['name'] : '';
+        ?>
             <option value="<?=$pages[$i]['id']?>" <?=$selectpageid==$pages[$i]['id'] ? "selected='selected'":""?>><?=$pages[$i]['name']?></option>
         <?php } ?>
     </select>
@@ -104,7 +104,6 @@ background: aliceblue;
         <?php
         $cubos= $this->db->fa("SELECT * from cubo order by name ASC LIMIT 10");
         for($i=0;$i<count($cubos);$i++){
-            //$wid=explode('.',basename($wid))[0];
             ?>
             <div style="cursor:pointer" class="draggable list-group-item global nested-<?=$cubos[$i]['name']?> wid" id="<?=$cubos[$i]['id']?>">
                 <div class="widheader" cubo_id="<?=$cubos[$i]['id']?>">
@@ -120,6 +119,10 @@ background: aliceblue;
     </div>
 
 <!-- WIDGETIZED AREAS -->
+<?php         $pc = $this->getMaincuboBypage($selectedPageName);
+xecho($pc);
+
+//pagecubo ?>
 <div id="wid" class="list-group-item nested-1">
         <!--Header(H)-->
         <div id="h">
@@ -137,6 +140,14 @@ background: aliceblue;
         <div id="m_container"  >
          <label>Main M</label>
         <div id="m" class="droppable">
+            <?php
+         //   foreach ($pc['m'] as $mcubos) {
+           // foreach ($mcubos as $cubo) {
+            //echo '<div class="widheader" cubo_id="1" id="' . $cubo . '" class="row archive-content">';
+            //echo $cubo;
+            //echo '</div>';
+             //}}
+           ?>
 <!---			<div id="m1" class="droppable">M1</div>----->
         </div>
         </div>
@@ -297,7 +308,7 @@ async function restoreState(layoutpage, cubocont, dropareas) {
             LEFT JOIN main ON main.id = maincubo.mainid
             LEFT JOIN cubo ON cubo.id = maincubo.cuboid
             WHERE main.id = ?`, [selectedPage]);
-
+console.log(getpage);
         const state = getpage.data || [];
 
         // Clear all droppable areas

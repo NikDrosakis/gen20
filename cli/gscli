@@ -81,9 +81,9 @@ read_options() {
                fi
                ;;
         2)
-            echo "Running versioning.sh..."
-            if [ -x "$GSROOTCLI/bin/versioning.sh" ]; then
-                $GSROOTCLI/bin/versioning.sh
+            echo "Running version.sh..."
+            if [ -x "$GSROOTCLI/bin/version.sh" ]; then
+                $GSROOTCLI/bin/version.sh
             else
                 echo "Error: versioning.sh not found or not executable"
             fi

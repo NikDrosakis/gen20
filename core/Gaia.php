@@ -92,8 +92,7 @@ abstract class Gaia {
 		//$this->redis->set("is",$this->G['is']);
 		//}
         $this->G['usergrps'] = $this->db->fl(["id", "name"], "usergrp");
-        $this->G['globs_tags'] = array_values(array_unique($this->db->fl('tag', 'globs')));
-
+       $this->G['globs_tags'] = $this->getGlobs();
 //all $this->G to local variables
         foreach ($this->G as $gkey => $gval) {
 		if (property_exists($this, $gkey)) {
@@ -439,5 +438,19 @@ Handle XHR request.
                 }
             });
     }
+
+protected function getGlobs(){
+           // Fetch all tags as an array
+           $tagsList = $this->db->fl('tag', 'globs');
+           // Initialize an empty array to collect split tags
+           $allTags = [];
+           // Loop through each row and split by comma
+           foreach ($tagsList as $tags) {
+               $splitTags = explode(',', $tags); // Split tags by comma
+               $allTags = array_merge($allTags, array_map('trim', $splitTags)); // Trim and merge into the collection
+           }
+           // Remove duplicates and reindex the array
+           return array_values(array_unique($allTags));
+       }
 
 }

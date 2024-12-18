@@ -43,7 +43,7 @@ use Cubo;
 
      echo  $this->renderPublicHead();
       try {
-          $this->G['PAGECUBO'] = $this->getMaincuboBypage();
+          $this->G['PAGECUBO'] = $this->getMaincuboBypage($this->page);
 		} catch (Exception $e) {
           // Handle exception and set error in buffer
           $this->catch_errors();
@@ -92,7 +92,7 @@ if (!$has_not_sl) {
     foreach ($sl as $cubo) {
         echo '<div id="' . $cubo . '" class="cubo">';
         include CUBO_ROOT.$cubo."/public.php";
-        echo '</div>';  // Correctly closing div
+        echo '</div>';
     }}
     echo '</div>';
 }
@@ -101,17 +101,15 @@ if (!$has_not_sl) {
 echo '<div id="m" style="width:' . $main_width . '%">';
 
     if (!$has_not_m) {
-
       foreach ($pc['m'] as $cubo) {
            echo '<div id="' . $cubo . '" class="row archive-content">';
               //include CUBO_ROOT.$cubo."/public.php";
               $main= $this->db->f("select * from main where name=?",[$this->page]);
               echo  $this->buildTemplateArchive($main);
-              echo '</div>';  // Correctly closing div
+              echo '</div>';
       }
   }elseif(!empty($this->G['PAGECUBO'])){
                       $pageTemplate= $this->db->f("select * from main where name=?",[$this->page]);
-                   //   xecho($pageTemplate);
  }else{
      $template= $this->db->f("select template_read from main where name=?",['404'])['template_read'];
      echo $this->renderTemplatePug($template);
