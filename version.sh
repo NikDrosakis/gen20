@@ -64,12 +64,14 @@ echo "Git pushed, Versioning completed successfully."
 
 #4 download new version of db to mysqldump with IF NOT EXIST WITHOUT ALTER setup/maria/gen_${NEW_VERSION}.sql
 DUMP_DIR="setup/maria/"
-SQL_FILE="${DUMP_DIR}/gen_${NEW_VERSION}.sql"
-mysqldump -u $DB_USER -p$DB_PASS --no-set-names --skip-triggers --routines --create-options $DB_NAME > $SQL_FILE
+SQL_FILE="${DUMP_DIR}/gen_public_${NEW_VERSION}.sql"
+ADMIN_SQL_FILE="${DUMP_DIR}/gen_admin_${NEW_VERSION}.sql"
+mysqldump -u $DB_USER -p$DB_PASS --no-data --triggers --routines --events --create-options --no-set-names --add-drop-table=false $DB_NAME > $SQL_FILE
+mysqldump -u $DB_USER -p$DB_PASS --no-set-names --triggers --routines --events --create-options --add-drop-table=false $DB_NAME > $ADMIN_SQL_FILE
 
 if [ ! -e "$SQL_FILE" ] || [ ! -w "$SQL_FILE" ]; then
     echo "File does not exist or is not writable: $SQL_FILE"
     exit 1
 else
-    echo "File setup/maria/$SQL_FILE created"
+    echo "SQL presetup file $SQL_FILE created"
 fi

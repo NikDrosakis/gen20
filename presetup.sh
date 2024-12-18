@@ -10,6 +10,11 @@
 #9 KRONOS
 #10 PERMISSIONS
 
+#get .env vars
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
+fi
+
 #1 Check for PHP Version > 8.0
 PHP_VERSION=$(php -v 2>/dev/null | grep -oP '^PHP \K[0-9]+\.[0-9]+')
 if [[ -z "$PHP_VERSION" || $(echo "$PHP_VERSION < 8.0" | bc) -eq 1 ]]; then
@@ -170,25 +175,30 @@ echo "Setting up the database for $DOMAIN..."
 # Convert domain name to an underscore-friendly database name
 DB_NAME="gen_${DOMAIN//./}"
 
-# Create the database if it does not exist
+# Create the PUBLIC database if it does not exist
 echo "Creating database '$DB_NAME' (if not exists)..."
 mysql -uroot -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};" || {
     echo "Database creation failed. Exiting.";
     exit 1;
 }
+# Create the ADMIN database if it does not exist
+mysql -uroot -e "CREATE DATABASE IF NOT EXISTS gen_admin;" || {
+    echo "Database creation failed. Exiting.";
+    exit 1;
+}
 
-# Reload the SQL schema
-echo "Updating schema SQL file 'setup/maria/gen_048.sql' into database '$DB_NAME'..."
-if [ -f "setup/maria/gen_048.sql" ]; then
-    mysql -uroot -D "${DB_NAME}" < setup/maria/gen_048.sql || {
-        echo "Failed to load/update core SQL file. Exiting.";
-        exit 1;
-    }
-    echo "Database '$DB_NAME' schema updated successfully!"
-else
-    echo "Error: SQL file 'setup/maria/gen_048.sql' not found."
-    exit 1
-fi
+# Install SQL schema from admin & public
+LATEST_ADMIN_FILE=$(ls setup/maria/gen_admin_*.sql | sort -t'_' -k2,2V | tail -n 1)
+echo "Updating schema SQL file 'setup/maria/${LATEST_ADMIN_FILE}' into database gen_admin..."
+mysql -uroot -D gen_admin < {LATEST_ADMIN_FILE}
+echo "Database gen_admin schema updated successfully!"
+
+CURRENT_VERSION=$(mysql -u$DB_USER -p$DB_PASS -D$DB_NAME -se "SELECT MAX(version_tag) + 0.001 FROM versions")
+LATEST_PUBLIC_FILE=$(ls setup/maria/gen_public_*.sql | sort -t'_' -k2,2V | tail -n 1)
+echo "Updating schema SQL file '${LATEST_PUBLIC_FILE}' into database '$DB_NAME'..."
+mysql -uroot -D "${DB_NAME}" < ${LATEST_PUBLIC_FILE}
+echo "Database '$DB_NAME' schema updated successfully!"
+
 
 #Load settings SQL file
 SETTINGS_SQL="setup/maria/gen_settings_048.sql"

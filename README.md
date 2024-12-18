@@ -3,17 +3,18 @@
 ## Installation of Gen20 in linux console (existing domain) 
 Already running your domain with nginx, follow the steps:
 ### Step 1
-Download and install git & run presetup with: 
-```sudo apt install git && git clone https://github.com/NikDrosakis/gen20.git && cd gen20 && bash presetup.sh``` 
+Download and install git 
+```sudo apt install git && git clone https://github.com/NikDrosakis/gen20.git && cd gen20``` 
 
 ### Step 2
+Set .env variables for database and user access 
+
+### Step 3
+Run presetup with: 
+```bash presetup.sh``` 
+
+### Step 4
 At the Browser enter to the url  [your_domain]/admin
-
-Step 2
-In the browser open [domain]/admin
-
-
-
 
 ## Introduction
 The purpose of this system is to develop smart applications that harness the power of AI and modern web technologies to enhance mental and scientific knowledge. The goal is to utilize the vast resources available online while integrating AI capabilities to create useful, scalable applications. These tools aim to improve the way people interact with information, providing smarter, faster, and more insightful solutions.
