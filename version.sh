@@ -37,11 +37,10 @@ NEW_VERSION=$(mysql -u$DB_USER -p$DB_PASS -D$DB_NAME -se "SELECT MAX(version_tag
 echo ${NEW_VERSION}
 
 # Check if NEW_VERSION is empty or not a number
-if ! [[ "$NEW_VERSION" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+if ! [[ "$NEW_VERSION" =~ ^[0-9]+(\.[0-9]+){1,2}$ ]]; then
     echo "Failed to get the new version number. Exiting."
     exit 1
 fi
-
 
 #2: Get the latest commit summary and total changes
 LATEST_COMMIT_MESSAGE=$(git log -1 --pretty=%B)
