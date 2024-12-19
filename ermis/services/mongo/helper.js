@@ -1,14 +1,15 @@
 const mongo = require('mongodb');
 const MongoClient = mongo.MongoClient;
+require('dotenv').config();
 const fun = require('./functions');
 
-module.exports = function(params, config) {
+module.exports = function(params) {
     let options = {};
 
     async function call() {
         let client;
         try {
-            client = await MongoClient.connect(config.mongoconnect);
+            client = await MongoClient.connect(process.env.MONGOCONNECT);
             const db = client.db();
             const collection = db.collection(params.key);
             params.q = params.q || {};

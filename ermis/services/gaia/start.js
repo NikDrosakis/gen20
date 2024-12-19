@@ -1,16 +1,16 @@
     // api.js
-const express = require('express'),fun=require("./functions"),path = require('path'),csv = require("csv-parser");
+const express = require('express'),fs = require("fs"), path = require('path'),csv = require("csv-parser");
+require('dotenv').config();
+const ROOT = process.env.ROOT || path.resolve(__dirname);
 const router = express.Router();
 const multer = require('multer');
-const fs = require("fs");
 const mysql = require('mysql2/promise');
-const config = require("../../config.json");
 // Import broadcast function
 const { broadcastMessage } = require('../../ws');
 
 function searchCSV(criteria, limit, offset, callback) {
     const results = [];
-    fs.createReadStream('/var/www/gs/public/vivalibro.com/store/dataset1.csv')
+    fs.createReadStream(ROOT+'public/vivalibro.com/store/dataset1.csv')
         .pipe(csv({ separator: ';' }))
         .on('data', (row) => {
             let match = true;
@@ -59,7 +59,7 @@ router.get('/:type/:col', async (req, res, next) => {
             res.status(200).json(data);
         });
     } else {
-        const ma = require("./dbs/maria")(req.params, config, fun);
+        const ma = require("./dbs/maria")(req.params);
         ma[type](function (data) {
             if (type == 'lookup') {
                 const newarray = [];
@@ -82,7 +82,7 @@ router.get('/:type/:col', async (req, res, next) => {
 // Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, '/var/www/gs/public/vivalibro.com/media');
+        cb(null, ROOT+'public/vivalibro.com/media');
     },
     name: (req, file, cb) => {
         const uniqueName = path.basename(file.originalname);
@@ -150,7 +150,7 @@ router.post('/:type', async (req, res) => {
     const type = req.params.type || '';
 
     req.body.type = type;
-    const ma = require("./dbs/maria")(req.body, config, fun);
+    const ma = require("./dbs/maria")(req.body);
     ma[type](function (data) {
         if (type === 'upload' || type === 'bookedit' || type === 'newbook' || type === 'bookuser' || type === 'signup') {
             res.json(data);
@@ -183,7 +183,7 @@ router.post('/:type/:col', async (req, res) => {
 
     req.params.q = req.body.q;
     req.params.body = req.body;
-    const ma = require("./dbs/maria")(req.params, config, fun);
+    const ma = require("./dbs/maria")(req.params);
     ma[type](function (data) {
         const r = data.affectedRows == 1 ? "OK" : "NO";
         res.status(200).json(r);

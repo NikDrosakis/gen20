@@ -6,12 +6,12 @@ use DOMDocument;
 abstract class Gaia {
  use Tree;
 	 protected $db;
-	 protected $dbm;
 	 protected $admin;
      protected $mon;
+	protected $redis;
+
 	 protected $gsolr;
 	 protected $resource;
-	protected $redis;
 	protected $dom;
     protected $metadata= [];
 	protected $parsedown;
@@ -67,16 +67,8 @@ abstract class Gaia {
          * START MARIADB in ABSTRACTED GAIA
          *****/
          //xecho(TEMPLATE);
-         //maria template db instantiate
-        $this->db = new Maria("gen_".TEMPLATE);
-        //admin template instantiate
-        $this->admin = new Maria('gen_admin');
-      //mongo db instantiate
-        $this->mon = new Mon('vox');
-        //solr instantiate
-       // $this->gsolr = new GSolr('solr_vivalibro');
-        //redis instantiate
-        $this->redis=new Gredis("1");
+        $this->instantiateDBs();
+
 
         $this->G['loggedin'] = isset($_COOKIE['GSID']) && $_COOKIE['GSGRP'] > 1;
         $this->G['me'] = $_COOKIE['GSID'];
@@ -88,7 +80,7 @@ abstract class Gaia {
         }
 		//$this->G['is'] = $this->redis->get("is");
 		//if(!$this->G['is']){        
-        $this->G['is'] = $this->db->flist("SELECT name, val from globs");
+        $this->G['is'] = $this->admin->flist("SELECT name, val from globs");
 		//$this->redis->set("is",$this->G['is']);
 		//}
         $this->G['usergrps'] = $this->db->fl(["id", "name"], "usergrp");
@@ -113,6 +105,16 @@ abstract class Gaia {
     }
 	abstract protected function handleRequest();
 
+protected function instantiateDBs() {
+    $this->db = new Maria('gen_' . TEMPLATE);
+    $this->admin = new Maria('gen_admin');
+          //mongo db instantiate
+            $this->mon = new Mon('vox');
+        //solr instantiate
+       // $this->gsolr = new GSolr('solr_vivalibro');
+        //redis instantiate
+        $this->redis=new Gredis("1");
+}
     protected function isCuboRequest(): bool {
         return $this->SYSTEM=== 'cubos';
     }
@@ -441,7 +443,7 @@ Handle XHR request.
 
 protected function getGlobs(){
            // Fetch all tags as an array
-           $tagsList = $this->db->fl('tag', 'globs');
+           $tagsList = $this->admin->fl('tag', 'globs');
            // Initialize an empty array to collect split tags
            $allTags = [];
            // Loop through each row and split by comma

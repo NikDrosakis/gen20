@@ -113,10 +113,7 @@
     </style>
 <div id="output">
     <?php
-    $cubo=$this->db->f("SELECT id,query from cubo where name=?",["journal"]);
-
-    //$query= json_decode($cubo['query'],true);
-    $templates= $this->db->flist("select name,template from cubo_template where cuboid=?",[$cubo['id']]);
+    $cubo=$this->db->f("SELECT id,query,template from cubo where name=?",["journal"]);
 
    // echo $this->buildTemplateArchive($main);
    $posts = $this->db->fa("select post.* from post LEFT JOIN postgrp on postgrp.id=post.postgrpid where postgrp.name=?",['journal']);

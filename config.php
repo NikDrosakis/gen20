@@ -90,7 +90,7 @@ $this->G= array(
     'langprefix'=>isset($_GET['lang']) && $_GET['lang']!='en' ? $_GET['lang'] : (!empty($_COOKIE['lang']) ? $_COOKIE['lang']: ''),
     'APPSROOT'=> SITE_ROOT."apps/",
     'APPSPATH'=> SITE_URL."apps/",
-    'globs_types'=>array(0=>'text',1=>'img',2=>'html',3=>'boolean',4=>'integer',5=>'decimal2',6=>'textarea',7=>'url',8=>'color',9=>'read',10=>'json',11=>'code'),
+    'globs_types'=>array(0=>'text',1=>'img',2=>'html',3=>'boolean',4=>'integer',5=>'decimal',6=>'textarea',7=>'url',8=>'color',9=>'read',10=>'json',11=>'code'),
 //preserver uris array 2nd level SITE_URL/[uri]
 
     'CUBO_ROOT'=> CUBO_ROOT,

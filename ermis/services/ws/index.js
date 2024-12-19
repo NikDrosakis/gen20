@@ -4,8 +4,8 @@ const Maria = require('../../core/Maria');
 const config = require("../../config.json");
 const uaParser = require('ua-parser-js'),fun=require("../gaia/functions");
 const fs = require('fs');
-
-fs.watch('/var/www/gs/core', (eventType, filename) => {
+const ROOT = process.env.ROOT || path.resolve(__dirname);
+fs.watch(ROOT+'core', (eventType, filename) => {
     if (filename) {
         console.log(`${filename} file changed: ${eventType}`);
         broadcastMessage({ type: 'reload' }); // Notify all clients to reload

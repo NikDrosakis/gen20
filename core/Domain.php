@@ -702,7 +702,7 @@ protected function setupDomain($jsonsetup,$url){
 			system("chmod -R 777 $dom_folder.tar.bz2");
 
 			//update version database
-			$updateVersion = $this->db($domainame)->q("UPDATE globs SET en=? WHERE name=?", array($replica, 'domain-version'));
+			$updateVersion = $this->admin->q("UPDATE globs SET val=? WHERE name=?", array($replica, 'domain-version'));
 			if (!$updateVersion) {return $this->error[2];}else{return 'yes';}
 		} else {
 			return $this->error[1];

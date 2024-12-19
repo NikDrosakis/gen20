@@ -1,8 +1,10 @@
 version: '3.9'
 
 services:
+
   core:
     build: ./core
+
   cubos:
     build: ./cubos
   vivalibro:
@@ -35,8 +37,8 @@ services:
       - api
       - redis
     volumes:
-      - ./admin:/var/www/html
-      - ./core:/var/www/core
+      - ./admin:/var/www/gs/admin
+      - ./core:/var/www/gs/core
   api:
     build: ./apiv1
     ports:
@@ -44,8 +46,8 @@ services:
     depends_on:
       - mariadb
     volumes:
-      - ./apiv1:/var/www/html
-      - ./core:/var/www/html/core
+      - ./apiv1:/var/www/gs/apiv1
+      - ./core:/var/www/gs/core
 
   ermis:
     build: ./ermis

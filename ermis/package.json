@@ -32,7 +32,7 @@
     "cors": "^2.8.5",
     "csv-parser": "^3.0.0",
     "dhtmlx-gantt": "^8.0.10",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.4.7",
     "express": "^4.19.2",
     "huggingface": "^1.4.0",
     "ibm-cloud-sdk-core": "^5.0.2",

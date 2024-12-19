@@ -23,7 +23,7 @@ func NewMaria(dsn string) (*Maria, error) {
 // Check if a specific entry exists
 func (m *Maria) Is(name string) (string, error) {
 	var en string
-	err := m.db.QueryRow("SELECT en FROM globs WHERE name = ?", name).Scan(&en)
+	err := m.admin.QueryRow("SELECT val FROM globs WHERE name = ?", name).Scan(&en)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return "", nil

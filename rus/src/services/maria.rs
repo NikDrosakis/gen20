@@ -12,7 +12,7 @@ impl Maria {
     }
 
     async fn is(&self, name: &str) -> Result<Option<String>, Error> {
-        let result: Option<(String,)> = query_as("SELECT en FROM globs WHERE name = ?")
+        let result: Option<(String,)> = query_as("SELECT val FROM globs WHERE name = ?")
             .fetch_one(self.pool.get_ref()) // Access pool using self.pool
             .await
             .expect("Query failed");

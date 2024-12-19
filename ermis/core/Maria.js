@@ -2,13 +2,18 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
+
 class Maria {
-    constructor(database) {
+    constructor(database = process.env.MARIA) {  //OR MARIADBMIN
         const config = {
-            host: process.env.MARIA_HOST,
-            user: process.env.MARIA_USER,
-            password: process.env.MARIA_PASS,
-            database: database
+            host: process.env.MARIAHOST,
+            user: process.env.MARIAUSER,
+            password: process.env.MARIAPASS,
+            database: database,
+            connectionLimit: 10,
+            waitForConnections: true,
+            queueLimit: 0,
+            multipleStatements: true
         };
         this.pool = mysql.createPool(config); // Create a connection pool
     }
@@ -46,13 +51,18 @@ class Maria {
         }
     }
 
+    // General query method for FETCHING MULTIPLE CONTENT
+    async fetch(query, params = []) {
+        const [rows] = await this.pool.query(query, params);
+        return rows && rows.length > 0 ? rows : false; // Return rows or false
+    }
+
     // General query method for INSERT, UPDATE, DELETE
     async q(query, params = []) {
         const queryType = query.trim().split(' ')[0].toUpperCase(); // Get the first word of the query
         if (!['UPDATE', 'INSERT', 'DELETE'].includes(queryType)) {
             return false;
         }
-
         const [result] = await this.pool.query(query, params);
         return result.affectedRows > 0; // Return true if rows affected
     }

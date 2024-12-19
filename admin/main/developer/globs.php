@@ -1,7 +1,7 @@
 <button id="newGlobalBtn" class="button">+</button>
 <div id="newglobal"></div>
 
-<?php  $globlist=$this->db->fl(array("tag","id"),"globs");  ?>
+<?php  $globlist=$this->admin->fl(array("tag","id"),"globs");  ?>
 
 
 <div class="table-container">

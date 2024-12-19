@@ -38,21 +38,7 @@ TO HEAD CSS
 */
 
 class Admin extends Gaia {
-use Head;
-use Ermis;
-use Lang;
-use Tree;
-use Form;
-use Domain;
-use Kronos;
-use GSocket;
-use Resource;
-use Template;
-use Bundle;
-use Media;
-use Filemeta;
-use My;
-use Cubo;
+use Head, Ermis, Lang, Tree, Form, Domain, Kronos, GSocket, Resource, Template, Bundle, Media, Filemeta, My, Cubo;
 
 protected $database;
 protected $layout_selected;
@@ -71,9 +57,11 @@ protected $admin_sub;
 protected $admin_page;
 protected $emptyChannelImg='<img src="https://scontent.fath6-1.fna.fbcdn.net/v/t39.30808-6/346640854_1464202694405870_4821110064275118463_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=cc71e4&_nc_eui2=AeET8MMdyrrxcZXQPQRHxxULzTMCkFTvUl7NMwKQVO9SXlWjH0Q-knjnox1ZdrOQV0Q&_nc_ohc=kaVtIYyBrmEQ7kNvgHtt038&_nc_zt=23&_nc_ht=scontent.fath6-1.fna&_nc_gid=AKEgjeaOYw12bRkO0FEl6jd&oh=00_AYDlYaFlI9-vLGr2Zyak5KKkzHVXnaDNqSRly3sY4d_zaQ&oe=67232B67">';
 
-public function __construct() {
-           parent::__construct();
-    }
+
+     public function __construct()  {
+          parent::__construct();
+       }
+
 
  public function handleRequest() {
   // if ($this->isApiRequest()) {

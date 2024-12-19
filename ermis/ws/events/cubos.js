@@ -1,11 +1,15 @@
-// Import peertopeer method if it's part of another module
+/**
+Attempt to async load cubos by Ermis
+Import peertopeer method if it's part of another module
+Not used but useful for frontend connection with Ermis
+*/
 const fetch = require('node-fetch');
 const Maria = require('../core/Maria');
 // Initialize the Maria class with your MySQL config
 const maria = new Maria('vivalibro');
 
-//usage //if(message.type=='open' && message.text=='PING' && message.system=='vivalibro') {
-//   //  await fetchCubosAndSend(message);
+//usage if(message.type=='open' && message.text=='PING' && message.system=='vivalibro') {
+//      await fetchCubosAndSend(message);
 // //}
 async function fetchCubosAndSend(message) {
     try {

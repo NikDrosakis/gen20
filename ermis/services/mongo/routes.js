@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const helper = require('./helper'); // MongoDB helper
-const config = require('../../config.json');
 router.get('/:col/:key/:id', async (req, res, next) => {
     try {
         res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -16,7 +15,7 @@ router.get('/:col/:key/:id', async (req, res, next) => {
         const { col, key, id } = req.params;
         console.log(`Request URL: ${req.url}`);
         console.log(req.params)
-       const mongoActions = helper(req.params, config);
+       const mongoActions = helper(req.params);
         mongoActions[col]((data) => {
         //    data = Array.isArray(data) ? (data.length === 1 ? data[0] : data) : data;
           //  data = data ? data.toString() : 'NO';

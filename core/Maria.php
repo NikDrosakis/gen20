@@ -304,8 +304,8 @@ public function fl(string|array $rows, string $table, $clause=''): bool|array {
 }
 
 	//setting table
-	public   function is(string $name): bool|string{
-		$fetch = $this->db->f("SELECT en FROM globs WHERE name=?", array($name));
+	public function is(string $name): bool|string{
+		$fetch = $this->admin->f("SELECT val FROM globs WHERE name=?", array($name));
 		if (!empty($fetch)) {
 			return urldecode($fetch['val']);
 		} else {

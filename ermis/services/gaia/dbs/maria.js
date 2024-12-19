@@ -14,7 +14,7 @@ vl_libuser: `${BASE_URL}/vl_libuser`,
 LOOKUP: (type) => `${BASE_URL}/lookup/${type}`,
 GET_BOOKS_BY_LIB: (libid) => `${BASE_URL}/lib/${libid}`,
 * */
-module.exports = function(params,config){
+module.exports = function(params){
 	let action = params.type;
     var options={};
 	let sql, pms = [];

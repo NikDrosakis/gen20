@@ -2425,7 +2425,7 @@ class Maria {
 
 	//setting table
 	public   function is(string $name): bool|string{
-		$fetch = $this->db->f("SELECT val FROM globs WHERE name=?", array($name));
+		$fetch = $this->admin->f("SELECT val FROM globs WHERE name=?", array($name));
 		if (!empty($fetch)) {
 			return urldecode($fetch['val']);
 		} else {

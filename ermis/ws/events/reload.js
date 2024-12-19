@@ -1,14 +1,20 @@
+//reload.js - Building file automation for reload & notifications
 const fs = require('fs');
 const path = require('path');
+// Use ROOT_DIR from the environment or fallback
+require('dotenv').config();
+const ROOT = process.env.ROOT || path.resolve(__dirname);
 const { broadcastMessage } = require('../../core/Redis'); // Redis module
 /*
 * reload event
 * */
 // Array of directories to watch
 const directoriesToWatch = [
-    { folder: '/var/www/gs/core', system: 'vivalibrocom' },
-    { folder: '/var/www/gs/public/vivalibro.com', system: 'vivalibrocom' },
-    { folder: '/var/www/gs/admin', system: 'admin' }
+    { folder: ROOT+'core', system: 'admin' },
+    { folder: ROOT+'cubos', system: 'cubos' },
+    { folder: ROOT+'public/vivalibro.com', system: 'vivalibrocom' },
+    { folder: ROOT+'public/gen20.gr', system: 'gen20gr' },
+    { folder: ROOT+'admin', system: 'admin' }
 ];
 // Function to determine the base folder (system) based on the file path
 function getBaseFolder(filePath) {
@@ -19,6 +25,7 @@ function getBaseFolder(filePath) {
     }
     return null; // Return null if no matching base folder is found
 }
+
 // Function to watch a directory
 function watchDirectory(directory) {
     fs.watch(directory.folder, (eventType, file) => {

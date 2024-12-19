@@ -1,12 +1,14 @@
 // N.js
 const mariadb = require('mariadb');
-const config = require('../../config.json');
+require('dotenv').config();
+const ROOT = process.env.ROOT || path.resolve(__dirname);
+
 
 const pool = mariadb.createPool({
 	host: '127.0.0.1',
-	user: config.mariauser,
-	password: config.mariapass,
-	database: config.maria,
+	user: ROOT.mariauser,
+	password: ROOT.mariapass,
+	database: ROOT.maria,
 	waitForConnections: true,
 	connectionLimit: 5,
 	queueLimit: 1,
