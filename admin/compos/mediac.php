@@ -191,7 +191,7 @@ function appendMediaToPlace(slide) {
       <td>${slide.sort}</td>
       <td><img src="${G.SITE_URL}media/${slide.filename}" alt="${slide.filename}" style="max-width: 100px;"></td>
       <td>${slide.filename}</td>
-      <td><input name="caption" id="cubo_slideshow${slide.id}" value="${slide.caption}"></td>
+      <td><input name="caption" id="c_slideshow${slide.id}" value="${slide.caption}"></td>
       <td><input type="checkbox" class="delete-checkbox" value="${slide.id}"></td>
       </tr>`;
     document.querySelector('#sortableMedia tbody').insertAdjacentHTML('beforeend', table);

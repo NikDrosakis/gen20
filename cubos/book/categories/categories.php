@@ -33,7 +33,7 @@
 <span style="float:left;" onclick="s.ui.goto(['previous','cat','id',g.get.id,'/cat?id='])" class="next glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
 <span style="float:right" onclick="s.ui.goto(['next','cat','id',g.get.id,'/cat?id='])" class="next glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
 
-<?php  $sel= $this->fetch("SELECT * FROM vl_cat WHERE id=?",array($G['id'])); ?>
+<?php  $sel= $this->fetch("SELECT * FROM c_book_cat WHERE id=?",array($G['id'])); ?>
 
 <?php include 'public.php'; ?>
 

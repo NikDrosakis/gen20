@@ -9,9 +9,9 @@ try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Create the cubo_slideshow table if it doesn't exist
+    // Create the c_slideshow table if it doesn't exist
     $sql = "
-    CREATE TABLE IF NOT EXISTS cubo_slideshow (
+    CREATE TABLE IF NOT EXISTS c_slideshow (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         sort INT NOT NULL DEFAULT 0,
@@ -19,7 +19,7 @@ try {
     )";
 
     $pdo->exec($sql);
-    echo "Table `cubo_slideshow` created successfully or already exists.<br>";
+    echo "Table `c_slideshow` created successfully or already exists.<br>";
 
     // Ensure the media/slideshow folder exists
     $mediaFolder = MEDIA_ROOT. 'slideshow';

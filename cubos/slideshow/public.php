@@ -91,7 +91,7 @@
     <?php
     // Fetch slides from the database
     //V0
-    $slides = $this->db->fa("SELECT * FROM cubo_slideshow ORDER BY sort DESC");
+    $slides = $this->db->fa("SELECT * FROM c_slideshow ORDER BY sort DESC");
     //xecho($slides);
     //this in the V1 SCHEMA taken from the endpoint /widget/slideshow/fetch_slides
     ?>

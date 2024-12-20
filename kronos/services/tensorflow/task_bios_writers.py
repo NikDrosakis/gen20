@@ -20,7 +20,7 @@ model = TFGPT2LMHeadModel.from_pretrained(model_name)
 
 # Prepare to fetch writers from the database
 mycursor = mydb.cursor(dictionary=True)
-mycursor.execute("SELECT id, name FROM vl_writer WHERE bio IS NULL LIMIT 100")
+mycursor.execute("SELECT id, name FROM c_book_writer WHERE bio IS NULL LIMIT 100")
 writers = mycursor.fetchall()
 
 for writer in writers:
@@ -51,7 +51,7 @@ for writer in writers:
             bio = bio[len(prompt):].strip()
 
         # Update the database with the generated bio
-        mycursor.execute("UPDATE vl_writer SET bio = %s WHERE id = %s", (bio, id))
+        mycursor.execute("UPDATE c_book_writer SET bio = %s WHERE id = %s", (bio, id))
         mydb.commit()
         print(f"Updated Writer Bio for ID {id}")
 

@@ -9,7 +9,7 @@ LOOKUPSAVE: (type) => `${BASE_URL}/lookupsave/${type}`,
 - GET
 GET_BY_ID: (table,id) => `${BASE_URL}/${table}/${bookId}`,
 LOGIN: `${BASE_URL}/login`,
-vl_libuser: `${BASE_URL}/vl_libuser`,
+c_book_libuser: `${BASE_URL}/c_book_libuser`,
 LOOKUP: (type) => `${BASE_URL}/lookup/${type}`,
 GET_BOOKS_BY_LIB: (libid) => `${BASE_URL}/lib/${libid}`,
 * */
@@ -31,56 +31,56 @@ console.log(params.type);
 		var limit=`LIMIT ${start},${pagin}`;
 		sql = q ? `SELECT * FROM dataset WHERE ${params.col} LIKE ? ${limit}`: `SELECT * FROM dataset WHERE ${params.col} ${limit}`;
 		pms = q ? [`%${q}%`]:[];
-	}else if(params.type=='vl_book'){
-		sql = "SELECT vl_book.*,vl_writer.id as writerId,vl_publisher.id as publisherId,vl_book.id as bookId,vl_writer.name as writername,vl_cat.name as catname,vl_publisher.name as publishername FROM vl_book " +
-			"LEFT JOIN vl_writer on vl_writer.id=vl_book.writer " +
-			"LEFT JOIN vl_publisher on vl_publisher.id=vl_book.publisher " +
-			"LEFT JOIN vl_cat on vl_cat.id=vl_book.cat " +
-			"WHERE vl_book.id=? ";
+	}else if(params.type=='c_book'){
+		sql = "SELECT c_book.*,c_book_writer.id as writerId,c_book_publisher.id as publisherId,c_book.id as bookId,c_book_writer.name as writername,c_book_cat.name as catname,c_book_publisher.name as publishername FROM c_book " +
+			"LEFT JOIN c_book_writer on c_book_writer.id=c_book.writer " +
+			"LEFT JOIN c_book_publisher on c_book_publisher.id=c_book.publisher " +
+			"LEFT JOIN c_book_cat on c_book_cat.id=c_book.cat " +
+			"WHERE c_book.id=? ";
 		pms=[params.col];
-	}else if(params.type=='vl_writer'|| params.type=='vl_publisher' || params.type=='vl_cat'){
+	}else if(params.type=='c_book_writer'|| params.type=='c_book_publisher' || params.type=='c_book_cat'){
 		sql = "SELECT *, COALESCE(CONCAT('https://vivalibro.com/media/', img), 'https://vivalibro.com/img/empty.png') as uri FROM "+params.type+" WHERE id=? ";
 		pms=[params.col];
 	}else if(params.type=='libdetails'){
-		sql = "SELECT vl_libuser.libid,vl_libuser.bookid,vl_libuser.score," +
+		sql = "SELECT c_book_libuser.libid,c_book_libuser.bookid,c_book_libuser.score," +
 			"user.name,lib.id,DATE_FORMAT(lib.created, \"%Y-%m-%d\") as created," +
 			"COALESCE(CONCAT('https://vivalibro.com/media/', lib.img), 'https://vivalibro.com/img/header.png') as uri," +
-			"(SELECT count(id) FROM vl_cat) as catcount, "+
-			"(SELECT count(id) FROM vl_publisher) as publishercount, "+
-			"(SELECT count(id) FROM vl_writer) as writercount, "+
-			"count(Distinct(vl_libuser.id)) as bookcount "+
-			"FROM vl_lib " +
-			"LEFT JOIN vl_libuser on vl_libuser.libid=lib.id " +
+			"(SELECT count(id) FROM c_book_cat) as catcount, "+
+			"(SELECT count(id) FROM c_book_publisher) as publishercount, "+
+			"(SELECT count(id) FROM c_book_writer) as writercount, "+
+			"count(Distinct(c_book_libuser.id)) as bookcount "+
+			"FROM c_book_lib " +
+			"LEFT JOIN c_book_libuser on c_book_libuser.libid=lib.id " +
 			"LEFT JOIN user on lib.userid=user.id " +
-			"where vl_lib.id=? ";
+			"where c_book_lib.id=? ";
 		pms = [params.col];
-	}else if(params.type=='vl_lib'){
+	}else if(params.type=='c_book_lib'){
 		var pagin=10, start=(parseInt(params.query.page) - 1) * pagin;
 		var limit=`LIMIT ${start},${pagin}`
 		if(params.query.q!='') {
 			var q=params.query.q, page=params.query.page;
 			sql = "SELECT book.*,COALESCE(CONCAT('https://vivalibro.com/media/', book.img), 'https://vivalibro.com/img/empty.png') as uri, " +
 				"writer.id as writerId,publisher.id as publisherId,book.id as bookId,writer.name as writername,cat.name as catname,publisher.name as publishername " +
-				"FROM vl_libuser " +
-				"LEFT JOIN book on vl_book.id=vl_libuser.bookid " +
-				"LEFT JOIN writer on vl_writer.id=vl_book.writer " +
+				"FROM c_book_libuser " +
+				"LEFT JOIN book on c_book.id=c_book_libuser.bookid " +
+				"LEFT JOIN writer on c_book_writer.id=c_book.writer " +
 				"LEFT JOIN publisher on publisher.id=book.publisher " +
-				"LEFT JOIN vl_cat on vl_cat.id=vl_book.cat " +
-				"WHERE vl_libuser.libid=? " +
+				"LEFT JOIN c_book_cat on c_book_cat.id=c_book.cat " +
+				"WHERE c_book_libuser.libid=? " +
 				"AND (book.title LIKE ? " +
 				"OR writer.name LIKE ? " +
 				"OR publisher.name LIKE ?) " +
 				"GROUP BY book.id  ORDER BY book.edited DESC "+limit;
 			pms=[1, `%${q}%`, `%${q}%`, `%${q}%`];
 		}else {
-			sql = "SELECT book.*,COALESCE(CONCAT('https://vivalibro.com/media/', vl_book.img), 'https://vivalibro.com/img/empty.png') as uri," +
+			sql = "SELECT book.*,COALESCE(CONCAT('https://vivalibro.com/media/', c_book.img), 'https://vivalibro.com/img/empty.png') as uri," +
 				"writer.id as writerId,publisher.id as publisherId,book.id as bookId,writer.name as writername,publisher.name as publishername,cat.name as catname " +
-				"FROM vl_libuser " +
-				"LEFT JOIN vl_book on vl_book.id=vl_libuser.bookid " +
-				"LEFT JOIN vl_writer on vl_writer.id=book.writer " +
-				"LEFT JOIN publisher on vl_publisher.id=vl_book.publisher " +
-				"LEFT JOIN vl_cat on vl_cat.id=vl_book.cat " +
-				"WHERE vl_libuser.libid=? GROUP BY vl_book.id ORDER BY vl_book.edited DESC " + limit;
+				"FROM c_book_libuser " +
+				"LEFT JOIN c_book on c_book.id=c_book_libuser.bookid " +
+				"LEFT JOIN c_book_writer on c_book_writer.id=book.writer " +
+				"LEFT JOIN publisher on c_book_publisher.id=c_book.publisher " +
+				"LEFT JOIN c_book_cat on c_book_cat.id=c_book.cat " +
+				"WHERE c_book_libuser.libid=? GROUP BY c_book.id ORDER BY c_book.edited DESC " + limit;
 			pms = [params.col];
 			console.log(sql)
 		}
@@ -102,9 +102,9 @@ console.log(params.type);
 		pms=[value,id];
 		console.log(sql);
 		console.log(pms);
-	}else if(params.type=='vl_libuser'){
+	}else if(params.type=='c_book_libuser'){
 		var bookid=params.bookid,libid=params.libid;
-		sql = `INSERT INTO vl_libuser (bookid,libid) VALUES(?,?)`;
+		sql = `INSERT INTO c_book_libuser (bookid,libid) VALUES(?,?)`;
 		pms=[bookid,libid];
 	}else if(params.type=='newbook'){
 		sql = `INSERT INTO book (created,edited) VALUES(NOW(),NOW())`;

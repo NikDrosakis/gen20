@@ -4,22 +4,22 @@ source /var/www/gs/cli/configs/.env
 
 mysql -u "$DB_USER" -p"$DB_PASS" -h "$DB_HOST" "$DB_NAME" <<EOF
 SELECT
-    vl_book.id AS id,
-    vl_book.title AS title,
-    vl_book.summary AS summary,
-    vl_book.published AS published,
-    vl_book.isbn AS isbn,
-    vl_book.clas AS classification,
-    vl_book.img AS img,
-    vl_book.img_s AS img_small,
-    vl_book.img_l AS img_large,
-    vl_writer.name AS writer_name,
-    vl_writer.bio AS writer_bio,
-    vl_publisher.name AS publisher_name,
-    vl_publisher.profile AS publisher_profile
-FROM vl_book
-LEFT JOIN vl_writer ON vl_book.writer = vl_writer.id
-LEFT JOIN vl_publisher ON vl_book.publisher = vl_publisher.id
+    c_book.id AS id,
+    c_book.title AS title,
+    c_book.summary AS summary,
+    c_book.published AS published,
+    c_book.isbn AS isbn,
+    c_book.clas AS classification,
+    c_book.img AS img,
+    c_book.img_s AS img_small,
+    c_book.img_l AS img_large,
+    c_book_writer.name AS writer_name,
+    c_book_writer.bio AS writer_bio,
+    c_book_publisher.name AS publisher_name,
+    c_book_publisher.profile AS publisher_profile
+FROM c_book
+LEFT JOIN c_book_writer ON c_book.writer = c_book_writer.id
+LEFT JOIN c_book_publisher ON c_book.publisher = c_book_publisher.id
 INTO OUTFILE '$DEPLOY_DIR/exported_vivalibro.csv'
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'

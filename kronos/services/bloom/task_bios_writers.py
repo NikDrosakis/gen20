@@ -19,7 +19,7 @@ model = AutoModelForCausalLM.from_pretrained(model_name)
 mycursor = mydb.cursor(dictionary=True)
 
 # Fetch books with missing summaries
-mycursor.execute("SELECT id, title FROM vl_book WHERE lang='en' AND summary IS NULL")
+mycursor.execute("SELECT id, title FROM c_book WHERE lang='en' AND summary IS NULL")
 books = mycursor.fetchall()
 
 for book in books:
@@ -36,7 +36,7 @@ for book in books:
         summary = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
 
         # Update the database with the Greek summary
-        mycursor.execute("UPDATE vl_book SET summary = %s WHERE id = %s", (summary, id))
+        mycursor.execute("UPDATE c_book SET summary = %s WHERE id = %s", (summary, id))
         mydb.commit()
         print(f"Updated summary for book ID {id}")
 

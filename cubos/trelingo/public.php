@@ -1,7 +1,7 @@
 <?php
 /**
 Trelingo Cubo
-View1: buildTable (Form method)|cubo_trelingo_word (tableName param) (orderby type= verb)
+View1: buildTable (Form method)|c_trelingo_word (tableName param) (orderby type= verb)
 Read English
 Input italian (onkeyup Input checker italian)
 Sound italian
@@ -67,7 +67,7 @@ trait CuboLogic {
               <tbody id="words-table">
                   <!-- Dynamically filled by PHP -->
                   <?php
-                  $words=$this->db->fa("SELECT * FROM cubo_trelingo_word"); // Fetch words from the database
+                  $words=$this->db->fa("SELECT * FROM c_trelingo_word"); // Fetch words from the database
                   foreach ($words as $word) {
                       echo "<tr>
                           <td>" . htmlspecialchars($word['english']) . "</td>

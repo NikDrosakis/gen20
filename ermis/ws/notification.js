@@ -8,7 +8,7 @@ const mariadmin = new Maria(process.env.MARIADMIN);
 // Function to fetch notifications dynamically
 async function getNotification() {
     try {
-        // Fetch ermis group
+        // TODO Fetch all ermis ermisgrp
         const ermis_res = await mariadmin.f("SELECT * FROM ermis WHERE ermisgrpid = 4");
 
         if (!ermis_res || !ermis_res.get_statement) {

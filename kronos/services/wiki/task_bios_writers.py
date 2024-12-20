@@ -21,7 +21,7 @@ def update_writer_bio(id, bio):
     """Update the writer's bio in the database."""
     db = connect_db()
     cursor = db.cursor()
-    cursor.execute("UPDATE vl_writer SET bio = %s WHERE id = %s", (bio, id))
+    cursor.execute("UPDATE c_book_writer SET bio = %s WHERE id = %s", (bio, id))
     db.commit()
     cursor.close()
     db.close()
@@ -52,7 +52,7 @@ def fetch_writers_without_bio(limit=100):
     """Fetch writers without bios from the database."""
     db = connect_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT id, name FROM vl_writer WHERE bio IS NULL LIMIT %s", (limit,))
+    cursor.execute("SELECT id, name FROM c_book_writer WHERE bio IS NULL LIMIT %s", (limit,))
     writers = cursor.fetchall()
     cursor.close()
     db.close()

@@ -23,7 +23,7 @@ mydb = mysql.connector.connect(
 mycursor = mydb.cursor(dictionary=True)
 
 # Fetch writers with missing bios
-mycursor.execute("SELECT id, name FROM vl_writer WHERE bio IS NULL limit 100")
+mycursor.execute("SELECT id, name FROM c_book_writer WHERE bio IS NULL limit 100")
 writers = mycursor.fetchall()
 
 for writer in writers:
@@ -43,7 +43,7 @@ for writer in writers:
         bio = response.choices[0].text.strip()
 
         # Update the database with the generated bio
-        mycursor.execute("UPDATE vl_writer SET bio = %s WHERE id = %s", (bio, id))
+        mycursor.execute("UPDATE c_book_writer SET bio = %s WHERE id = %s", (bio, id))
         mydb.commit()
         print(f"Updated Writer Bio for ID {id}")
 

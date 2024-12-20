@@ -17,13 +17,13 @@ template: |
       .card-summary= summary.join(',')
 
 query: >
-  SELECT vl_publisher.*, vl_book.title 
-  FROM vl_publisher 
-  LEFT JOIN vl_book ON vl_book.publisher = vl_publisher.id 
-  ORDER BY vl_publisher.name
+  SELECT c_book_publisher.*, c_book.title 
+  FROM c_book_publisher 
+  LEFT JOIN c_book ON c_book.publisher = c_book_publisher.id 
+  ORDER BY c_book_publisher.name
   params: []
 database:
-  name: cubo_trelingo_word
+  name: c_trelingo_word
 fields:
   - id
   - english: read

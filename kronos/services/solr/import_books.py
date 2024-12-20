@@ -16,7 +16,7 @@ mydb = mysql.connector.connect(
 )
 
 mycursor = mydb.cursor(dictionary=True)
-mycursor.execute("SELECT * FROM vl_book")
+mycursor.execute("SELECT * FROM c_book")
 books = mycursor.fetchall()
 
 # Prepare documents for Solr

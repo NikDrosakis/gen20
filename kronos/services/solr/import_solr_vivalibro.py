@@ -18,24 +18,24 @@ mydb = mysql.connector.connect(
 mycursor = mydb.cursor(dictionary=True)
 mycursor.execute("""
     SELECT
-        vl_book.id,
-        vl_book.title,
-        vl_book.summary,
-        vl_book.published,
-        vl_book.isbn,
-        vl_book.lang,
-        vl_book.clas,
-        vl_book.img,
-        vl_book.img_s,
-        vl_book.img_l,
-        vl_writer.name AS writername,
-        vl_writer.bio AS writerbio,
-        vl_publisher.name AS publishername,
-        vl_publisher.profile AS publisherprofile
+        c_book.id,
+        c_book.title,
+        c_book.summary,
+        c_book.published,
+        c_book.isbn,
+        c_book.lang,
+        c_book.clas,
+        c_book.img,
+        c_book.img_s,
+        c_book.img_l,
+        c_book_writer.name AS writername,
+        c_book_writer.bio AS writerbio,
+        c_book_publisher.name AS publishername,
+        c_book_publisher.profile AS publisherprofile
     FROM
-        vl_book
-    LEFT JOIN vl_writer ON vl_book.writer = vl_writer.id
-    LEFT JOIN vl_publisher ON vl_book.publisher = vl_publisher.id
+        c_book
+    LEFT JOIN c_book_writer ON c_book.writer = c_book_writer.id
+    LEFT JOIN c_book_publisher ON c_book.publisher = c_book_publisher.id
 """)
 books = mycursor.fetchall()
 

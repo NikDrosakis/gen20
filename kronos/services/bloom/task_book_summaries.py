@@ -22,12 +22,12 @@ class BookSummaryUpdate(BaseModel):
 
 # Fetch books with missing summaries
 def fetch_books_with_missing_summaries(cursor):
-    cursor.execute("SELECT id, title FROM vl_book WHERE lang='en' AND summary IS NULL")
+    cursor.execute("SELECT id, title FROM c_book WHERE lang='en' AND summary IS NULL")
     return cursor.fetchall()
 
 # Update book summary in the database
 def update_book_summary(cursor, book_id, summary):
-    cursor.execute("UPDATE vl_book SET summary = %s WHERE id = %s", (summary, book_id))
+    cursor.execute("UPDATE c_book SET summary = %s WHERE id = %s", (summary, book_id))
 
 # Generate summary using the model
 def generate_summary(model, tokenizer, title):

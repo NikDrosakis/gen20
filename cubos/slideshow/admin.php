@@ -3,7 +3,7 @@
     <h1>Slideshow Management</h1>
     <?php
       // Fetch slides from the database
-    $slides = $this->db->fa("SELECT * FROM cubo_slideshow ORDER BY sort ASC, id ASC");
+    $slides = $this->db->fa("SELECT * FROM c_slideshow ORDER BY sort ASC, id ASC");
   include ADMIN_ROOT."compos/mediac.php";
       ?>
 
@@ -26,7 +26,7 @@
                       <td class="sort-order"><?php echo $slide['sort']; ?></td>
                       <td><img src="<?=SITE_URL?>media/<?php echo htmlspecialchars($slide['filename']); ?>" style="max-width:100px;"></td>
                       <td><?=$slide['filename']?></td>
-                      <td><input name="caption" id="cubo_slideshow<?=$slide['id']?>" value="<?=$slide['caption']?>"></td>
+                      <td><input name="caption" id="c_slideshow<?=$slide['id']?>" value="<?=$slide['caption']?>"></td>
                       <td><button class="delete-button" id="del<?=$slide['id']?>">Delete</td>
                   </tr>
               <?php endforeach; ?>
@@ -68,7 +68,7 @@
   async function updateSortOrder(id, sort) {
       try {
           // Assuming gs.api.maria.q is available and works as a query function
-          const result = await gs.api.maria.q("UPDATE cubo_slideshow SET sort = ? WHERE id = ?", [sort, id]);
+          const result = await gs.api.maria.q("UPDATE c_slideshow SET sort = ? WHERE id = ?", [sort, id]);
           return result;
       } catch (error) {
           console.error('Error updating sort order:', error);
@@ -81,7 +81,7 @@
           let id = checkbox.id.replace('del','');
           const confirmation = confirm("This image is going to be deleted. Are you sure?");
           if (confirmation) {
-              const delImage = await gs.api.maria.q("DELETE FROM cubo_slideshow WHERE id = ?", [id]);
+              const delImage = await gs.api.maria.q("DELETE FROM c_slideshow WHERE id = ?", [id]);
               if (delImage.success) {
                   console.log('Slide deleted successfully');
                   document.getElementById(`slide_${id}`).remove();

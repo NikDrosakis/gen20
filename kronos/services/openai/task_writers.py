@@ -21,12 +21,12 @@ def generate_bio(name):
 
 def update_writer_bio(writer_id, bio):
     """Update the writer's bio in the database."""
-    cursor.execute("UPDATE vl_writer SET bio = ? WHERE id = ?", (bio, writer_id))
+    cursor.execute("UPDATE c_book_writer SET bio = ? WHERE id = ?", (bio, writer_id))
     db_conn.commit()
 
 def main():
     # Fetch writers with NULL bios
-    cursor.execute("SELECT id, name FROM vl_writer WHERE id < 100 AND bio IS NULL")
+    cursor.execute("SELECT id, name FROM c_book_writer WHERE id < 100 AND bio IS NULL")
     writers = cursor.fetchall()
 
     for writer_id, name in writers:

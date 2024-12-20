@@ -2,12 +2,12 @@ These tasks are indeed logical and practical applications of Generative AI. They
 
 ### PUBLIC-SIDE GENERATIVE AI TASKS
 
-1. **Scraping New or Old Books (of the Greek Market) Based on `vl_book` Table**
-   - **Logical Use**: AI-powered web scraping can systematically gather book data from Greek market sources and cross-reference it with your `vl_book` table, ensuring new data is constantly integrated.
+1. **Scraping New or Old Books (of the Greek Market) Based on `c_book` Table**
+   - **Logical Use**: AI-powered web scraping can systematically gather book data from Greek market sources and cross-reference it with your `c_book` table, ensuring new data is constantly integrated.
    - **Generative Potential**: Based on missing or outdated data, AI can create records and suggest book information to enrich the existing database.
 
 2. **Adding Summary, Tags, Classification Based on Existing JSON Classification**
-   - **Logical Use**: For any `vl_book` record with null fields, AI can generate summaries, classify books, and suggest tags based on natural language processing (NLP) and existing JSON classifications.
+   - **Logical Use**: For any `c_book` record with null fields, AI can generate summaries, classify books, and suggest tags based on natural language processing (NLP) and existing JSON classifications.
    - **Generative Potential**: AI models like GPT can generate summaries and keywords by analyzing similar books or sources to fill gaps.
 
 3. **Improving Small Photos for Publishers, Writers, Books**

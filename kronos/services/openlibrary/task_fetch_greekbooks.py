@@ -36,7 +36,7 @@ def insert_book_data(book_data):
 
         # Check if the book already exists based on title and author
         title, author = book_data.get('title', ''), book_data.get('writer', '')
-        cursor.execute("SELECT id FROM vl_book WHERE title = %s AND writer = %s", (title, author))
+        cursor.execute("SELECT id FROM c_book WHERE title = %s AND writer = %s", (title, author))
         if cursor.fetchone():
             print("Book already exists:", title)
             return
@@ -50,7 +50,7 @@ def insert_book_data(book_data):
 
         # Insert the book data
         insert_query = """
-        INSERT INTO vl_book (title, ptitle, img, isbn, uri, pages, lang, writer, publisher, published, summary, source)
+        INSERT INTO c_book (title, ptitle, img, isbn, uri, pages, lang, writer, publisher, published, summary, source)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         cursor.execute(insert_query, (
