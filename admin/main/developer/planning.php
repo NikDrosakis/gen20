@@ -79,11 +79,11 @@ gantt.config.date_format = "%Y-%m-%d %H:%i";
     gantt.init("gantt_here");        
     
     // Load tasks and links from the API
-    gantt.load("/ermis/v1/timetable");
+    gantt.load("/action/v1/timetable");
 
     // Add event handler for adding a task
     gantt.attachEvent("onAfterTaskAdd", function(id, item) {
-        fetch('/ermis/v1/timetable', {
+        fetch('/action/v1/timetable', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -104,7 +104,7 @@ gantt.config.date_format = "%Y-%m-%d %H:%i";
     // Add event handler for deleting a task
 gantt.attachEvent("onAfterTaskUpdate", function(id, item) {
 console.log("onAfterTaskUpdate")
-    fetch(`/ermis/v1/timetable/${id}`, {
+    fetch(`/action/v1/timetable/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
@@ -122,7 +122,7 @@ console.log("onAfterTaskUpdate")
 });
 gantt.attachEvent("onAfterTaskDelete", function(id, item) {
 console.log("onAfterTaskDelete")
-    fetch(`/ermis/v1/timetable/${id}`, {
+    fetch(`/action/v1/timetable/${id}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json'
@@ -139,7 +139,7 @@ console.log("onAfterTaskDelete")
     // Add event handler for adding a link
     gantt.attachEvent("onAfterLinkAdd", function(id, link) {
 console.log("onAfterLinkAdd")
-        fetch('/ermis/v1/timetable/links', {
+        fetch('/action/v1/timetable/links', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -158,7 +158,7 @@ console.log("onAfterLinkAdd")
     // Add event handler for updating a link
     gantt.attachEvent("onAfterLinkUpdate", function(id, link) {
 console.log("onAfterLinkUpdate")
-        fetch(`/ermis/v1/timetable/links/${id}`, {
+        fetch(`/action/v1/timetable/links/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -176,7 +176,7 @@ console.log("onAfterLinkUpdate")
     // Add event handler for deleting a link
     gantt.attachEvent("onAfterLinkDelete", function(id) {
 console.log("onAfterLinkDelete")
-        fetch(`/ermis/v1/timetable/links/${id}`, {
+        fetch(`/action/v1/timetable/links/${id}`, {
             method: 'DELETE'
         })
         .then(() => console.log('Link deleted:', id))

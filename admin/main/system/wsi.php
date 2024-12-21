@@ -86,7 +86,7 @@ background-color: #4CAF50;
         <a href="/ermis/ermis"><span class="glyphicon glyphicon-transfer"></span>WSI</a>
         </h3>
     <button id="newermis" class="bare right" style="float:right">New Integration</button>
-<blockquote>Web Socket Nodejs resources</blockquote>
+<blockquote>Web Socket Nodejs actiongrp</blockquote>
 
 	<div id="newermisbox"></div>
 	<div id="newermis_container"></div>
@@ -97,7 +97,7 @@ background-color: #4CAF50;
 <script>
 
 async function getermisloop(){
- const loop= await gs.api.gpm.fa("SELECT * FROM resources ");
+ const loop= await gs.api.gpm.fa("SELECT * FROM actiongrp ");
 if(loop.success){
     var html='';
     for(var i in loop.data) {

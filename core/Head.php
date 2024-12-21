@@ -5,7 +5,7 @@ DOC
 ===
 Setting update the <head> of Admin and any project
 
-v.1 used build Public & Admin Head, encoding resources
+v.1 used build Public & Admin Head, encoding actiongrp
 
 
 TODO
@@ -35,7 +35,7 @@ protected $resourceMap = [
             'https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js'
         ]
     ],
-    '' => [ // Global resources
+    '' => [ // Global actiongrp
         'css' => [],
         'js'  => []
     ]

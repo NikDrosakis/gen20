@@ -195,7 +195,7 @@ protected function executeLocalMethod($request): array {
 /*
 primary executes A) maria methods IN post
     B) REST logic /resource=table/id/
-    --- extend to webhooks and clevel resources for Kafka use
+    --- extend to webhooks and clevel actiongrp for Kafka use
     C) files if exist in apiv1/bin folder/method/
     3rd LEVEL supported in nginx TODO...
 */

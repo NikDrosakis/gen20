@@ -83,7 +83,7 @@ background-color: #4CAF50;
 <script>
 //WORKER BUFFER METHOD combined with APY
 async function getkronosloop(){
- const loop= await gs.api.gpm.fa("SELECT * FROM resources ");
+ const loop= await gs.api.gpm.fa("SELECT * FROM actiongrp ");
 if(loop.success){
     var html='';
     for(var i in loop.data) {

@@ -1,1 +1,0 @@
-const Maria = require('../core/Maria');

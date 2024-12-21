@@ -2,7 +2,7 @@
 namespace Core;
 /**
 @filemetacore.sql-create
-CREATE TABLE `resources` (
+CREATE TABLE `actiongrp` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `img` VARCHAR(200) DEFAULT NULL COMMENT 'sql-ins: URL of the image',
   `system_id` INT(11) NOT NULL COMMENT 'sql-fetch: Related system reference',
@@ -27,10 +27,10 @@ CREATE TABLE `resources` (
 
 @filemetacore.features
 Check standard nulls of DB and suggest to complete
-Check all resources if active
+Check all actiongrp if active
 
 @filemetacore.todo
-- add more NULL img resources
+- add more NULL img actiongrp
 - aDDMore resource text and bw and diff types of images
 - Google Books API
 - Open Library API
@@ -113,7 +113,7 @@ if($imageUrl!=null){
       }
 
   protected function storeResources2() {
-      $metadataRecords = $this->db->flist("SELECT id, meta FROM resources WHERE img IS NULL");
+      $metadataRecords = $this->db->flist("SELECT id, meta FROM actiongrp WHERE img IS NULL");
 
       if (empty($metadataRecords)) {
           echo "No metadata records found for image fetching.\n";
@@ -139,7 +139,7 @@ if($imageUrl!=null){
 
               if ($imageUrl) {
                   file_put_contents($localFilePath, file_get_contents($imageUrl));
-                  $this->db->q("UPDATE resources SET img = ? WHERE id = ?", [MEDIA_URL . basename($localFilePath), $postId]);
+                  $this->db->q("UPDATE actiongrp SET img = ? WHERE id = ?", [MEDIA_URL . basename($localFilePath), $postId]);
                   echo "Image saved and resource updated: {$localFilePath}\n";
                   break; // Save only one image per record
               }

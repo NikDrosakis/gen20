@@ -7,7 +7,7 @@ v3 updated to filemeta
 -->
 <!--
 @filemeta.todo
-- add more resources, compined with core.Resources
+- add more actiongrp, compined with core.Resources
 - fix & update custom
 - add video and more media types
 -->

@@ -7,7 +7,7 @@ let table=G.sub;
                 user EDIT
 ------------------------------------------------------>
 <?php
-$user=$this->gpm->f("SELECT * from ermis where id=?",[$this->id]);
+$user=$this->gpm->f("SELECT * from action where id=?",[$this->id]);
 ?>
     <!-- Page Title and Navigation Buttons -->
     <div class="pagetitle-container">
@@ -22,10 +22,10 @@ $user=$this->gpm->f("SELECT * from ermis where id=?",[$this->id]);
             Next <i class="glyphicon glyphicon-chevron-right"></i>
         </span>
     </div>
-         <button class="bare right" id="create_new_ermis"><span class="glyphicon glyphicon-plus"></span>New Ermis</button>
-         <button class="bare right" id="create_new_ermisgrp"><span class="glyphicon glyphicon-plus"></span>New Ermisgroup</button>
-        <button onclick='location.href="/system/ermisgrp"' class="bare" id="groups">ErmisGroups</button>
-        <button onclick='location.href="/system/ermis"' class="bare" id="groups">Ermis</button>
+         <button class="bare right" id="create_new_action"><span class="glyphicon glyphicon-plus"></span>New Ermis</button>
+         <button class="bare right" id="create_new_actiongrp"><span class="glyphicon glyphicon-plus"></span>New Ermisgroup</button>
+        <button onclick='location.href="/system/actiongrp"' class="bare" id="groups">ErmisGroups</button>
+        <button onclick='location.href="/system/action"' class="bare" id="groups">Ermis</button>
 <?php
-echo $this->buildForm("ermis",$user);
+echo $this->buildForm("action",$user);
 ?>

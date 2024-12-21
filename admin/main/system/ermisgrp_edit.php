@@ -7,7 +7,7 @@ let table=G.sub;
                 user EDIT
 ------------------------------------------------------>
 <?php
-$user=$this->gpm->f("SELECT * from ermisgrp where id=?",[$this->id]);
+$user=$this->gpm->f("SELECT * from actiongrp where id=?",[$this->id]);
 ?>
     <!-- Page Title and Navigation Buttons -->
     <div class="pagetitle-container">
@@ -22,10 +22,10 @@ $user=$this->gpm->f("SELECT * from ermisgrp where id=?",[$this->id]);
             Next <i class="glyphicon glyphicon-chevron-right"></i>
         </span>
     </div>
-         <button class="bare right" id="create_new_ermisgrp"><span class="glyphicon glyphicon-plus"></span>New Ermis</button>
+         <button class="bare right" id="create_new_actiongrp"><span class="glyphicon glyphicon-plus"></span>New Ermis</button>
          <button class="bare right" id="create_new_user"><span class="glyphicon glyphicon-plus"></span>New Ermisgroup</button>
-        <button onclick='location.href="/system/ermisgrp"' class="bare" id="groups">UserGroups</button>
-        <button onclick='location.href="/system/ermis"' class="bare" id="groups">User</button>
+        <button onclick='location.href="/system/actiongrp"' class="bare" id="groups">UserGroups</button>
+        <button onclick='location.href="/system/action"' class="bare" id="groups">User</button>
 <?php
-echo $this->buildForm("gen_admin.ermisgrp",$user);
+echo $this->buildForm("gen_admin.actiongrp",$user);
 ?>

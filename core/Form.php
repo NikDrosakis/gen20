@@ -116,6 +116,10 @@ protected function getInputType(string $table): ?array {
                 $htmlType = 'json';
                 } elseif ($colComment=='twig' ){
                 $htmlType = 'twig';
+                } elseif ($colComment=='pug' ){
+                $htmlType = 'pug';
+                } elseif ($colComment=='cron' ){
+                $htmlType = 'cron';
                 } elseif ($colComment=='sql' ){
                 $htmlType = 'sql';
                } elseif (strpos($colComment, 'selectG') !== false){
@@ -461,9 +465,24 @@ $onclick = 'data-table="' . $this->table . '" onclick="this.dataset.pagenum = th
 
     return '<div id="pagination">' . $previous . $firstb . $list . $lastb . $next . '</div>';
 }
-
+protected function renderCronEditor($post) {
+    $cronExpression = $post['cron_expression'] ?? '* * * * *'; // Default value or provided one
+    return <<<HTML
+<label for="cron_expression">Schedule (Command to Execute)</label>
+<input
+    type="text"
+    class="gs-input"
+    onchange="gs.form.updateRow(this, '{$this->table}')"
+    id="cron_expression"
+    name="cron_expression"
+    value="$cronExpression"
+    placeholder="e.g., * * * * *"
+    required>
+<small>Use standard cron format (minute, hour, day, month, weekday).</small>
+HTML;
+}
 // @filemetacore.description render twig
-public function renderTwigContent($post) {
+protected function renderTwigContent($post) {
     // @filemetacore.features Decode JSON template
     $template = is_json($post) ? json_decode($post, true) : $post;
 
@@ -780,6 +799,9 @@ return '<div class="gs-span">
                return "<div class='gs-span'><label for='$col'>$col</label>
                        <code><textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'><code>$value</code></textarea></code>
                        </div><button class='button save-button' onclick='saveContent(\"$col\", \"$table\")' type='button' id='save_$col'>Save Content</button>";
+        break;
+        case 'cron':
+        return $this->renderCronEditor($value);
         break;
         case 'pug':
         case 'textarea':

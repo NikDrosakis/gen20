@@ -1,71 +1,71 @@
-    const WebSocket = require('ws');
-    const EventEmitter = require('events');
-    // Create an instance of EventEmitter
-    const emitter = new EventEmitter();
-    // Set the maximum number of listeners to 100,000
-    emitter.setMaxListeners(100000);
+const WebSocket = require('ws');
+const EventEmitter = require('events');
+const { watch } = require('./watch');
+const { peertopeer } = require('./peertopeer');
+const { stats } = require('./stats');
+const { publish, subscribe } = require('./broadcast');
 
-    const reload = require('./events/reload');
-    const { broadcastMessage, subscribe } = require('../core/Redis'); // Redis module
-    //const { getCounters } = require('./notifications/vivalibro_N');  // Import the counters
-    const { getNotification } = require('./notification');  // Import the counters
-    const connectionManager = require('./connectionManager');
+const emitter = new EventEmitter();
+emitter.setMaxListeners(100); // Set appropriate limit
+//Watching filesystem
+watch();
 
-    let wss;  // WebSocket server instance
+let wss;
 
-    function setupWebSocket(server) {
-        wss = new WebSocket.Server({ server });
+function realTimeConnection(server,exeActions) {
+    wss = new WebSocket.Server({ server });
 
-        // Subscribe to Redis broadcast_channel for messages
-        subscribe('gen_channel', (message) => {
-            // Broadcast the message to all connected clients
-            wss.clients.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.send(message);
-                }
-            });
+    // Redis subscription
+    subscribe(process.env.REDIS_CHANNEL, (message) => {
+        wss.clients.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(message);
+            }
         });
-
-    wss.on('connection', async (ws, req) => {
-    // Call the connection manager for active connections check
-        connectionManager(wss,ws, req);
-            // Handle incoming messages
-        ws.on('message', async (data) => {
-                let message;
-                // If the data is a buffer, convert it to a string
-                if (Buffer.isBuffer(data)) {
-                    data = data.toString();
-                }
-                message=JSON.parse(data);
-                console.log(message.page)
-
-        switch(message.cast){
-            case "one":    await peertopeer(message); break;
-            case "all":  broadcastMessage('gen_channel',message);break;
-        }
     });
 
-        try {
-                const notifications = await getNotification();
-                broadcastMessage(process.env.REDIS_CHANNEL,{ system:"vivalibrocom",page:'',cast:'all',type: 'N', text:notifications,class:"c_square cblue" });
-            } catch (err) {
-                console.error('Failed to get counters:', err);
-            }
-            async function peertopeer(message) {
-                // Broadcast the message
-               if (message.to) {
-                   console.log("peertopeer", message.to)
-                   // let to = `user${to}`;
-                   const recipientWs = Array.from(wss.clients).find(client => client.userid === message.to);
-                   if (recipientWs) {
-                       console.log("found recipient and sending to", message.to)
-                       recipientWs.send(JSON.stringify(message));
-                   }
-               }
-            }
-        ws.isAlive = true;
+    // Health check for WebSocket connections
+    setInterval(() => {
+        wss.clients.forEach((ws) => {
+            if (!ws.isAlive) return ws.terminate();
+            ws.isAlive = false;
+            ws.ping();
         });
-    }
-    module.exports = {
-        setupWebSocket
-    };
+    }, 30000);
+
+    wss.on('connection', async (ws, req) => {
+        ws.isAlive = true;
+        ws.on('pong', () => (ws.isAlive = true));
+
+        stats(wss, ws, req); // Track stats
+
+        ws.on('message', async (data) => {
+            try {
+                let message = Buffer.isBuffer(data) ? JSON.parse(data.toString()) : JSON.parse(data);
+
+                if (!message || typeof message.cast !== 'string') {
+                    console.warn('Invalid message:', data);
+                    return;
+                }
+
+                switch (message.cast) {
+                    case "one":
+                        await peertopeer(wss, message);
+                        break;
+                    case "all":  //broadcast event.
+                        publish('gen_channel', message);
+                        break;
+                    default:
+                        console.warn(`Unknown message type: ${message.cast}`);
+                }
+
+                exeActions();
+            } catch (err) {
+                console.error('Error processing message:', err);
+                ws.send(JSON.stringify({ error: 'Invalid message format or internal error.' }));
+            }
+        });
+    });
+}
+
+module.exports = { realTimeConnection };

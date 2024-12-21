@@ -496,9 +496,5 @@ buildArchive
     }
 
 #ch1{
-    display: flex;
-    align-content: center;
-    align-items: center;
     width: 96%;
-    flex-direction: column;
 }
