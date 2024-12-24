@@ -1,18 +1,15 @@
 const WebSocket = require('ws');
 const EventEmitter = require('events');
-const { watch } = require('./watch');
 const { peertopeer } = require('./peertopeer');
 const { stats } = require('./stats');
 const { publish, subscribe } = require('./broadcast');
 
 const emitter = new EventEmitter();
 emitter.setMaxListeners(100); // Set appropriate limit
-//Watching filesystem
-watch();
 
 let wss;
 
-function realTimeConnection(server,exeActions) {
+function realTimeConnection(server,app,exeActions) {
     wss = new WebSocket.Server({ server });
 
     // Redis subscription
@@ -52,14 +49,15 @@ function realTimeConnection(server,exeActions) {
                     case "one":
                         await peertopeer(wss, message);
                         break;
+                    case "action":  //action
+                        exeActions(app);
+                        break;
                     case "all":  //broadcast event.
                         publish('gen_channel', message);
                         break;
                     default:
                         console.warn(`Unknown message type: ${message.cast}`);
                 }
-
-                exeActions();
             } catch (err) {
                 console.error('Error processing message:', err);
                 ws.send(JSON.stringify({ error: 'Invalid message format or internal error.' }));

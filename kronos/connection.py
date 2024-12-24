@@ -4,9 +4,9 @@ import mysql.connector
 def get_db_connection():
     return mysql.connector.connect(
         host=settings.DB_HOST,
-        user=settings.DB_USERNAME,
+        user=settings.DB_USER,
         password=settings.DB_PASS,
-        database=settings.DATABASE_VIVALIBRO,
+        database=settings.MARIA,
         use_unicode=True,
         charset="utf8mb4",
         collation="utf8mb4_general_ci"

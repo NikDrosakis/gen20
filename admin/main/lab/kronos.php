@@ -3,7 +3,7 @@
 
 2. core.kronos connects with kronos.service.openai
 
-THE GENERATIVE TARGET for openai is to Resource
+THE GENERATIVE TARGET for openai is to Action
 1) NULLS in DB,
 
 

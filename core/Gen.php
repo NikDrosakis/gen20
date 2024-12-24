@@ -6,7 +6,7 @@ use Head;
 use Form;
 use Media;
 use My;
-use GSocket;
+use WS;
 use Template;
 use Cubo;
 

@@ -1,42 +1,28 @@
-from fastapi import APIRouter, Request, HTTPException
-from fastapi.responses import JSONResponse
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from fastapi import FastAPI
+from pydantic import BaseModel
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
-router = APIRouter()
+app = FastAPI()
 
-# Load the Bloomz-7b1-mt model and tokenizer
-model_name = "bigscience/bloomz-7b1-mt"
-model = AutoModelForCausalLM.from_pretrained(model_name)
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+# Load GPT-2 model and tokenizer
+model_name = "gpt2"  # You can replace this with a different GPT-2 model variant
+tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+model = GPT2LMHeadModel.from_pretrained(model_name)
 
-@router.post("/chat")
-async def chat_with_bloom(request: Request):
-    try:
-        request_data = await request.json()
-        message = request_data.get("message")
-        if not message:
-            raise HTTPException(status_code=400, detail="Missing 'message' field in request body")
+class PromptRequest(BaseModel):
+    prompt: str
+    max_length: int = 50  # Default maximum length for generated text
 
-        # Encode the input message
-        inputs = tokenizer(message, return_tensors="pt", padding=True, truncation=True)
-        input_ids = inputs["input_ids"]
-        attention_mask = inputs.get("attention_mask", None)  # Use get to handle optional keys
+@app.post("/generate")
+async def generate_text(request: PromptRequest):
+    # Encode the input prompt
+    inputs = tokenizer.encode(request.prompt, return_tensors="pt")
 
-        # Generate a response
-        response = model.generate(
-            input_ids,
-            attention_mask=attention_mask,
-            max_length=1000,  # Adjust max_length as needed
-            do_sample=True,  # Or False if you don't want sampling
-            temperature=0.7,  # Only needed if sampling is enabled
-            pad_token_id=tokenizer.eos_token_id,
-            eos_token_id=tokenizer.eos_token_id
-        )
+    # Generate output
+    outputs = model.generate(inputs, max_length=request.max_length, num_return_sequences=1)
 
-        # Decode the response with clean-up
-        response_text = tokenizer.decode(response[0], skip_special_tokens=True, clean_up_tokenization_spaces=True)
+    # Decode and return the output
+    generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-        return JSONResponse(content={"response": response_text})
+    return {"generated_text": generated_text}
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error interacting with Bloomz-7b1-mt: {e}")

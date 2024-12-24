@@ -3,11 +3,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from config import settings
-DATABASE_VIVALIBRO_URL = f"mysql+pymysql://{settings.DB_USERNAME}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DATABASE_VIVALIBRO}"
-DATABASE_GPM_URL = f"mysql+pymysql://{settings.DB_USERNAME}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DATABASE_GPM}"
+MARIA_URL = f"mysql+pymysql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.MARIA}"
+MARIADMIN_URL = f"mysql+pymysql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.MARIADMIN}"
 
 # Create engine and session
-engine_vivalibro = create_engine(DATABASE_VIVALIBRO_URL)
+engine_vivalibro = create_engine(MARIA_URL)
 engine_admin = create_engine(DATABASE_ADMIN_URL)
 
 SessionLocalVivalibro = sessionmaker(autocommit=False, autoflush=False, bind=engine_vivalibro)

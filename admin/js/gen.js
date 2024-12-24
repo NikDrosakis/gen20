@@ -1068,14 +1068,24 @@ cooDelAll: function (except) {
             if(document.getElementById('activity-list')) {
                 gs.activity.add(message.text);
             }
-                console.log(message.text)
-                console.log(message.system)
             }
             if (G.SYSTEM == message.system) {
                 if (connectionName == 'ermis') {
                     switch (message.type) {
-                        case 'reload':
-                            location.reload();
+                        case 'watch':
+                        case 'events':
+                        case 'N':
+                            if (message.execute) {
+                                try {
+                                    eval(message.execute);
+                                } catch (error) {
+                                    console.error('Error executing command:', error);
+                                }
+                            } else {
+                                console.warn('No command to execute');
+                            }
+                        //case 'reload':
+//                            location.reload();
                             break;
                         case 'cubos':
                             console.log("received cubos",message)
@@ -1090,7 +1100,7 @@ cooDelAll: function (except) {
                                 existingid.innerHTML += message.html;
                             }
                             break;
-                        case 'N':
+                     /*   case 'N':
                             // Assuming message.text is an array of objects with class and number properties
                             for (const [key, value] of Object.entries(message.text)) {
                                 const span = document.createElement('span');
@@ -1103,6 +1113,7 @@ cooDelAll: function (except) {
                                 }
                             }
                             break;
+                      */
                         default:console.log(`Received, ${connectionName}:`, message);break;
                     }
                 } else if (connectionName == 'venus') {

@@ -30,6 +30,7 @@ Minification (Optional): You can extend the build.php script to minify the HTML,
 trait Bundle {
 
 
+
      protected function outputBundledCubos() {
             // Create the build directory if it doesn't exist
             if (!file_exists(BUILD_ROOT.'cubos')) {

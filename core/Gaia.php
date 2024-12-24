@@ -191,7 +191,7 @@ protected function renderCubo(string $name): string {
 }
 /**
 page & subpage metadata
-create list of metadata to Resource
+create list of metadata to Action
 */
 protected function getPageMetatags(): array {
     // Initialize an empty string for concatenation

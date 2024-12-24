@@ -10,7 +10,7 @@ v.1 used build Public & Admin Head, encoding actiongrp
 
 TODO
 ====
-v.2 dive into Resources SEO Metadata
+v.2 dive into Actions SEO Metadata
 */
 
 trait Head{
@@ -40,7 +40,7 @@ protected $resourceMap = [
         'js'  => []
     ]
 ];
-protected function loadDynamicResources($libraries) {
+protected function loadDynamicActions($libraries) {
     foreach ($libraries as $library) {
         $apiUrl = "https://api.cdnjs.com/libraries/$library";
         $response = file_get_contents($apiUrl);
@@ -111,13 +111,13 @@ protected function renderAdminHead() {
         <link rel="stylesheet" href="/admin/css/dashboard.css">
         <link rel="stylesheet" href="/admin/css/core.css">
 
-        <!-- Load Resources Based on Page -->
+        <!-- Load Actions Based on Page -->
         <?php
-       $this->loadResources('timetable');
-       $this->loadResources('globs');
+       $this->loadActions('timetable');
+       $this->loadActions('globs');
 
-       // Dynamic CDN Resources
-       $this->loadDynamicResources([]);
+       // Dynamic CDN Actions
+       $this->loadDynamicActions([]);
        ?>
 
 
@@ -148,7 +148,7 @@ protected function renderAdminHead() {
 }
 
 
-protected function loadResources($sub = '') {
+protected function loadActions($sub = '') {
     if (!isset($this->resourceMap[$sub])) return;
 
     // Load CSS files

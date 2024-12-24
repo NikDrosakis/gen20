@@ -3656,8 +3656,8 @@ app.include_router(gaia_route, prefix="/apy/v1/gaia")
 #    await ws_manager.connect(websocket, client_id)
 @app.on_event("startup")
 async def startup():
-    app.state.maria_vivalibro = Maria(settings.DATABASE_VIVALIBRO)
-    app.state.maria_gpm = Maria(settings.DATABASE_GPM)
+    app.state.maria_vivalibro = Maria(settings.MARIA)
+    app.state.maria_gpm = Maria(settings.MARIADMIN)
     app.state.solr = Solr(settings.DATABASE_SOLR_VIVALIBRO)
 
 if __name__ == '__main__':

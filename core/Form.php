@@ -1,6 +1,6 @@
 <?php
 /** 
-@filemeta.description CRUD Resources from Users & Admins, administers forms and tables, trait form (based in Maria.COMMENT) ADMIN to all page tables - Form class dynamic forms from mysql.comment
+@filemeta.description CRUD Actions from Users & Admins, administers forms and tables, trait form (based in Maria.COMMENT) ADMIN to all page tables - Form class dynamic forms from mysql.comment
 */
 
 /** 

@@ -18,7 +18,6 @@ class Maria:
         self._db = self.mysql_con()
         self.cursor = self._db.cursor(dictionary=True)
 
-
     def mysql_con(self):
             try:
                 connection = mysql.connector.connect(**self.config)

@@ -75,7 +75,7 @@ background-color: #4CAF50;
         <a href="/system/kronos"><span class="glyphicon glyphicon-transfer"></span>GPY</a>
         </h3>
     <button id="newkronos" class="bare right" style="float:right">New Integration</button>
-<blockquote>Python Resources</blockquote>
+<blockquote>Python Actions</blockquote>
 
 	<div id="newkronosbox"></div>
 	<div id="newkronos_container"></div>
