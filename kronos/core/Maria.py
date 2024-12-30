@@ -4,38 +4,112 @@ from mysql.connector import Error
 from config import settings
 
 class Maria:
-    def __init__(self, database: str):
+    def __init__(self, database: str = None):
+        # Default database is None if not provided
         self.config = {
             "host": "localhost",
             "user": "root",
             "password": "n130177!",
-            "database": database,  # Use the passed database name
             "use_unicode": True,
             "charset": "utf8mb4",
             "collation": "utf8mb4_unicode_ci",
             "buffered": True,
         }
+
+        # If a database is provided, add it to the config
+        if database:
+            self.config["database"] = database
+
+        # Establish the connection
         self._db = self.mysql_con()
         self.cursor = self._db.cursor(dictionary=True)
 
     def mysql_con(self):
-            try:
-                connection = mysql.connector.connect(**self.config)
-                print(f"Connecting successful to database: {self.config['database']}...")
-                return connection
-            except Error as error:
-                print(f"Error connecting to the database: {error}")
-                raise  # Re-raise the exception for FastAPI to handle
-
-    def switch_database(self, database_name: str):
         try:
-            self.config['database'] = database_name
-            self._db.close()  # Close the existing connection
-            self._db = self.mysql_con()  # Create a new connection
-            self.cursor = self._db.cursor(dictionary=True)  # Create a new cursor
-            print(f"Switched to database: {database_name}")
-        except Exception as e:
-            raise Exception(f"Failed to switch database: {e}")
+            connection = mysql.connector.connect(**self.config)
+            if "database" in self.config:
+                print(f"Connecting successful to database: {self.config['database']}...")
+            else:
+                print("Connecting successful without specifying a database...")
+            return connection
+        except Error as error:
+            print(f"Error connecting to the database: {error}")
+            raise  # Re-raise the exception for FastAPI to handle
+
+    def get_maria_tree(self):
+        """Fetch a list of databases from the server."""
+        try:
+            self.cursor.execute("SHOW DATABASES")
+            databases = [row['Database'] for row in self.cursor.fetchall()]
+            return databases
+        except Error as error:
+            print(f"Error retrieving databases: {error}")
+            return []
+
+    def get_tables_with_dbs(self):
+        """Get a list of all tables and their corresponding databases."""
+        try:
+            self.cursor.execute("""
+                SELECT TABLE_NAME, TABLE_SCHEMA
+                FROM information_schema.TABLES
+            """)
+            # Fetch all tables and schemas into a dictionary
+            tables_with_dbs = {}
+            for row in self.cursor.fetchall():
+                tables_with_dbs[row['TABLE_NAME']] = row['TABLE_SCHEMA']
+            return tables_with_dbs
+        except Error as error:
+            print(f"Error retrieving tables with databases: {error}")
+            return {}
+
+    #Function to get audit logs
+    def audit(self):
+        try:
+            query = """
+                SELECT * FROM mysql.audit_log
+                WHERE timestamp >= NOW() - INTERVAL 5 MINUTE;
+            """
+            self.cursor.execute(query)
+            results = self.cursor.fetchall()
+            return results
+        except mysql.connector.Error as err:
+            logging.error(f"Error fetching audit logs: {err}")
+            return None
+        finally:
+            self.cursor.close()
+            self.connection.close()
+
+    def table_meta(self, table_name: str):
+            """
+            Retrieves metadata information for a table from `information_schema`.
+            This includes column name, type, nullability, default value, key, extra info, and comments.
+            """
+            # Split table_name into schema and table if it contains a dot
+            exp = table_name.split(".")
+
+            if len(exp) == 2:
+                db, table = exp
+            else:
+                print("Invalid table name format. Expected 'database_name.table_name'")
+                return None
+
+            query = """
+                SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT,
+                       COLUMN_KEY, EXTRA, COLUMN_COMMENT
+                FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = %s
+                AND TABLE_NAME = %s
+            """
+
+            try:
+                self.cursor.execute(query, (db, table))
+                result = self.cursor.fetchall()
+                return result  # Returns a list of dictionaries containing metadata
+            except Error as e:
+                print(f"Error retrieving table metadata: {e}")
+                return None
+
+
 
     def is_(self, name: str) -> Union[str, bool]:
         fetch = self.f("SELECT val FROM globs WHERE name = %s", (name,))

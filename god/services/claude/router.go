@@ -1,7 +1,7 @@
 package claude
 
 import (
-	"encoding/json"
+
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -21,9 +21,10 @@ type Conversation struct {
 	Messages []map[string]string `json:"messages"`
 }
 
-var conversations = make(map[uuid.UUID][]map[string]string)
-apiKey := "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"
-
+var (
+    conversations = make(map[uuid.UUID][]map[string]string)
+    apiKey        = "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"
+)
 func NewClient(apiKey string) *Client {
 	return &Client{APIKey: apiKey}
 }

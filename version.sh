@@ -3,6 +3,62 @@
 if [ -f .env ]; then
     export $(grep -v '^#' .env | xargs)
 fi
+# Check if Git is installed; if not, install it
+if ! command -v git &> /dev/null; then
+    echo "[INFO] Git not found. Installing Git..."
+    sudo apt update && sudo apt install git -y
+    echo "[INFO] Git installed successfully."
+else
+    echo "[INFO] Git is already installed."
+fi
+
+# Navigate to the project directory
+cd "$GSROOT" || { echo "[ERROR] Project directory not found."; exit 1; }
+
+# Add the directory to Git's safe list if necessary
+echo "[INFO] Checking safe.directory for $GSROOT..."
+git config --global --add safe.directory "$GSROOT"
+git config --global user.email "$DEV_EMAIL"
+git config --global user.name "$ROOT_USER"
+
+# Display configuration for verification
+echo "[INFO] Verifying Git configuration..."
+git config --list | grep -E "user\.email|user\.name|safe\.directory"
+
+echo "[INFO] Git configuration complete."
+
+# Initialize Git if not already initialized
+if [ ! -d ".git" ]; then
+    echo "[INFO] Git repository not found. Initializing repository..."
+    git init
+fi
+
+# Check if the branch exists; if not, create 'main'
+CURRENT_BRANCH=$(git branch --show-current)
+if [ -z "$CURRENT_BRANCH" ]; then
+    echo "[INFO] No branch detected. Creating 'main' branch..."
+    git checkout -b main
+else
+    echo "[INFO] Current branch: $CURRENT_BRANCH"
+fi
+
+# Check if the remote repository is configured; if not, set it
+REMOTE_URL=$(git remote get-url origin 2>/dev/null)
+if [ -z "$REMOTE_URL" ]; then
+    echo "[INFO] Remote repository not found. Adding remote..."
+    git remote add origin "$REPO_URL"
+    echo "[INFO] Remote repository set to $REPO_URL"
+else
+    echo "[INFO] Remote repository already configured: $REMOTE_URL"
+fi
+# Verify if the remote repository matches 'gen20.git'
+if [[ "$REMOTE_URL" != *"$EXPECTED_REPO"* ]]; then
+    echo "[ERROR] Remote repository does not match $EXPECTED_REPO. Please verify."
+    exit 1
+else
+    echo "[INFO] Verified repository matches $EXPECTED_REPO."
+fi
+
  #debian12 shell script versioning.sh with two params  $1 for commit message to  # repository  https://github.com/NikDrosakis/GEN20.git
  # with GITHUB_ACCESS_TOKEN=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
 
@@ -33,7 +89,7 @@ COMMIT_MESSAGE=$1
 cd "$GSROOT" || exit 1
 
 #1: Get the new version number
-NEW_VERSION=$(mysql -u$DB_USER -p$DB_PASS -D$DB_NAME -se "SELECT MAX(version_tag) + 0.001 FROM versions")
+NEW_VERSION=$(mysql -u$DB_USER -p$DB_PASS -D$DB_ADMINAME -se "SELECT MAX(version_tag) + 0.001 FROM versions")
 echo ${NEW_VERSION}
 
 # Check if NEW_VERSION is empty or not a number
@@ -55,19 +111,17 @@ git commit -m "$COMMIT_MESSAGE"
 git push --set-upstream origin main
 #git push origin "$NEW_VERSION"
 
-
 #3: Insert the new version into the database
 MYSQL_QUERY="INSERT INTO versions (version_tag, title, summary, total_changes) VALUES ($NEW_VERSION, '$COMMIT_MESSAGE', '$LATEST_COMMIT_MESSAGE', $TOTAL_CHANGES);"
-mysql -u$DB_USER -p$DB_PASS -h$DB_HOST -D$DB_NAME -e "$MYSQL_QUERY"
-
+mysql -u$DB_USER -p$DB_PASS -h$DB_HOST -D$DB_ADMINAME -e "$MYSQL_QUERY"
 echo "Git pushed, Versioning completed successfully."
 
 #4 download new version of db to mysqldump with IF NOT EXIST WITHOUT ALTER setup/maria/gen_${NEW_VERSION}.sql
-DUMP_DIR="setup/maria/"
+DUMP_DIR="setup/maria"
 SQL_FILE="${DUMP_DIR}/gen_public_${NEW_VERSION}.sql"
 ADMIN_SQL_FILE="${DUMP_DIR}/gen_admin_${NEW_VERSION}.sql"
-mysqldump -u $DB_USER -p$DB_PASS --no-data --triggers --routines --events --create-options --no-set-names --add-drop-table=false $DB_NAME > $SQL_FILE
-mysqldump -u $DB_USER -p$DB_PASS --no-set-names --triggers --routines --events --create-options --add-drop-table=false $DB_NAME > $ADMIN_SQL_FILE
+mysqldump -u $DB_USER -p$DB_PASS --no-data --triggers --routines --events --create-options --no-set-names --add-drop-table=false $DB_ADMINAME > $SQL_FILE
+mysqldump -u $DB_USER -p$DB_PASS --no-set-names --triggers --routines --events --create-options --add-drop-table=false $DB_ADMINAME > $ADMIN_SQL_FILE
 
 if [ ! -e "$SQL_FILE" ] || [ ! -w "$SQL_FILE" ]; then
     echo "File does not exist or is not writable: $SQL_FILE"

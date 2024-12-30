@@ -1,6 +1,17 @@
 <?php
 namespace Core;
 /**
+ Action Ermis is the beginning of Action with it's websocket server and fs.watch that dominates the system
+ exeActions exported to index.js:
+ `Instantiate Actions |  const { exeActions } = require('./action');exeActions(app);
+ Running Web Socket Server for RealTime Actions; realTimeConnection(server,app,exeActions);
+
+--> uses Maria, Messenger
+--> runs in systemsid ermis
+ TODO utilize ci/cd process (through Github) example in the end
+ TODO utilize the power of event driven kafka logic
+ TODO utilize the power of unit testing
+ TODO use the manifest.md as high level filesystem & sql standarization
 
 CREATE TABLE `actiongrp` (
   `id` int(11) UNSIGNED NOT NULL COMMENT 'auto',

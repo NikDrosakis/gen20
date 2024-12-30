@@ -9,7 +9,7 @@ mydb = mysql.connector.connect(
     host="localhost",
     user="root",
     password="n130177!",
-    database="vivalibro"
+    database="gen_vivalibrocom"
 )
 
 mycursor = mydb.cursor(dictionary=True)

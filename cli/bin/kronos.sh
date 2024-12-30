@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Load environment variables
-source /var/www/gs/cli/configs/.env
+source /var/www/gs/cli/.env
 echo $GSROOT
 # Parameters: $1=name, $2=new or delete
 SERVICE_NAME=$1
@@ -28,7 +28,7 @@ if [ "$ACTION" = "new" ]; then
 
     # Update the database (use correct credentials)
     echo "Updating the database..."
-    $QUERY="INSERT INTO $INTEGRATION_TABLE (system_id, status, name) VALUES (7, 1, '$SERVICE_NAME');"
+    $QUERY="INSERT INTO $INTEGRATION_TABLE (systemsid, status, name) VALUES (7, 1, '$SERVICE_NAME');"
     echo $QUERY
     mysql -u "$DB_USER" -p"$DB_PASS" -h "$DB_HOST" -D "$DB_NAME" -e $QUERY || { echo "Database update failed"; exit 1; }
 

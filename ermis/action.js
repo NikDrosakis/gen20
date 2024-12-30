@@ -1,8 +1,19 @@
 /**
- Action Ermis is the beginning of Action with it's websocket server and fs.watch
- dominates the system
- uses Maria, Messenger
- runs in systemid ermis
+ Action Ermis is the beginning of Action with it's websocket server and fs.watch that dominates the system
+Analogy to Kafka is Kafka producers for logging or notifications and consumers for action execution
+ exeActions exported to index.js:
+ `Instantiate Actions |  const { exeActions } = require('./action');exeActions(app);
+ Running Web Socket Server for RealTime Actions; realTimeConnection(server,app,exeActions);
+ Feature	            Kafka									Your DB-Driven Actions System
+ Event Handling			Real-time, distributed messaging via topics.	WS RealTime Batch (before files) sequential processing of actions from/to DB.
+ Scalability			Highly scalable for millions of messages.		Limited by DB performance and query execution time. (cache it's execution by in-memory Redis)
+ Decoupling				Producers and consumers are loosely coupled.	Actions and systems are tightly coupled to DB schema (dbcentrism).
+ Order Guarantees		Ensured per partition (configurable).			Explicitly managed via schema order_level, action.systemsid, action.type,mysql COMMENTS-column metadata).
+ Use Case Suitability	High throughput, distributed systems.			Simplified task orchestration with dependency tracking.
+ Latency				Very low (real-time).							Low (Systems Batched, WS RealTime, Cron, Sql event triggered).
+ Complexity				Requires additional infrastructure.				Lightweight, easier to implement.
+--> uses Maria, Messenger
+--> runs in systemsid ermis
  TODO utilize ci/cd process (through Github) example in the end
  TODO utilize the power of event driven kafka logic
  TODO utilize the power of unit testing
@@ -21,22 +32,27 @@ const ROOT = process.env.ROOT || path.resolve(__dirname);
 //const mariapublic = new Maria(process.env.MARIA);
 const mariadmin = new Maria(process.env.MARIADMIN);
 
-
 //TODO Status Stats Diagnostics returns a table of statuses counters before and after actions updated to show the difference
 async function stat(actions) {
 
 }
+
 //TODO activate or deactivate status
-async function updateStatus(rec) {
+async function updateStatus(rec,newstatus,log='') {
     // Update the database with the result
-    await mariadmin.q("UPDATE action SET status = 'active', log=? WHERE id = ?", [
-        JSON.stringify(data),
+    //TODO log= empty log ? '' : (is json ? JSON.stringify(data) : data)
+    await mariadmin.q("UPDATE action SET status = ?, log=? WHERE id = ?", [
+        newstatus,
+        log,
         rec.id,
-    ]);
+    ])
+    .then(() => console.log(`Action ID ${rec.id} set to 'inactived' after change.`))
+    .catch((err) => console.error('Error updating action status:', err));
 }
+
 //TODO add action based on systemsid (where action runs) & actiongrpid (in which Resource action runs)
 async function addAction(rec) {
-    //TODO construct new record
+    //TODO construct new record with rec
     const newrecord= {};
     // Update the database with the result
     await mariadmin.inse("action",newrecord);
@@ -54,7 +70,6 @@ async function exeActions(app) {
 
         //before execution console table
         await stat(actions);
-
 
         if (!actions || actions.length === 0) {
             throw new Error("No valid data found in 'ermis' table.");
@@ -78,7 +93,6 @@ async function exeActions(app) {
                 console.warn(`Unknown type '${rec.type}' for row ID ${rec.id}.`);
             }
         }
-
         //after execution console table
         await stat(actions);
 
@@ -128,18 +142,13 @@ async function buildAI(rec) {
                 console.log(`${rec.names} AI responded with data:`, data);
 
                 // Update the database with the result
-                await mariadmin.q("UPDATE action SET status = 'active', log=? WHERE id = ?", [
-                    JSON.stringify(data),
-                    rec.id,
-                ]);
+               await updateStatus(rec,'activated');
+
             } catch (fetchError) {
                 console.error('Error processing AI POST request:', fetchError.message);
 
                 // Update the database for failure
-                await mariadmin.q("UPDATE action SET status = 'errored', log=? WHERE id = ?", [
-                    fetchError.message,
-                    rec.id,
-                ]);
+                await updateStatus(rec,'errored',err.message);
             }
         } else {
             console.error(`Unsupported HTTP method for AI: ${method}`);
@@ -148,10 +157,7 @@ async function buildAI(rec) {
         console.error(`Error building AI route:`, err.message);
 
         // Update the database for incorrect configuration
-        await mariadmin.q("UPDATE action SET status = 'errored', log=? WHERE id = ?", [
-            err.message,
-            rec.id,
-        ]);
+        await updateStatus(rec,'errored',err.message);
     }
 }
 
@@ -198,12 +204,12 @@ async function buildAPI(rec) {
                 const data = await response.json();
                 console.log(`${rec.names} Responsed with data , but how to use them?`);
                 // Update the database
-                await mariadmin.q("UPDATE action SET status = 'activated', log=? WHERE id = ?", [rec.id,JSON.stringify(data)]);
+                await updateStatus(rec,'activated');
 
-            } catch (fetchError) {
-                console.error('Error processing GET request:', fetchError.message);
+            } catch (err) {
+                console.error('Error processing GET request:', err.message);
                 // Update the database for failure
-                await mariadmin.q("UPDATE action SET status = 'errored', log=? WHERE id = ?", [rec.id,fetchError.message]);
+                await updateStatus(rec,'errored',err.message);
             }
         } else {
             console.error(`Unsupported HTTP method: ${method}`);
@@ -211,7 +217,7 @@ async function buildAPI(rec) {
     } catch (err) {
         console.error(`Error building API route:`, err.message);
         // Update the database for incorrect configuration
-        await mariadmin.q("UPDATE action SET status = 'errored',log=? WHERE id = ?", [rec.id,err.message]);
+        await updateStatus(rec,'errored',err.message);
     }
 }
 async function buildN(rec) {
@@ -312,9 +318,8 @@ async function watch2() {
                         changes.push(change);
 
                         // Switch action status
-                        mariadmin.q("UPDATE action SET status='inactived' WHERE id=?", [rec.id])
-                            .then(() => console.log(`Action ID ${rec.id} set to 'inactived' after change.`))
-                            .catch((err) => console.error('Error updating action status:', err));
+                        updateStatus(rec,'inactived');
+
                     }
                 });
             });

@@ -17,43 +17,58 @@ from fastapi import FastAPI
 app = FastAPI()
 
 # Utility function to fetch actions from the DB
-async def fetch_actions():
+async def fetch_actions(id: int = None):
+    """
+    Fetch actions from the database. If `id` is provided, fetch a specific action.
+    """
+    print(f"Executing action with ID: {id if id else 'all'}")
     try:
-        query = """
+        # Construct the query with optional filtering by `id`
+        paramQ = "WHERE action.id = ?" if id else ""
+        query = f"""
             SELECT systems.name, actiongrp.keys, action.*
             FROM action
             LEFT JOIN systems ON systems.id = action.systemsid
             LEFT JOIN actiongrp ON actiongrp.id = action.actiongrpid
+            {paramQ}
             ORDER BY sort
         """
-        result = mariadmin.fa(query)
+
+        # Execute the query with or without parameters
+        if id:
+            result = mariadmin.f(query, [id])  # Assuming `mariadmin.f` expects parameters
+        else:
+            result = mariadmin.fa(query)  # Fetch all records
         return result
     except mysql.connector.Error as err:
         logging.error(f"Database error: {err}")
         raise Exception("Internal server error")
 
-async def exe_actions():
-    try:
-        actions = await fetch_actions()
 
+async def exe_actions(id: int = None):
+    """
+    Execute actions based on the `id`. If no `id` is provided, execute all actions.
+    """
+    try:
+        actions = await fetch_actions(id)
         if not actions:
             raise Exception("No valid data found in table for 'kronos'.")
-        logging.info(actions)
-        #Now ! integrate Pretrained Model for training by accessing actions
-
-        ##Not now Later this!
-        #for rec in actions:
-         #   if rec['type'] == 'route':
-          #      await build_route(rec)
-           # elif rec['type'] == 'ext_resource':
-            #    await build_api(rec)
-            #elif rec['type'] == 'ai':
-             #   await build_ai(rec)
-            #else:
-             #   print(f"Unknown type '{rec['type']}' for row ID {rec['id']}.")
+        logging.info(f"Fetched actions: {actions}")
+        # Placeholder for processing fetched actions
+        for rec in actions:
+            print(f"Processing action ID {rec['id']} of type {rec['type']}")
+            # Example for future integration
+            # if rec['type'] == 'route':
+            #     await build_route(rec)
+            # elif rec['type'] == 'ext_resource':
+            #     await build_api(rec)
+            # elif rec['type'] == 'ai':
+            #     await build_ai(rec)
+            # else:
+            #     print(f"Unknown type '{rec['type']}' for row ID {rec['id']}.")
     except Exception as e:
-        print(f"Error fetching actions: {str(e)}")
-
+        logging.error(f"Error executing actions: {str(e)}")
+        print(f"Error executing actions: {str(e)}")
 
 async def render_keys(rawurl, rec):
     try:

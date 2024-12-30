@@ -1,10 +1,13 @@
 #!/bin/bash
-#1 PHP & MODULES INTALLATION
+#0 DOMAIN to CHOOSE ENVIRONMENT FOR SETUP IF LOCALHOST run docker-compose else continue
+#1 PHP & MODULES INTALLATION, COMPOSER
 #2 COMPOSER INSTALLATION
 #3 MARIA INSTALLATION
 #4 GENDB MYSQL INSTALLATION
 #5 PUBLIC PHP OR REACT
 #6 DB MYSQL
+#TODO 6B REDIS
+#TODO 6C MONGO
 #7 ERMIS
 #8 VENUS
 #9 KRONOS
@@ -14,39 +17,75 @@
 if [ -f .env ]; then
     export $(grep -v '^#' .env | xargs)
 fi
+IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
 
-#1 Check for PHP Version > 8.0
-PHP_VERSION=$(php -v 2>/dev/null | grep -oP '^PHP \K[0-9]+\.[0-9]+')
-if [[ -z "$PHP_VERSION" || $(echo "$PHP_VERSION < 8.0" | bc) -eq 1 ]]; then
+#0 ENVIRONMENT choose server or docker environment
+#Set the default domain to localhost for microservices if not already set
+DOMAIN=${DOMAIN:-localhost}
+echo "Using domain: $DOMAIN"
+
+# TODO: Check if the environment is localhost or not and handle accordingly
+if [[ "$DOMAIN" == "localhost" ]]; then
+    echo "Environment is localhost. Proceeding with Docker Compose configuration from $ROOT/docker-compose.yml"
+    if [ -f "$ROOT/docker-compose.yml" ]; then
+        echo "Docker Compose file found. Running docker-compose..."
+        docker-compose up -d
+    else
+        echo "docker-compose.yml file not found in $ROOT. Ensure it's in the correct location."
+    fi
+else
+    # Check if the domain is reachable (ping the domain)
+    echo "Checking if domain $DOMAIN is reachable..."
+    if ping -c 1 "$DOMAIN" &> /dev/null; then
+        echo "$DOMAIN is reachable. Continuing with the existing setup..."
+    else
+        echo "$DOMAIN is not reachable. Please check the domain or network connectivity."
+        exit 1
+    fi
+fi
+
+#Check if Composer is installed
+if ! command -v composer &> /dev/null; then
+    echo "Composer not found. Installing Composer..."
+    curl -sS https://getcomposer.org/installer | php
+    sudo mv composer.phar /usr/local/bin/composer
+    echo "Composer installed successfully!"
+else
+    echo "Composer is already installed."
+fi
+
+#1 PHP Check for PHP Version > 8.0
+PHP_VER=$(php -v 2>/dev/null | grep -oP '^PHP \K[0-9]+\.[0-9]+')
+if [[ -z "$PHP_VER" || $(echo "$PHP_VER < 8.0" | bc) -eq 1 ]]; then
     echo "PHP 8.0+ is required. Do you want to install it? (yes/no)"
     read -r INSTALL_PHP
     if [[ "$INSTALL_PHP" == "yes" ]]; then
         sudo apt update
-        sudo apt install -y php8.3 php8.3-fpm php8.3-mysql
+        sudo apt install -y php$PHP_VER php$PHP_VER-fpm php$PHP_VER-mysql
         sudo apt install -y \
-            php8.3-bz2 php8.3-calendar php8.3-core php8.3-ctype php8.3-curl php8.3-date \
-            php8.3-dom php8.3-exif php8.3-ffi php8.3-fileinfo php8.3-filter php8.3-ftp \
-            php8.3-gd php8.3-gettext php8.3-hash php8.3-iconv php8.3-igbinary php8.3-imagick \
-            php8.3-intl php8.3-json php8.3-libxml php8.3-mbstring php8.3-mcrypt php8.3-mongodb \
-            php8.3-mysqli php8.3-mysqlnd php8.3-openssl php8.3-pcntl php8.3-pcre php8.3-pdo \
-            php8.3-pdo-mysql php8.3-pdo-sqlite php8.3-phar php8.3-posix php8.3-random \
-            php8.3-readline php8.3-redis php8.3-reflection php8.3-session php8.3-shmop \
-            php8.3-simplexml php8.3-sockets php8.3-sodium php8.3-spl php8.3-sqlite3 php8.3-standard \
-            php8.3-sysvmsg php8.3-sysvsem php8.3-sysvshm php8.3-tokenizer php8.3-xml php8.3-xmlreader \
-            php8.3-xmlwriter php8.3-xsl php8.3-opcache php8.3-zip php8.3-zlib
-      sudo apt install -y php-pear php8.3-dev
+ php$PHP_VER-bz2 php$PHP_VER-calendar php$PHP_VER-core php$PHP_VER-ctype php$PHP_VER-curl php$PHP_VER-date \
+            php$PHP_VER-dom php$PHP_VER-exif php$PHP_VER-ffi php$PHP_VER-fileinfo php$PHP_VER-filter php$PHP_VER-ftp \
+            php$PHP_VER-gd php$PHP_VER-gettext php$PHP_VER-hash php$PHP_VER-iconv php$PHP_VER-igbinary php$PHP_VER-imagick \
+            php$PHP_VER-intl php$PHP_VER-json php$PHP_VER-libxml php$PHP_VER-mbstring php$PHP_VER-mcrypt php$PHP_VER-mongodb \
+            php$PHP_VER-mysqli php$PHP_VER-mysqlnd php$PHP_VER-openssl php$PHP_VER-pcntl php$PHP_VER-pcre php$PHP_VER-pdo \
+            php$PHP_VER-pdo-mysql php$PHP_VER-pdo-sqlite php$PHP_VER-phar php$PHP_VER-posix php$PHP_VER-random \
+            php$PHP_VER-readline php$PHP_VER-redis php$PHP_VER-reflection php$PHP_VER-session php$PHP_VER-shmop \
+            php$PHP_VER-simplexml php$PHP_VER-sockets php$PHP_VER-sodium php$PHP_VER-spl php$PHP_VER-sqlite3 php$PHP_VER-standard \
+            php$PHP_VER-sysvmsg php8.2-redis php$PHP_VER-sysvsem php$PHP_VER-sysvshm php$PHP_VER-tokenizer php$PHP_VER-xml php$PHP_VER-xmlreader \
+            php$PHP_VER-xmlwriter php$PHP_VER-xsl php$PHP_VER-opcache php$PHP_VER-zip php$PHP_VER-zlib php$PHP_VER-dev
+      sudo apt install -y php-pear php-dev build-essential
       sudo pecl install mongodb
       sudo pecl install igbinary
       sudo pecl install redis
-      sudo systemctl enable php8.3-fpm
-      sudo systemctl start php8.3-fpm
-        echo "PHP 8.3 & Modules installed successfully!"
+      sudo systemctl enable php$PHP_VER-fpm
+      sudo systemctl start php$PHP_VER-fpm
+        echo "PHP $PHP_VER & Modules installed successfully!"
     else
         echo "PHP 8.0+ is required. Exiting."
         exit 1
     fi
 else
-    echo "PHP version $PHP_VERSION is already installed."
+    echo "PHP version $PHP_VER is already installed."
 fi
 
 #2 COMPOSER Ask for Composer Installation
@@ -167,7 +206,6 @@ sudo ufw allow 8983,3006,3008,3009,3010/tcp
 # Test and reload Nginx
 sudo nginx -t && sudo systemctl reload nginx && echo "Nginx reloaded successfully!" || echo "Failed to reload Nginx."
 
-
 #5 GEN_DB - Ask the Domain && Install/Update setup/maria/gen_template_0.48.sql
 echo "Setting up the database for $DOMAIN..."
 
@@ -198,7 +236,6 @@ LATEST_PUBLIC_FILE=$(ls setup/maria/gen_public_*.sql | sort -t'_' -k2,2V | tail 
 echo "Updating schema SQL file '${LATEST_PUBLIC_FILE}' into database '$DB_NAME'..."
 mysql -uroot -D "${DB_NAME}" < ${LATEST_PUBLIC_FILE}
 echo "Database '$DB_NAME' schema updated successfully!"
-
 
 #Load settings SQL file
 SETTINGS_SQL="setup/maria/gen_settings_048.sql"
@@ -279,6 +316,12 @@ else
     exit 1
 fi
 echo "Presetup finished successfully"
+
+#6B
+  apt install redis-server && pecl install redis
+
+#6C
+ apt install mongodb
 
 #7: ERMIS Install Ermis Node.js dependencies if node_modules doesn't exist
 if [ ! -d "ermis/node_modules" ]; then

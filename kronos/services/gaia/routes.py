@@ -17,7 +17,7 @@ def read_root():
 
 @router.post("/maria")
 async def some_endpoint(request: Request,query_data: QueryRequest):
-    if query_data.database == "vivalibro":
+    if query_data.database == "gen_vivalibrocom":
         db = request.app.state.maria_vivalibro
     else:
         db = request.app.state.maria_admin

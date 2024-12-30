@@ -73,7 +73,7 @@ db_config = {
     'host': 'localhost',
     'user': 'root',
     'password': 'n130177!',
-    'database': 'vivalibro',
+    'database': 'gen_vivalibrocom',
 }
 
 # Chunk size

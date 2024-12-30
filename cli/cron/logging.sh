@@ -23,7 +23,7 @@ fi
 #INSERT INTO
 # CREATE TABLE `system_log` (
   # `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  # `system_id` int(10) UNSIGNED NOT NULL,
+  # `systemsid` int(10) UNSIGNED NOT NULL,
   # `version_id` decimal(5,2) UNSIGNED NOT NULL DEFAULT 0.00,
   # `summary` longtext DEFAULT NULL,
   # `files_changed` mediumint(8) UNSIGNED NOT NULL DEFAULT 0,
@@ -68,14 +68,14 @@ select_all_gitfolders() {
 }
 # Function to insert a log entry into the system_log table
 insert_log_entry() {
-    local system_id=$1
+    local systemsid=$1
     local version_id=$2
     local summary=$3
     local files_changed=$4
     local new_files=$5
   mysql -u"$DB_USER" -p"$DB_PASS" -h"$DB_HOST" -D"$DB_NAME" -e "
-    INSERT INTO system_log (system_id, version_id, summary, files_changed, new_files)
-    VALUES ($system_id, '$version_id', '$summary', $files_changed, $new_files)
+    INSERT INTO system_log (systemsid, version_id, summary, files_changed, new_files)
+    VALUES ($systemsid, '$version_id', '$summary', $files_changed, $new_files)
     ON DUPLICATE KEY UPDATE
         summary = CONCAT(summary, '\n', '$summary'),
         files_changed = files_changed + $files_changed,
@@ -87,8 +87,8 @@ cd "$LOCAL_REPO_PATH" || exit 1
 # Get the current max version_id from the database
 CURRENT_VERSION=$(version_id)
 # Loop through system IDs
-for system_id in $(select_all_gitfolders); do
-    git_folder=$(select_folder_by_id "$system_id")
+for systemsid in $(select_all_gitfolders); do
+    git_folder=$(select_folder_by_id "$systemsid")
 
     # Add changes only in the specific folder (with trailing slash)
     git add "$git_folder/"
@@ -108,7 +108,7 @@ for system_id in $(select_all_gitfolders); do
         new_files=$(git diff --name-status HEAD~1 -- "$git_folder/" | grep '^A' | wc -l)
 
         # Insert the log entry
-        insert_log_entry "$system_id" "$CURRENT_VERSION" "$commit_summary" "$files_changed" "$new_files"
+        insert_log_entry "$systemsid" "$CURRENT_VERSION" "$commit_summary" "$files_changed" "$new_files"
     fi
 done
 

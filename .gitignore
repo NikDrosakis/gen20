@@ -20,7 +20,7 @@ vendor/
 rus/target/
 # Specific directories and files
 kronos/__pycache__/
-kronos/newenv/
+kronos/genenv/
 ermis/node_modules/
 cubos/node_modules/
 venus/node_modules/

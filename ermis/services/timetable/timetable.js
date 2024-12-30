@@ -69,23 +69,23 @@ module.exports = function(params, config) {
                 }
 
                 // Get or Insert cubos ID
-                let cubos_id = await conn.query(
+                let cubosid = await conn.query(
                     'SELECT id FROM cubos WHERE name = ?',
                     [cubos_name]
                 );
-                if (cubos_id.length === 0) {
+                if (cubosid.length === 0) {
                     const insertCubos = await conn.query(
                         'INSERT INTO cubos (name) VALUES (?)',
                         [cubos_name]
                     );
-                    cubos_id = insertCubos.insertId;
+                    cubosid = insertCubos.insertId;
                 } else {
-                    cubos_id = cubos_id[0].id;
+                    cubosid = cubosid[0].id;
                 }
 
                 // Insert into tasks
-                sql = `INSERT INTO tasks (systems_id, cubos_id, text, start_date, end_date, progress, parent, duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-                pms = [systems_id, cubos_id, text, start_date, end_date, progress, parent, duration];
+                sql = `INSERT INTO tasks (systems_id, cubosid, text, start_date, end_date, progress, parent, duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+                pms = [systems_id, cubosid, text, start_date, end_date, progress, parent, duration];
                 await conn.query(sql, pms);
 
                 return { success: true };

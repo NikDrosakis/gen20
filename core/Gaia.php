@@ -61,8 +61,8 @@ abstract class Gaia {
     public $chat_file= "/var/www/gs/admin/compos/chat_panel.php";
 
     public function __construct() {
-	include ROOT.'config.php';
-	include ROOT."generic.php";
+	include "config.php";
+	include "generic.php";
         /*****
          * START MARIADB in ABSTRACTED GAIA
          *****/

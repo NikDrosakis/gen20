@@ -4,7 +4,7 @@
     "license": "proprietary",
     "description": "Core PHP library running in PHP8.3",
     "require": {
-        "php": "^8.3",
+        "php": "^8.2.26",
         "erusev/parsedown": "^1.7",
         "guzzlehttp/guzzle": "^7.9",
         "ratchet/pawl": "^0.4.1",

@@ -87,10 +87,10 @@ $db=explode('.',$table)[0];
     protected function getSystemLogsBuffer(): ?array {
        $buffer = array();
         $sel = array(); 
-		$query='SELECT systems.*,system_logs.* FROM systems left join system_logs ON systems.id=system_logs.system_id ';
+		$query='SELECT systems.*,system_logs.* FROM systems left join system_logs ON systems.id=system_logs.systemsid ';
 		$selsystems=$this->admin->fa($query);
 			for($i=0;$i<count($selsystems);$i++) { 
-				$sel[$selsystems[$i]["system_id"]][]=$selsystems[$i];
+				$sel[$selsystems[$i]["systemsid"]][]=$selsystems[$i];
 			}      
         // Create buffer for output		
         $buffer['count'] = count($selsystems);
@@ -127,7 +127,7 @@ protected function addMetric(array $params = []): ?array {
     // SQL query to fetch the required data
     $sql = "SELECT s.name, DATE_FORMAT(tr.created, '%Y-%m-%d') AS week, tr.progress_level
             FROM task_report tr
-            JOIN systems s ON tr.system_id = s.id
+            JOIN systems s ON tr.systemsid = s.id
             WHERE tr.created BETWEEN '2024-07-05' AND '2024-09-08'
             ORDER BY tr.created";
 
@@ -241,7 +241,7 @@ protected function addMetric(array $params = []): ?array {
 
         // Insert cubo into the database
         $data = [
-            'system_id' => 1,
+            'systemsid' => 1,
             'name' => $name,
             'description' => $description,
             'created' => date('Y-m-d H:i:s')

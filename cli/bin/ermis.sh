@@ -7,7 +7,7 @@ source /var/www/gs/cli/configs/.env
 # add new service folder ./services/$1
 # inside add new start.js  ./services
 # inside add new routes.js  ./services
-# insert maria.gen_admin.integrations table with name=$1, status=1, system_id = 3
+# insert maria.gen_admin.integrations table with name=$1, status=1, systemsid = 3
 # append line under //integrations `const $1Router = require('./services/$1/start');`
 # append line under #includes  `app.use('/api/v1/$1',$1Router);`
 ##If param $2=delete
@@ -41,7 +41,7 @@ if [ "$ACTION" = "new" ]; then
 
   # Insert into the database (use correct credentials)
   echo "Updating the database..."
-  mysql -u $DB_USER -p$DB_PASS -D $DB_NAME -e "INSERT INTO $INTEGRATION_TABLE (name, status, system_id) VALUES ('$SERVICE_NAME', 1, 3);"
+  mysql -u $DB_USER -p$DB_PASS -D $DB_NAME -e "INSERT INTO $INTEGRATION_TABLE (name, status, systemsid) VALUES ('$SERVICE_NAME', 1, 3);"
 
   # Update the main Node.js app with the new service integration
   echo "Updating main app..."
