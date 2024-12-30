@@ -37,7 +37,7 @@ fi
 CURRENT_BRANCH=$(git branch --show-current)
 if [ -z "$CURRENT_BRANCH" ]; then
     echo "[INFO] No branch detected. Creating 'main' branch..."
-    git checkout -b main
+    git checkout -b $BRANCH_NAME
 else
     echo "[INFO] Current branch: $CURRENT_BRANCH"
 fi
