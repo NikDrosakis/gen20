@@ -3,6 +3,7 @@
 if [ -f .env ]; then
     export $(grep -v '^#' .env | xargs)
 fi
+
 # Check if Git is installed; if not, install it
 if ! command -v git &> /dev/null; then
     echo "[INFO] Git not found. Installing Git..."
@@ -36,7 +37,7 @@ fi
 # Check if the branch exists; if not, create 'main'
 CURRENT_BRANCH=$(git branch --show-current)
 if [ -z "$CURRENT_BRANCH" ]; then
-    echo "[INFO] No branch detected. Creating 'main' branch..."
+    echo "[INFO] No branch detected. Creating '$BRANCH_NAME' branch..."
     git checkout -b $BRANCH_NAME
 else
     echo "[INFO] Current branch: $CURRENT_BRANCH"
@@ -44,6 +45,8 @@ fi
 
 # Check if the remote repository is configured; if not, set it
 REMOTE_URL=$(git remote get-url origin 2>/dev/null)
+REPO_URL="https:///${ACCESS_TOKEN}@github.com/${GIT_USER}/${EXPECTED_REPO}.git"
+
 if [ -z "$REMOTE_URL" ]; then
     echo "[INFO] Remote repository not found. Adding remote..."
     git remote add origin "$REPO_URL"
@@ -108,7 +111,7 @@ git add .
 git commit -m "$COMMIT_MESSAGE"
 
 # Push changes and tag to GitHub
-git push --set-upstream origin main
+git push --set-upstream origin "$BRANCH_NAME"
 #git push origin "$NEW_VERSION"
 
 #3: Insert the new version into the database
@@ -129,3 +132,4 @@ if [ ! -e "$SQL_FILE" ] || [ ! -w "$SQL_FILE" ]; then
 else
     echo "SQL presetup file $SQL_FILE created"
 fi
+
