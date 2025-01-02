@@ -16,7 +16,7 @@ fi
 # logging.sh is a cron running every one hour so as to get the changes (without pushing remote)
 #for each root folder of  that it is project
 # STEP 1 perform  git add (and need to commit??? to get from git log)
-# get last current max version_id froom database
+# get last current max version_tag froom database
 # INSERT INTO system_log changes and diff for separate folders in GEN20.git locally in /var/www/gs
 
 # Detailed Commit Information in column summary for each (/var/www/gs/)folder=(system.name)
@@ -24,10 +24,9 @@ fi
 # CREATE TABLE `system_log` (
   # `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   # `systemsid` int(10) UNSIGNED NOT NULL,
-  # `version_id` decimal(5,2) UNSIGNED NOT NULL DEFAULT 0.00,
+  # `version_tag` decimal(5,2) UNSIGNED NOT NULL DEFAULT 0.00,
   # `summary` longtext DEFAULT NULL,
   # `files_changed` mediumint(8) UNSIGNED NOT NULL DEFAULT 0,
-  # `new_files` MEDIUMINT UNSIGNED NOT NULL DEFAULT '0'
   # `created` datetime NOT NULL DEFAULT current_timestamp()
 # ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
@@ -56,8 +55,8 @@ fi
 # (9, 'cubos', '2024-08-28 01:29:51', '2024-08-28 03:43:41', 0.00, 'Widgets of VLWEB VLMOB PBWEB PBMOB decoupled in /cubos', 'Nik Drosakis', 'Provides modular widgets', 'PHP class system integrated in ADMIN, controlled by GPM sybsystem', 'High', 20),
 # (11, 'core', '2024-09-08 18:02:07', '2024-09-08 18:02:07', 0.00, 'PHP Classes, the core engine of GEN20\r\n', 'NikDrosakis', 'updated to 8.3, fully working', NULL, NULL, 3);
 
-# Function to get the maximum version_id from the database
-version_id() {
+# Function to get the maximum version_tag from the database
+version_tag() {
     mysql -u"$DB_USER" -p"$DB_PASS" -h"$DB_HOST" -D"$DB_NAME" -se "SELECT MAX(version_tag) FROM versions"
 }
 select_folder_by_id() {
@@ -69,23 +68,21 @@ select_all_gitfolders() {
 # Function to insert a log entry into the system_log table
 insert_log_entry() {
     local systemsid=$1
-    local version_id=$2
+    local version_tag=$2
     local summary=$3
     local files_changed=$4
-    local new_files=$5
   mysql -u"$DB_USER" -p"$DB_PASS" -h"$DB_HOST" -D"$DB_NAME" -e "
-    INSERT INTO system_log (systemsid, version_id, summary, files_changed, new_files)
-    VALUES ($systemsid, '$version_id', '$summary', $files_changed, $new_files)
+    INSERT INTO system_log (systemsid, version_tag, summary, files_changed)
+    VALUES ($systemsid, '$version_tag', '$summary', $files_changed)
     ON DUPLICATE KEY UPDATE
         summary = CONCAT(summary, '\n', '$summary'),
-        files_changed = files_changed + $files_changed,
-        new_files = new_files + $new_files;"
+        files_changed = files_changed + $files_changed;"
 }
 
 # Change to the repository directory
 cd "$LOCAL_REPO_PATH" || exit 1
-# Get the current max version_id from the database
-CURRENT_VERSION=$(version_id)
+# Get the current max version_tag from the database
+CURRENT_VERSION=$(version_tag)
 # Loop through system IDs
 for systemsid in $(select_all_gitfolders); do
     git_folder=$(select_folder_by_id "$systemsid")
@@ -105,10 +102,9 @@ for systemsid in $(select_all_gitfolders); do
 
         # Get files changed and new files for the specific folder (with trailing slash)
         files_changed=$(git diff --name-only HEAD~1 -- "$git_folder/" | wc -l)
-        new_files=$(git diff --name-status HEAD~1 -- "$git_folder/" | grep '^A' | wc -l)
 
         # Insert the log entry
-        insert_log_entry "$systemsid" "$CURRENT_VERSION" "$commit_summary" "$files_changed" "$new_files"
+        insert_log_entry "$systemsid" "$CURRENT_VERSION" "$commit_summary" "$files_changed"
     fi
 done
 

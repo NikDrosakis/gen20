@@ -185,7 +185,7 @@ to be updated to $_post AND json content
     }
 
 protected function renderCubo(string $name): string {
-         $cubo = $this->db->fa('SELECT * FROM cubo WHERE name=?',[$name]);
+         $cubo = $this->admin->fa('SELECT * FROM cubo WHERE name=?',[$name]);
          $uri=CUBO_ROOT.$name."/public.php";
          return $this->include_buffer($uri);
 }

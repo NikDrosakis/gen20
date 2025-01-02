@@ -726,7 +726,7 @@
 
 
 <!---BUTTON-TO FIRE CHAT--->
-<button class="button" data-uid="1" data-cid="3701232" data-uid0="2" data-mode="1" id="chat_3701232" onclick="gs.venus.fire(this,1)" title="Chat"><div class="totalChatNum chatc_3701232"></div>CHAT WITH ai</button>
+<button class="button" data-uid="1" data-cid="3701232" data-uid0="2" data-mode="1" id="chat_3701232" onclick="venus.fire(this,1)" title="Chat"><div class="totalChatNum chatc_3701232"></div>CHAT WITH ai</button>
 
 <!---CHATBOX---->
 <div id="wrapperchat" class="chatBottomAll"></div>
@@ -757,7 +757,7 @@ function closeVenusBox(button) {
     var id = button.id.replace('closechat', '');
     var chatbox = document.getElementById("chatbox" + id);
     if (chatbox) chatbox.remove();
-    gs.venus.fire(id, 0, button);
+    venus.fire(id, 0, button);
 }
 function closeVenusBox(button) {
     // Find the closest parent chatbox container ('.venusBox')
@@ -769,7 +769,7 @@ function closeVenusBox(button) {
     // Optionally call the `coo` function with the ID
     // You might need to adjust this based on your actual implementation
     var id = chatbox ? chatbox.getAttribute('data-id') : null; // Use a data attribute for the ID if necessary
-    gs.venus.fire(id, 0, button);
+    venus.fire(id, 0, button);
 }
 
 // Example usage

@@ -114,7 +114,7 @@ INSERT INTO `action` (`id`, `names`, `img`, `sort`, `actiongrpid`, `systemsid`, 
 (32, 'botpress', NULL, 0, 27, 3, 'route', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'activated', NULL, 0, NULL, NULL, NULL),
 (33, 'mongo', NULL, 0, 28, 3, 'route', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'activated', NULL, 0, NULL, NULL, NULL),
 (34, 'gaia', NULL, 0, 29, 3, 'route', NULL, NULL, NULL, NULL, NULL, 'update/insert', NULL, NULL, 'all', 'activated', NULL, 0, NULL, NULL, NULL),
-(46, 'gemini', NULL, 0, 11, 3, 'generate', '/tasks', NULL, NULL, NULL, NULL, 'update/insert', NULL, NULL, 'all', 'activated', NULL, 0, NULL, NULL, NULL),
+(46, 'gemini', NULL, 0, 11, 3, 'generate', '/action_task', NULL, NULL, NULL, NULL, 'update/insert', NULL, NULL, 'all', 'activated', NULL, 0, NULL, NULL, NULL),
 (47, 'unsplash', NULL, 0, 11, 3, 'ext_resource', 'GET,https://api.unsplash.com/collections?client_id={UNSPLASH_API_KEY}', NULL, NULL, NULL, NULL, 'update img divided with comma/insert', NULL, NULL, 'all', 'wrong', NULL, 0, NULL, 'Environment variable UNSPLASH_API_KEY is not defined.', NULL),
 (48, 'openweather', NULL, 0, 11, 3, 'ext_resource', 'GET,https://api.openweathermap.org/data/3.0/onecall/overview?lat={lat}&lon={lon}&appid={API key}', NULL, NULL, NULL, NULL, 'update/insert', NULL, NULL, 'all', 'wrong', NULL, 0, NULL, 'Environment variable lat is not defined.', NULL);
 

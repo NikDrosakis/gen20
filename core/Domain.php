@@ -647,7 +647,7 @@ protected function setupDomain($jsonsetup,$url){
 		return !empty($error) ? $error:  true;
 }
 
-    protected function mysqldump($domainame,$replica,$type='dom'){
+    protected function mariadump($domainame,$replica,$type='dom'){
         $host = $this->CONF[$domainame]['dbhost'];
         $db = $this->CONF[$domainame]['dbname'];
         $dbuser = $this->CONF[$domainame]['dbuser'];
@@ -659,13 +659,13 @@ protected function setupDomain($jsonsetup,$url){
             : $this->BACKUP_DIR.$type."/sql/gs-".$replica.".sql";
         //if type==gaia set only default settings and from one demo user,post,page record
         if($type=='dom'){
-            $mysqldump = "mysqldump --user=$dbuser --password=$dbpass --host=$host $db > $dump";
+            $dump = "mariadb-dump --user=$dbuser --password=$dbpass --host=$host $db > $dump";
         }else{
-            $mysqldump = "mysqldump --no-data --user=$dbuser --password=$dbpass --host=$host $db > $dump";
+            $dump = "mariadb-dump --no-data --user=$dbuser --password=$dbpass --host=$host $db > $dump";
         }
 
 
-        @exec($mysqldump);
+        @exec($dump);
         @chmod($dump, 0777);
     }
 
@@ -681,7 +681,7 @@ protected function setupDomain($jsonsetup,$url){
 			write_onfile($this->BACKUP_DIR."dom/log/updatelog-" . $domainbase . "-" . $replica . ".md", $log);
 
             //mysqldump
-            $this->mysqldump($domainame,$replica);
+            $this->dump($domainame,$replica);
 
 //copy the system to backup folder
             // and domain to domain_folder
@@ -718,8 +718,8 @@ protected function setupDomain($jsonsetup,$url){
             //rewrite update.log.txt
             write_onfile(BACKUP_DIR."gaia/log/updatelog-sys-" . $replica . ".md", $log);
 
-            //mysqldump
-            $this->mysqldump($domainame,$replica,'gaia');
+            //mariadb-dump
+            $this->dump($domainame,$replica,'gaia');
 
 ////copy the system to backup folder
             //update copy gaia to sys_folder

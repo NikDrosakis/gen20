@@ -27,7 +27,7 @@ from services.claude.routes import router as claude_route
 from services.gemini.routes import router as gemini_route
 # from services.tensorflow.routes import router as tensorflow_route
 #from services.openai.genai import router as openai_route
-#from services.gaia.routes import router as gaia_route
+from services.gaia.routes import router as gaia_route
 # Import the send_notification function
 
 # Start FastAPI
@@ -59,7 +59,7 @@ app.include_router(claude_route, prefix="/apy/v1/claude")
 app.include_router(gemini_route, prefix="/apy/v1/gemini")
 # app.include_router(tensorflow_route, prefix="/apy/v1/tensorflow")
 #app.include_router(openai_route, prefix="/apy/v1/openai")
-#app.include_router(gaia_route, prefix="/apy/v1/gaia")
+app.include_router(gaia_route, prefix="/apy/v1/gaia")
 
 # WSManager Initialize
 # ws_manager = WSManager(settings.REDIS_URL)
@@ -91,7 +91,7 @@ async def startup():
     # Fetch actions from the database (using maria_admin instance)
     logging.info("Executing Actions on startup...")
     await exe_actions()
-    await asyncio.gather(handle_shortcuts())
+    #await asyncio.gather(handle_shortcuts())
     # Start the periodic ping task
     #asyncio.create_task(periodic_ping())
     logging.info("Startup completed")

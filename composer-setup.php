@@ -450,7 +450,7 @@ function getPlatformIssues(&$errors, &$warnings, $install)
         || (version_compare(PHP_VERSION, '7.3.0', '>=')
         && version_compare(PHP_VERSION, '7.3.10', '<')))) {
         $warnings['onedrive'] = array(
-            'The Windows OneDrive folder is not supported on PHP versions below 7.2.23 and 7.3.10.',
+            'The Windows OneDrive folder is not supported on PHP version below 7.2.23 and 7.3.10.',
             'Upgrade your PHP ('.PHP_VERSION.') to use this location with Composer.'
         );
     }

@@ -1,4 +1,5 @@
 #!/bin/bash
+#ACTION - CUBO - METADATA
 #get .env vars
 if [ -f .env ]; then
     export $(grep -v '^#' .env | xargs)
@@ -19,7 +20,6 @@ CUBO_DIR="${ROOT}/cubos"
 KRONOS_SERVICES="${ROOT}/kronos/services"
 ERMIS_SERVICES="${ROOT}/ermis/services"
 GOD_SERVICES="${ROOT}/god/services"
-#autocheck.sh ACTION - CUBO - METADATA -
 #TODO dependencies
 #TODO delete doubles, change names like openai_ermis_generate(system_name)
 #TODO parse all routes and:

@@ -12,7 +12,7 @@ use Form;
   getBranches() shows the schema all tables with their parent and connection id
 
   Two Trees, the Core of GPM and the core of Public
-  systems have tasks and make actions
+  systems have action_task and make actions
 
 create prototype of the public based on tree
 

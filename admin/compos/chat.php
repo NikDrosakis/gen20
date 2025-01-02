@@ -90,10 +90,10 @@ display: table;
     <div id="chatresponse">
     <?php
     $dialogue=$this->admin->fa("
-        SELECT sudo_chat.*, s1.name AS from_name, s2.name AS to_name
-        FROM sudo_chat
-        LEFT JOIN sudos AS s1 ON s1.id = sudo_chat.fromid
-        LEFT JOIN sudos AS s2 ON s2.id = sudo_chat.toid
+        SELECT actiongrp_chat.*, s1.name AS from_name, s2.name AS to_name
+        FROM actiongrp_chat
+        LEFT JOIN actiongrp AS s1 ON s1.id = actiongrp_chat.fromid
+        LEFT JOIN actiongrp AS s2 ON s2.id = actiongrp_chat.toid
         order by id asc
     ");
     if(!empty($dialogue)){
@@ -163,7 +163,7 @@ display: table;
      if (message.length > 5) {
          try {
              // Save the message
-             const messagesave = await gs.api.admin.inse("sudo_chat", { text: message, fromid: 1, toid: 3 });
+             const messagesave = await gs.api.admin.inse("actiongrp_chat", { text: message, fromid: 1, toid: 3 });
              if (!messagesave.success) throw new Error('Failed to save message');
 
              // Append to div
@@ -191,7 +191,7 @@ display: table;
              console.log("GPY Response:", messageReceived);
 
              // Save the response
-             const responseSave = await gs.api.admin.inse("sudo_chat", { text: messageReceived, fromid: 3, toid: 1,conversation_id:messageReceived.conversation_id });
+             const responseSave = await gs.api.admin.inse("actiongrp_chat", { text: messageReceived, fromid: 3, toid: 1,conversation_id:messageReceived.conversation_id });
              if (!responseSave.success) throw new Error('Failed to save response');
 
              // Append response to div

@@ -117,15 +117,16 @@ fi
 MYSQL_VERSION=$(mysql -V 2>/dev/null | awk '{print $5}' | cut -d'.' -f1,2)
 
 # Define the minimum required version
-REQUIRED_VERSION="10.4"
+REQUIRED_VERSION="11.4"
 
 # Check if MariaDB/MySQL is installed and the version is detected
 if [[ -z "$MYSQL_VERSION" ]]; then
     echo "MariaDB is not installed. Do you want to install it? (yes/no)"
+    curl -LsS https://r.mariadb.com/downloads/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version="mariadb-${REQUIRED_VERSION}"
     read -r INSTALL_MYSQL
     if [[ "$INSTALL_MYSQL" == "yes" ]]; then
         sudo apt update
-        sudo apt install -y mariadb-server mariadb-client
+        sudo apt install sudo apt-get install mariadb-server mariadb-client mariadb-backup
         sudo systemctl start mariadb
         sudo systemctl enable mariadb
         echo "MariaDB installed successfully!"

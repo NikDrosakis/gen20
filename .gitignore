@@ -14,7 +14,6 @@ template/
 backup/
 core/test/
 public/
-template/
 setup/
 vendor/
 rus/target/
@@ -29,18 +28,15 @@ ermis/services/botpress/.env
 ermis/services/huggingface/.env
 ermis/services/openai/.env
 venus/services/openai/.env
-
-
+/.env
 ###> symfony/framework-bundle ###
 /.env.local
 /.env.local.php
 /.env.*.local
 /config/secrets/prod/prod.decrypt.private.php
 /public/bundles/
-/var/
 /vendor/
 ###< symfony/framework-bundle ###
-
 ###> phpunit/phpunit ###
 /phpunit.xml
 .phpunit.result.cache

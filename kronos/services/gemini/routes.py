@@ -72,7 +72,7 @@ async def get_databases():
 @router.get("/tables")
 async def get_tables():
     try:
-        tables_with_dbs = mariadmin.get_tables_with_dbs()
+        tables_with_dbs = mariadmin.tables()
         return {"tables_with_dbs": tables_with_dbs}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching tables with databases: {e}")

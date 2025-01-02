@@ -371,7 +371,7 @@ $cols = $this->getInputType($table); // @filemetacore.features Get column metada
                 $actions = json_encode([
                   ['method' => 'updateCuboImg', 'params' => ['name' => $row['name']]]
                   ]);
-            //       ['method' => 'buildTable', 'params' => ['table' => 'gen_vivalibro.tasks']],
+            //       ['method' => 'buildTable', 'params' => ['table' => 'gen_vivalibro.action_task']],
             //instead of gs.form.loadButton(\'updateCuboImg\', \'' . $row['name'] . '\')
 $tableHtml .= '<button onclick="gs.form.loadButton(\'updateCuboImg\', \'' . $table . '\', \'' . $row['name'] . '\')"><span style="position:absolute" class="bare glyphicon glyphicon-refresh"></span></button>';
 

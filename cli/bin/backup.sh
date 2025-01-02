@@ -15,10 +15,10 @@ mkdir -p $BACKUP_DIR
 
 # Step a) Backup databases
 echo "Backing up MySQL databases..."
-mysqldump -u $DB_USER -p$DB_PASS --triggers --routines --databases vivalibro gen_admin > $BACKUP_DIR/mysql_dbs.sql
+mariadb-dump -u $DB_USER -p$DB_PASS --triggers --routines --databases vivalibro gen_admin > $BACKUP_DIR/mysql_dbs.sql
 
 echo "Backing up Solr..."
-mysqldump -u $DB_USER -p$DB_PASS solr_vivalibro > $BACKUP_DIR/solr_vivalibro.sql
+mariadb-dump -u $DB_USER -p$DB_PASS solr_vivalibro > $BACKUP_DIR/solr_vivalibro.sql
 
 echo "Backing up MongoDB..."
 mongodump --db dros --out $BACKUP_DIR/dros

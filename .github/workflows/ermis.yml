@@ -1,0 +1,56 @@
+name: Ermis CI/CD
+
+on:
+  push:
+    branches:
+      - main  # Trigger on pushes to 'main'
+  pull_request:
+    branches:
+      - main # Trigger on pull requests targeting 'main'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18' # Use a supported Node.js version
+
+      - name: Install dependencies
+        run: npm ci # Use npm ci for cleaner installs
+
+      - name: Lint with ESLint
+        run: npm run lint # Assuming you have a lint script in package.json
+
+      - name: Run tests
+        run: npm run test # Assuming you have a test script in package.json
+
+      - name: Build application
+        run: npm run build # Assuming you have a build script in package.json
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Docker Image and Push (Example)
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          docker build -t "${{ secrets.DOCKER_USERNAME }}/<your-docker-image-name>:${{ github.sha }}" .
+          docker push "${{ secrets.DOCKER_USERNAME }}/<your-docker-image-name>:${{ github.sha }}"

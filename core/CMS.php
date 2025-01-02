@@ -63,7 +63,7 @@ protected function getUsers() {
     }
 
     protected function getMaincubo() {
-        return $this->db->fa("SELECT * from cubo order by name");
+        return $this->admin->fa("SELECT * from cubo order by name");
     }
 
 }

@@ -1,0 +1,15 @@
+### yml action line saving to action.manifest to be triggered
+## use Symfony\Component\Yaml\Yaml;
+## $config = Yaml::parseFile('config.yaml');
+services:  #fill_null_img
+  sql: select meta from [alltables] where img is null ==> insert into img VALUES()
+  type: api
+  description: fills new images saving in the /media folder and to [table].img in the system with given credentials
+  actiongrp: unsplash, other
+  execution_mode: direct # or pubsub to indicate how to execute
+  redis_channel: image_processing # if execution_mode is pubsub
+
+
+#[interpreter] 1. find update img select if insert into action 2.
+
+

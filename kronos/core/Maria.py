@@ -46,12 +46,12 @@ class Maria:
             print(f"Error retrieving databases: {error}")
             return []
 
-    def get_tables_with_dbs(self):
+    def tables(self):
         """Get a list of all tables and their corresponding databases."""
         try:
             self.cursor.execute("""
                 SELECT TABLE_NAME, TABLE_SCHEMA
-                FROM information_schema.TABLES
+                FROM information_schema.TABLES WHERE
             """)
             # Fetch all tables and schemas into a dictionary
             tables_with_dbs = {}

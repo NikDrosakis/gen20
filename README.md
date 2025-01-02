@@ -29,13 +29,13 @@ To provide a modular smart system, creating useful applications upgrading values
 how to create and IPFS subsystem for getting and sharing knowledge 2) how Blockchain could utilize share apps like uber of airbnb
 ##Top until now
 - The php api & to core in php8.3 (with 5 different utilizing core class methods accessing all type of data and buffers)
-- Vanillajs and decoupling from main libraries)
+- JS and decoupling from main libraries)
 - Layout & cubos
 - Use flexibility with drag & drop in admin
 - Generative AIs
-- solr neo4j, elasticsearch,
+- solr 
 - Ta kronos, ermis rising service modularity
-- Go and Rust as the young power
+- Go 
 - The admin as it progresses
 - The admin > grid with the channels is small and disfunctional
 - the 270k vivalibrocom book titles saved in db in one night
@@ -48,7 +48,7 @@ CORE:PHP classes + COMPOSER
 ADMIN:PHP COMMON DASHBOARD  
 KRONOS:COMMON python INTEGRATOR
 ERMIS:COMMON nodejs INTEGRATOR
-CLI:low level, crons, backups, tasks using also maria.gpm
+CLI:low level, crons, backups, action_task using also maria.gpm
 RUS:INTEGRATOR rust
 GO:INTEGRATOR golang
 VENUS:GLOBAL chat nodejs/ws app
@@ -217,7 +217,7 @@ Resource Management: Ensure proper organization and search capabilities for reso
 - **CI/CD**: Implementing workflows for PHP (core & admin), Node.js (ermis), React (Poetabook), and FastAPI (GPY).
 - **Version Control**: Git for local and remote synchronization, with custom versioning details tracked in MySQL.
 - **Versioning**: Focus on tracking the number of changed/new files in the system's versioning table.
-- **Cron Jobs**: Used for executing shell scripts, such as `logging.sh`, to manage automated tasks like logging.
+- **Cron Jobs**: Used for executing shell scripts, such as `logging.sh`, to manage automated action_task like logging.
 - **Database**: Using MySQL via PHP's PDO, with dynamic database allocation for resources based on method calls.
 - **API Development**: PHP API Gateway providing endpoints for HTML responses (either serialized or buffered).
 
@@ -532,7 +532,7 @@ GPM (Gaia Package Manager): A central subsystem for managing packages, workflows
 Cubos & Components: Modular UI components for both public and admin use, forming a customizable, reusable interface.
 
 Text for Generative AI
-The system is designed to bridge the gap between human intelligence and AI, providing a platform where users can leverage the power of artificial intelligence to enhance their personal and professional knowledge. By integrating AI into the system’s core components, it opens new avenues for learning and research, dynamically updating and interacting with real-time data. Generative AI plays a crucial role in customizing content, suggesting improvements, and automating repetitive tasks, allowing users to focus on higher-level thinking and creativity.
+The system is designed to bridge the gap between human intelligence and AI, providing a platform where users can leverage the power of artificial intelligence to enhance their personal and professional knowledge. By integrating AI into the system’s core components, it opens new avenues for learning and research, dynamically updating and interacting with real-time data. Generative AI plays a crucial role in customizing content, suggesting improvements, and automating repetitive action_task, allowing users to focus on higher-level thinking and creativity.
 ###JAVASCRIPT LIBRARY
 
 /*

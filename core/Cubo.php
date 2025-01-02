@@ -54,7 +54,7 @@ $db=explode('.',$table)[0];
     protected function getCuboBuffer(): array {
         $buffer = array();
         $sel = array();
-   		$query='SELECT * FROM cubos ORDER BY valuability DESC';
+   		$query='SELECT * FROM cubo ORDER BY valuability DESC';
    		$sel=$this->admin->fa($query);
    		$count = count($this->admin->fa($query));
            // Create buffer for output
@@ -67,13 +67,13 @@ $db=explode('.',$table)[0];
 
    // Retrieve all cubos
     protected function getCubos(): array {
-        return $this->admin->fa('SELECT * FROM cubos');
+        return $this->admin->fa('SELECT * FROM cubo');
     }
     // Retrieve  cubos buffer
 
     // Retrieve a single cubos by ID
     protected function getCubo(int $id): array {
-        return $this->admin->f('SELECT * FROM cubos WHERE id = ?',[$id]);
+        return $this->admin->f('SELECT * FROM cubo WHERE id = ?',[$id]);
     }
 
     // Retrieve cubos logs
@@ -87,7 +87,7 @@ $db=explode('.',$table)[0];
     protected function getSystemLogsBuffer(): ?array {
        $buffer = array();
         $sel = array(); 
-		$query='SELECT systems.*,system_logs.* FROM systems left join system_logs ON systems.id=system_logs.systemsid ';
+		$query='SELECT systems.*,system_ver.* FROM systems left join system_ver ON systems.id=system_ver.systemsid ';
 		$selsystems=$this->admin->fa($query);
 			for($i=0;$i<count($selsystems);$i++) { 
 				$sel[$selsystems[$i]["systemsid"]][]=$selsystems[$i];
@@ -98,12 +98,6 @@ $db=explode('.',$table)[0];
     //    $buffer['html'] = $this->include_buffer(ADMIN_ROOT."main/admin/system_buffer.php", $sel);
         return $buffer;
     }
-
-    // Add a new widget log entry
-    protected function addCuboLog(int $widgetId, string $action, string $summary): int {
-        return $this->admin->inse('cubo_logs',['widget_id'=>$widgetId, 'action'=>$action, 'summary'=>$summary]);
-    }
-
     // Update a widget
     protected function updateCubo(int $id, array $data): bool {
         $fields = [];
@@ -126,7 +120,7 @@ $db=explode('.',$table)[0];
 protected function addMetric(array $params = []): ?array {
     // SQL query to fetch the required data
     $sql = "SELECT s.name, DATE_FORMAT(tr.created, '%Y-%m-%d') AS week, tr.progress_level
-            FROM task_report tr
+            FROM action_task_report tr
             JOIN systems s ON tr.systemsid = s.id
             WHERE tr.created BETWEEN '2024-07-05' AND '2024-09-08'
             ORDER BY tr.created";
