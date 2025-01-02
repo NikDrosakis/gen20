@@ -9,6 +9,7 @@
 *.log
 
 # Media files
+log/
 media/
 template/
 backup/
