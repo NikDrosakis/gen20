@@ -94,7 +94,9 @@ async def startup():
     #await asyncio.gather(handle_shortcuts())
     # Start the periodic ping task
     #asyncio.create_task(periodic_ping())
+    print("\n".join([str(route) for route in app.routes]))
     logging.info("Startup completed")
+
 
 if __name__ == '__main__':
     import uvicorn

@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     OPENAI_PROJECT_ID: str
     OPENAI_ORG_ID: str
     REDIS_CHANNEL: str = None
+    CLAUDE_KEY: str
+    CLAUDE_ADMINKEY: str
 
     class Config:
         env_file = ".env"

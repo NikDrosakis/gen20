@@ -29,17 +29,6 @@ func NewClient(apiKey string) *Client {
 	return &Client{APIKey: apiKey}
 }
 
-func (c *Client) SetupRouter() *gin.Engine {
-	router := gin.Default()
-	api := router.Group("/apy/v1/claude")
-	api.Use(c.authMiddleware())
-	{
-		api.POST("/conversations/:conversation_id/messages", c.addMessage)
-		api.GET("/conversations/:conversation_id", c.getConversation)
-	}
-	return router
-}
-
 func (c *Client) authMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		apiKey := ctx.GetHeader("vivalibro")
@@ -103,4 +92,12 @@ func (c *Client) GetConversation(conversationID uuid.UUID) (*Conversation, error
 		return nil, fmt.Errorf("conversation not found")
 	}
 	return &Conversation{ID: conversationID, Messages: messages}, nil
+}
+
+func (c *Client) SetupRouter(router *gin.Engine) *gin.Engine {
+    api := router.Group("/god/v1/claude")
+    api.Use(c.authMiddleware())
+    api.POST("/conversations/:conversation_id/messages", c.addMessage)
+    api.GET("/conversations/:conversation_id", c.getConversation)
+    return router
 }
