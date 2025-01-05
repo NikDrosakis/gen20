@@ -7,7 +7,7 @@ By using a combination of PHP, Node.js, React Native, and FastAPI, along with AI
 
 ### Overview
 
-GEN20 is an advanced, modular system designed to facilitate the development of interactive and dynamic applications. It integrates multiple technologies, including PHP, FastAPI, Node.js, and React Native, to provide a comprehensive solution for various web and mobile needs. The system comprises several key components, each serving a specific role, and leverages AI technologies to enhance functionality and user experience.
+GEN20 is an advanced, modular system designed to facilitate the development of interactive and dynamic applications. It integrates multiple technologies, including PHP, FastAPI, Node.js, and React Native, to provide a comprehensive solution for various web and mobile needs. The system comprises several key components, each serving a specific role, and leverages AI technologies to enhance capabilities and user experience.
 
 ###The main goal
 To provide a modular smart system, creating useful applications upgrading values, freedom in educational resources, upgrading mental and scientific concepts through programming, using the great sources of knowledge that exist on the internet, but also the contribution of AI
@@ -75,7 +75,7 @@ Reusability: Review and refactor your JavaScript code to improve modularity and 
 Reduce Dependencies: If possible, reduce reliance on external libraries (like jQuery) to decrease your application's size and loading times.
 Re-evaluate Unsuccessful AI Integrations:
 Identify Roadblocks: Determine the reasons for the unsuccessful AI setups.
-Alternative Approaches: Explore alternative APIs or solutions to achieve the AI functionality you need.
+Alternative Approaches: Explore alternative APIs or solutions to achieve the AI capabilities you need.
 Localization (ADMIN):
 Complete Refactoring: Finish the localization rebuilding in your ADMIN system.
 User Authentication and Authorization:
@@ -149,7 +149,7 @@ How are the cubos that come from apis organized in admin, I have them in sub pag
 How components become global if they are public. If the admin also uses them, eg google login, how do they become public
 
 ###summary
-Component Integration: Components like login/signup are distinct but can be integrated into Cubos. Maintain separation for clarity and functionality.
+Component Integration: Components like login/signup are distinct but can be integrated into Cubos. Maintain separation for clarity and capabilities.
 Public vs. Admin: Cubos used publicly and in admin systems need clear distinction and organization.
 Component Globalization: Public components used in admin should be designed for broad applicability.
 Project and System Hierarchy: Projects include main pages and cubos. Systems serve projects with their own databases and domains.
@@ -346,7 +346,7 @@ The system consists of several key components:
    - Potential challenges in maintaining and updating form templates.
 
 4. **Modal Performance**
-   - The current modal implementation might not meet performance or functionality expectations.
+   - The current modal implementation might not meet performance or capabilities expectations.
    - Possible limitations in handling full-page content or interactive elements.
 
 5. **Documentation Gaps**
@@ -428,7 +428,7 @@ Contains Go source files and modules, likely related to a Go-based subsystem or 
 
 ### Additional Components
 
-- **ADMIN**: The dashboard for system management, divided into 7 channels and utilizing sortable components for drag-and-drop functionality.
+- **ADMIN**: The dashboard for system management, divided into 7 channels and utilizing sortable components for drag-and-drop capabilities.
 - **CORE**: The abstract class system of GEN20, updated to PHP 8.3 and vanilla JavaScript.
 
 ## Abilities
@@ -465,7 +465,7 @@ Contains Go source files and modules, likely related to a Go-based subsystem or 
 **Title: Enhancing AI Capabilities with Generative AI in GEN20**
 GEN20 is at the forefront of integrating advanced AI technologies to enhance its capabilities and offer a richer user experience. Our system employs Generative AI to drive various features, including personalized recommendations, content generation, and user interaction. By leveraging FastAPI to manage AI services like Gemini and Cohere, we ensure that our applications benefit from cutting-edge natural language processing and recommendation algorithms.
 Generative AI in GEN20 allows for the creation of sophisticated recommendation engines that analyze user preferences and behavior to provide tailored suggestions. This capability is integral to our Vivalibro project, where personalized book recommendations and reading challenges enhance user engagement. Additionally, our AI-driven content generation tools can automatically create and adapt content based on user interactions, improving the relevance and quality of user experiences.
-We are committed to exploring and refining AI technologies to continually improve the functionality and performance of our system. Our approach involves continuous experimentation with AI setups, optimization of existing integrations, and evaluation of new AI solutions. By integrating Generative AI, GEN20 aims to provide a dynamic, responsive, and personalized environment for all users.
+We are committed to exploring and refining AI technologies to continually improve the capabilities and performance of our system. Our approach involves continuous experimentation with AI setups, optimization of existing integrations, and evaluation of new AI solutions. By integrating Generative AI, GEN20 aims to provide a dynamic, responsive, and personalized environment for all users.
 
 MOB (Vivalibro Mobile): A React Native mobile app for cataloging and managing books using custom classifications and open resources.
 CUBO: Public UI widgets that form the core layout elements in both public and admin pages.

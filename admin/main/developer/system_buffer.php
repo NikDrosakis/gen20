@@ -14,7 +14,6 @@
     <textarea id="widget-description-<?=$id?>" class="widget-textarea" placeholder="engineering_scope"><?=$logs[0]['engineering_scope'] ? $logs[0]['engineering_scope'] : ''?></textarea>
     <label style="display:block;clear:left" for="widget-description-<?=$id?>">user_experience:</label>
     <textarea id="widget-description-<?=$id?>" class="widget-textarea" placeholder="user_experience"><?=$logs[0]['user_experience'] ? $logs[0]['user_experience'] : ''?></textarea>
-    <label style="display:block;clear:left" for="widget-description-<?=$id?>">scalability_level:</label>    
 <textarea id="widget-description-<?=$id?>" class="widget-textarea" placeholder="scalability_level"><?=$logs[0]['scalability_level'] ? $logs[0]['scalability_level'] : ''?></textarea>
 
     <div class="logs-section">

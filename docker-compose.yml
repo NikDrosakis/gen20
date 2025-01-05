@@ -1,94 +1,196 @@
-version: '3.9'
-
 services:
 
-  core:
-    build: ./core
-
-  cubos:
-    build: ./cubos
-  vivalibro:
-    build: public/vivalibro
-    ports:
-      - "80:80"
-    depends_on:
-      - mariadb
-      - api
-      - core
-      - cubos
+    # PHP-FPM Service
+  php-fpm:
+    image: php:8.2-fpm
+    container_name: php-fpm
     volumes:
-      - ./vivalibro:/var/www/html
-      - ./core:/var/www/core
-      - ./cubos:/var/www/cubos
-  poetabook:
-    build: ./poetabook
+      - ./app:/app
+      - ./setup/php.ini:/usr/local/etc/php/php.ini
+    networks:
+      - gen-network
+
+  # 0 Nginx Service to Proxy Requests
+  webserver:
+    image: nginx:1.26
+    container_name: webserver
     ports:
-      - "3000:3000"
+      - "443:443"
+    volumes:
+      - ./setup/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./setup/nginx/fastcgi.conf:/etc/nginx/fastcgi.conf
+      - ./setup/nginx/fastcgi-php.conf:/etc/nginx/snippets/fastcgi-php.conf
+      - ./setup/nginx/gen_shared:/etc/nginx/gen_shared
+      - ./setup/nginx/ssl/ssl.crt:/etc/nginx/ssl/ssl.crt
+      - ./setup/nginx/ssl/ssl.key:/etc/nginx/ssl/ssl.key
+      - ./setup/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+      - ./admin:/app/admin
+      - ./core:/app/core
+      - ./media:/app/media
     depends_on:
-      - api
-      - core
+      - php-fpm
       - cubos
+      - vivalibrocom
+    networks:
+      - gen-network
+
+#1 micro php
   admin:
-    build: ./admin
+    build:
+      context: .
+      dockerfile: ./admin/Dockerfile
     ports:
-      - "81:80"
+      - "8044:8044"
     depends_on:
-      - mariadb
-      - api
+      - maria
+      - apiv1
       - redis
     volumes:
-      - ./admin:/var/www/gs/admin
-      - ./core:/var/www/gs/core
-  api:
-    build: ./apiv1
-    ports:
-      - "8080:80"
+      - ./admin:/app/admin
+      - ./core:/app/core
+    networks:
+      - gen-network
+#2 micro php
+  cubos:
+    build:
+      dockerfile: ./cubos/Dockerfile
     depends_on:
-      - mariadb
+      - maria
+      - apiv1
     volumes:
-      - ./apiv1:/var/www/gs/apiv1
-      - ./core:/var/www/gs/core
-
-  ermis:
-    build: ./ermis
+      - ./cubos:/app/cubos
+      - ./core:/app/core
+    networks:
+      - gen-network
+#3 micro php
+  vivalibrocom:
+    build:
+      dockerfile: ./public/vivalibro.com/Dockerfile
     ports:
-      - "9000:9000"
+      - "8043:8043"
     depends_on:
-      - redis
-      - mariadb
-
-  kronos:  # Add the kronos (FastAPI) service
-    build: ./kronos
+      - maria
+      - apiv1
+      - cubos
+    volumes:
+      - ./public/vivalibro.com:/app/public
+      - ./core:/app/core
+    networks:
+      - gen-network
+#4 micro php api gateway
+  apiv1:
+    build:
+      dockerfile: ./apiv1/Dockerfile
     ports:
-      - "3006:3006"
+      - "8045:8045"
     depends_on:
-      - mariadb
-      - redis
-
-  mariadb:
-    image: mariadb:latest
+      - maria
+    volumes:
+      - ./apiv1:/app/apiv1
+      - ./core:/app/core
+    networks:
+      - gen-network
+#10 shared
+  maria:
+    image: mariadb:11.4
     environment:
-      MYSQL_ROOT_PASSWORD: ""  # Set your root password here
-      MYSQL_DATABASE: vivalibro         # Optional: Create a default database
-      MYSQL_USER: "root"                       # Optional: Create a new user
-      MYSQL_PASSWORD: "n130177!"
-      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+      MARIADB_ROOT_PASSWORD: ""
+      MARIADB_DATABASE: "gen_admin"
+      MARIADB_USER: "root"
+      MARIADB_PASSWORD: ""
+      MARIADB_ALLOW_EMPTY_PASSWORD: yes
     volumes:
       - db_data:/var/lib/mysql
-      - ./cli/deploy/vivalibro.sql:/docker-entrypoint-initdb.d/vivalibro.sql
-
+      - ./setup/maria/gen_admin_0.504.sql:/docker-entrypoint-initdb.d/gen_admin.sql
+      - ./setup/maria/gen_public_0.504.sql:/docker-entrypoint-initdb.d/gen_vivalibrocom.sql
+      - ./setup/maria/init.sh:/docker-entrypoint-initdb.d/init.sh
+    command: [ "bash", "/docker-entrypoint-initdb.d/init.sh" ]
+    networks:
+      - gen-network
+#11 works with #1
   phpmyadmin:  # Add the phpMyAdmin service
     image: phpmyadmin/phpmyadmin:latest
     environment:
-      PMA_HOST: mariadb  # Your MySQL service name
-      PMA_PASSWORD: "n130177!"   # Empty password
+      PMA_HOST: maria  # Your MySQL service name
+      PMA_PASSWORD: ""   # Empty password
     ports:
       - "8081:80"  # Port for accessing phpMyAdmin UI
     depends_on:
-      - mariadb
-
+      - maria
+    networks:
+      - gen-network
+#12 redis cache with pub/sub
   redis:
     image: redis:latest
+    command: redis-server --requirepass "your_strong_password"  # Set the required password
+    ports:
+      - "6379:6379"  # Expose the Redis port
+    volumes:
+      - ./data/redis:/data  # Optional: Persist data between container restarts
+    networks:
+      - gen-network
+
+  #6 micro nodejs
+  ermis:
+    build:
+      context: .
+      dockerfile: ermis/Dockerfile
+    volumes:
+      - ./ermis:/app
+    ports:
+      - "3005:3005"
+    command: ["node", "index.js"]
+    depends_on:
+      - redis
+      - maria
+    networks:
+      - gen-network
+
+  #7 micro fastapi
+  kronos:
+    volumes:
+      - ./kronos:/app
+    build:
+      context: .
+      dockerfile: kronos/Dockerfile
+    ports:
+      - "3006:3006"
+    depends_on:
+      - maria
+      - redis
+    networks:
+      - gen-network
+
+  #8 micro golang
+  god:
+    build:
+      context: .
+      dockerfile: god/Dockerfile
+    ports:
+      - "3007:3007"
+    depends_on:
+      - maria
+      - redis
+    networks:
+      - gen-network
+
+  #9 micro c++
+  mars:
+    build:
+      context: .
+      dockerfile: mars/Dockerfile
+    ports:
+      - "3008:3008"
+    depends_on:
+      - maria
+      - redis
+    networks:
+      - gen-network
 
 volumes:
   db_data:
+
+networks:
+  gen-network:
+    driver: bridge
+

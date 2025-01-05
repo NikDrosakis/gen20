@@ -1,6 +1,6 @@
-FROM php:8.3-cli AS cubos-builder
-
+#2 micro php
+FROM php:8.2-fpm
 WORKDIR /app
-
 # Copy your core code
-COPY . /app
+COPY . /app/cubos
+COPY ./core /app/core

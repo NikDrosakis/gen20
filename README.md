@@ -11,7 +11,7 @@ Set .env variables for database and user access
 
 ### Step 3
 Run presetup with: 
-```bash presetup.sh``` 
+```bash install.sh``` 
 
 ### Step 4
 At the Browser enter to the url  [your_domain]/admin
@@ -21,7 +21,7 @@ The purpose of this system is to develop smart applications that harness the pow
 By using a combination of PHP, Node.js, React Native, and FastAPI, along with AI resources such as Gemini and Cohere, the system bridges the gap between raw data and practical, intelligent applications. The overall vision is to empower users to unlock the potential of digital resources, elevating both individual and collective understanding.
 
 ### Overview
-GEN20 is an advanced, modular system designed to facilitate the development of interactive and dynamic applications. It integrates multiple technologies, including PHP, FastAPI, Node.js, and React Native, to provide a comprehensive solution for various web and mobile needs. The system comprises several key components, each serving a specific role, and leverages AI technologies to enhance functionality and user experience.
+GEN20 is an advanced, modular system designed to facilitate the development of interactive and dynamic applications. It integrates multiple technologies, including PHP, FastAPI, Node.js, and React Native, to provide a comprehensive solution for various web and mobile needs. The system comprises several key components, each serving a specific role, and leverages AI technologies to enhance capabilities and user experience.
 
 ###The main goal
 To provide a modular smart system, creating useful applications upgrading values, freedom in educational resources, upgrading mental and scientific concepts through programming, using the great sources of knowledge that exist on the internet, but also the contribution of AI
@@ -116,7 +116,7 @@ Reusability: Review and refactor your JavaScript code to improve modularity and 
 Reduce Dependencies: If possible, reduce reliance on external libraries (like jQuery) to decrease your application's size and loading times.
 Re-evaluate Unsuccessful AI resources:
 Identify Roadblocks: Determine the reasons for the unsuccessful AI setups.
-Alternative Approaches: Explore alternative APIs or solutions to achieve the AI functionality you need.
+Alternative Approaches: Explore alternative APIs or solutions to achieve the AI capabilities you need.
 Localization (ADMIN):
 Complete Refactoring: Finish the localization rebuilding in your ADMIN system.
 User Authentication and Authorization:
@@ -190,7 +190,7 @@ How are the cubos that come from apis organized in admin, I have them in sub pag
 How components become global if they are public. If the admin also uses them, eg google login, how do they become public
 
 ###summary
-Component Integration: Components like login/signup are distinct but can be integrated into Cubos. Maintain separation for clarity and functionality.
+Component Integration: Components like login/signup are distinct but can be integrated into Cubos. Maintain separation for clarity and capabilities.
 Public vs. Admin: Cubos used publicly and in admin systems need clear distinction and organization.
 Component Globalization: Public components used in admin should be designed for broad applicability.
 Project and System Hierarchy: Projects include main pages and cubos. Systems serve projects with their own databases and domains.
@@ -387,7 +387,7 @@ Resource Management: Ensure proper organization and search capabilities for reso
     - Potential challenges in maintaining and updating form templates.
 
 4. **Modal Performance**
-    - The current modal implementation might not meet performance or functionality expectations.
+    - The current modal implementation might not meet performance or capabilities expectations.
     - Possible limitations in handling full-page content or interactive elements.
 
 5. **Documentation Gaps**
@@ -469,7 +469,7 @@ Contains Go source files and modules, likely related to a Go-based subsystem or 
 
 ### Additional Components
 
-- **ADMIN**: The dashboard for system management, divided into 7 channels and utilizing sortable components for drag-and-drop functionality.
+- **ADMIN**: The dashboard for system management, divided into 7 channels and utilizing sortable components for drag-and-drop capabilities.
 - **CORE**: The abstract class system of GEN20, updated to PHP 8.3 and vanilla JavaScript.
 
 ## Abilities
@@ -509,14 +509,14 @@ GEN20 is at the forefront of integrating advanced AI technologies to enhance its
 
 Generative AI in GEN20 allows for the creation of sophisticated recommendation engines that analyze user preferences and behavior to provide tailored suggestions. This capability is integral to our Vivalibro project, where personalized book recommendations and reading challenges enhance user engagement. Additionally, our AI-driven content generation tools can automatically create and adapt content based on user interactions, improving the relevance and quality of user experiences.
 
-We are committed to exploring and refining AI technologies to continually improve the functionality and performance of our system. Our approach involves continuous experimentation with AI setups, optimization of existing resources, and evaluation of new AI solutions. By integrating Generative AI, GEN20 aims to provide a dynamic, responsive, and personalized environment for all users.
+We are committed to exploring and refining AI technologies to continually improve the capabilities and performance of our system. Our approach involves continuous experimentation with AI setups, optimization of existing resources, and evaluation of new AI solutions. By integrating Generative AI, GEN20 aims to provide a dynamic, responsive, and personalized environment for all users.
 
 #Deep Plans
 - Install and configure IPFS nodes on your servers or devices. IPFS (InterPlanetary File System) is a peer-to-peer network for storing and sharing data in a distributed file system.
   UI Design: Design a user-friendly interface for users to upload and access content. This could be a web application where users can drag and drop files or search for content.
   Integration: Integrate the frontend with the IPFS backend using the APIs you created. Ensure that users can easily share content by generating IPFS links.
   Metadata: Store metadata related to files on a decentralized database (like a blockchain) or use IPFS itself to store metadata.
-  Search: Implement a search functionality using decentralized search engines or integrate with existing ones like Solr or Elasticsearch.
+  Search: Implement a search capabilities using decentralized search engines or integrate with existing ones like Solr or Elasticsearch.
   Encryption: Encryption of sensitive data before uploading it to IPFS to ensure privacy.
   Access Control: access control mechanisms to manage who can view or upload content.
   Open Source: making system open-source to allow others to contribute and improve it.
@@ -2254,13 +2254,13 @@ const uniqueHrefs = [...new Set(hrefs)];
 
                     document.body.appendChild(modal);
 
-                    // Print button functionality
+                    // Print button capabilities
                     modal.querySelector('.print-button').addEventListener('click', function () {
                         var iframe = modal.querySelector('iframe');
                         iframe.contentWindow.print();
                     });
 
-                    // Close button functionality
+                    // Close button capabilities
                     modal.querySelector('.modal-close').addEventListener('click', function () {
                         document.body.removeChild(modal);
                     });
@@ -2548,7 +2548,7 @@ get max value from table
         return $cols;
     }
 
-    public function  mysql_con(string $dbhost,string $dbname,string $dbuser,string $dbpass){
+    public function  maria_con(string $dbhost,string $dbname,string $dbuser,string $dbpass){
         try	{
 			//mysql:unix_socket=/var/run/mysqld/mysqld.sock;charset=utf8mb4;dbname=$dbname
             return new PDO("mysql:host=$dbhost;dbname=$dbname",$dbuser,$dbpass,

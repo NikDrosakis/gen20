@@ -1,6 +1,5 @@
 import os
 import subprocess
-import mysql.connector
 import re
 from fastapi import FastAPI, WebSocket
 from core.Maria import Maria

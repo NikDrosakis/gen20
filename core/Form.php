@@ -271,7 +271,7 @@ $cols = $this->getInputType($table); // @filemetacore.features Get column metada
    // @filemetacore.features $offset = ((int)$this->currentPage - 1) * $this->resultsPerPage;
 
       $query= "SELECT * FROM $table";
-      // @filemetacore.features Modify query for search functionality
+      // @filemetacore.features Modify query for search capabilities
         if ($searchTerm) {
             $query .= " WHERE name LIKE '%$searchTerm%'";
         }

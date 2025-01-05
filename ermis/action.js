@@ -365,10 +365,10 @@ module.exports = { exeActions };
  sudo apt-get install -y curl git
  curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
- - name: Run presetup.sh (server-side configuration setup)
+ - name: Run install.sh (server-side configuration setup)
  run: |
- chmod +x ./presetup.sh
- ./presetup.sh
+ chmod +x ./install.sh
+ ./install.sh
 
  - name: Run version.sh (versioning script)
  run: |

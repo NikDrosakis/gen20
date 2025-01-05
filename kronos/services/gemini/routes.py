@@ -2,10 +2,10 @@ import os
 from fastapi import APIRouter, Request, HTTPException
 import google.generativeai as genai
 from core.Maria import Maria  # Import Maria class
-
-router= APIRouter();
 # Initialize Maria instance for gen_admin database access
 mariadmin = Maria("gen_admin")
+# mariadmin.fa(query,params) for fetch,mariadmin.q(query,params) for query, mariadmin.f(query,params) for fetch one, mariadmin.inse(table,array_soc) for INSERT
+router= APIRouter()
 
 # Initialize the Gemini API key
 genai.configure(api_key="AIzaSyBzMZiTWZPLZuoPkPhCyeFGMa0DhCUcS3M")  # Replace with your actual key
@@ -63,7 +63,7 @@ async def continue_conversation(request: Request):
 @router.get("/schema")
 async def get_databases():
     try:
-        databases = mariadmin.get_maria_tree()
+        databases = mariadmin.show_databases()
         return {"databases": databases}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching databases: {e}")

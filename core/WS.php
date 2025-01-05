@@ -7,7 +7,7 @@ use React\Promise\Promise; // Import Promise if needed for handling
 use Gredis; //Redis php implementation
 
 trait WS{
-// Use the GRedis trait for Redis functionality
+// Use the GRedis trait for Redis capabilities
 
     protected $socket; // WebSocket client instance
     protected $loop;   // Event loop instance

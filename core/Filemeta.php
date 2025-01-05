@@ -3,7 +3,7 @@
 
 /**
 @filemetacore.updatelog
-v.1 basic Trait, batch saving all files, changing all the style writing, having basic functionality & automating documentation and logging
+v.1 basic Trait, batch saving all files, changing all the style writing, having basic capabilities & automating documentation and logging
 */
 
 /** @filemetacore.features all classes and methods lists documented */

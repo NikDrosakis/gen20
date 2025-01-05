@@ -3,6 +3,8 @@
 #1 PHP & MODULES INTALLATION, COMPOSER
 #2 COMPOSER INSTALLATION
 #3 MARIA INSTALLATION
+#3A redis
+# 3B mongo
 #4 GENDB MYSQL INSTALLATION
 #5 PUBLIC PHP OR REACT
 #6 DB MYSQL
@@ -11,7 +13,8 @@
 #7 ERMIS
 #8 VENUS
 #9 KRONOS
-#10 PERMISSIONS
+#10 MARS
+#11 PERMISSIONS
 
 #get .env vars
 if [ -f .env ]; then
@@ -154,6 +157,10 @@ else
         fi
     fi
 fi
+
+#3A REDIS
+#3B MONGO
+sudo apt install redis-server redis-tools
 
 #4 Nginx - Ask for the domain
 echo "Enter the domain name to configure the database (e.g., example.com):"

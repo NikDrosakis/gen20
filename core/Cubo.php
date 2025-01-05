@@ -314,10 +314,9 @@ protected function getUsers() {
     protected function getMaincuboBypage(string $page): bool|array {
 
       $list=[];
-        $fetch = $this->db->fa("SELECT maincubo.area, cubo.name as cubo
+        $fetch = $this->db->fa("SELECT maincubo.area, maincubo.name as cubo
         FROM maincubo
         left join main on main.id=maincubo.mainid
-        left join cubo on cubo.id=maincubo.cuboid
         where main.name=?",[$page]);
             if (!empty($fetch)) {
                     foreach ($fetch as $row) {

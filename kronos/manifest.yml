@@ -1,0 +1,50 @@
+systems:
+  name: "Kronos"
+  path: "kronos"
+  img: "https://cdn.skai.gr/sites/default/files/styles/article_680x440/public/2022-09/kronos-saturn-space-st.jpg.webp?itok=YdL_T6sK"
+  description: "A Gen subsystem for handling AI training, generatives and various actions"
+  github: "gen20"
+  created: "2024-09-03"
+  version: 4
+  ecosystem: "Python FastAPI"
+  requires: "requirements.txt"
+  features:
+    - watching autosaving
+    - parsing YAML
+    - crud MariaDB
+    - crud Redis Lists
+    - Dockerfile
+    - Github Workflow
+    - AI generatives
+    - AI trained
+    - Resources
+    - Solr management
+  services:
+    - bloom
+    - claude
+    - cohere
+    - gaia
+    - gemini
+    - gptneo
+    - gutenberg
+    - openai
+    - openlibrary
+    - scrape
+    - solr
+    - tensorflow
+    - transformers
+    - wiki
+    - ws
+  todo:
+    - WS with Redis PubSub subscribe publish
+    - action.py to Messenger
+  author: "Nik Drosakis"
+  contact: "nikosdrosakis@gmail.com"
+  context:
+    - step: "Install"
+      command: "bash install.sh"
+    - step: "Update"
+      command: "bash install.sh"
+    - step: "Run the application"
+      command: "./main [yml filename]"
+  doc: "README.md"

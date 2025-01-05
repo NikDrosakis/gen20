@@ -611,7 +611,7 @@ protected function setupDomain($jsonsetup,$url){
 				GRANT ALL ON `$dbname`.* TO '$dbuser'@'localhost';
 				FLUSH PRIVILEGES;");
 	//7 install maria db --$this->create_db($dbname,$dbhost,$dbuser,$dbpass);
-	//	$this->_db = $this->mysql_con($dbhost,$dbname,$dbuser,$dbpass);
+	//	$this->_db = $this->maria_con($dbhost,$dbname,$dbuser,$dbpass);
 		$db= new PDO("mysql:host=$dbhost;dbname=$dbname",$dbuser,$dbpass);
 	//import basic database
 

@@ -390,7 +390,7 @@ $table = $exp[1];
         return $cols;
     }
 
-    public function  mysql_con(string $dbhost,string $dbname,string $dbuser,string $dbpass){
+    public function  maria_con(string $dbhost,string $dbname,string $dbuser,string $dbpass){
         try	{
 			//mysql:unix_socket=/var/run/mysqld/mysqld.sock;charset=utf8mb4;dbname=$dbname
             return new PDO("mysql:host=$dbhost;dbname=$dbname",$dbuser,$dbpass,

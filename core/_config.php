@@ -16,45 +16,31 @@ define('BUILD_ROOT',$_SERVER['DOCUMENT_ROOT'].'/build/');
 define('SERVERNAME',$_SERVER['SERVER_NAME']);
 define('HTTP_HOST',$_SERVER['HTTP_HOST']);
 define('REFERER',$_SERVER['HTTPS']=='on' ? 'https://' : 'http://'); //http or https
-
 define('CUBO_ROOT','/var/www/gs/cubos/');
-
 define('SERVEROOT',dirname(SITE_ROOT).'/');
 define('SITE_URL',REFERER.HTTP_HOST.'/');
-
 define('PUBLIC_ROOT',GSROOT.TEMPLATE.'/');
 define('PUBLIC_ROOT_WEB',GSROOT.'public/'.$_SERVER['SERVER_NAME'].'/');
-
-
 define('CUBO_URL',SITE_URL.'cubos/');
-
 define('ADMIN_URL',REFERER.HTTP_HOST. '/admin/');
 define('SITE',$_SERVER['HTTP_HOST']);
 define('SERVERNAME', $_SERVER['SERVER_NAME']);
-
 define('DOM_EXT', pathinfo($_SERVER['SERVER_NAME'], PATHINFO_EXTENSION));
 define('DOM_ARRAY', explode('.',$_SERVER['SERVER_NAME']));
-
 define('SERVERBASE',TEMPLATE.'.com');
 define('LOC','en');
 define('LANG','en');
 define('AJAXREQUEST',$_SERVER['HTTP_X_REQUESTED_WITH']=="XMLHttpRequest");
-
-define('MEDIA_ROOT', PUBLIC_ROOT_WEB.'media/');
+define('MEDIA_ROOT', ROOT.'media/');
 define('MEDIA_URL',SITE_URL.'media/');
 define('MEDIA_ROOT_ICON', MEDIA_ROOT."thumbs/");
-
 define('PUBLIC_IMG_ROOT', PUBLIC_ROOT_WEB.'img/');
 define('PUBLIC_IMG',SITE_URL.'img/');
-
 define('ADMIN_IMG_ROOT', ADMIN_ROOT.'img/');
 define('ADMIN_IMG',ADMIN_URL.'img/');
-
 define('URL_FILE',basename($_SERVER['PHP_SELF']));
 define('IMG',"/media/");
 define ('TEMPLATESURI',PUBLIC_ROOT_WEB."templates/");
-
-
 $this->G= array(
     'LIB'=> SITE_URL."/lib/",
     'IMG'=> SITE_URL."img/",
@@ -273,7 +259,6 @@ $this->G["status_message"] = array(
         $this->G['SYSTEM'] = $_SERVER['SYSTEM'];
 		$this->G['aconf']= json_decode(file_get_contents(PUBLIC_ROOT_WEB."gaia.json"),true);
 		$this->G['classif']= json_decode(file_get_contents(PUBLIC_ROOT_WEB."tax.json"),true);
-
 		$this->G['id'] = isset($_GET['id']) ? trim($_GET['id']):'';
 		$this->G['userid'] = isset($_GET['userid']) ? trim($_GET['userid']):'';
 		if ($this->G['SYSTEM']=='admin'){
@@ -289,8 +274,6 @@ $this->G["status_message"] = array(
         $this->G['name']= $_GET['name'] ?? '';
         $this->G['href']= $_GET['href'] ?? '';
         $this->G['src']= $_GET['src'] ?? '';
-
-
 		$this->G['SITE_ROOT']=SITE_ROOT;
 		$this->G['SITE_URL']=SITE_URL;
 		$this->G['HTTP_HOST']=HTTP_HOST;
@@ -305,7 +288,6 @@ $this->G["status_message"] = array(
         $this->G['publisherdefaultimg'] = "/admin/img/empty_publisher.png";
         $this->G['writerdefaultimg'] = "/admin/img/empty_user.png";
         $this->G['logo'] = "/img/logo.png";
-
 $this->G['parenting_areas'] = [
                "h1"=>"h","h2"=>"h","h3"=>"h",
                  "sl1"=>"sl","sl2"=>"sl","sl3"=>"sl",

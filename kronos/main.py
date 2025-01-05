@@ -10,9 +10,10 @@ from config import settings
 #from connection import get_db_connection
 from action import exe_actions
 import websockets
-#import asyncio
 from datetime import datetime  # Import datetime module
 from ws_send import ws_send
+from core.Watch import Watch
+from core.Yaml import Yaml
 
 logging.basicConfig(level=logging.DEBUG)
 # Integrations
@@ -32,12 +33,12 @@ from services.gaia.routes import router as gaia_route
 
 # Start FastAPI
 app = FastAPI()
-#app = FastAPI(
- #   title="Gen20 Python Integrations (Kronos)",
-  #  docs_url="/apy/v1/docs",
-#    redoc_url="/apy/v1/redoc",
- #   openapi_url="/apy/v1/openapi.json"
-#)
+app = FastAPI(
+    title="Kronos API",
+    docs_url="/apy/v1/docs",
+    redoc_url="/apy/v1/redoc",
+    openapi_url="/apy/v1/openapi.json"
+)
 
 # Add CORS middleware
 app.add_middleware(
@@ -91,6 +92,11 @@ async def startup():
     # Fetch actions from the database (using maria_admin instance)
     logging.info("Executing Actions on startup...")
     await exe_actions()
+     # Start watching the YAML file for changes
+    json= Yaml.read_yaml_and_convert_to_json("manifest.yml")
+    print(json)
+    Watch.start_watching("manifest.yml", "systems", "yaml")
+    # Start watching the YAML file for changes
     #await asyncio.gather(handle_shortcuts())
     # Start the periodic ping task
     #asyncio.create_task(periodic_ping())
@@ -100,7 +106,6 @@ async def startup():
 
 if __name__ == '__main__':
     import uvicorn
-
     uvicorn.run(
         "main:app",
         host=settings.HOST,

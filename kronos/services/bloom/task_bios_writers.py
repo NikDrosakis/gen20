@@ -1,26 +1,12 @@
-import mysql.connector
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-# MySQL Connection
-mydb = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="n130177!",
-    database="gen_vivalibrocom",
-    use_unicode=True,
-    charset="utf8mb4",
-    collation='utf8mb4_general_ci'
-)
 # Load Bloom model and tokenizer
 model_name = "bigscience/bloomz-7b1-mt"  # Multilingual Bloom variant
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForCausalLM.from_pretrained(model_name)
 
-mycursor = mydb.cursor(dictionary=True)
-
 # Fetch books with missing summaries
-mycursor.execute("SELECT id, title FROM c_book WHERE lang='en' AND summary IS NULL")
-books = mycursor.fetchall()
+books = maria.fa("SELECT id, title FROM c_book WHERE lang='en' AND summary IS NULL")
 
 for book in books:
     id = book['id']
@@ -36,11 +22,8 @@ for book in books:
         summary = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
 
         # Update the database with the Greek summary
-        mycursor.execute("UPDATE c_book SET summary = %s WHERE id = %s", (summary, id))
-        mydb.commit()
+        maria.q("UPDATE c_book SET summary = %s WHERE id = %s", (summary, id))
         print(f"Updated summary for book ID {id}")
 
     except Exception as e:
         print(f"Error generating summary for book '{title}': {e}")
-# Close database connection
-mydb.close()

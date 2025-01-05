@@ -1,0 +1,3 @@
+./ermis/node_modules/
+./kronos/genenv/
+*.log

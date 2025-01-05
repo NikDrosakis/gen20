@@ -1,6 +1,6 @@
 # CORE 
 ### v1 - August 2024
-1) started as Gaia abstracted mother class, with php8.3 functionality 
+1) started as Gaia abstracted mother class, with php8.3 capabilities 
 2) instance from Vivalibro & trait GPM class, starts Maria, GRedis
 3) Docker base as shared (not working)
 4) Added PHP API gateway to the system with gs.js access to core.Maria

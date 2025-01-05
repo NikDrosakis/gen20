@@ -1,0 +1,10 @@
+actions:
+  - id: 1
+    name: "Example Action"
+    type: "route"
+    endpoint: "/api/example"
+    execute_mode: "direct"
+    systemsid: 1
+    actiongrpid: 2
+    schedule: "cron(0 0 * * *)"
+    status: "testing"

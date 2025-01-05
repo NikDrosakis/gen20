@@ -1,11 +1,7 @@
-FROM php:8.3-cli
-
+#4 micro php api gateway
+FROM php:8.2-fpm
 WORKDIR /app
-
 # Copy your apiv1 code
-COPY . /var/www/html
-
-# Copy the shared core from the core-builder stage
-COPY --from=core-builder /app/core /var/www/html/core
-
+COPY ./apiv1 /app/apiv1
+COPY ./core /app/core
 ENTRYPOINT ["php", "index.php"]

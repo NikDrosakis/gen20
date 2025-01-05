@@ -9,16 +9,17 @@ accessed in APY, python fastapi runs with uvicorn in venv
 5. Swagger docs added 
 
 ## v.2 September 2024
-1. Generative AIs experimentations
+1. Generative AIs 
 2. Solved pedantic 
 3. Guvicorn running uvicorn
-4. gpu.sh automation and then gscli fast functions
-5. Added Transformers, Tensorflow and Solr along with 10 not active AIs 
+4. kronos.sh automation and then gscli fast functions
+5. Added Transformers, Tensorflow and Solr along with 10 AIs 
 6. javascript accessed from browser console.
 
-## v.3 WORKING October 2024
+## v.3 October 2024
 1. Activate & organize generative AIs tasks
 2. Automate processes & communication
 2. Scrape automation (together WITH GSCLI) service as Soup
 3. WS connect communication
-4. Use OpenCV, Pillow python job for kronos
+
+## v.4 December 2024

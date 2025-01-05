@@ -1,6 +1,5 @@
 from typing import Union, List, Dict, Optional
-import mysql.connector
-from mysql.connector import Error
+import mariadb
 from config import settings
 
 class Maria:
@@ -10,40 +9,41 @@ class Maria:
             "host": "localhost",
             "user": "root",
             "password": "n130177!",
-            "use_unicode": True,
-            "charset": "utf8mb4",
-            "collation": "utf8mb4_unicode_ci",
-            "buffered": True,
+            "autocommit":True,
         }
-
         # If a database is provided, add it to the config
         if database:
             self.config["database"] = database
 
         # Establish the connection
-        self._db = self.mysql_con()
+        self._db = self.maria_con()
         self.cursor = self._db.cursor(dictionary=True)
 
-    def mysql_con(self):
+    def maria_con(self):
         try:
-            connection = mysql.connector.connect(**self.config)
+            connection = mariadb.connect(**self.config)
             if "database" in self.config:
                 print(f"Connecting successful to database: {self.config['database']}...")
             else:
                 print("Connecting successful without specifying a database...")
             return connection
-        except Error as error:
+        except Exception as error:
             print(f"Error connecting to the database: {error}")
             raise  # Re-raise the exception for FastAPI to handle
 
-    def get_maria_tree(self):
-        """Fetch a list of databases from the server."""
+    def close(self):
+        if self._db:
+            self._db.close()
+            logging.info("Database connection closed.")
+
+    def show_databases(self) -> List[str]:
+        """Fetch all databases."""
         try:
-            self.cursor.execute("SHOW DATABASES")
-            databases = [row['Database'] for row in self.cursor.fetchall()]
-            return databases
-        except Error as error:
-            print(f"Error retrieving databases: {error}")
+            with self._db.cursor(dictionary=True) as cursor:
+                cursor.execute("SHOW DATABASES")
+                return [db['Database'] for db in cursor.fetchall()]
+        except mariadb.Error as err:
+            logging.error(f"Error fetching databases: {err}")
             return []
 
     def tables(self):
@@ -58,7 +58,7 @@ class Maria:
             for row in self.cursor.fetchall():
                 tables_with_dbs[row['TABLE_NAME']] = row['TABLE_SCHEMA']
             return tables_with_dbs
-        except Error as error:
+        except Exception as error:
             print(f"Error retrieving tables with databases: {error}")
             return {}
 
@@ -72,7 +72,7 @@ class Maria:
             self.cursor.execute(query)
             results = self.cursor.fetchall()
             return results
-        except mysql.connector.Error as err:
+        except Exception as error:
             logging.error(f"Error fetching audit logs: {err}")
             return None
         finally:
@@ -109,15 +109,6 @@ class Maria:
                 print(f"Error retrieving table metadata: {e}")
                 return None
 
-
-
-    def is_(self, name: str) -> Union[str, bool]:
-        fetch = self.f("SELECT val FROM globs WHERE name = %s", (name,))
-        if fetch:
-            return fetch[0]['val']  # Assuming 'en' is the column you want
-        else:
-            return False
-
     def fjsonlist(self, query: str) -> list:
         res = self.fa(query)
         if not res:
@@ -140,9 +131,7 @@ class Maria:
             columns = 'id, ' + columns
             placeholders = '%s, ' + placeholders
             values.insert(0, id)
-
         sql = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
-
         cursor = self._db.cursor()
         cursor.execute(sql, values)
         self._db.commit()
@@ -195,32 +184,6 @@ class Maria:
         self._db.commit()
         return bool(cursor.rowcount)
 
-    def ins(self, table: str, params: dict, id: Optional[int] = None) -> Union[int, bool]:
-        columns = ', '.join(params.keys())
-        placeholders = ', '.join(['%s'] * len(params))
-        values = list(params.values())
-
-        if id is not None:
-            columns = 'id, ' + columns
-            placeholders = '%s, ' + placeholders
-            values.insert(0, id)
-
-        sql = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
-
-        cursor = self._db.cursor()
-        cursor.execute(sql, values)
-        self._db.commit()
-        last_id = cursor.lastrowid
-        cursor.close()
-        return last_id if last_id else True
-
-    def count_(self, rowt: str, table: str, clause: str = '', params: tuple = ()) -> int:
-        cursor = self._db.cursor()
-        cursor.execute(f"SELECT COUNT({rowt}) FROM {table} {clause}", params)
-        count = cursor.fetchone()[0]  # Fetch the count
-        cursor.close()
-        return count
-
     def counter(self, query: str, params: tuple = ()) -> int:
         cursor = self._db.cursor()
         cursor.execute(query, params)
@@ -234,23 +197,6 @@ class Maria:
         result = cursor.fetchall()
         cursor.close()
         return result if not list_ else [column[0] for column in result]
-
-    def fPairs(self, row1: str, row2: str, table: str, clause: str = '') -> dict:
-        cursor = self._db.cursor(dictionary=True)
-        cursor.execute(f"SELECT {row1},{row2} FROM {table} {clause}")
-        result = dict(cursor.fetchall())  # Convert to a dictionary
-        cursor.close()
-        return result
-
-    def fUnique(self, query: str) -> dict:
-        cursor = self._db.cursor(dictionary=True)
-        cursor.execute(query)
-        result = {}
-        for row in cursor.fetchall():
-            key = list(row.keys())[0]  # Get the first key
-            result[row[key]] = row
-        cursor.close()
-        return result
 
     def fGroup(self, query: str) -> dict:
         cursor = self._db.cursor(dictionary=True)
@@ -269,56 +215,6 @@ class Maria:
         result = [row[0] for row in cursor.fetchall()]  # Extract the first element from each row
         cursor.close()
         return result
-
-    def fetchList(self, rows: Union[str, list], table: str, clause: str = '') -> Union[dict, bool]:
-        list_ = {}
-        if isinstance(rows, list):
-            row1, row2 = rows
-            fetch = self.fa(f"SELECT {row1}, {row2} FROM {table} {clause}")
-            if fetch:
-                for row in fetch:
-                    row1_key = row1.split('.')[-1] if '.' in row1 else row1
-                    row2_key = row2.split('.')[-1] if '.' in row2 else row2
-                    list_[row[row1_key]] = row[row2_key]
-                return list_
-            else:
-                return False
-        else:
-            fetch = self.fa(f"SELECT {rows} FROM {table} {clause}")
-            if fetch:
-                for row in fetch:
-                    list_.append(row[rows])
-                return list_
-            else:
-                return False
-
-    def truncate(self, table: str):
-        cursor = self._db.cursor()
-        cursor.execute(f"TRUNCATE TABLE {table}")
-        self._db.commit()
-        cursor.close()
-
-    def fl(self, rows: Union[str, list], table: str, clause: str = '') -> Union[dict, bool]:
-        list_ = {}
-        if isinstance(rows, list):
-            row1, row2 = rows
-            fetch = self.fa(f"SELECT {row1}, {row2} FROM {table} {clause}")
-            if fetch:
-                for row in fetch:
-                    row1_key = row1.split('.')[-1] if '.' in row1 else row1
-                    row2_key = row2.split('.')[-1] if '.' in row2 else row2
-                    list_[row[row1_key]] = row[row2_key]
-                return list_
-            else:
-                return False
-        else:
-            fetch = self.fa(f"SELECT {rows} FROM {table} {clause}")
-            if fetch:
-                for row in fetch:
-                    list_.append(row[rows])
-                return list_
-            else:
-                return False
 
     def trigger_list(self) -> list:
         triggers = self.fa("SHOW TRIGGERS")
