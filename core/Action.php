@@ -1,5 +1,6 @@
 <?php
 namespace Core;
+
 /**
  Action Ermis is the beginning of Action with it's websocket server and fs.watch that dominates the system
  exeActions exported to index.js:
@@ -138,8 +139,15 @@ trait Action {
 the Core does not need to publish to WS just in case of realtime need
 */
 use WS;
+use Yaml;
 protected $UNSPLASH_URL='https://api.unsplash.com/search/photos/';
 
+    /**
+     * Converts YAML string or file content to JSON.
+     *
+     * @param string $yamlContent The YAML content to convert (can be a string or file path).
+     * @return string JSON encoded data.
+     */
 
 //this function
 protected function exeAction(){

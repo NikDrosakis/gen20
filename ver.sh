@@ -174,5 +174,10 @@ fi
 
 # TODO: Backup the filesystem excluding certain directories
 # Backup the filesystem, excluding directories like node_modules
-tar -cvzf  --exclude='*/node_modules/*' --exclude='./genenv' -czf "/var/www/gs/backup/gen_backup_${NEW_VERSION}.tar.gz" /var/www/gs
+MYSQL_QUERY="INSERT INTO version (version_tag, title, summary, total_changes) VALUES ('$NEW_VERSION', '$(echo "$COMMIT_MESSAGE" | sed "s/'/''/g")', '$(echo "$LATEST_COMMIT_MESSAGE" | sed "s/'/''/g")', $TOTAL_CHANGES);"
+mariadb -u$DB_USER -p$DB_PASS -h$DB_HOST -D$DB_ADMINAME -e "$MYSQL_QUERY"
+echo "Version tag updated successfully."
+
+tar --exclude='*/node_modules/*' --exclude='./genenv' -czf "/var/www/gs/backup/gen_backup_${NEW_VERSION}.tar.gz" /var/www/gs
 echo "Filesystem backup completed."
+

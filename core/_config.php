@@ -16,6 +16,9 @@ define('BUILD_ROOT',$_SERVER['DOCUMENT_ROOT'].'/build/');
 define('SERVERNAME',$_SERVER['SERVER_NAME']);
 define('HTTP_HOST',$_SERVER['HTTP_HOST']);
 define('REFERER',$_SERVER['HTTPS']=='on' ? 'https://' : 'http://'); //http or https
+define('ERMIS_ROOT','/var/www/gs/ermis/');
+define('KRONOS_ROOT','/var/www/gs/kronos/');
+define('MARS_ROOT','/var/www/gs/mars/');
 define('CUBO_ROOT','/var/www/gs/cubos/');
 define('SERVEROOT',dirname(SITE_ROOT).'/');
 define('SITE_URL',REFERER.HTTP_HOST.'/');

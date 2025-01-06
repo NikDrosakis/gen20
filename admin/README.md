@@ -26,4 +26,10 @@
 ## v.6 November 2024
 1. core.Form along with core.Template 
 2. updated Media channel 
+
+## v.7 January 2025
+1. core.Action created
+2. core.Form updated
+3. Yaml
+ 
  

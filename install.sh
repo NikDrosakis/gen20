@@ -75,8 +75,8 @@ if [[ -z "$PHP_VER" || $(echo "$PHP_VER < 8.0" | bc) -eq 1 ]]; then
             php$PHP_VER-readline php$PHP_VER-redis php$PHP_VER-reflection php$PHP_VER-session php$PHP_VER-shmop \
             php$PHP_VER-simplexml php$PHP_VER-sockets php$PHP_VER-sodium php$PHP_VER-spl php$PHP_VER-sqlite3 php$PHP_VER-standard \
             php$PHP_VER-sysvmsg php8.2-redis php$PHP_VER-sysvsem php$PHP_VER-sysvshm php$PHP_VER-tokenizer php$PHP_VER-xml php$PHP_VER-xmlreader \
-            php$PHP_VER-xmlwriter php$PHP_VER-xsl php$PHP_VER-opcache php$PHP_VER-zip php$PHP_VER-zlib php$PHP_VER-dev
-      sudo apt install -y php-pear php-dev build-essential
+            php$PHP_VER-xmlwriter  php$PHP_VER-xsl php$PHP_VER-opcache php$PHP_VER-zip php$PHP_VER-zlib php$PHP_VER-dev
+      sudo apt install -y php-yaml php-pear php-dev build-essential
       sudo pecl install mongodb
       sudo pecl install igbinary
       sudo pecl install redis

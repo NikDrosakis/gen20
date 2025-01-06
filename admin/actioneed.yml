@@ -1,0 +1,19 @@
+
+actioneed:
+  - actioneed: "document_filling"
+    actions:
+      - name: "fill_null_field_image"
+        type: "POST"
+        endpoint: "/api/v1/fill_null_field_image"
+        parameters:
+          - "image_id"
+          - "null_field_data"
+  - actiongrp: "content_summarization"
+    meta: "null-fill, summary-generation, data-validation, image-processing, ai-integration"
+    actions:
+      - name: "generate_summary"
+        type: "POST"
+        endpoint: "/api/v1/generate_summary"
+        parameters:
+          - "document_id"
+          - "summary_type"

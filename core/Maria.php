@@ -137,15 +137,132 @@ public function inse(string $table, array $params = []): int|bool {
     updated $q validation for API flows
     */
     public function q(string $q, array $params = []): bool {
-           $queryType = strtoupper(strtok(trim($q), ' ')); // Get the first word of the query
-    if ($queryType !== 'UPDATE' && $queryType !== 'INSERT' && $queryType !== 'DELETE') {
-               return FALSE;
-           }
             $res = $this->_db->prepare($q);
             $res->execute($params);
             if (!$res)return FALSE;
             return true;
     }
+/**
+ * Extend and reformat data from DB into appropriate structure (reverses `prepareColumnFormat` logic).
+ */
+public function extendColumnFormat(array $params, array $columnsFormat): array {
+
+    foreach ($params as $key => &$value) {
+        if (isset($columnsFormat[$key])) {
+            $comment = $columnsFormat[$key];
+
+
+
+            // Handle 'comma' fields - convert comma-separated strings back to arrays
+            if (strpos($comment, 'comma') !== false && is_string($value)) {
+                $value = explode(',', $value);  // Convert comma-separated string to array
+            }
+
+            // Handle 'json' fields - decode JSON string back to array
+            elseif (strpos($comment, 'json') !== false && is_string($value)) {
+                $value = json_decode($value, true);  // Convert JSON string to array
+            }
+
+            // Handle 'includes' fields - if it's a file path, store it as an 'includes' key
+            elseif (is_string($value) && file_exists($value)) {
+                $value = ['includes' => $value];  // Store file path as an 'includes' key
+            }
+
+            // Handle simple string fields - no conversion needed, just ensure it is trimmed
+            elseif (is_string($value)) {
+                $value = trim($value);  // Remove whitespace from string
+            }
+
+            // Handle integer fields - ensure it's an integer
+            elseif (is_int($value)) {
+                // No transformation needed, just ensure it's an integer (useful for strict types)
+                $value = (int)$value;
+            }
+        }
+    }
+    return $params;
+}
+
+/**
+ * Prepare data from DB to be inserted or updated, according to the column format.
+ */
+public function prepareColumnFormat(array $params, array $columnsFormat): array {
+    foreach ($params as $key => &$value) {
+        if (isset($columnsFormat[$key])) {
+            $comment = $columnsFormat[$key];
+
+            // Handle file includes (like README.md) for 'includes' field
+ if (is_array($value) && array_key_exists('includes', $value)) {
+                $filePath = $value['includes'];
+                // If the 'includes' key exists and is a valid file, use file_get_contents
+                if (file_exists($filePath)) {
+                    $value = file_get_contents($filePath);  // Read file content
+                } else {
+                    throw new InvalidArgumentException("File at '$filePath' not found.");
+                }
+            }
+
+            // If it's a comma-separated field, convert array to string
+            elseif (strpos($comment, 'comma') !== false && is_array($value)) {
+                $value = implode(',', $value);  // Convert array to comma-separated string
+            }
+
+            // If it's a JSON field, convert array to JSON string
+            elseif (strpos($comment, 'json') !== false && is_array($value)) {
+                $value = json_encode($value);  // Convert array to JSON string
+            }
+        }
+    }
+    return $params;
+}
+/*
+pdo update or insert based on name
+comment=>format included
+* */
+public function upsert(string $table, array $params): int|bool {
+    // Ensure 'name' key exists in the params
+    if (!isset($params['name'])) {
+        throw new InvalidArgumentException("The 'name' parameter is required for upsert.");
+    }
+
+    // Get columns format
+    $columnsFormat = $this->colFormat($table);
+
+    // Format the params based on the column comments
+    $params = $this->prepareColumnFormat($params, $columnsFormat);
+
+    // Extract the 'name' value for the WHERE clause
+    $name = $params['name'];
+    unset($params['name']); // Remove 'name' to avoid duplication in insert/update
+
+    // Check if the record with the given name exists
+    $checkSql = "SELECT COUNT(*) FROM $table WHERE name = ?";
+    $checkStmt = $this->_db->prepare($checkSql);
+    $checkStmt->execute([$name]);
+    $exists = $checkStmt->fetchColumn() > 0;
+
+    if ($exists) {
+        // Prepare an UPDATE statement
+        $updateColumns = implode(' = ?, ', array_keys($params)) . ' = ?';
+        $updateSql = "UPDATE $table SET $updateColumns WHERE name = ?";
+        $updateStmt = $this->_db->prepare($updateSql);
+
+        // Execute the UPDATE statement
+        $updateStmt->execute([...array_values($params), $name]);
+        return true; // Return true for a successful update
+    } else {
+        // Prepare an INSERT statement
+        $insertColumns = implode(',', array_keys($params));
+        $placeholders = implode(',', array_fill(0, count($params), '?'));
+        $insertSql = "INSERT INTO $table (name, $insertColumns) VALUES (?, $placeholders)";
+        $insertStmt = $this->_db->prepare($insertSql);
+
+        // Execute the INSERT statement
+        $insertStmt->execute([$name, ...array_values($params)]);
+
+        return $this->_db->lastInsertId() ?: true;  // Return the last insert ID or true if no ID
+    }
+}
 
 /*
 	api flaw, executes even if I pass update , so it needs validation
@@ -175,6 +292,7 @@ public function inse(string $table, array $params = []): int|bool {
 		if(!$res) return FALSE;
             return $res->fetchAll(PDO::FETCH_ASSOC);
     }
+
 public function fetch(string $q, array $params = [], int $limit = 10, int $currentPage = 1,
     $orderBy="" , // Default order column
     $orderDir="" // Default order direction
@@ -368,14 +486,32 @@ $table = $exp[1];
     return $this->fa($query, [$db,$table]);
 }}
 
-    public function  comments(string $table): array{
-        $sel=array();
-        foreach($this->columns($table) as $colid => $col) {
-            $select = $this->f("SHOW full columns from $table WHERE Field='$col'");
-            $sel[$select['Field']] = $select['Comment'];
+/**
+ * Retrieves column comments for a specified table.
+ *
+ * @param string $table The name of the table.
+ * @return array An associative array of column names and their comments.
+ */
+public function colFormat(string $table, $column = null): array|string|bool {
+    if ($column) {
+        $res = $this->_db->prepare("SHOW FULL COLUMNS FROM `$table` WHERE Field = :column");
+        $res->bindParam(':column', $column);
+        $res->execute();
+        if (!$res) return false;
+        $select = $res->fetch(PDO::FETCH_ASSOC);
+        return $select ? trim($select['Comment']) : false;
+    } else {
+        $res = $this->_db->prepare("SHOW FULL COLUMNS FROM `$table`");
+        $res->execute();
+        if (!$res) return false;
+        $select = [];
+        $columns = $res->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($columns as $colData) {
+            $select[$colData['Field']] = trim($colData['Comment']);
         }
-        return $sel;
+        return $select;
     }
+}
     /*
      * RETURN TABLE char, varchar, text types
      *
