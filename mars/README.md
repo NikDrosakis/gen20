@@ -6,13 +6,14 @@ Actions: This section lists specific actions that the system can perform, such a
 Configuration: This provides database or system configuration options that are required to run the project.
 
 
-#v1
+#v1 - 
 - Input cli level
 - Parse yaml file
-- maria connector CRUD & INDEX AND MANAGE THE WHOLE SCHEMA
-- heredis PUBSUB + CRUD LISTS NATIVE PROCESS WITH CAPABILITIES
+- core.Maria > maria connector CRUD & INDEX AND MANAGE THE WHOLE SCHEMA
+- core.Gredis > heredis PUBSUB + CRUD LISTS NATIVE PROCESS WITH CAPABILITIES
 - API INTERACTION with libcurl (no pistache USE THE PUBSUB)
 - STANDALONE Connect with version.cpp & create the daemon subsystem Mars
 -  MICROSERVICES perform better in terms of processing efficiency and speed, especially for computational tasks
 - AI pretrained Have binding at TensorFlow, Bert, Onnx to train models
 - CLI chat with generatives or irc channel through liburl
+- version.cpp to replace ver.sh 

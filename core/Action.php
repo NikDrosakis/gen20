@@ -5,7 +5,7 @@ namespace Core;
  Action Ermis is the beginning of Action with it's websocket server and fs.watch that dominates the system
  exeActions exported to index.js:
  `Instantiate Actions |  const { exeActions } = require('./action');exeActions(app);
- Running Web Socket Server for RealTime Actions; realTimeConnection(server,app,exeActions);
+ Running Web Socket Server for RealTime Actions; WServer(server,app,exeActions);
 
 --> uses Maria, Messenger
 --> runs in systemsid ermis

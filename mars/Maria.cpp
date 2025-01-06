@@ -118,7 +118,7 @@ public:
             }
             query.pop_back(); // Remove trailing comma
             query += ") VALUES (";
-for (const auto& elem : params) { 
+for (const auto& elem : params) {
                 query += "?,";  // Placeholder for values
             }
             query.pop_back(); // Remove trailing comma

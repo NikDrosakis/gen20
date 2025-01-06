@@ -1,7 +1,7 @@
 // index.js
 const express = require('express');
 //RUN Ermis WebSocket
-const { realTimeConnection } = require('./ws');
+const { WServer } = require('./ws');
 
 const app = express();
 const fs = require("fs");
@@ -47,7 +47,7 @@ const { exeActions } = require('./action');
 exeActions(app);
 
 //Running Web Socket Server for RealTime Actions
-realTimeConnection(server,app,exeActions);
+WServer(server,app,exeActions);
 
 const PORT = process.env.ERMIS_PORT || 3010;
 server.listen(PORT, function () {

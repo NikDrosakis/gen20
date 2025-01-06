@@ -4,7 +4,7 @@ import json
 
 async def ai_websocket_client(prompt: str, max_tokens: int = 100):
     """Communicates with AI via WebSocket and returns the response."""
-    uri = "wws://vivalibro.com:3009/"  # The WebSocket URL of the AI service
+    uri = "wss://vivalibro.com:3010/"  # The WebSocket URL of the AI service
 
     async with websockets.connect(uri) as websocket:
         # Create and send the message (e.g., prompt for AI text generation)

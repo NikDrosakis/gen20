@@ -53,53 +53,39 @@ function updateConnectionIndicator(connection, isConnected) {
     }
 }
 
-
-// Usage examples for WebSocket instance creation
-const connections = ['ermis', 'venus'];
-const uris = { ermis: `vivalibro.com:3010/?user=${my.userid}`, venus: `vivalibro.com:3009/?user=${my.userid}` };
-connections.forEach(connection => {
-    const ws = gs.soc.init(connection, uris[connection]);
-    window[`ws${connection}`] = ws;  // Store WebSocket instance in window for global access if needed
-});
+// WebSocket instance creation
+const ws = gs.soc.init('ermis', `vivalibro.com:3010/?user=${my.userid}`);
+window[`wsermis`] = ws;  // Store WebSocket instance in window for global access if needed
 setTimeout(() => {
     checkWebSocketStatus();
 }, 15000);
 // Define a function to check the status of each WebSocket connection
 function checkWebSocketStatus() {
-    connections.forEach(connection => {
-        const ermisnstance = window[`ws${connection}`];
-        console.log(connection);
+        const ermisnstance = window[`wsermis`];
         if (ermisnstance) {
             switch (ermisnstance.readyState) {
                 case WebSocket.CONNECTING:
-                    console.log(`${connection} WebSocket is connecting...`);
+                    console.log(`ermis WebSocket is connecting...`);
                     break;
                 case WebSocket.OPEN:
-                    console.log(`${connection} WebSocket is open and ready.`);
-                    if(connection=='ermis') {
-                        const notificationweb_panel= document.getElementById('notificationweb_panel');
-                            if(notificationweb_panel){notificationweb_panel.className = 'green indicator';}
-                        const wsy_panel= document.getElementById('wsy_panel');
-                        if(wsy_panel){wsy_panel.className = 'green indicator';}
-                    }
-                    if(connection=='venus') {
-                        const venus_panel= document.getElementById('venus_panel');
-                        if(venus_panel){venus_panel.className = 'green indicator';}
-                    }
+                    console.log(`ermis WebSocket is open and ready.`);
+                     const notificationweb_panel= document.getElementById('notificationweb_panel');
+                       if(notificationweb_panel){notificationweb_panel.className = 'green indicator';}
+                        const ermis_panel= document.getElementById('wsy_panel');
+                        if(ermis_panel){ermis_panel.className = 'green indicator';}
                     break;
                 case WebSocket.CLOSING:
-                    console.log(`${connection} WebSocket is closing...`);
+                    console.log(`ermis WebSocket is closing...`);
                     break;
                 case WebSocket.CLOSED:
-                    console.log(`${connection} WebSocket is closed.`);
+                    console.log(`ermis WebSocket is closed.`);
                     break;
                 default:
-                    console.log(`${connection} WebSocket status is unknown.`);
+                    console.log(`ermis WebSocket status is unknown.`);
             }
         } else {
-            console.log(`No WebSocket instance found for ${connection}`);
+            console.log(`No WebSocket instance found for ermis`);
         }
-    });
 }
 
 //start all the gseditors

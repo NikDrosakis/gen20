@@ -9,7 +9,7 @@ emitter.setMaxListeners(100); // Set appropriate limit
 
 let wss;
 
-function realTimeConnection(server,app,exeActions) {
+function WServer(server,app,exeActions) {
     wss = new WebSocket.Server({ server });
 
     // Redis subscription
@@ -66,4 +66,4 @@ function realTimeConnection(server,app,exeActions) {
     });
 }
 
-module.exports = { realTimeConnection };
+module.exports = { WServer };

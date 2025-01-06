@@ -24,21 +24,21 @@ async def fetch_actions(id: int = None):
     print(f"Executing action with ID: {id if id else 'all'}")
     try:
         # Construct the query with optional filtering by `id`
-        paramQ = "WHERE action.id = ?" if id else ""
+        paramQ = "AND action.id = ?" if id else ""
         query = f"""
             SELECT systems.name, actiongrp.keys, action.*
             FROM action
             LEFT JOIN systems ON systems.id = action.systemsid
             LEFT JOIN actiongrp ON actiongrp.id = action.actiongrpid
-            {paramQ}
+            WHERE systems.name=? {paramQ}
             ORDER BY sort
         """
 
         # Execute the query with or without parameters
         if id:
-            result = mariadmin.f(query, [id])  # Assuming `mariadmin.f` expects parameters
+            result = mariadmin.f(query, ['kronos',id])  # Assuming `mariadmin.f` expects parameters
         else:
-            result = mariadmin.fa(query)  # Fetch all records
+            result = mariadmin.fa(query,['kronos'])  # Fetch all records
         return result
     except mysql.connector.Error as err:
         logging.error(f"Database error: {err}")

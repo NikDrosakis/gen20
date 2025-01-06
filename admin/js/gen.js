@@ -672,7 +672,12 @@ cooDelAll: function (except) {
         // Initialize WebSocket connection dynamically for each URI
         init: (connectionName, uri) => {
             const ws = new WebSocket(`wss://${uri}`);
-            ws.onopen = gs.soc.open(connectionName);
+            ws.onopen =  function(){
+                const user = !!my.userid ? my.userid : '1';
+                console.info(`${G.SYSTEM}:${G.page} Connection, ${connectionName} established with user:`, user);
+                const mes = { system:G.SYSTEM,domaffect:"*",type: "open", verba: "PING", userid: user, to:user,cast: "one" };
+                ws.send(JSON.stringify(mes));
+            };
             ws.onmessage = gs.soc.get(connectionName);
             ws.onerror = gs.soc.error(connectionName);
             ws.onclose = gs.soc.close(connectionName, uri);
@@ -680,14 +685,6 @@ cooDelAll: function (except) {
             gs.soc.wsConnections[connectionName] = ws;
             return ws;
         },
-
-        open: (connectionName) => (e) => {
-            const user = !!my.userid ? my.userid : '1';
-            console.info(`${G.SYSTEM}:${G.page} Connection, ${connectionName} established with user:`, user);
-            const mes = { system:G.SYSTEM,page:G.page,type: "open", text: "PING", userid: user, to:user,cast: "one" };
-            gs.soc.send(connectionName, mes);
-        },
-
         close: (connectionName, uri) => (e) => {
             if (e.wasClean) {
                 console.log(`Connection ${connectionName} closed cleanly, code=${e.code}, reason=${e.reason}`);
@@ -696,15 +693,10 @@ cooDelAll: function (except) {
             }
             // Attempt reconnection after 10 seconds
             setTimeout(() => {
-                gs.soc.reconnect(connectionName, uri);
+             console.log(`Reconnecting ${connectionName}...`);
+              gs.soc.init(connectionName, uri);
             }, 10000);
         },
-
-        reconnect: (connectionName, uri) => {
-            console.log(`Reconnecting ${connectionName}...`);
-            gs.soc.init(connectionName, uri);
-        },
-
         error: (connectionName) => (e) => {
             console.error(`WebSocket ${connectionName} error occurred:`, e);
         },
@@ -712,30 +704,7 @@ cooDelAll: function (except) {
             const ws = gs.soc.wsConnections[connectionName];
             /* @userid:"sudo", @type:com[mand],notify,chat,html@cast:all,one @rule:js condition @fun: function | s object	 @text: message
                 @to: client receiver @time: @img: */
-            let message=!!mes ? mes : {};
-               if(connectionName=='ermis'){
-                switch (message.type) {
-                    case "N":
-                        message.rule = "true", message.time = time();
-                        //function to date cache mes.fun = "api.red.get('N'+my.userid,d=>loadN(d));",
-                        break;
-                    case "reload":
-                    case "io":
-                        message.rule = "true", message.rule = true;
-                        break;
-                }
-               }else if(connectionName =='venus'){
-                   switch (message.type) {
-                       case "get":
-                       case "set":
-                           message.rule = "true", message.rule = true;
-                           break;
-                   }
-               }
-            message.userid = !!my.userid ? my.userid : 1;
-                if (["set", "N", "my", "peer", "get"].includes(message.type)) {
-                    message.cast = 'one';
-                }
+                console.log(mes);
             // Send the message using the stored WebSocket instance
             // Check if WebSocket is open before sending the message
             if (ws && ws.readyState === WebSocket.OPEN) {
@@ -744,24 +713,18 @@ cooDelAll: function (except) {
                 console.error(`${message.system}:${message.page} WebSocket ${connectionName} is not open. Unable to send message:`, message);
             }
         },
-
-
         // Updated async get method for handling WebSocket messages
         get: (connectionName) => async (e) => {
             //const data = gs.isjson(e.data) || e.data;
             const message = JSON.parse(e.data);
-            console.log(message)
-            if(typeof message.text!= 'undefined') {
-            if(document.getElementById('activity-list')) {
-                gs.activity.add(message.text);
-            }
-            }
-            if (G.SYSTEM == message.system) {
-                if (connectionName == 'ermis') {
+            if (G.SYSTEM == message.system) {  //read only by the system
                     switch (message.type) {
                         case 'watch':
                         case 'events':
                         case 'N':
+                            if(document.getElementById('activity-list')) {
+                                gs.activity.add(message.verba);
+                            }
                             if (message.execute) {
                                 try {
                                     eval(message.execute);
@@ -771,43 +734,19 @@ cooDelAll: function (except) {
                             } else {
                                 console.warn('No command to execute');
                             }
-                        //case 'reload':
-//                            location.reload();
                             break;
                         case 'cubos':
                             console.log("received cubos",message)
                             await gs.cubos(message.area,message.html);
-                            //let area = document.getElementById(message.area);
-                            //if (area) {
-                              //  area.innerHTML += message.html;
-                            //}
                          break;
                             let existingid = document.getElementById(message.id);
                             if (existingid) {
                                 existingid.innerHTML += message.html;
                             }
-                            break;
-                     /*   case 'N':
-                            // Assuming message.text is an array of objects with class and number properties
-                            for (const [key, value] of Object.entries(message.text)) {
-                                const span = document.createElement('span');
-                                const existingClass = document.querySelector(key);
-                                if (existingClass) {
-                                    const span = document.createElement('span'); // Create a new span
-                                    span.className = message.class; // Assign the class from the message
-                                    span.textContent = value; // Assign the value as the text content
-                                    existingClass.appendChild(span); // Append the span to the existing class
-                                }
-                            }
-                            break;
-                      */
-                        default:console.log(`Received, ${connectionName}:`, message);break;
-                    }
-                } else if (venus && connectionName == 'venus') {
-                    switch (message.type) {
-                        case "get":venus.start(message);break;
-                        default:console.log(`${message.system} Received at ${message.page} from ${connectionName}:`, message);break;
-                    }
+                        break;
+                        case "chat": venus.start(message); break;
+                        default:console.log(`${message.system} Received at ${message.page} from ${connectionName}:`, message);
+                        break;
                 }
                 // Implement your async logic here to process incoming data
                 return new Promise((resolve, reject) => {
