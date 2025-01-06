@@ -3,7 +3,7 @@
 Analogy to Kafka is Kafka producers for logging or notifications and consumers for action execution
  exeActions exported to index.js:
  `Instantiate Actions |  const { exeActions } = require('./action');exeActions(app);
- Running Web Socket Server for RealTime Actions; realTimeConnection(server,app,exeActions);
+ Running Web Socket Server for RealTime Actions; WServer(server,app,exeActions);
  Feature	            Kafka									Your DB-Driven Actions System
  Event Handling			Real-time, distributed messaging via topics.	WS RealTime Batch (before files) sequential processing of actions from/to DB.
  Scalability			Highly scalable for millions of messages.		Limited by DB performance and query execution time. (cache it's execution by in-memory Redis)

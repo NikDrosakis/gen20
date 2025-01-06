@@ -3,7 +3,7 @@ import websockets
 import json
 
 async def ws_send(message):
-    uri = "wss://vivalibro.com:3009/?user=2"  # Ensure this matches your WebSocket server URL and port
+    uri = "wss://vivalibro.com:3010/?userid=2"  # Ensure this matches your WebSocket server URL and port
     try:
         async with websockets.connect(uri) as websocket:
             await websocket.send(json.dumps(message))

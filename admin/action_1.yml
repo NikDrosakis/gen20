@@ -1,3 +1,11 @@
+system: 'vivalibrocom',  // The target system for the message
+domaffect: 'vivalibrocom.*'                //UI.page visibility > admin.* Default empty; can be updated dynamically if needed
+domappend: ~
+domexecute: ~, # JavaScript command to be executed in the browser
+cast: *      # * for Target audience: 'one', 'many', or 'all'
+type: N      # 'N' for notification or other types
+text: text     # Dynamically formatted text
+class: results.domappend || '' # DOM class to append
 ---
 action:
   id: 1
@@ -23,6 +31,7 @@ action:
   - Total Greek titles available
   - Total publishers registered
   - Total writers registered
+  domaffect: admin.*
   domappend:
   - c_active_libraries
   - c_total_books
@@ -41,7 +50,7 @@ action:
   execute_mode: direct
   schedule: ~
   cast: all
-  usergroups: ~
+  usergroups: *
   interval_time: 40
   log: ~
   doc: better  publish and php will  get GSocket

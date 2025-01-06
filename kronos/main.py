@@ -9,9 +9,8 @@ from core.Maria import Maria
 from config import settings
 #from connection import get_db_connection
 from action import exe_actions
-import websockets
 from datetime import datetime  # Import datetime module
-from ws_send import ws_send
+from core.WS import WSClient
 from core.Watch import Watch
 from core.Yaml import Yaml
 
@@ -32,7 +31,6 @@ from services.gaia.routes import router as gaia_route
 # Import the send_notification function
 
 # Start FastAPI
-app = FastAPI()
 app = FastAPI(
     title="Kronos API",
     docs_url="/apy/v1/docs",
@@ -48,6 +46,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+async def socinit():
+    ws_client = WSClient(uri="wss://vivalibro.com:3010/?userid=kronos")  # Replace with actual WebSocket URI
+    await ws_client.connect()
+
+    # Send a message to the server
+    message = {"system":"kronos","type": "chat","cast": "one", "data": "Hello, Ermis!","to":"Ermis"}
+    await ws_client.send_message(message)
+
+    # Receive a response
+    response = await ws_client.receive_message()
+    print(f"Received response: {response}")
+
+    # Close the WebSocket connection
+    await ws_client.close()
 
 # Includes
 app.include_router(bloom_route, prefix="/apy/v1/bloom") #pretrained
@@ -94,13 +108,13 @@ async def startup():
     await exe_actions()
      # Start watching the YAML file for changes
     json= Yaml.read_yaml_and_convert_to_json("manifest.yml")
-    print(json)
     Watch.start_watching("manifest.yml", "systems", "yaml")
     # Start watching the YAML file for changes
     #await asyncio.gather(handle_shortcuts())
     # Start the periodic ping task
     #asyncio.create_task(periodic_ping())
     print("\n".join([str(route) for route in app.routes]))
+    await socinit()
     logging.info("Startup completed")
 
 
