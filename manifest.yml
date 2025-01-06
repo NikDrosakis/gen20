@@ -1,20 +1,20 @@
 manifest:
     filemeta:
-        @[table.field]: "table.field content (strictly this style) inside <!--  --> or /**  */"
+        table.field: "@ table.field content (strictly this style) inside <!--  --> or /**  */"
         filemeta.script: "filemeta.script"
         filemeta.css: "save/update/bundle to filemeta.css starting <style> endofcontent </style>"
         filemeta.head: "filemeta.head starting <head> endofcontent </head>"
-        @cron: "create/update cron"
-        @filemeta.description: "update filemeta.description"
-        @filemeta.todo: "update filemeta.todo"
-        @filemeta.features: "update filemeta.features"
-        @filemeta.doc: "update filemeta.doc"
+        cron: "@ create/update cron"
+        filemeta.description: "@ update filemeta.description"
+        filemeta.todo: "@ update filemeta.todo"
+        filemeta.features: "@ update filemeta.features"
+        filemeta.doc: "@ update filemeta.doc"
     
     filemetacore:
-        @filemetacore.description: "update filemetacore.description"
-        @filemetacore.todo: "update filemetacore.todo"
-        @filemetacore.features: "update filemetacore.features"
-        @filemetacore.doc: "update filemetacore.doc"
+        filemetacore.description: "@ update filemetacore.description"
+        filemetacore.todo: "@ update filemetacore.todo"
+        filemetacore.features: "@ update filemetacore.features"
+        filemetacore.doc: "@ update filemetacore.doc"
     
     format-content:
         readonly: "set not edited"

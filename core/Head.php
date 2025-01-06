@@ -19,20 +19,24 @@ use SEO;
 /* key is page or sub '' is global */
 protected $resourceMap = [
     'timetable' => [
-        'css' => ['https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.css'],
+        'css' => [
+        //'https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.css'
+        ],
         'js'  => []
     ],
     'globs' => [
         'css' => [
-            'https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/10.1.0/jsoneditor.min.css',
+    //        'https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/10.1.0/jsoneditor.min.css',
             'https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css',
-            'https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css'
+            'https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/theme/dracula.min.css',
+        //    'https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css'
         ],
         'js'  => [
-            'https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/10.1.0/jsoneditor.min.js',
-            'https://cdn.jsdelivr.net/npm/marked/marked.min.js',
+  //          'https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/10.1.0/jsoneditor.min.js',
+      //      'https://cdn.jsdelivr.net/npm/marked/marked.min.js',
             'https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js',
-            'https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js'
+            'https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/yaml/yaml.min.js',
+     //       'https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js'
         ]
     ],
     '' => [ // Global actiongrp
@@ -64,13 +68,15 @@ protected function loadDynamicActions($libraries) {
 }
 
 	protected function renderPublicHead() {
-	   $copyright = html_entity_decode($this->G['is']['copyright'], ENT_QUOTES);
+	   $copyright = html_entity_decode($this->G['is']['copyright'] ?? '', ENT_QUOTES);
+
         $html = '<!DOCTYPE html>
         <html>
         <head>
             <meta charset="UTF-8">
             <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
             <meta http-equiv="X-UA-Compatible" content="IE=edge">
             <meta name="robots" content="selection">
             <meta name="copyright" content="' . $copyright . '">

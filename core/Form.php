@@ -112,16 +112,8 @@ protected function getInputType(string $table): ?array {
                if ($colComment=='readonly' || $colName=='id' || $colName=='sort') {
                    $htmlType = 'label'; // @filemetacore.features Render as label for readonly
 
-               } elseif ($colComment=='json' ){
-                $htmlType = 'json';
-                } elseif ($colComment=='twig' ){
-                $htmlType = 'twig';
-                } elseif ($colComment=='pug' ){
-                $htmlType = 'pug';
-                } elseif ($colComment=='cron' ){
-                $htmlType = 'cron';
-                } elseif ($colComment=='sql' ){
-                $htmlType = 'sql';
+               } elseif (in_array($colComment,['json','twig','pug','cron','sql','md','comma','yaml','javascript'])){
+                $htmlType = $colComment;
                } elseif (strpos($colComment, 'selectG') !== false){
                 $htmlType = 'select';
                 $createList= explode('-',$colComment)[1];
@@ -728,6 +720,17 @@ protected function renderFormField(string $col, array $fieldData, $value = ''): 
     $sqlType   = $fieldData['sql_type'] ?? '';
     $list   = $fieldData['list'] ?? [];
 
+  $supportedCodeMirrorModes = [
+        'json' => 'application/json',
+        'twig' => 'text/x-twig',
+        'pug' => 'text/x-pug',
+        'cron' => 'text/plain',  // Assuming cron syntax needs plain text, can be customized
+        'sql' => 'text/x-sql',
+        'md' => 'text/x-markdown',
+        'yaml' => 'text/x-yaml',
+        'javascript' => 'text/javascript'
+    ];
+$codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
     // @filemetacore.features Generate the appropriate HTML field based on the type
 
     switch ($inputType) {
@@ -748,39 +751,35 @@ protected function renderFormField(string $col, array $fieldData, $value = ''): 
             return "<label for='$col'>$col</label><button ondblclick='openPanel(`compos/mediac.php`)' class='gs-span' id='drop-zone' ondrop='handleDrop(event)' ondragover='handleDragOver(event)'>
                 <img src='$imgPath' style='height: 100%;width:100%;' draggable='false'></button>";
         break;
-        /*
-         case 'twig':
-                // @filemetacore.features Handle Twig preview (rendered HTML)
-                $value=json_decode($value,true)['Archive'];
-                $renderedTwigContent = $this->renderTwigContent($this->res);  // @filemetacore.features Render the Twig content here
-return '<div class="gs-span">
-            <label for="' . $col . '">' . $col . '</label>
-            <div class="gs-preview-container">
-            <textarea class="gs-textarea" name="' . $col . '" id="' . $col . '" placeholder="' . $col . '">' . $value . '</textarea>
-                ' . $renderedTwigContent . '
-            </div>
-        </div>
-        <button class="button save-button" onclick="saveContent(\'' . $col . '\', \'' . $table . '\')" type="button" id="save_' . $col . '">Save Content</button>';
-
-        break;
-        */
-        case 'twig':
-            // @filemetacore.features Handle Twig preview (rendered HTML)
-            #$value = json_decode($value, true)['Archive'];
-            $renderedTwigContent = $this->renderTwigContent($value);  // @filemetacore.features Render the Twig content here
-            return '
-                <div class="gs-span">
-                    <label for="' . $col . '">' . $col . '</label>
-                    <div class="gs-preview-container">
-                        <textarea class="gs-textarea" name="' . $col . '" id="' . $col . '" placeholder="' . $col . '">' . $value . '</textarea>
-                        ' . $renderedTwigContent . '
-                        <div class="twig-editor" id="twig-editor' . $col . '" style="height: 500px;"></div>
+  case 'twig':
+        case 'sql':
+        case 'javascript':
+        case 'json':
+        case 'pug':
+        case 'md':
+        case 'yaml':
+            $escapedValue = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+            return "
+                <div class='gs-span'>
+                    <label for='$col'>$col ($comment)</label>
+                    <div class='gs-preview-container'>
+                        <textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'>$escapedValue</textarea>
+                        <div class='code-editor' id='editor-$col' style='height: 300px;'></div>
                     </div>
                 </div>
-                <button class="button save-button" onclick="saveContent(\'' . $col . '\', \'' . $table . '\')" type="button" id="save_' . $col . '">Save Content</button>
-            ';
-            break;
-
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        var editor = CodeMirror.fromTextArea(document.getElementById('$col'), {
+                            mode: '$codeMirrorMode',
+                            lineNumbers: true,
+                            matchBrackets: true,
+                            autoCloseBrackets: true,
+                            theme: 'default'
+                        });
+                    });
+                </script>
+                <button class='button save-button' onclick='saveContent(\"$col\", \"$table\")' type='button' id='save_$col'>Save Content</button>
+            ";
         case 'sql':
                 // @filemetacore.features Handle SQL preview (raw SQL code)
               //  $preview= xechox($this->db->fetch($value));
@@ -856,4 +855,6 @@ return '<div class="gs-span">
         break;
     }
 }
+
+
 }

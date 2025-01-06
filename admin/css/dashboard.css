@@ -30,15 +30,6 @@ html,body{
   overflow-y:scroll;
 }
 /*::-webkit-scrollbar { width: 0px; background: transparent; }*/
-pre{
-  overflow:scroll;
-  float: left;
-  word-wrap: break-word;
-  overflow-wrap:break-word;
-  background:black;
-  color:white;
-  padding:10px;
-}
 li{
   padding: 0 0 12px 0px;
 font-size:14px;

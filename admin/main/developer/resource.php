@@ -1,2 +1,3 @@
 <?php
-$this->storeAction();
+//$this->storeAction();
+xecho ($this->yaml2json());

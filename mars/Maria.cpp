@@ -1,64 +1,140 @@
-#include <mariadb/mysql.h>
+#include <mariadb/conncpp.hpp>
 #include <iostream>
 #include <map>
-#include <string>  // <-- Add this line for std::string
-#include "Gredis.cpp"  // If you're including other files
+#include <string>
 
 class Maria {
-
 private:
     std::string _dbHost;
     std::string _dbUser;
     std::string _dbPass;
     std::string _database;
-
-    // Database connection object, use your DB connector (MySQL, MariaDB C++ connector, etc.)
-    MYSQL *conn;
+    sql::Driver *driver;
+    std::shared_ptr<sql::Connection> conn;
 
 public:
-    // Constructor
-    Maria(std::string dbname = "") {
-        _dbHost = "localhost";
-        _dbUser = "root";
-        _dbPass = "n130177!";
-        _database = dbname;
-        conn = mysql_init(NULL);
+    Maria(std::string dbname = "")
+        : _dbHost("localhost"), _dbUser("root"), _dbPass("n130177!"), _database(dbname) {
+        driver = sql::mariadb::get_driver_instance();
     }
 
-    // Connect to database
     bool connect() {
-        if (conn == NULL) {
-            std::cerr << "MySQL initialization failed!" << std::endl;
+        try {
+            sql::SQLString url(_dbHost);
+            sql::Properties properties({
+                {"user", _dbUser},
+                {"password", _dbPass}
+            });
+            conn = std::shared_ptr<sql::Connection>(driver->connect(url, properties));
+            conn->setSchema(_database);
+            return true;
+        } catch (sql::SQLException &e) {
+            std::cerr << "Connection failed: " << e.what() << std::endl;
             return false;
         }
-        if (mysql_real_connect(conn, _dbHost.c_str(), _dbUser.c_str(),
-                               _dbPass.c_str(), _database.c_str(), 0, NULL, 0) == NULL) {
-            std::cerr << "MySQL connection failed: " << mysql_error(conn) << std::endl;
-            return false;
-        }
-        return true;
     }
 
-    // Insert function (simplified)
-    bool insert(std::string table, std::map<std::string, std::string> params) {
-        std::string query = "INSERT INTO " + table + " (";
-        for (const auto &param : params) {
-            query += param.first + ",";
-        }
-        query.pop_back(); // Remove trailing comma
-        query += ") VALUES (";
-        for (const auto &param : params) {
-            query += "'" + param.second + "',";
-        }
-        query.pop_back(); // Remove trailing comma
-        query += ")";
+    std::vector<std::map<std::string, std::string>> fa(const std::string& query, const std::map<int, std::string>& params) {
+        std::vector<std::map<std::string, std::string>> result;
+        try {
+            std::string queryType = query.substr(0, query.find(' '));
+            if (queryType != "SELECT" && queryType != "DESCRIBE") {
+                return {};
+            }
 
-        if (mysql_query(conn, query.c_str())) {
-            std::cerr << "Insert failed: " << mysql_error(conn) << std::endl;
-            return false;
+            std::shared_ptr<sql::PreparedStatement> pstmt(conn->prepareStatement(query));
+         //   int index = 1;
+            for (const auto &param : params) {
+                 (void)param;
+            }
+
+            std::shared_ptr<sql::ResultSet> res(pstmt->executeQuery());
+            sql::ResultSetMetaData* meta = res->getMetaData();
+            int colCount = meta->getColumnCount();
+
+            while (res->next()) {
+                std::map<std::string, std::string> row;
+                for (int col = 1; col <= colCount; ++col) {
+                   row[std::string(meta->getColumnName(col))] = res->getString(col);
+                }
+                result.push_back(row);
+            }
+        } catch (sql::SQLException &e) {
+            std::cerr << "Fetch failed: " << e.what() << std::endl;
         }
-        return true;
+        return result;
     }
 
-    // Other CRUD operations (UPDATE, SELECT, DELETE) go here
+    std::map<std::string, std::string> f(const std::string& query, const std::map<int, std::string>& params) {
+        std::map<std::string, std::string> result;
+        try {
+            std::string queryType = query.substr(0, query.find(' '));
+            if (queryType != "SELECT") {
+                return {};
+            }
+
+            std::shared_ptr<sql::PreparedStatement> pstmt(conn->prepareStatement(query));
+      //      int index = 1;
+            for (const auto &param : params) {
+                 (void)param;
+            }
+
+            std::shared_ptr<sql::ResultSet> res(pstmt->executeQuery());
+            sql::ResultSetMetaData* meta = res->getMetaData();
+            int colCount = meta->getColumnCount();
+
+            if (res->next()) {
+                for (int col = 1; col <= colCount; ++col) {
+                    result[std::string(meta->getColumnName(col))] = res->getString(col);
+                }
+            }
+        } catch (sql::SQLException &e) {
+            std::cerr << "Fetch failed: " << e.what() << std::endl;
+        }
+        return result;
+    }
+
+    bool q(const std::string& query, const std::map<std::string, std::string>& params) {
+        try {
+            std::shared_ptr<sql::PreparedStatement> pstmt(conn->prepareStatement(query));
+            int index = 1;
+            for (const auto &param : params) {
+                pstmt->setString(index++, param.second);
+            }
+
+            pstmt->execute();
+            return true;
+        } catch (sql::SQLException &e) {
+            std::cerr << "Query execution failed: " << e.what() << std::endl;
+            return false;
+        }
+    }
+
+    bool inse(std::string table, std::map<std::string, std::string> params) {
+        try {
+            std::string query = "INSERT INTO " + table + " (";
+            for (const auto &param : params) {
+                query += param.first + ",";
+            }
+            query.pop_back(); // Remove trailing comma
+            query += ") VALUES (";
+for (const auto& elem : params) { 
+                query += "?,";  // Placeholder for values
+            }
+            query.pop_back(); // Remove trailing comma
+            query += ")";
+
+            std::shared_ptr<sql::PreparedStatement> pstmt(conn->prepareStatement(query));
+            int index = 1;
+            for (const auto &param : params) {
+                pstmt->setString(index++, param.second);
+            }
+
+            pstmt->execute();
+            return true;
+        } catch (sql::SQLException &e) {
+            std::cerr << "Insert failed: " << e.what() << std::endl;
+            return false;
+        }
+    }
 };

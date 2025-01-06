@@ -256,12 +256,44 @@ buildArchive
 
     /* gs form */
     /* Flexbox container to hold the preview and textarea side by side */
-    .gs-preview-container {
-        display: flex;
-        justify-content: space-between;
-        gap: 10px;
-    }
+.gs-preview-container {
+    border: 1px solid #ddd; /* Light gray border */
+    padding: 10px;          /* Padding for content inside the container */
+    background-color: #f9f9f9; /* Light background color */
+    border-radius: 5px;     /* Rounded corners */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    margin-top: 10px;       /* Space above the container */
+    display: flex;          /* Flex layout */
+    flex-direction: column; /* Stack items vertically */
+}
 
+.gs-preview-container textarea.gs-textarea {
+    width: 100%;            /* Full width of the container */
+    height: 100px;          /* Fixed height for the textarea */
+    border: none;           /* No border on the textarea */
+    resize: vertical;       /* Allow vertical resizing only */
+    background-color: #fff; /* White background */
+    padding: 8px;           /* Padding inside the textarea */
+    font-family: inherit;   /* Inherit font settings */
+    font-size: 14px;        /* Font size */
+    border-radius: 3px;     /* Slightly rounded corners */
+}
+
+.gs-preview-container .save-button {
+    align-self: flex-end;   /* Align the button to the right */
+    margin-top: 10px;       /* Space above the button */
+    padding: 8px 16px;      /* Padding inside the button */
+    background-color: #007bff; /* Primary color */
+    color: #fff;            /* White text */
+    border: none;           /* No border */
+    border-radius: 3px;     /* Rounded corners */
+    cursor: pointer;        /* Pointer cursor on hover */
+    transition: background-color 0.3s; /* Smooth background change */
+}
+
+.gs-preview-container .save-button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
     /* Style for the Twig preview container */
     .twig-editor{
         border: 1px solid gray;

@@ -1,7 +1,10 @@
 CXX = g++
-CXXFLAGS = -Wall -std=c++17
-CXXFLAGS += -I/usr/include/yaml-cpp
-LDFLAGS = -lhiredis -lyaml-cpp -lmariadbclient
+CXXFLAGS = -Wall -std=c++17 -I/usr/include/yaml-cpp -I/usr/include/mariadb
+
+
+# Add -pthread for threading support, and make sure to link the correct MariaDB client library
+LDFLAGS = -lhiredis -lyaml-cpp -lmariadb -pthread
+
 SOURCES = Gredis.cpp Maria.cpp main.cpp Yaml.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 TARGET = main
