@@ -27,6 +27,7 @@ class WSClient:
         except Exception as e:
             print(f"Error sending message: {e}")
 
+
     async def receive_message(self):
         """Receive a message from the WebSocket server."""
         if self.websocket is None:
@@ -47,3 +48,18 @@ class WSClient:
             print("WebSocket connection closed.")
         else:
             print("No WebSocket connection to close.")
+
+async def wsinit():
+    ws_client = WSClient(uri="wss://vivalibro.com:3010/?userid=kronos")  # Replace with actual WebSocket URI
+    await ws_client.connect()
+
+    # Send a message to the server
+    message = {"system":"kronos","type": "chat","cast": "one", "data": "Hello, Ermis!","to":"Ermis"}
+    await ws_client.send_message(message)
+
+    # Receive a response
+    response = await ws_client.receive_message()
+    print(f"Received response: {response}")
+
+    # Close the WebSocket connection
+    await ws_client.close()

@@ -16,10 +16,7 @@ mysql_adminexec() {
     mysql -u "$DB_USER" -p"$DB_PASS" -h "$DB_HOST" -e "$1" "$DB_ADMINAME"
 }
 ROOT=$(pwd)
-CUBO_DIR="${ROOT}/cubos"
-KRONOS_SERVICES="${ROOT}/kronos/services"
-ERMIS_SERVICES="${ROOT}/ermis/services"
-GOD_SERVICES="${ROOT}/god/services"
+
 #TODO dependencies
 #TODO delete doubles, change names like openai_ermis_generate(system_name)
 #TODO parse all routes and:
@@ -37,6 +34,10 @@ GOD_SERVICES="${ROOT}/god/services"
              #god/services /[SERVICE_NAME]   god is systems.name
 #if file not in folder, add file routes.py (kronos) or routes.js in ermis or routes.go in god
 # 1. Handle Services
+CUBO_DIR="${ROOT}/cubos"
+KRONOS_SERVICES="${ROOT}/kronos/services"
+ERMIS_SERVICES="${ROOT}/ermis/services"
+GOD_SERVICES="${ROOT}/god/services"
 handle_services() {
     log "Checking and updating services for Kronos, Ermis, and God..."
 

@@ -1,4 +1,6 @@
 /**
+ Build Action with methods => action.type
+
  Action Ermis is the beginning of Action with it's websocket server and fs.watch that dominates the system
 Analogy to Kafka is Kafka producers for logging or notifications and consumers for action execution
  exeActions exported to index.js:
@@ -27,14 +29,16 @@ const Maria = require('./core/Maria');
 const Messenger = require('./core/Messenger');
 require('dotenv').config();
 const ROOT = process.env.ROOT || path.resolve(__dirname);
-
 // MariaDB configuration
 //const mariapublic = new Maria(process.env.MARIA);
 const mariadmin = new Maria(process.env.MARIADMIN);
 
-//TODO Status Stats Diagnostics returns a table of statuses counters before and after actions updated to show the difference
-async function stat(actions) {
 
+//TODO Status Stats Diagnostics returns a table of statuses counters before and after actions updated to show the difference
+async function after_execution(actions) {
+//if executeed updates execution_time, win +=1 else lose +=1
+//SET TIMEER OFF    
+    //UPDATE status
 }
 
 //TODO activate or deactivate status
@@ -47,7 +51,7 @@ async function updateStatus(rec,newstatus,log='') {
         rec.id,
     ])
     .then(() => console.log(`Action ID ${rec.id} set to 'inactived' after change.`))
-    .catch((err) => console.error('Error updating action status:', err));
+    .catch((err) => console.trace('Error updating action status:', err));
 }
 
 //TODO add action based on systemsid (where action runs) & actiongrpid (in which Resource action runs)
@@ -58,18 +62,13 @@ async function addAction(rec) {
     await mariadmin.inse("action",newrecord);
 }
 
-//Main function
-async function exeActions(app) {
+//Execute actions where action.systemsid=3 or *
+async function executeErmisActions(app) {
     try {
         // Fetch all 'ermis' rows for notifications before run
-        const actions = await mariadmin.fa(`SELECT systems.name,actiongrp.keys, action.* 
-        FROM action 
-            LEFT JOIN systems ON systems.id = action.systemsid 
-            LEFT JOIN actiongrp ON actiongrp.id = action.actiongrpid 
-        WHERE systems.name = 'ermis' ORDER BY sort;`);
-
-        //before execution console table
-        await stat(actions);
+        const actions = await mariadmin.fa(`SELECT actiongrp.keys,actiongrp.name as grpName, action.* 
+        FROM action LEFT JOIN actiongrp ON actiongrp.id = action.actiongrpid 
+        WHERE action.systemsid in (0,3) ORDER BY action.sort;`);
 
         if (!actions || actions.length === 0) {
             throw new Error("No valid data found in 'ermis' table.");
@@ -77,36 +76,45 @@ async function exeActions(app) {
         // Process each helper function according to type
         //TODO return a stat for use in the end
         for (const rec of actions) {
-            if (rec.type ==='route') {
-                await buildRoute(rec,app);
-            }else  if (rec.type === 'ext_resource') {
-                await buildAPI(rec);
-            }else  if (rec.type === 'ai') {
-                await buildAI(rec);
-            }else  if (rec.type === 'N') {
-                await buildN(rec);
-            } else if (rec.type === 'generate') {
-                console.log(rec);
-            } else if (rec.type === 'watch') {
-                await buildWatch(rec);
-            } else {
-                console.warn(`Unknown type '${rec.type}' for row ID ${rec.id}.`);
+            switch (rec.type) {
+                case 'route':
+                    await buildRoute(rec, app);
+                    break;
+                case 'ext_resource':
+                    await buildAPI(rec);
+                    break;
+                case 'generate':
+                case 'ai':
+                    await buildAI(rec);
+                    break;
+                case 'N':
+                    await buildN(rec);
+                    break;
+                case 'fs':
+                    await buildWatch(rec);
+                    break;
+                default:
+                    console.warn(`Unknown type '${rec.type}' for row ID ${rec.id}.`);
             }
         }
-        //after execution console table
-        await stat(actions);
 
+        //after execution console table
+        const afterExecStats = await afterExecution(actions);
+        if (afterExecStats) {
+            return afterExecStats;
+        }
     } catch (err) {
-        console.error("Error fetching action:", err.message);
+        console.trace("Error fetching action:", err.message);
     }
 }
-async function buildRoute(rec,app) {
-    const routerPath=`./services/${rec.names}/routes.js`;
+
+async function buildRoute(rec, app) {
+    const routerPath = `./services/${rec.grpName}/routes.js`;
     if (fs.existsSync(routerPath)) {
-        app.use(`/ermis/v1/${rec.names}`, require(`./services/${rec.names}/routes`));
-        console.error(`${rec.names} routed. Now check all the route given endpoints.`);
+        app.use(`/ermis/v1/${rec.grpName}`, require(routerPath));
+        console.trace(`${rec.grpName} routed. Now check all the route given endpoints.`);
     } else {
-        console.error(`Invalid path for action group: ${routerPath}`);
+        console.trace(`Invalid path for action group: ${routerPath}`);
     }
 }
 
@@ -139,22 +147,22 @@ async function buildAI(rec) {
 
                 // Process the response data
                 const data = await response.json();
-                console.log(`${rec.names} AI responded with data:`, data);
+                console.log(`${rec.name} AI responded with data:`, data);
 
                 // Update the database with the result
                await updateStatus(rec,'activated');
 
             } catch (fetchError) {
-                console.error('Error processing AI POST request:', fetchError.message);
+                console.trace('Error processing AI POST request:', fetchError.message);
 
                 // Update the database for failure
                 await updateStatus(rec,'errored',err.message);
             }
         } else {
-            console.error(`Unsupported HTTP method for AI: ${method}`);
+            console.trace(`Unsupported HTTP method for AI: ${method}`);
         }
     } catch (err) {
-        console.error(`Error building AI route:`, err.message);
+        console.trace(`Error building AI route:`, err.message);
 
         // Update the database for incorrect configuration
         await updateStatus(rec,'errored',err.message);
@@ -183,6 +191,7 @@ async function renderKeys(rawurl, rec) {
         return envValue;
     });
 }
+
 //Connect with API endpoint & & receive information,
 async function buildAPI(rec) {
     try {
@@ -202,24 +211,25 @@ async function buildAPI(rec) {
                 }
                 // Process the response data
                 const data = await response.json();
-                console.log(`${rec.names} Responsed with data , but how to use them?`);
+                console.log(`${rec.name} Responsed with data , but how to use them?`);
                 // Update the database
                 await updateStatus(rec,'activated');
 
             } catch (err) {
-                console.error('Error processing GET request:', err.message);
+                console.trace('Error processing GET request:', err.message);
                 // Update the database for failure
                 await updateStatus(rec,'errored',err.message);
             }
         } else {
-            console.error(`Unsupported HTTP method: ${method}`);
+            console.trace(`Unsupported HTTP method: ${method}`);
         }
     } catch (err) {
-        console.error(`Error building API route:`, err.message);
+        console.trace(`Error building API route:`, err.message);
         // Update the database for incorrect configuration
         await updateStatus(rec,'errored',err.message);
     }
 }
+
 async function buildN(rec) {
     try {
         if (rec.statement || rec.execute) {
@@ -227,22 +237,30 @@ async function buildN(rec) {
             await Messenger.publishMessage(rec);
         }
     } catch (error) {
-        console.error('Error processing action:', error);
+        console.trace('Error processing action:', error);
         await mariadmin.q("UPDATE action SET status = 'errored', log=? WHERE id = ?", [rec.id,error.message]);
     }
 }
+
 //Filesystem one record and send Message
 async function buildWatch(rec) {
+    // Fetch all 'ermis' rows with actiongrp.name=fswatch before run
     try {
-        const watchList = await watch(); // get json_merged_id_name_path_with_this
-        watchList['execute']=rec.execute;
-        watchList['type']=rec.type;
-        console.log('Watch List:', watchList); // Log the watch actions if needed
-        await Messenger.publishMessage(watchList);
+        const watchList = await mariadmin.fa(`SELECT actiongrp.keys, actiongrp.name as grpName,action.* 
+        FROM action LEFT JOIN actiongrp ON actiongrp.id = action.actiongrpid 
+        WHERE actiongrp.name='fswatch' ORDER BY action.sort;`);
+        await fswatch(); // get json_merged_id_name_path_with_this
+
+        //watchList['execute']=rec.execute;
+        //watchList['type']=rec.type;
+        //console.log('Watch List:', watchList); // Log the watch actions if needed
+        //await Messenger.publishMessage(watchList);
+
+        return watchList;
     } catch (error) {
-        console.error('Error setting up watch:', error);
+        console.trace('Error setting up watch:', error);
         // Update the database for incorrect configuration
-        await mariadmin.q("UPDATE action SET status = 'errored', log=? WHERE id = ?", [rec.id,error.message]);
+        //await mariadmin.q("UPDATE action SET status = 'errored', log=? WHERE id = ?", [rec.id,error.message]);
     }
 }
 
@@ -263,77 +281,34 @@ function watchSystem(directory, systems) {
                 };
 
                 // Merge the directory information into the change object and push to the changes array
-                changes.push({
-                    id: directory.id,
-                    name: directory.name,
-                    path: directory.path,
-                    ...change,
-                });
+
                 //Except from reload
             //    publish(process.env.REDIS_CHANNEL, { system: baseFolder, text:text, type: 'reload', filename });
             }
         }
     });
 }
+
 // Watch function to initialize all directories
 //TODO convert to js Class into core.Watch
-async function watch() {
+// Execute actiongrp.name = watch
+async function fswatch() {
     try {
         const systems = await mariadmin.fa("SELECT * FROM systems WHERE status='active'");
         if (!systems || systems.length === 0) {
             throw new Error("No active systems found for watching.");
         }
-
-        systems.forEach(dir => watchSystem(dir, systems, changes));
+        systems.forEach(dir => watchSystem(dir, systems));
         console.log('Watching directories:', systems.map(d => d.path).join(', '));
         // Return merged JSON (the changes array)
-        return changes;
     } catch (error) {
-        console.error("Error initializing watch:", error.message);
-        return [];
-    }
-}
-async function watch2() {
-    try {
-        const watchActions = await mariadmin.fa("SELECT * FROM action WHERE status='activated' AND type='watch'");
-        if (!watchActions || watchActions.length === 0) {
-            throw new Error("No active 'watch' actions found.");
-        }
-
-        const changes = [];
-        watchActions.forEach((directory) => {
-            const directories = JSON.parse(rec.statement); // Assume `statement` has directory paths as JSON array
-            rec.forEach((directory) => {
-                const watcher = fs.watch(path.resolve(ROOT, directory), (eventType, file) => {
-                    if (file) {
-                        const fullPath = path.join(ROOT, directory, file);
-                        const change = {
-                            action_id: rec.id,
-                            system: rec.system || directory,
-                            text: `${file} ${eventType} in ${directory}`,
-                            filename: path.basename(file),
-                        };
-
-                        // Push change to the list
-                        changes.push(change);
-
-                        // Switch action status
-                        updateStatus(rec,'inactived');
-
-                    }
-                });
-            });
-        });
-
-        console.log('Watching directories:', watchActions.map((a) => a.statement).join(', '));
-        return changes;
-    } catch (error) {
-        console.error("Error initializing watch:", error.message);
+        console.trace("Error initializing watch:", error.message);
         return [];
     }
 }
 
-module.exports = { exeActions };
+
+module.exports = { executeErmisActions };
 
 /**
  name: Server-Side CI/CD Pipeline

@@ -10,7 +10,7 @@ from config import settings
 #from connection import get_db_connection
 from action import exe_actions
 from datetime import datetime  # Import datetime module
-from core.WS import WSClient
+from core.WS import WSClient, wsinit
 from core.Watch import Watch
 from core.Yaml import Yaml
 
@@ -47,21 +47,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-async def socinit():
-    ws_client = WSClient(uri="wss://vivalibro.com:3010/?userid=kronos")  # Replace with actual WebSocket URI
-    await ws_client.connect()
-
-    # Send a message to the server
-    message = {"system":"kronos","type": "chat","cast": "one", "data": "Hello, Ermis!","to":"Ermis"}
-    await ws_client.send_message(message)
-
-    # Receive a response
-    response = await ws_client.receive_message()
-    print(f"Received response: {response}")
-
-    # Close the WebSocket connection
-    await ws_client.close()
 
 # Includes
 app.include_router(bloom_route, prefix="/apy/v1/bloom") #pretrained
@@ -114,7 +99,7 @@ async def startup():
     # Start the periodic ping task
     #asyncio.create_task(periodic_ping())
     print("\n".join([str(route) for route in app.routes]))
-    await socinit()
+    await wsinit()
     logging.info("Startup completed")
 
 

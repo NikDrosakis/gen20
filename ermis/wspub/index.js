@@ -1,15 +1,15 @@
 const WebSocket = require('ws');
 const EventEmitter = require('events');
 const { stats } = require('./stats');
-const Messenger = require('../core/Messenger');
+
 const emitter = new EventEmitter();
 emitter.setMaxListeners(1000);
 
 let wss;
 
-function WServer(server) {
+function WServer(server,app,exeActions) {
     wss = new WebSocket.Server({ server });
-/*
+
     // Redis subscription
     subscribe(process.env.REDIS_CHANNEL, (message) => {
         wss.clients.forEach((client) => {
@@ -18,7 +18,6 @@ function WServer(server) {
             }
         });
     });
-*/
 
     // Health check for WebSocket connections
     setInterval(() => {
@@ -34,20 +33,6 @@ function WServer(server) {
         ws.on('pong', () => (ws.isAlive = true));
 
         stats(wss, ws, req); // Track stats
-        //Instantiate Actions
-        const { executeErmisActions } = require('../action');
-
-        const executed_actions = await executeErmisActions();
-        const finalized_action_message = Messenger.buildMessage(executed_actions);
-        //broadcast message event.
-        if(finalized_action_message) {
-            wss.clients.forEach(function each(client) {
-                if (client !== ws && client.readyState === WebSocket.OPEN) {
-                    console.log("broadcast", finalized_messsage);
-                    client.send(finalized_messsage);
-                }
-            });
-        }
 
         ws.on('message', async (data) => {
             try {
@@ -58,8 +43,6 @@ function WServer(server) {
                     return;
                 }
 
-                const finalized_messsage = Messenger.buildMessage(message);
-
                 switch (message.cast) {
                     case "one":
                         if (message.to) {
@@ -68,17 +51,16 @@ function WServer(server) {
                             const recipientWs = Array.from(wss.clients).find(client => client.userid === message.to);
                             if (recipientWs) {
                                 console.log("found recipient and sending to", message.to)
-                                recipientWs.send(finalized_messsage);
+                                recipientWs.send(message);
                             }
                         }
                         break;
-                    default:
-                        //broadcast message event.
+                    default:  //broadcast event.
                             wss.clients.forEach(function each(client) {
                             if (client !== ws && client.readyState === WebSocket.OPEN) {
-                                console.log("broadcast", finalized_messsage);
-                                client.send(finalized_messsage);
-                            }})
+                                console.log("peertopeer", message);                            }
+                                client.send(message, { binary: isBinary });
+                            };
                         break;
                 }
             } catch (err) {

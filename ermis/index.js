@@ -1,15 +1,12 @@
 // index.js
 const express = require('express');
-//RUN Ermis WebSocket
-const { WServer } = require('./ws');
-
 const app = express();
 const fs = require("fs");
 const https = require('https');
 const cors = require("cors");
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
-
+require('dotenv').config();
 // Check if the domain is localhost
 const isLocalhost = process.env.DOMAIN === 'localhost';
 
@@ -42,12 +39,9 @@ app.use((err, req, res, next) => {
 // HTTPS Server
 const server = https.createServer(credentials, app);
 
-//Instantiate Actions
-const { exeActions } = require('./action');
-exeActions(app);
-
-//Running Web Socket Server for RealTime Actions
-WServer(server,app,exeActions);
+//RUN Ermis WebSocket
+const { WServer } = require('./ws');
+WServer(server);
 
 const PORT = process.env.ERMIS_PORT || 3010;
 server.listen(PORT, function () {

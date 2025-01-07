@@ -1,36 +1,40 @@
+/**
+ Constructs the communication standardized message
+ * */
 const Maria = require('./Maria');
+const Manifest = require('./Manifest');
 require('dotenv').config();
 const mariadmin = new Maria(process.env.MARIADMIN);
 const mariapublic = new Maria(process.env.MARIA);
-const {publish} = require("../ws/broadcast");
 class Messenger {
     // Main method to construct the default message
-    static async constructDefaultMessage(results) {
-    let text='';
+    static async buildMessage(results) {
+    let verba='';
             // Fetch and construct the statement dynamically
-            if(results.statement) {
+            if(results && results.statement) {
                 try {
-                    text = await this.buildStatement(results.statement, results.domappend);
+                    verba = await this.buildStatement(results.statement, results.domappend);
                 } catch (error) {
                     console.error('Error constructing default message:', error);
                     return null; // Return null if there was an error
                 }
             }else{
-                text=results.text;
+                verba=results.verba;
             }
+    //
             return {
-                system: results.system || 'vivalibrocom',  // The target system for the message
-                page: '',                // Default empty; can be updated dynamically if needed
+                systems: results.system || '*',  // The target system for the message
                 execute: results.execute, // JavaScript command to be executed in the browser
                 cast: results.cast,      // Target audience: 'one', 'many', or 'all'
                 type: results.type,      // 'N' for notification or other types
-                text: text,     // Dynamically formatted text
-                class: results.domappend || '' // DOM class to append
+                verba: verba,     // Dynamically formatted text
+                domaffects: '*',                // Default empty; can be updated dynamically if needed
+                domappend: results.domappend || '' // DOM class to append
             };
 
     }
 
-    // Helper method to construct the `text` field dynamically
+    // Helper method to construct the `verba` field dynamically
     static async buildStatement(statement, domappend) {
         try {
             if (!statement || !domappend) {
@@ -56,14 +60,17 @@ class Messenger {
             return '';
         }
     }
-
+/*
     // Method to publish the constructed message
     static async publishMessage(res) {
             // Default message construction if JSON is invalid
-            const defaultMessage = await this.constructDefaultMessage(res);
+            const defaultMessage = await this.buildMessage(res);
             if (defaultMessage) {
                 publish(process.env.REDIS_CHANNEL, defaultMessage);
             }
     }
+     */
+
 }
+
 module.exports = Messenger;

@@ -14,4 +14,3 @@ async function peertopeer(wss,message) {
 module.exports = {
     peertopeer
 };
-
