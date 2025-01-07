@@ -12,8 +12,7 @@ class Gredis extends Redis {
             parent::select($database ?? 0);
             }
         }
- /********************************REDIS CACHE function  S*********************************************/
-        public function set(string $key, mixed $fetch, mixed $options = null): Redis|string|bool{
+         public function set(string $key, mixed $fetch, mixed $options = null): Redis|string|bool{
             if (!$fetch) {
                 return false;
             } else {

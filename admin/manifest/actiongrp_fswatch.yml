@@ -1,0 +1,33 @@
+fswatch:
+  - name: "ai_model_x_integration"
+    description: "AI Model X integration with 5 potential actions."
+    actions:
+      - name: "generate_text"
+        type: "POST"
+        endpoint: "/api/v1/generate_text"
+        parameters:
+          - "prompt"
+          - "temperature"
+          - "max_length"
+      - name: "generate_image"
+        type: "POST"
+        endpoint: "/api/v1/generate_image"
+        parameters:
+          - "prompt"
+          - "size"
+          - "style"
+      - name: "summarize_text"
+        type: "GET"
+        endpoint: "/api/v1/summarize"
+        parameters:
+          - "text"
+      - name: "analyze_sentiment"
+        type: "POST"
+        endpoint: "/api/v1/analyze_sentiment"
+        parameters:
+          - "text"
+      - name: "extract_entities"
+        type: "POST"
+        endpoint: "/api/v1/extract_entities"
+        parameters:
+          - "text"

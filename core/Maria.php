@@ -268,11 +268,6 @@ public function upsert(string $table, array $params): int|bool {
 	api flaw, executes even if I pass update , so it needs validation
 	*/
    public function f(string $q, array $params = []): array|string|bool {
-       $queryType = strtoupper(strtok(trim($q), ' ')); // Get the first word of the query
-       if ($queryType !== 'SELECT') {
-           // If it's not a SELECT query, return an error or handle it accordingly
-           return FALSE;
-       }
             $res = $this->_db->prepare($q);
             $res->execute($params);
             if (!$res) return FALSE;

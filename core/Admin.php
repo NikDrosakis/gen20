@@ -34,11 +34,10 @@ TO HEAD CSS
         columns: '1fr',
         rows: '1fr'
     }
-
 */
 
 class Admin extends Gaia {
-use Yaml, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Bundle, Media, Filemeta, My, Cubo;
+use Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Bundle, Media, Filemeta, My, Cubo;
 
 protected $database;
 protected $layout_selected;
