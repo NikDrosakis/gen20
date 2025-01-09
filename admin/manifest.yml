@@ -30,4 +30,4 @@ systems:
     - step: "Run the application"
       command: "./main [yml filename]"
   doc:
-    includes: "./README.md"
+    includes: "README.md"

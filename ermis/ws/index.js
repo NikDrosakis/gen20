@@ -35,11 +35,11 @@ function WServer(server) {
 
         stats(wss, ws, req); // Track stats
         //Instantiate Actions
-        const { executeErmisActions } = require('../action');
 
-        const executed_actions = await executeErmisActions();
-        const finalized_action_message = Messenger.buildMessage(executed_actions);
+       // const finalized_action_message = Messenger.buildMessage(executed_actions);
+
         //broadcast message event.
+        /*
         if(finalized_action_message) {
             wss.clients.forEach(function each(client) {
                 if (client !== ws && client.readyState === WebSocket.OPEN) {
@@ -48,7 +48,7 @@ function WServer(server) {
                 }
             });
         }
-
+        */
         ws.on('message', async (data) => {
             try {
                 let message = Buffer.isBuffer(data) ? JSON.parse(data.toString()) : JSON.parse(data);

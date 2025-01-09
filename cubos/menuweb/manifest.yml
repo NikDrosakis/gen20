@@ -1,0 +1,34 @@
+---
+menuweb_cubo:
+  id: 5
+  sort: 0
+  img: https://vivalibro.com/media/temple-of-books-6.jpg
+  name: menuweb
+  path: cubos/menuweb
+  pages: ~
+  description: the default vivalibro menu not used as a cubo at all
+  template: ~
+  query: ~
+  todo: ~
+  version: "0.00"
+  status: 0
+  tables: ~
+  actions: ~
+  has_maria: ~
+  has_admin: 0
+  valuability: 10
+  flag: 0
+  ideally: ""
+  layout_views: 0
+  total_duration: 0
+  created: "2024-08-23 23:32:24"
+  modified: "2025-01-07 11:23:35"
+  hasPage: 0
+  isSub: 0
+  branch: ~
+  doc: ~
+  meta:
+  - nav
+  - links
+  manifest: ~
+...

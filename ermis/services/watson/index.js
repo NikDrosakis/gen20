@@ -1,3 +1,5 @@
+const express = require('express');
+const router = express.Router();
 const AssistantV1 = require('ibm-watson/assistant/v1');
 const { IamAuthenticator } = require('ibm-cloud-sdk-core');
 
@@ -10,42 +12,35 @@ const assistant = new AssistantV1({
 });
 
 const assistantId = 'YOUR_ASSISTANT_ID'; // Replace with your assistant ID
-
-document.getElementById('chat-input').addEventListener('keydown', function(event) {
-    if (event.key === 'Enter') {
-        const userInput = event.target.value;
-        sendMessage(userInput);
-        event.target.value = '';
-    }
-});
+const sessionId = 'YOUR_SESSION_ID'; // Replace with your session ID
 
 async function sendMessage(text) {
     try {
         const response = await assistant.message({
             assistantId: assistantId,
-            sessionId: 'YOUR_SESSION_ID', // Replace with your session ID
+            sessionId: sessionId,
             input: {
                 'message_type': 'text',
                 'text': text
             }
         });
 
-        const messages = response.result.output.generic;
-        displayMessage(text, 'user');
-        messages.forEach(msg => {
-            if (msg.response_type === 'text') {
-                displayMessage(msg.text, 'bot');
-            }
-        });
+        return response.result.output.generic;
+
     } catch (err) {
         console.error('Error:', err);
+        throw new Error('Error in sendMessage:' + err.message);
     }
 }
 
-function displayMessage(text, type) {
-    const messageElement = document.createElement('div');
-    messageElement.textContent = text;
-    messageElement.className = `message ${type}-message`;
-    document.getElementById('messages').appendChild(messageElement);
-    document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;
-}
+router.post('/chat', async (req, res) => {
+    try {
+        const { message } = req.body;
+        const messages = await sendMessage(message);
+        res.json({ messages , user:message });
+    } catch (error) {
+        res.status(500).send('Error interacting with Watson Assistant: '+error.message);
+    }
+});
+
+module.exports = router;

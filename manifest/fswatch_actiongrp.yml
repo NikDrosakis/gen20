@@ -32,7 +32,7 @@ fswatch_actiongrp:
     statement: ~
     rule: ~
     execute: location.reload()
-    execute_mode: direct
+    exe_mode: direct
     schedule: ~
     cast: all
     usergroups: ~

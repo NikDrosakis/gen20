@@ -3,12 +3,51 @@ namespace Core;
 use PDO;
 use PDOException;
 /**
-basic functions
-f
-fa
-fl
-q
-inse
+Standards
+    filemeta:
+        table.field: "@ table.field content (strictly this style) inside <!--  --> \/** *\/"
+        filemeta.script: "filemeta.script"
+        filemeta.css: "save/update/bundle to filemeta.css starting <style> endofcontent </style>"
+        filemeta.head: "filemeta.head starting <head> endofcontent </head>"
+        cron: "@ create/update cron"
+        filemeta.description: "@ update filemeta.description"
+        filemeta.todo: "@ update filemeta.todo"
+        filemeta.features: "@ update filemeta.features"
+        filemeta.doc: "@ update filemeta.doc"
+
+    filemetacore:
+        filemetacore.description: "@ update filemetacore.description"
+        filemetacore.todo: "@ update filemetacore.todo"
+        filemetacore.features: "@ update filemetacore.features"
+        filemetacore.doc: "@ update filemetacore.doc"
+
+    format-content:
+        readonly: "set not edited"
+        img: "set <img>"
+        img-icon: "set <img> for icon library"
+        img-photo: "set <img> for user photo library"
+        img-graph: "set <img> for Graph creation"
+        meta: "comma separated words (replace with comma)"
+        comma: "comma separated words"
+        twig: "set twig editor by Form/Template (replace with pug)"
+        pug: "set pug editor by Form/Template"
+        sql: "read as sql by Form/Template"
+        selectjoin-[table].name: "read from Form as joined with other table"
+        selectG-[key]: "read as $this->G[key] (replace with ENUM)"
+        auto: "read as primary key (mostly id, not edit) (deprecated, not used, delete it)"
+        boolean: "read as checkbox boolean or FALSE/TRUE NO/YES 0/1 (διακόπτης)"
+        json: "read and decoded as json"
+        exe: "render button for execution, execute straight code (replaced with js, php, the lang executed)"
+        loc: "localized textarea used by Lang for translation"
+        cron: "varchar in cron format to be executed by Action converted to linux cron or sql event"
+
+    folders:
+        cubos: "folder with cubos"
+        compos: "folder with components"
+        main: "admin/folder"
+        kronos: null
+        ermis: null
+        public: null
 */
 
 class Maria {
@@ -186,8 +225,8 @@ public function extendColumnFormat(array $params, array $columnsFormat): array {
 /**
  * Prepare data from DB to be inserted or updated, according to the column format.
  */
-public function prepareColumnFormat(array $params, array $columnsFormat): array {
-    foreach ($params as $key => &$value) {
+public function prepareColumnFormat(array $record, array $columnsFormat): array {
+    foreach ($record as $key => &$value) {
         if (isset($columnsFormat[$key])) {
             $comment = $columnsFormat[$key];
 
@@ -195,8 +234,9 @@ public function prepareColumnFormat(array $params, array $columnsFormat): array 
  if (is_array($value) && array_key_exists('includes', $value)) {
                 $filePath = $value['includes'];
                 // If the 'includes' key exists and is a valid file, use file_get_contents
-                if (file_exists($filePath)) {
-                    $value = file_get_contents($filePath);  // Read file content
+                if (file_exists(ROOT.$filePath)) {
+                    $value = file_get_contents(ROOT.$filePath);  // Read file content
+
                 } else {
                     throw new InvalidArgumentException("File at '$filePath' not found.");
                 }
@@ -213,15 +253,15 @@ public function prepareColumnFormat(array $params, array $columnsFormat): array 
             }
         }
     }
-    return $params;
+    return $record;
 }
 /*
 pdo update or insert based on name
 comment=>format included
 * */
-public function upsert(string $table, array $params): int|bool {
+public function upsert(string $table, array $record): int|bool {
     // Ensure 'name' key exists in the params
-    if (!isset($params['name'])) {
+    if (!isset($record['name'])) {
         throw new InvalidArgumentException("The 'name' parameter is required for upsert.");
     }
 
@@ -229,11 +269,11 @@ public function upsert(string $table, array $params): int|bool {
     $columnsFormat = $this->colFormat($table);
 
     // Format the params based on the column comments
-    $params = $this->prepareColumnFormat($params, $columnsFormat);
+    $record = $this->prepareColumnFormat($record, $columnsFormat);
 
     // Extract the 'name' value for the WHERE clause
-    $name = $params['name'];
-    unset($params['name']); // Remove 'name' to avoid duplication in insert/update
+    $name = $record['name'];
+    unset($record['name']); // Remove 'name' to avoid duplication in insert/update
 
     // Check if the record with the given name exists
     $checkSql = "SELECT COUNT(*) FROM $table WHERE name = ?";
@@ -243,23 +283,22 @@ public function upsert(string $table, array $params): int|bool {
 
     if ($exists) {
         // Prepare an UPDATE statement
-        $updateColumns = implode(' = ?, ', array_keys($params)) . ' = ?';
+        $updateColumns = implode(' = ?, ', array_keys($record)) . ' = ?';
         $updateSql = "UPDATE $table SET $updateColumns WHERE name = ?";
         $updateStmt = $this->_db->prepare($updateSql);
 
         // Execute the UPDATE statement
-        $updateStmt->execute([...array_values($params), $name]);
+        $updateStmt->execute([...array_values($record), $name]);
         return true; // Return true for a successful update
     } else {
         // Prepare an INSERT statement
-        $insertColumns = implode(',', array_keys($params));
-        $placeholders = implode(',', array_fill(0, count($params), '?'));
+        $insertColumns = implode(',', array_keys($record));
+        $placeholders = implode(',', array_fill(0, count($record), '?'));
         $insertSql = "INSERT INTO $table (name, $insertColumns) VALUES (?, $placeholders)";
         $insertStmt = $this->_db->prepare($insertSql);
 
         // Execute the INSERT statement
-        $insertStmt->execute([$name, ...array_values($params)]);
-
+        $insertStmt->execute([$name, ...array_values($record)]);
         return $this->_db->lastInsertId() ?: true;  // Return the last insert ID or true if no ID
     }
 }

@@ -29,7 +29,7 @@ void readYamlAndConvertToJson(const std::string& filename) {
                 {"name", action["name"].as<std::string>()},
                 {"type", action["type"].as<std::string>()},
                 {"endpoint", action["endpoint"].as<std::string>()},
-                {"execute_mode", action["execute_mode"].as<std::string>()},
+                {"exe_mode", action["exe_mode"].as<std::string>()},
                 {"systemsid", action["systemsid"].as<int>()},
                 {"actiongrpid", action["actiongrpid"].as<int>()},
                 {"schedule", action["schedule"].as<std::string>()},

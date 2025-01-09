@@ -38,7 +38,7 @@ counters_actiongrp:
     rule: ~
     execute: for(const [key, value] of Object.entries(message.text)){const span=document.createElement('span');const
       existingClass=document.querySelector(key);if(existingClass){const span=document.createElement('span');span.className=message.class;span.textContent=value;existingClass.appendChild(span);}}
-    execute_mode: direct
+    exe_mode: direct
     schedule: ~
     cast: all
     usergroups: ~

@@ -32,7 +32,6 @@
         }
     },
     "require-dev": {
-        "phpdocumentor/phpdocumentor": "^3.1",
         "phpunit/phpunit": "^9"
     },
     "config": {
@@ -42,9 +41,6 @@
         }
     },
     "scripts": {
-        "auto-scripts": {
-            "cache:clear": "symfony-cmd",
-            "assets:install %PUBLIC_DIR%": "symfony-cmd"
-        }
+        "auto-scripts": []
     }
 }
