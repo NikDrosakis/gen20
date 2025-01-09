@@ -1,0 +1,33 @@
+---
+diary_cubo:
+  id: 29
+  sort: 0
+  img: ~
+  name: diary
+  path: cubos/diary
+  pages: ~
+  description: ~
+  template: ~
+  query: ~
+  todo: ~
+  version: "0.00"
+  status: 0
+  tables:
+  - diary
+  actions: ~
+  has_maria: ~
+  has_admin: 0
+  valuability: 0
+  flag: 0
+  ideally: ~
+  layout_views: 0
+  total_duration: 0
+  created: "2024-12-29 19:11:58"
+  modified: "2025-01-07 11:23:35"
+  hasPage: 0
+  isSub: 0
+  branch: ~
+  doc: ~
+  meta: ~
+  manifest: ~
+...

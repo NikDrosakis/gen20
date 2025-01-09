@@ -6,6 +6,8 @@ const https = require('https');
 const cors = require("cors");
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
+//PROCESS ACTION LOOP
+
 require('dotenv').config();
 // Check if the domain is localhost
 const isLocalhost = process.env.DOMAIN === 'localhost';
@@ -24,6 +26,7 @@ const privateKey = fs.readFileSync(keyPath, 'utf8');
 const certificate = fs.readFileSync(certPath, 'utf8');
 const credentials = { key: privateKey, cert: certificate };
 
+
 // Middleware
 app.use(express.static("public"));
 app.use(cookieParser());
@@ -36,14 +39,19 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!');
 });
 
+
+
+const action = require('./action');
+action.mainLoop();
+
 // HTTPS Server
 const server = https.createServer(credentials, app);
 
 //RUN Ermis WebSocket
-const { WServer } = require('./ws');
-WServer(server);
+//const { WServer } = require('./ws');
+//WServer(server);
 
 const PORT = process.env.ERMIS_PORT || 3010;
 server.listen(PORT, function () {
-    console.log('Server listening on port ' + "3010");
+    console.log('Server listening on port ' + PORT);
 });

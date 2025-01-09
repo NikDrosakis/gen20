@@ -763,8 +763,8 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
                 <div class='gs-span'>
                     <label for='$col'>$col ($comment)</label>
                     <div class='gs-preview-container'>
-                        <textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'>$escapedValue</textarea>
-                        <div class='code-editor' id='editor-$col' style='height: 300px;'></div>
+                        <textarea name='$col' id='$col' placeholder='$col'>$escapedValue</textarea>
+                        <div class='code-editor' id='editor-$col'></div>
                     </div>
                 </div>
                 <script>

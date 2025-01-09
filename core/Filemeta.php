@@ -1,14 +1,18 @@
 <?php
-/** @filemetacore.description creates file to db dynamic mechanism **/
+/** @filemetacore.description creates file to db dynamic mechanism
 
-/**
+ why important the manifest in core folder?
+ it's important to
+  dependencies (ie methods from other functions)
+
+
 @filemetacore.updatelog
 v.1 basic Trait, batch saving all files, changing all the style writing, having basic capabilities & automating documentation and logging
-*/
 
-/** @filemetacore.features all classes and methods lists documented */
 
-/**
+ @filemetacore.features all classes and methods lists documented
+
+
 @filemetacore.todo
 - connect to Ermis for auto-update each file
 - logging all load data

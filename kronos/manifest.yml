@@ -47,4 +47,5 @@ systems:
       command: "bash install.sh"
     - step: "Run the application"
       command: "./main [yml filename]"
-  doc: "README.md"
+  doc:
+    includes: "README.md"

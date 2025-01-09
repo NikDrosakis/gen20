@@ -1,6 +1,7 @@
 'use strict';
 require('dotenv').config();
 const express = require('express');
+const app = express();
 const router = express.Router();
 const { PredictionServiceClient } = require('@google-cloud/aiplatform');
 
