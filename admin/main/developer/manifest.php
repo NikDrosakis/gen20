@@ -1,3 +1,24 @@
+<?php
+echo $this->buildTable("gen_admin.action_plan");
+echo $this->buildTable("gen_admin.action");
+//$this->storeAction();
+//xecho ($this->yamlParseFile(ADMIN_ROOT."manifest.yml"));
+//xecho ($this->yamlUpdateDB(ADMIN_ROOT."manifest.yml"));
+//xecho($this->manifestFileActiongrpFromDB('fswatch'));
+//xecho($this->manifestFileActiongrpFromDB('counters'));
+//xecho ($this->admin->colFormat("systems"));
+
+//$systempaths = $this->admin->flist("select name,path FROM systems");
+//xecho($systempaths);
+//foreach($systempaths as $name => $path){
+//$this->manifestFileFromDB("select * FROM systems where name=?",[$name],$path);
+//xecho($this->yamlUpdateDB(ROOT.$path.'/manifest.yml'));
+//echo "<br />";
+//}
+//$this->batchManifestFilesFromDB("cubo");
+//$this->batchYamlUpdateDB("systems");
+?>
+
 <h2>File new</h2>
             <label for="yaml-editor">YAML Content:</label>
             <textarea id="yaml-editor" name="yamlContent"></textarea>
@@ -63,23 +84,3 @@
             });
         });
     </script>
-
-<?php
-//$this->storeAction();
-//xecho ($this->yamlParseFile(ADMIN_ROOT."manifest.yml"));
-//xecho ($this->yamlUpdateDB(ADMIN_ROOT."manifest.yml"));
-//xecho($this->manifestFileActiongrpFromDB('fswatch'));
-//xecho($this->manifestFileActiongrpFromDB('counters'));
-//xecho ($this->admin->colFormat("systems"));
-
-//$systempaths = $this->admin->flist("select name,path FROM systems");
-//xecho($systempaths);
-//foreach($systempaths as $name => $path){
-//$this->manifestFileFromDB("select * FROM systems where name=?",[$name],$path);
-//xecho($this->yamlUpdateDB(ROOT.$path.'/manifest.yml'));
-//echo "<br />";
-//}
-//$this->batchManifestFilesFromDB("cubo");
-$this->batchYamlUpdateDB("systems");
-
-

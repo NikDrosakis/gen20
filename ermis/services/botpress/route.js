@@ -1,4 +1,5 @@
 'use strict';
+
 require('dotenv').config();
 const express = require('express');
 const router = express.Router();
@@ -8,6 +9,7 @@ const { Client } = require('@botpress/chat');
 //openai https://webhook.botpress.cloud/288ac779-ce7a-4e62-ab54-a99ecf7cc80b
 //browser https://webhook.botpress.cloud/9526e607-6daf-4dad-9e5a-b92f39f99716
 //https://cdn.botpress.cloud/webchat/v2/shareable.html?botId=76eec27b-d95d-4c66-aa35-96b8babbbe72
+
 // Your Botpress Webhook ID
 //const myWebhookId = 'dae518d0-b501-4b2b-92d1-895b460d25cb';
 
@@ -15,13 +17,25 @@ const { Client } = require('@botpress/chat');
 //const client = new Client({
 //  apiUrl: `https://chat.botpress.cloud/${myWebhookId}`,
 //});
-const webhookId = "dae518d0-b501-4b2b-92d1-895b460d25cb";
-//const webhookId = process.env.WEBHOOK_ID;
-    if (!webhookId) {
-        throw new Error('WEBHOOK_ID is required');
-    }
 
-// Function to interact with Botpress API
+/**
+ * @type {string}
+ * The Botpress Webhook ID. This should be set in the .env file
+ */
+const webhookId = process.env.WEBHOOK_ID;
+//const webhookId = "dae518d0-b501-4b2b-92d1-895b460d25cb";
+if (!webhookId) {
+    throw new Error('WEBHOOK_ID is required');
+}
+
+/**
+ * Function to interact with the Botpress API.
+ * @async
+ * @function interactWithBotpress
+ * @param {string} userMessage - The message from the user.
+ * @returns {Promise<string|null>} The bot's response, or null if not text based.
+ * @throws {Error} If there is an issue interacting with the Botpress API.
+ */
 const interactWithBotpress = async (userMessage) => {
     try {
         // Initialize Botpress Client
@@ -65,11 +79,23 @@ const interactWithBotpress = async (userMessage) => {
     }
 };
 
-// POST route to handle user messages
+/**
+ * POST route to handle user messages and get a response from botpress.
+ * @name post/chat
+ * @route {POST} /chat
+ * @param {express.Request} req - Express request object, contains the user message
+ * @param {express.Response} res - Express response object
+ * @returns {Promise<void>}
+ * @throws {Error} if interacting with botpress fails.
+ */
 router.post('/chat', async (req, res) => {
     try {
+        /**
+         * @type {string}
+         * The message sent by the user.
+         */
         const { message } = req.body;
-console.log(message);
+        console.log(message);
         // Validate input
         if (!message) {
             return res.status(400).json({ error: 'Message is required' });

@@ -1,72 +1,73 @@
 package main
-/**
 
-*/
-//TODO Integrate WebSocket for Realtime
-//TODO  action.go
-//TODO CI/CD
 import (
-    "fmt"
-    "log"
-    "os"
-    "net/http"
-    "github.com/gin-gonic/gin"
-    "github.com/joho/godotenv"
-    "github.com/gorilla/websocket"
-    "god/services/misc" // Change this to your actual module name
-//    "god/services/openai" // Change this to your actual module name
-    "god/services/claude" // Change this to your actual module name
-)
-var upgrader = websocket.Upgrader{
-    ReadBufferSize:  1024,
-    WriteBufferSize: 1024,
-    CheckOrigin: func(r *http.Request) bool { return true }, // Allow all origins (for testing, restrict in production)
-}
-func handleConnections(w http.ResponseWriter, r *http.Request) {
-    ws, err := upgrader.Upgrade(w, r, nil)
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer ws.Close()
+	"fmt"
+	"log"
+	"os"
 
-    for {
-        messageType, p, err := ws.ReadMessage()
-        if err != nil {
-            log.Println(err)
-            return
-        }
-        fmt.Println(string(p))
-        if err := ws.WriteMessage(messageType, p); err != nil {
-            log.Println(err)
-            return
-        }
-    }
-}
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	"github.com/gorilla/websocket"
+	"god/services/claude"
+//	"god/services/googleal" // Correct import path
+)
 
 func main() {
-  http.HandleFunc("/ws", handleConnections)
-	// Initialize a Gin router
-  err := godotenv.Load()
-    if err != nil {
-        log.Fatal("Error loading .env file")
-    }
-    r := gin.Default()
+	// Load environment variables
+	godotenv.Load()
 
-	// Define other routes
-	r.GET("/god/v1/users", misc.GetUsers)    // Define the route for fetching users
-	r.GET("/god/v1/product", misc.GetProducts)  // Define the route for fetching products
+	// Get API keys from environment variables
+//googleAPIKey := os.Getenv("GOOGLEAI_APIKEY")
+	claudeAPIKey := os.Getenv("CLAUDE_APIKEY")
 
-    // Initialize Claude client and set up its routes
-    apiKey := os.Getenv("CLAUDE_ADMINκKEY")
-    if apiKey == "" {
-        log.Fatal("CLAUDE_KEY is not set in the environment")
-    }
-    clau := claude.NewClient(apiKey)
-    clau.SetupRouter(r) // Pass the existing router to the SetupRouter method
+	// Initialize Gin router
+	router := gin.Default()
 
+	// Initialize Google AI client
+	//googleClient, err := stream.NewClient(googleAPIKey)
+	//if err != nil {
+//		log.Fatalf("Failed to create Google AI client: %v", err)
+///	}
 
-	// Start the Gin server
-	if err := r.Run(":3008"); err != nil {
-		fmt.Println("Error starting server:", err)
+	// Initialize Claude client
+	claudeClient := claude.NewClient(claudeAPIKey)
+
+	// Set up routes for Google AI
+	//router = googleal.SetupRouter(router)
+
+	// Set up routes for Claude
+	router = claudeClient.SetupRouter(router)
+
+	// Example WebSocket route (if needed)
+	router.GET("/ws", func(c *gin.Context) {
+		upgrader := websocket.Upgrader{}
+		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+		if err != nil {
+			log.Println("Error upgrading connection:", err)
+			return
+		}
+		defer conn.Close()
+
+		for {
+			messageType, p, err := conn.ReadMessage()
+			if err != nil {
+				log.Println("Error reading message:", err)
+				return
+			}
+			log.Printf("Received message: %s\n", string(p))
+			err = conn.WriteMessage(messageType, p)
+			if err != nil {
+				log.Println("Error writing message:", err)
+				return
+			}
+		}
+	})
+
+	// Start the server
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3006"
 	}
+	log.Printf("Server starting on port %s\n", port)
+	router.Run(fmt.Sprintf(":%s", port))
 }

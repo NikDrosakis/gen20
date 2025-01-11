@@ -4,11 +4,12 @@
 #include <yaml-cpp/yaml.h>
 #include <nlohmann/json.hpp>
 #include "Yaml.h"
-
+#include <thread>
+#include <map>
 
 int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <manifest_file>" << std::endl;
+    if (argc < 3) {
+        std::cerr << "Usage: " << argv[0] << " <manifest_file> <table>" << std::endl;
         return 1;
     }
 
@@ -19,11 +20,11 @@ int main(int argc, char* argv[]) {
     std::thread watcher(&Yaml::watchAndSyncManifest, &yamlHandler, filename, table);
     watcher.join();
 
-
     Maria db("gen_admin");
 
     if (db.connect()) {
-        auto result = db.f("SELECT * FROM systems WHERE id = ?", [1]);
+        std::map<int, std::string> params_f = {{1, "1"}}; // Corrected params for db.f
+        auto result = db.f("SELECT * FROM systems WHERE id = ?", params_f);
         if (!result.empty()) {
             for (const auto &pair : result) {
                 std::cout << pair.first << ": " << pair.second << std::endl;
@@ -32,7 +33,8 @@ int main(int argc, char* argv[]) {
             std::cout << "Query failed or no result." << std::endl;
         }
 
-        auto results = db.fa("SELECT * FROM systems", params);
+        std::map<int, std::string> params_fa; // Corrected params for db.fa
+        auto results = db.fa("SELECT * FROM systems", params_fa);
         for (const auto &row : results) {
             for (const auto &pair : row) {
                 std::cout << pair.first << ": " << pair.second << " ";

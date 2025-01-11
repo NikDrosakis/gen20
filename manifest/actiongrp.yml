@@ -1,6 +1,7 @@
 actiongroups:
   - name: "ai_model_x_integration"
     description: "AI Model X integration with 5 potential actions."
+    base: "https://api.example.com"
     actions:
       - name: "generate_text"
         type: "POST"
@@ -31,3 +32,227 @@ actiongroups:
         endpoint: "/api/v1/extract_entities"
         parameters:
           - "text"
+  - name: "openai_integration"
+    description: "Integration with OpenAI GPT-3 model for text generation and analysis."
+    base: "https://api.openai.com/v1"
+    meta: "AI, Text Generation, NLP"
+    actions:
+      - name: "generate_text"
+        type: "POST"
+        endpoint: "/completions"
+        parameters:
+          - "model"
+          - "prompt"
+          - "temperature"
+          - "max_tokens"
+          - "top_p"
+          - "frequency_penalty"
+          - "presence_penalty"
+      - name: "edit_text"
+        type: "POST"
+        endpoint: "/edits"
+        parameters:
+          - "model"
+          - "input"
+          - "instruction"
+      - name: "summarize_text"
+        type: "POST"
+        endpoint: "/summarize"
+        parameters:
+          - "model"
+          - "text"
+          - "max_tokens"
+      - name: "analyze_sentiment"
+        type: "POST"
+        endpoint: "/sentiment"
+        parameters:
+          - "model"
+          - "text"
+      - name: "answer_question"
+        type: "POST"
+        endpoint: "/answers"
+        parameters:
+          - "model"
+          - "question"
+          - "documents"
+          - "max_responses"
+  - name: "openlibrary_integration"
+    description: "Integration with Open Library for book information retrieval."
+    base: "https://openlibrary.org/api"
+    meta: "Books, Library, Open Data"
+    actions:
+      - name: "get_book_details"
+        type: "GET"
+        endpoint: "/books/{book_id}"
+        parameters:
+          - "book_id"
+      - name: "search_books"
+        type: "GET"
+        endpoint: "/search.json"
+        parameters:
+          - "title"
+          - "author"
+          - "subject"
+      - name: "get_author_details"
+        type: "GET"
+        endpoint: "/authors/{author_id}"
+        parameters:
+          - "author_id"
+      - name: "get_book_cover"
+        type: "GET"
+        endpoint: "/covers/{cover_id}"
+        parameters:
+          - "cover_id"
+      - name: "google_translate_integration"
+        description: "Integration with Google Translate API for language translation and detection."
+        base: "https://translation.googleapis.com/language/translate/v2"
+        meta: "Language, Translation, NLP"
+        actions:
+          - name: "translate_text"
+            type: "POST"
+            endpoint: "/translate"
+            parameters:
+              - "q"
+              - "target"
+              - "source"
+              - "format"
+          - name: "detect_language"
+            type: "POST"
+            endpoint: "/detect"
+            parameters:
+              - "q"
+          - name: "list_languages"
+            type: "GET"
+            endpoint: "/languages"
+            parameters:
+              - "target"
+  - name: "google_drive_integration"
+    description: "Integration with Google Drive API for file management and access."
+    base: "https://www.googleapis.com/upload/drive/v3/files"
+    meta: "Cloud Storage, File Management, Google"
+    actions:
+      - name: "upload_file"
+        type: "POST"
+        endpoint: "/upload"
+        parameters:
+          - "file"
+          - "name"
+          - "mimeType"
+      - name: "list_files"
+        type: "GET"
+        endpoint: "/list"
+        parameters:
+          - "q"
+          - "pageSize"
+      - name: "download_file"
+        type: "GET"
+        endpoint: "/{fileId}?alt=media"
+        parameters:
+          - "fileId"
+      - name: "delete_file"
+        type: "DELETE"
+        endpoint: "/{fileId}"
+        parameters:
+          - "fileId"
+  - name: "bert_integration"
+    description: "Integration with BERT API for NLP tasks such as text classification and embeddings."
+    base: "https://api.example.com/bert"
+    meta: "NLP, AI, Transformers"
+    actions:
+      - name: "get_text_embeddings"
+        type: "POST"
+        endpoint: "/embeddings"
+        parameters:
+          - "text"
+      - name: "text_classification"
+        type: "POST"
+        endpoint: "/classify"
+        parameters:
+          - "text"
+          - "labels"
+      - name: "question_answering"
+        type: "POST"
+        endpoint: "/qa"
+        parameters:
+          - "question"
+          - "context"
+  - name: "dropbox_integration"
+    description: "Integration with Dropbox API for file management and sharing."
+    base: "https://api.dropboxapi.com/2/files"
+    meta: "Cloud Storage, File Sharing, Dropbox"
+    actions:
+      - name: "upload_file"
+        type: "POST"
+        endpoint: "/upload"
+        parameters:
+          - "path"
+          - "file"
+      - name: "list_files"
+        type: "POST"
+        endpoint: "/list_folder"
+        parameters:
+          - "path"
+      - name: "download_file"
+        type: "POST"
+        endpoint: "/download"
+        parameters:
+          - "path"
+      - name: "delete_file"
+        type: "POST"
+        endpoint: "/delete"
+        parameters:
+          - "path"
+  - name: "wikipedia_integration"
+    description: "Integration with Wikipedia API for retrieving article content and information."
+    base: "https://en.wikipedia.org/w/api.php"
+    meta: "Knowledge Base, Wikipedia, API"
+    actions:
+      - name: "search_article"
+        type: "GET"
+        endpoint: "/"
+        parameters:
+          - "action"
+          - "format"
+          - "list"
+          - "srsearch"
+      - name: "get_article_content"
+        type: "GET"
+        endpoint: "/"
+        parameters:
+          - "action"
+          - "page"
+          - "format"
+      - name: "get_random_article"
+        type: "GET"
+        endpoint: "/"
+        parameters:
+          - "action"
+          - "format"
+          - "list"
+  - name: "expo_integration"
+    description: "Integration with Expo API for managing and deploying React Native apps."
+    base: "https://exp.host/--/api/v2"
+    meta: "Mobile, React Native, Expo"
+    actions:
+      - name: "publish_app"
+        type: "POST"
+        endpoint: "/publish"
+        parameters:
+          - "appId"             # The ID of the app to publish
+          - "releaseChannel"    # The release channel for the app
+      - name: "get_app_info"
+        type: "GET"
+        endpoint: "/getAppInfo"
+        parameters:
+          - "appId"             # The ID of the app to retrieve information for
+      - name: "deploy_app"
+        type: "POST"
+        endpoint: "/deploy"
+        parameters:
+          - "appId"             # The ID of the app to deploy
+          - "target"            # The target environment (e.g., "staging", "production")
+      - name: "get_deployment_status"
+        type: "GET"
+        endpoint: "/deploymentStatus"
+        parameters:
+          - "deploymentId"      # The ID of the deployment to check the status of

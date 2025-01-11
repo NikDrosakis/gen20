@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     REDIS_CHANNEL: str = None
     CLAUDE_KEY: str
     CLAUDE_ADMINKEY: str
+    GOOGLEAI_APIKEY: str
 
     class Config:
         env_file = ".env"

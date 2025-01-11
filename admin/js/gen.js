@@ -1049,7 +1049,7 @@ actions = [
 
                 // Retrieve the target element by id
                 const nextMethodElement = document.getElementById(method);
-
+                console.log(getResult.data);
                 // Update the icon based on the response (assuming `getResult.data` contains a value to determine the icon)
                 nextMethodElement.innerHTML = getResult.success
                     ? '<span style="color: green; font-size: 1.2em;">✔️</span>'

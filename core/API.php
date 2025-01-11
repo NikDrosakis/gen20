@@ -7,12 +7,7 @@ use ReflectionMethod;
      * */
 
 class API extends Gaia{
-	 use My;
-	 use Media;
-	 use Tree;
-	 use Form;
-	 use Domain;
-	 use Cubo;
+	 use Action, My, Media, Tree, Form, Domain, Cubo;
 
 protected $gpm;
 
@@ -46,32 +41,6 @@ if ($this->isApiRequest()) {
      //      }
         }
     }
-protected function class_use(){
-        $methods = get_class_methods($this); // Gets class methods
-
-        // Include methods from traits explicitly
-        $traits = class_uses($this);  // Get traits used in this class
-        foreach ($traits as $trait) {
-            $traitMethods = get_class_methods($trait);
-            if ($traitMethods) {
-                foreach ($traitMethods as $traitMethod) {
-                    $methods[$traitMethod] = $trait;  // Store method with trait name
-                }
-            }
-        }
-        // Capture methods from parent class
-        $parentClass = get_parent_class($this);
-        if ($parentClass) {
-            $parentMethods = get_class_methods($parentClass);
-            if ($parentMethods) {
-                foreach ($parentMethods as $parentMethod) {
-                    $methods[$parentMethod] = $parentClass;  // Store method with parent class name
-                }
-            }
-        }
-        return $methods;
-    }
-
 
   protected function startAPI() {
          $response = $this->response();

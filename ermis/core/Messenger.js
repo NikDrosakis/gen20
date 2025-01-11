@@ -60,7 +60,7 @@ class Messenger {
             return '';
         }
     }
-/*
+
     // Method to publish the constructed message
     static async publishMessage(res) {
             // Default message construction if JSON is invalid
@@ -69,7 +69,7 @@ class Messenger {
                 publish(process.env.REDIS_CHANNEL, defaultMessage);
             }
     }
-     */
+
 
 }
 

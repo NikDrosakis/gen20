@@ -1,19 +1,44 @@
 /**
-status
-default 5
-    0 deprecated
-    1 dangerous
-    2 missing infrustucture
-    3 needs updates
-    4 inactived wrong failed
-    5 new - IN_PROGRESS
-    6 working testing experimental mode (may miss sth)
-    7 alpha running - currently ready - active
-    8 beta working
-    9 stable
-    10 stable depends others
-'active','troubled','inactived','wrong','closed'
- */
+Action
+ building a mainLoop of action in the table to be executed by Ermis on startup of by action.interval_type
+    mainly the loop has routes
+ still no plan (series) here, just action records  with function according to action.type
+  no meaning if there is no action plan
+runAction(id):
+Retrieves action data from the database.
+Executes the action based on its type using executeAction.
+Updates the action status in the database.
+Returns a success or failure object.
+
+actionLoop():
+Fetches all actions from the database.
+Executes actions using processActions.
+processActions(actions):
+Iterates over a list of actions.
+Executes each action using executeAction.
+Updates action status and tracks execution results.
+
+executeAction(rec):
+Based on rec.type, calls specific logic for route, int_resource, ext_resource, generate (or ai), N, and fs.
+buildRoute(rec):
+Loads route files.
+Performs health checks on the route.
+
+buildAI(rec):
+Builds the ai api endpoint based on settings.
+renderKeys(rawurl, rec):
+Renders keys to url parameters based on config.
+
+runExternalRecource(rec):
+Executes external http calls.
+runInternalRecource(rec):
+Executes internal module calls
+
+buildN(rec):
+Executes messenger logic
+upsertAction(actionGrpData, actionData):
+Insert or update an action
+*/
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 const fs = require('fs');
 const express = require('express');
@@ -24,9 +49,9 @@ const Messenger = require('./core/Messenger');
 require('dotenv').config();
 const ROOT = process.env.ROOT || path.resolve(__dirname);
 const mariadmin = new Maria(process.env.MARIADMIN);
-const redFlag = '\x1b[31m✗\x1b[0m';
-let executionRunning = false;
 
+let executionRunning = false;
+//for new default is 5
 const ACTION_STATUS = {
     DEPRECATED: 0,
     DANGEROUS: 1,
@@ -41,7 +66,50 @@ const ACTION_STATUS = {
     STABLE_DEPENDS_OTHERS: 10
 };
 
-async function mainLoop() {
+async function runAction(name) {
+    try {
+        const record = await mariadmin.f(`
+            SELECT actiongrp.keys, actiongrp.name as grpName, actiongrp.base, action.*
+            FROM action
+            LEFT JOIN actiongrp ON actiongrp.id = action.actiongrpid
+            WHERE action.name='${name}'
+        `);
+        if (!record) {
+            console.warn(`✗  Action with ID ${name} not found.`);
+            return false;
+        }
+        const startTime = Date.now();
+        let result = await executeAction(record,app);
+        const endTime = Date.now();
+        const exeTime = endTime - startTime;
+
+        if (result) {
+            await updateStatus(record, ACTION_STATUS.ALPHA_RUNNING_READY, `Action completed`, exeTime);
+            return {
+                success: true,
+                message: `Action ${name} completed successfully`,
+                data: record
+            }
+        } else {
+            await updateStatus(record, ACTION_STATUS.INACTIVE_WRONG_FAILED, `Action failed`, exeTime);
+            return {
+                success: false,
+                message: `Action ${name} failed`,
+                data: record
+            }
+        }
+
+    } catch (err) {
+        console.error(`✗  Error processing action ${name}:`, err);
+     //   await updateStatus(record, ACTION_STATUS.NEEDS_UPDATES, err.message);
+   //     return {
+     //       success: false,
+       //     message: `Error processing action ${name}:`+ err.message,
+         //   data: record
+        //}
+    }
+}
+async function actionLoop() {
     if (executionRunning) {
         process.stdout.write('🏃‍♂️ Loop is already running');
         return; // Avoid concurrent executions
@@ -66,11 +134,11 @@ async function mainLoop() {
             const {total, success, statusStats, percentage} = await processActions(actions, app);
             process.stdout.write(`📊 ${success}/${total} --> ${percentage} %success`);
             const postLoopCounts = await getActionStatusCounts();
-            process.stdout.write('🏁 Post-Loop Status Counts:');
+            console.log('🏁 Post-Loop Status Counts:');
             console.table(postLoopCounts);
         }
     } catch (err) {
-        console.info(`✗  Error in main loop:`, err.message);
+        process.stdout.write(`✗  Error in main loop:`, err.message);
         //Set next loop in 10 seconds
       //  setTimeout(mainLoop,10000);
     } finally {
@@ -145,16 +213,16 @@ async function executeAction(rec) {
                 await buildRoute(rec);
                 return true;
             case 'int_resource':
-                return await buildInternalResource(rec);
+                return await runInternalRecource(rec);
             case 'ext_resource':
-                return await buildExternalResource(rec);
+                return await runExternalRecource(rec);
             case 'generate':
             case 'ai':
                 return await buildAI(rec);
             case 'N':
                 return await buildN(rec);
             case 'fs':
-            //    await buildWatch(rec);
+             //   await buildWatch(rec);
                 return true;
             default:
                 console.warn(`✗  Unknown type '${rec.type}' for action ID ${rec.id}.`);
@@ -165,6 +233,21 @@ async function executeAction(rec) {
         return false;
     }
 }
+async function updateEndpointParams(endpoint, params, name) {
+    try {
+        const stringifiedParams = JSON.stringify(params);
+        await mariadmin.q("UPDATE action SET params=?, endpoint=? WHERE actiongrp.name=?", [
+            stringifiedParams,
+            endpoint,
+            name,
+        ]);
+        process.stdout.write(
+            `✓ Updated action table with: params = ${stringifiedParams}, endpoint = ${endpoint} \n`
+        );
+    } catch (e) {
+        console.error("Error while reading, parsing file or updating db:", e);
+    }
+}
 
 async function updateStatus(rec, newstatus, log = '', exeTime = 0) {
     await mariadmin.q(
@@ -172,46 +255,90 @@ async function updateStatus(rec, newstatus, log = '', exeTime = 0) {
         [newstatus, log, exeTime, rec.id]
     )
         .then(() => process.stdout.write(`💾 Action ${rec.id} set to status ${newstatus}`))
-        .catch((err) => console.info(`✗  Error updating action status:`, err));
+        .catch((err) => process.stdout.write(`✗  Error updating action status:`, err));
 }
-function scanRoutes(router,prefix='') {
+const jsdocRegex = /\/\*\*([\s\S]*?)\*\//g;
+/**
+ * Parses JSDoc comments to extract params
+ * @param {string} comment - JSDoc comment string.
+ * @returns {Object | null} The extracted parameters object, or null if not found
+ */
+function parseJsdoc(comment) {
+    let params = null;
+    try {
+        const paramMatch = comment.match(/@params\s+({[\s\S]*?})/);
+        if (paramMatch) {
+            try {
+                params = JSON.parse(paramMatch[1]);
+            } catch (parseError) {
+                console.error(`Invalid JSON after @params tag: ${paramMatch[1]}`);
+                params = {}; // return an empty json object if json is invalid.
+            }
+        }
+    } catch (e) {
+        console.error("Error while parsing params", e);
+    }
+    return params;
+}
+function scanRoutes(router, prefix = '') {
     const mappings = [];
-    if (router && router.stack) {
+    if (router && router) {
+
         router.stack.forEach(layer => {
             if (layer.route) {
                 const methods = Object.keys(layer.route.methods).join(',').toUpperCase();
-                const path = prefix+ layer.route.path;
-                mappings.push(`${methods},${path}`);
+                const path = prefix + (layer.path || layer.route.path);
+                let keys = 'default-key';
+                let params = {};
+                if(layer.route.stack && layer.route.stack.length > 0){
+                    keys =  layer.route.stack[0].keys || 'default-key';
+                    params =  layer.route.stack[0].params || {};
+                }
+                mappings.push({
+                    method: methods,
+                    path: path,
+                    keys: keys,
+                    params: params,
+                });
             }
         });
     }
     return mappings;
 }
-
-async function buildRouteEndpoints(routes, prefix) {
-    const routeMappings = scanRoutes(routes, prefix);
-    if (routeMappings && routeMappings.length > 0) {
-        console.info(`   Endpoint mappings for ${prefix}:`);
-        routeMappings.forEach(mapping => console.info(`     ${mapping}`));
-    }
-    return routeMappings;
-}
-
 async function checkRouteHealth(rec) {
-    const host = rec.base + 'health' || rec.base + 'ping';  // Construct base health URL
-    try {
-        const response = await fetch(host);  // Check the health URL
-        if (!response.ok) {
-            console.error(`✗ Health Check Failed: ${host} status: ${response.status}`);
-            return false;  // Stop on failure
-        } else {
-            console.log(`✓ Health Check OK: ${host}`);
+    const healthEndpoint = 'health';
+    const pingEndpoint = 'ping';
+
+    const endpoints = [healthEndpoint, pingEndpoint]
+
+    for (const endpoint of endpoints) {
+        const host = rec.base + endpoint;  // Construct full health URL
+
+        try {
+            process.stdout.write(`--> Checking health at: ${host}\n`);
+            const response = await fetch(host);  // Check the health URL
+            if (!response.ok) {
+                // Check if the response has a body and log it
+                let errorBody = '';
+                try {
+                    errorBody = await response.text();
+                }catch(bodyError){
+                    errorBody = `Could not read body ${bodyError.message}`
+                }
+
+                console.error(`✗ Health Check Failed: ${host} status: ${response.status} ${errorBody}`);
+                continue; // check the other endpoint
+            } else {
+                console.log(`✓ Health Check OK: ${host}`);
+                return true;  // return if one endpoint is successfull
+            }
+        } catch (error) {
+            console.error(`✗ Health Check Error for: ${host} ${error.message}`);
+            continue; // check the other endpoint
         }
-    } catch (error) {
-        console.error(`✗ Health Check Error for: ${host} ${error.message}`);
-        return false;  // Stop on failure
     }
-    return true;  // Health check passed
+
+    return false; // if no endpoit worked, then return false
 }
 
 async function buildRoute(rec) {
@@ -222,23 +349,24 @@ async function buildRoute(rec) {
 
             if(routes){
                 app.use(`/ermis/v1/${rec.grpName}`, routes);
-                console.info(`✓  ${rec.grpName} routed.`);
+                process.stdout.write(`✓  ${rec.grpName} routed.`);
                 //health check
-                const healthCheckResult = await checkRouteHealth(rec);
+               // const healthCheckResult = await checkRouteHealth(rec);
 
-                const routeMappings = await buildRouteEndpoints(routes, `/ermis/v1/${rec.grpName}`);
+                //update with fswatch
+                const routeMappings = await scanRoutes(routes, `/ermis/v1/${rec.grpName}`);
                 return !!routeMappings;
             } else {
-                console.info(`✗  Error: No valid router exported from ${routerPath}`);
+                process.stdout.write(`✗  Error: No valid router exported from ${routerPath}`);
                 return false;
             }
 
         } catch (error) {
-            console.error(`✗  Error loading route ${routerPath}:`, error);
+            process.stdout.write(`✗  Error loading route ${routerPath}:`, error);
             return false;
         }
     } else {
-        console.info(`✗  Invalid path for action group: ${rec.grpName}`);
+        process.stdout.write(`✗  Invalid path for action group: ${rec.grpName}`);
         return false;
     }
 }
@@ -274,15 +402,15 @@ async function buildAI(rec) {
                 process.stdout.write(`${rec.name} AI responded with data:`, data);
                 return true;
             } catch (fetchError) {
-                console.info(`✗  Error processing AI POST request:`, fetchError.message);
+                process.stdout.write(`✗  Error processing AI POST request:`, fetchError.message);
                 return false;
             }
         } else {
-            console.info(`✗  Unsupported HTTP method for AI: ${method}`);
+            process.stdout.write(`✗  Unsupported HTTP method for AI: ${method}`);
             return false;
         }
     } catch (err) {
-        console.info(`✗  Error building AI route:`, err.message);
+        process.stdout.write(`✗  Error building AI route:`, err.message);
         return false;
     }
 }
@@ -310,35 +438,101 @@ async function renderKeys(rawurl, rec) {
     }
 }
 
+/**
+ * Helper function to extract and parse request parameters.
+ * @param {express.Response} res - Express response object
+ * @returns {Object} An object containing query and header parameters from request, or null if not available
+ */
+function getResourcesParams(res) {
+    if (!res || !res.req) {
+        return null; // Or an empty object, if you prefer
+    }
+    const req = res.req;
+    const params = {
+        query: req.query,
+        headers: req.headers
+    };
 
-async function buildExternalResource(rec) {
+    // Add cookies to the params if they exist
+    if (req.cookies) {
+        params.cookies = req.cookies;
+    }
+    return params;
+}
+
+/**
+ * Renders keys in a string using provided data.
+ * @async
+ * @param {string} text - The string containing keys to render.
+ * @param {Object} data - The data object with key-value pairs for rendering.
+ * @returns {Promise<string>} The rendered string.
+ */
+async function renderKeys(text, data) {
+    const keys = text.match(/{{(.*?)}}/g) || [];
+    let rendered = text;
+    for (const keyMatch of keys) {
+        const key = keyMatch.slice(2, -2).trim();
+        const value = key.split('.').reduce((obj, k) => (obj && obj[k] !== undefined ? obj[k] : ''), data);
+        rendered = rendered.replace(keyMatch, value);
+    }
+
+    return rendered;
+}
+/**
+ * Runs an external resource request.
+ * @async
+ * @param {Object} rec - Configuration object for the external resource.
+ * @returns {Promise<Object|boolean>} The JSON response from the external resource, or false if there was an error.
+ * @throws {Error} If any error occurs during the process of request or parsing.
+ */
+async function runExternalRecource(rec) {
     try {
         // Parse the method and URL
         const [method, rawurl] = rec.endpoint.split(',');
 
         // Replace variables in the URL using renderKeys function
         const url = await renderKeys(rawurl, rec);
-        console.warn(url)
-        // Only support GET method for now
-        if (method === 'GET') {
-            process.stdout.write(`--> Processing GET request to: ${url}`);
+
+        let data = null;
+        let response = null;
+
+        if (method === 'GET' || method === 'POST') {
+            process.stdout.write(`--> Processing ${method} request to: ${url} \n`);
             try {
-                // Make the fetch request
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`✗ HTTP! status: ${response.status}`);
+                let options = {
+                    method: method
                 }
+
+                if(method === 'POST') {
+                    const bodyData = await renderKeys(JSON.stringify(rec.body || {}), rec);
+                    options = {
+                        ...options,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: bodyData
+                    }
+
+                    process.stdout.write(`--> POST body: ${bodyData} \n`);
+                }
+                // Make the fetch request
+                response = await fetch(url, options);
+
+                if (!response.ok) {
+                    throw new Error(`✗ HTTP! status: ${response.status} \n ${await response.text()}`);
+                }
+
                 // Process the response data
-                const data = await response.json();
-                process.stdout.write(`✓ ${rec.name} Responsed with data`);
-                process.stdout.write(data);
-                return true;
+                data = await response.json();
+                process.stdout.write(`✓ ${rec.name} Responsed with data \n`);
+                process.stdout.write(JSON.stringify(data, null, 2) + '\n');
+                return data;
             } catch (err) {
-                console.info(`✗  Processing GET request:`, err.message);
+                console.error(`✗  Processing ${method} request:`, err.message);
                 return false;
             }
         } else {
-            console.info(`✗  Unsupported HTTP method: ${method}`);
+            console.error(`✗  Unsupported HTTP method: ${method}`);
             return false;
         }
     } catch (err) {
@@ -346,7 +540,17 @@ async function buildExternalResource(rec) {
         return false;
     }
 }
-async function buildInternalResource(rec) {
+
+
+/**
+ * Runs an internal resource request, adding an Express endpoint for the resource.
+ * @async
+ * @param {Object} rec - Configuration object for the internal resource.
+ * @param {express.Application} app - Express application object.
+ * @returns {Promise<boolean>} true if the resource is successfully served, false otherwise.
+ * @throws {Error} If any error occurs during the process of serving.
+ */
+async function runInternalRecource(rec, app) {
     // Check for requires first
     if (rec.requires) {
         try {
@@ -362,8 +566,8 @@ async function buildInternalResource(rec) {
             return false;
         }
     }
-        try {
-           // Parse the method and URL
+    try {
+        // Parse the method and URL
         const [method, path] = rec.endpoint.split(',');
 
         if(method !== 'GET'){
@@ -374,7 +578,6 @@ async function buildInternalResource(rec) {
             console.trace(`✗  Path not defined ${path}`);
             return false;
         }
-
         process.stdout.write(`--> Processing internal GET request to: ${path}`);
         // Simulate Express Route serving
         if(app){
@@ -382,41 +585,52 @@ async function buildInternalResource(rec) {
                 // Your logic to handle the internal resource
                 const file = `./services/${rec.grpName}/docs/index.html`
                 if(fs.existsSync(file)){
+                    const params = getResourcesParams(res);
+                    rec.action = {
+                        ...rec.action,
+                        params: params
+                    }
+                    process.stdout.write(`--> Params: ${JSON.stringify(params)} \n`);
+                    // Update the action params
+                    db('systems').where({ id: rec.id }).update({ action: JSON.stringify(rec.action) }).then(()=>{
+                        process.stdout.write(`✓ Updated system ${rec.id} with params: ${JSON.stringify(rec.action.params)} \n`);
+                    }).catch((err)=>{
+                        console.error('✗ Error updating action params:', err);
+                    })
                     res.sendFile(path.resolve(file));
                 }else{
                     res.status(404).send('File not found');
                 }
             });
-            process.stdout.write(`✓ ${rec.name} served from internal endpoint`);
+            process.stdout.write(`✓ ${rec.name} served from internal endpoint \n`);
             return true;
         }else{
             console.trace(`✗  App is undefined `);
             return false;
         }
-
-
     } catch (err) {
         console.trace(`✗  Building API route:`, err.message);
         return false;
     }
 }
+
 async function buildChat(rec, app) {
-    process.stdout.write(`Processing Chat action: ${rec.id}; `);
+    process.stdout.write(`Processing Chat #${rec.id}; `);
     return true;
 }
 async function buildStream(rec, app) {
-    process.stdout.write(`Processing Stream action: ${rec.id}; `);
+    process.stdout.write(`Processing Stream #${rec.id}; `);
     return true;
 }
 async function buildAuthentication(rec, app) {
-    process.stdout.write(`Processing Authenticate action: ${rec.id}; `);
+    process.stdout.write(`Processing Authenticate #${rec.id}; `);
     return true;
 }
 async function buildN(rec) {
     try {
         if (rec.statement || rec.execute) {
             // Pass the record directly to Messenger for message construction and publishing
-            await Messenger.publishMessage(rec);
+            //await Messenger.publishMessage(rec);
         }
         return true;
     } catch (error) {
@@ -425,78 +639,43 @@ async function buildN(rec) {
     }
 }
 
-//Filesystem one record and send Message
-async function buildWatch(rec) {
-    // Fetch all 'ermis' rows with actiongrp.name=fswatch before run
+//add action
+async function upsertAction(actionGrpData, actionData) {
     try {
-        const watchList = await mariadmin.fa(`SELECT actiongrp.keys, actiongrp.name as grpName,action.*
-                                              FROM action LEFT JOIN actiongrp ON actiongrp.id = action.actiongrpid
-                                              WHERE actiongrp.name='fswatch' ORDER BY action.sort;`);
-        await fswatch(); // get json_merged_id_name_path_with_this
-        // return watchList;
-        return true;
-    } catch (error) {
-        console.trace(`✗  Setting up watch:`, error);
-        // Update the database for incorrect configuration
-        return false
-    }
-}
-
-// Watch a specific directory
-function watchSystem(directory, systems) {
-    const watcher=  fs.watch(path.resolve(ROOT, directory.path), {recursive:true}, (eventType, file) => {
-        if (file) {
-            const fullPath = path.join(ROOT, directory.path, file);
-            const dir = systems.find(d => fullPath.startsWith(path.resolve(ROOT, d.path)));
-            const baseFolder = dir ? dir.name : null;
-            const filename = path.parse(file).name;
-            //process.stdout.write(filename)
-         /*   if (baseFolder) {
-                Messenger.publishMessage({
-                    system: baseFolder,
-                    text: `${file} changed in ${directory.path}: ${eventType}`,
-                    filename,
-                    type: 'reload'
-                });
-            } */
-        }
-    });
-    return watcher;
-}
-
-// Watch function to initialize all directories
-// Execute actiongrp.name = watch
-const watchers = {};
-async function fswatch() {
-    try {
-        const systems = await mariadmin.fa("SELECT * FROM systems WHERE status='active'");
-        if (!systems || systems.length === 0) {
-            throw new Error("No active systems found for watching.");
-        }
-        systems.forEach(dir => {
-            if (!watchers[dir.id]) {
-                watchers[dir.id] = watchSystem(dir, systems);
-                process.stdout.write(`👀 Watching directory: ${dir.path}`);
-            }
+        const {name, description, base} = actionGrpData;
+        // Insert into actiongrp
+        const insertActionGrpResult = await mariadmin.inse("actiongrp", {
+            name: name,
+            description: description,
+            base: base,
+            meta:meta
         });
 
-        // Clear old watchers
-        //for (const id in watchers) {
-          //  if (!systems.find(sys => sys.id == id)) {
-            //    process.stdout.write(`Unwatching directory: ${id}`);
-              //  watchers[id].close();
-                //delete watchers[id];
-            //}
-        //}
+        if(!insertActionGrpResult){
+            throw new Error('Error inserting actiongrp');
+        }
 
+        // Insert into action, the new actiongrpid
+        const insertAction = await mariadmin.inse("action", {
+            name: actionData.name,
+            systemsid: actionData.systemsid || 3, // default value
+            actiongrpid: insertActionGrpResult.insertId,
+            endpoint: actionData.endpoint
+        });
+
+        if(!insertAction) {
+            throw new Error('Error inserting action')
+        }
+        return {
+            actiongrpid: insertActionGrpResult.insertId,
+            actionid: insertAction.insertId
+        };
     } catch (error) {
-        console.info(`✗  Initializing watch:`, error.message);
+        console.error('Error adding action:', error.message);
         return false;
     }
 }
-
-//init watch
 //fswatch();
 //start main loop
-mainLoop();
-module.exports = { mainLoop };
+
+module.exports = { actionLoop,runAction,updateEndpointParams };
