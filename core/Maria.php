@@ -55,7 +55,37 @@ class Maria {
     public $_db;
     public $confd;
     public $database;
-
+/*
+   // Constructor: Connect to the server without specifying a database
+    public function __construct() {
+        $dbhost = "localhost";
+        $dbuser = "root";
+        $dbpass = "n130177!";
+        try {
+            // Connect to the server without specifying a database
+            $this->_db = new PDO("mysql:host=$dbhost", $dbuser, $dbpass,
+                array(
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_EMULATE_PREPARES => FALSE,
+                    PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true,
+                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'utf8'",
+                    PDO::ATTR_PERSISTENT => true
+                ));
+        } catch (PDOException $error) {
+            if ($error->getCode() == 23000) {
+                // Handle duplicate entry error specifically
+                echo "Warning: Duplicate entry for 'name'. Please try a different value or update existing one.";
+            } else {
+                throw new Exception("Database connection failed: " . $error->getMessage());
+            }
+        }
+    }
+  // Method to set the database for the current query
+    public function setDatabase(string $database) {
+        $this->database = $database;
+        $this->_db->exec("USE `$this->database`");
+    }
+*/
 	//connect to maria/mysql
     public function __construct(string $database = ''){
             $this->database=$database;
@@ -143,6 +173,200 @@ public function inse(string $table, array $params = []): int|bool {
             echo "Database error occurred: " . $e->getMessage();
         }
     }
+}
+protected function getInputFormat(string $table, $column = null): ?array {
+    // @filemetacore.features Fetch metadata for the table columns (including comments)
+    if ($column) {
+        $res = $this->_db->prepare("SHOW FULL COLUMNS FROM `$table` WHERE Field = :column");
+        $res->bindParam(':column', $column);
+        $res->execute();
+        if (!$res) return null;
+        $select = $res->fetch(PDO::FETCH_ASSOC);
+        $columns = $select ? [$select] : [];
+    } else {
+        $res = $this->_db->prepare("SHOW FULL COLUMNS FROM `$table`");
+        $res->execute();
+        if (!$res) return null;
+        $columns = $res->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // @filemetacore.features Define a mapping of SQL data types to HTML input types
+    $typeMapping = [
+        'varchar'    => 'text',
+        'char'       => 'text',
+        'text'       => 'textarea',
+        'longtext'   => 'editor',
+        'mediumtext' => 'editor',
+        'int'        => 'number',
+        'tinyint'    => 'number',
+        'smallint'    => 'number',
+        'bigint'     => 'number',
+        'decimal'    => 'number',
+        'float'      => 'number',
+        'double'     => 'number',
+        'date'       => 'date',
+        'datetime'   => 'datetime-local',
+        'timestamp'  => 'datetime-local',
+        'time'       => 'time',
+        'enum'       => 'select',
+        'boolean'    => 'checkbox',
+    ];
+    // @filemetacore.features Initialize an array to store input types for each column
+    $inputTypes = [];
+
+    // @filemetacore.features Loop through each column and map the SQL type to the HTML input type
+    foreach ($columns as $column) {
+        $colName = $column['Field'];
+        $colType = strtolower($column['Type']); // @filemetacore.features Get the SQL type (e.g., varchar, int)
+        $colComment = trim($column['Comment']); // @filemetacore.features Get the comment
+        $list = [];
+        $filters = [];
+        $colFormat = $this->colFormat[$colName] ?? []; // Get column-specific format
+
+            if (strpos($colType, 'enum') !== false){
+                    $htmlType = 'select';
+                     $list=$this->getEnumOptions($colType);
+                     $colType = substr($colType, 0, strpos($colType, '('));
+                  }
+              // @filemetacore.features after get the type clean the types from parenthesis
+            if (strpos($colType, '(') !== false) {
+                   $colType = substr($colType, 0, strpos($colType, '('));
+             }
+               // @filemetacore.features Default HTML type based on SQL type mapping
+               $htmlType = $typeMapping[$colType] ?? 'text'; // @filemetacore.features Fallback to 'text' if no match
+
+               // @filemetacore.features Override HTML type based on the column comment
+               if ($colComment=='readonly' || $colName=='id' || $colName=='sort') {
+                   $htmlType = 'label'; // @filemetacore.features Render as label for readonly
+
+               } elseif (in_array($colComment,['method','json','twig','pug','cron','sql','md','comma','yaml','javascript'])){
+                $htmlType = $colComment;
+               } elseif (strpos($colComment, 'selectG') !== false){
+                $htmlType = 'select';
+                $createList= explode('-',$colComment)[1];
+                if($list!=null){
+                $list=$this->G[$createList];
+                }
+
+               }elseif (strpos($colComment, 'exe') !== false) {
+                   $htmlType = 'button'; // @filemetacore.features Render as button
+
+               }elseif (strpos($colComment, 'selectjoin') !== false) {
+                   $htmlType = 'select'; // @filemetacore.features Render as select dropdown for custom selection
+
+               } elseif (strpos($colComment, 'upload') !== false) {
+                   $uploadType=explode('-',$colComment)[0];
+                   $htmlType = $uploadType; // @filemetacore.features Render file input for uploads
+
+               }elseif ($colType === 'tinyint' && $colComment === 'boolean') {
+                 $htmlType= 'checkbox';
+               }
+
+               // Apply formatting from $this->colFormat
+               if (isset($colFormat['type'])) {
+                   $htmlType = $colFormat['type']; // Override HTML type from colFormat
+               }
+               if (isset($colFormat['list'])) {
+                   $list = $colFormat['list']; // Override list from colFormat
+               }
+               if (isset($colFormat['filters'])) {
+                   $filters = $colFormat['filters']; // Override filters from colFormat
+               }
+
+               // @filemetacore.features Store the input type for this column
+               $inputTypes[$colName] = [
+                   'type'     => $htmlType,  // @filemetacore.features HTML input type
+                   'sql_type' => $colType,   // @filemetacore.features SQL type
+                   'comment'  => $colComment, // @filemetacore.features Original column comment
+                   'list'  =>  $list ?? [], // @filemetacore.features Original column comment
+                   'filters' => $filters ?? [], // @filemetacore.features Original column comment
+               ];
+           }
+    return $inputTypes;
+}
+protected function getInputTypeOld(string $table): ?array {
+    // @filemetacore.features Fetch metadata for the table columns (including comments)
+    $columns = $this->dbForm->tableMeta($table);
+
+    // @filemetacore.features Define a mapping of SQL data types to HTML input types
+    $typeMapping = [
+        'varchar'    => 'text',
+        'char'       => 'text',
+        'text'       => 'textarea',
+        'longtext'   => 'editor',
+        'mediumtext' => 'editor',
+        'int'        => 'number',
+        'tinyint'    => 'number',
+        'smallint'    => 'number',
+        'bigint'     => 'number',
+        'decimal'    => 'number',
+        'float'      => 'number',
+        'double'     => 'number',
+        'date'       => 'date',
+        'datetime'   => 'datetime-local',
+        'timestamp'  => 'datetime-local',
+        'time'       => 'time',
+        'enum'       => 'select',
+        'boolean'    => 'checkbox',
+    ];
+    // @filemetacore.features Initialize an array to store input types for each column
+    $inputTypes = [];
+
+    // @filemetacore.features Loop through each column and map the SQL type to the HTML input type
+    foreach ($columns as $column) {
+        $colName = $column['COLUMN_NAME'];
+        $colType = strtolower($column['COLUMN_TYPE']); // @filemetacore.features Get the SQL type (e.g., varchar, int)
+        $colComment = $column['COLUMN_COMMENT']; // @filemetacore.features Get the comment
+        $list = [];
+        $filters = [];
+
+            if (strpos($colType, 'enum') !== false){
+                    $htmlType = 'select';
+                     $list=$this->getEnumOptions($colType);
+                     $colType = substr($colType, 0, strpos($colType, '('));
+                  }
+              // @filemetacore.features after get the type clean the types from parenthesis
+            if (strpos($colType, '(') !== false) {
+                   $colType = substr($colType, 0, strpos($colType, '('));
+             }
+               // @filemetacore.features Default HTML type based on SQL type mapping
+               $htmlType = $typeMapping[$colType] ?? 'text'; // @filemetacore.features Fallback to 'text' if no match
+
+               // @filemetacore.features Override HTML type based on the column comment
+               if ($colComment=='readonly' || $colName=='id' || $colName=='sort') {
+                   $htmlType = 'label'; // @filemetacore.features Render as label for readonly
+
+               } elseif (in_array($colComment,['method','json','twig','pug','cron','sql','md','comma','yaml','javascript'])){
+                $htmlType = $colComment;
+               } elseif (strpos($colComment, 'selectG') !== false){
+                $htmlType = 'select';
+                $createList= explode('-',$colComment)[1];
+                if($list!=null){
+                $list=$this->G[$createList];
+                }
+
+               }elseif (strpos($colComment, 'exe') !== false) {
+                   $htmlType = 'button'; // @filemetacore.features Render as button
+
+               }elseif (strpos($colComment, 'selectjoin') !== false) {
+                   $htmlType = 'select'; // @filemetacore.features Render as select dropdown for custom selection
+
+               } elseif (strpos($colComment, 'upload') !== false) {
+                   $uploadType=explode('-',$colComment)[0];
+                   $htmlType = $uploadType; // @filemetacore.features Render file input for uploads
+
+               }elseif ($colType === 'tinyint' && $colComment === 'boolean') {
+                 $htmlType= 'checkbox';
+               }
+               // @filemetacore.features Store the input type for this column
+               $inputTypes[$colName] = [
+                   'type'     => $htmlType,  // @filemetacore.features HTML input type
+                   'sql_type' => $colType,   // @filemetacore.features SQL type
+                   'comment'  => $column['COLUMN_COMMENT'], // @filemetacore.features Original column comment
+                   'list'  =>  $list ?? [], // @filemetacore.features Original column comment
+               ];
+           }
+    return $inputTypes;
 }
     /*
     public function inse(string $table, array $params = array(),$id=NULL): int|bool{

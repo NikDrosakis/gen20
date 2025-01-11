@@ -33,16 +33,19 @@ app.use(cookieParser());
 app.use(cors({ credentials: true, origin: process.env.whitelist }));
 app.use(express.urlencoded({ limit: '300mb', extended: true }));
 app.use(express.json());
+
 // Error-handling middleware (last)
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).send('Something broke!');
 });
 
-
-
 const action = require('./action');
-action.mainLoop();
+action.actionLoop();
+
+//const watch = require('./watch');
+//watch.fswatch();
+
 
 // HTTPS Server
 const server = https.createServer(credentials, app);

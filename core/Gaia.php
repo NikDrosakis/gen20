@@ -453,6 +453,53 @@ protected function getGlobs(){
            }
            // Remove duplicates and reindex the array
            return array_values(array_unique($allTags));
-       }
+        }
+
+protected function getClassMethods() {
+    $methods = [];
+
+    // Get methods from the current class
+    $currentClass = get_class($this);
+    foreach (get_class_methods($currentClass) as $method) {
+        $methods[$method] = "$method ($currentClass)";
+    }
+
+    // Include methods from traits used in this class
+    $traits = class_uses($this);
+    foreach ($traits as $trait) {
+        foreach (get_class_methods($trait) as $traitMethod) {
+            $methods[$traitMethod] = "$traitMethod ($trait)";
+        }
+    }
+
+    // Capture methods from parent classes and their traits
+    $parentClass = get_parent_class($this);
+    while ($parentClass) {
+        foreach (get_class_methods($parentClass) as $method) {
+            if (!isset($methods[$method])) {
+                $methods[$method] = "$method ($parentClass)";
+            }
+        }
+
+        // Include methods from traits used in the parent class
+        $parentTraits = class_uses($parentClass);
+        foreach ($parentTraits as $parentTrait) {
+            foreach (get_class_methods($parentTrait) as $traitMethod) {
+                if (!isset($methods[$traitMethod])) {
+                    $methods[$traitMethod] = "$traitMethod ($parentTrait)";
+                }
+            }
+        }
+
+        // Move up to the next parent
+        $parentClass = get_parent_class($parentClass);
+    }
+
+    // Sort methods alphabetically by method name
+    ksort($methods);
+
+    return $methods;
+}
+
 
 }

@@ -112,7 +112,7 @@ protected function getInputType(string $table): ?array {
                if ($colComment=='readonly' || $colName=='id' || $colName=='sort') {
                    $htmlType = 'label'; // @filemetacore.features Render as label for readonly
 
-               } elseif (in_array($colComment,['json','twig','pug','cron','sql','md','comma','yaml','javascript'])){
+               } elseif (in_array($colComment,['method','json','twig','pug','cron','sql','md','comma','yaml','javascript'])){
                 $htmlType = $colComment;
                } elseif (strpos($colComment, 'selectG') !== false){
                 $htmlType = 'select';
@@ -331,8 +331,12 @@ $cols = $this->getInputType($table); // @filemetacore.features Get column metada
             } elseif ($inputType === 'label') {
                 $tableHtml .= is_string($value) ? htmlspecialchars($value, ENT_QUOTES, 'UTF-8') : '';
 
+            } elseif ($inputType === 'javascript') {
+                $tableHtml .= $this->renderRunField($colData['comment'],$row['id'],$row[$colName]);
+
             } elseif ($inputType === 'button') {
                 $tableHtml .= $this->renderButtonField($colData['comment'],$row[$colName]);
+
             // @filemetacore.features Handle selectjoin to create a link
             } elseif (strpos($colData['comment'], 'selectjoin') !== false) {
                         $rowtable = str_replace('selectjoin-', '', $colData['comment']);
@@ -347,8 +351,10 @@ $cols = $this->getInputType($table); // @filemetacore.features Get column metada
             }elseif ($inputType === 'checkbox') {
                 $tableHtml .= '<input id="'.$colName.$row['id'].'"   onchange="gs.form.updateRow(this, \'' . $table . '\')" type="checkbox" switch="" '.($row[$colName] ? "checked":"").' class="switcher">';
 
+           }elseif ($inputType === 'method') {
+              $options=$this->getClassMethods();
+                $tableHtml .= $this->renderSelectField($colName, $row[$colName], $options);
            }elseif ($inputType === 'select') {
-
                 if($colData['sql_type']=='enum'){
                     $options=$colData['list'];
                 }else{
@@ -365,7 +371,7 @@ $cols = $this->getInputType($table); // @filemetacore.features Get column metada
                   ]);
             //       ['method' => 'buildTable', 'params' => ['table' => 'gen_vivalibro.action_task']],
             //instead of gs.form.loadButton(\'updateCuboImg\', \'' . $row['name'] . '\')
-$tableHtml .= '<button onclick="gs.form.loadButton(\'updateCuboImg\', \'' . $table . '\', \'' . $row['name'] . '\')"><span style="position:absolute" class="bare glyphicon glyphicon-refresh"></span></button>';
+        $tableHtml .= '<button onclick="gs.form.loadButton(\'updateCuboImg\', \'' . $table . '\', \'' . $row['name'] . '\')"><span style="position:absolute" class="bare glyphicon glyphicon-refresh"></span></button>';
 
           }elseif ($inputType == 'datetime-local') {
                           $tableHtml .= '<input type="' . htmlspecialchars($inputType) . '"
@@ -385,9 +391,7 @@ $tableHtml .= '<button onclick="gs.form.loadButton(\'updateCuboImg\', \'' . $tab
                                                onkeyup="gs.form.updateRow(this, \'' . $table . '\')"
                                                name="' . $colName . '"
                                                id="' . $colName . $row['id'] . '"/>' . ($row[$colName] != '' ? htmlspecialchars($row[$colName]) : '') . '</textarea>';
-
            }
-
             $tableHtml .= '</td>';
         }
         $tableHtml .= '<td><button id="del' . $row['id'] . '" type="button" value="' . $row['id'] . '" title="delete"
@@ -675,6 +679,13 @@ protected function renderButtonField($comment,$value): string {
         <div id='{$loadCommand}_container'>
             <div id='{$loadCommand}'>$icon</div>
                <button class='button' onclick=\"const val = document.getElementById('name').value; gs.form.loadButton('$loadCommand', '{$this->table}')\">{$loadCommand}</button>
+        </div>";
+}
+
+protected function renderRunField($comment,$id,$value): string {
+        return "<div id='gs_container'>
+            <div id='runAction$id'></div>
+               <button class='button' onclick=\"gs.form.loadButton('runAction','$id')\">🏃‍♂️</button>
         </div>";
 }
 

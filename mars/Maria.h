@@ -4,11 +4,18 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <memory>
 
-// Include necessary libraries for MariaDB
-#include <mysql/mysql.h>  // Main MariaDB/MySQL header for C API
-// Ensure you have MySQL C++ Connector headers if needed
-#include <mysql_connection.h>
+// Include necessary libraries for MariaDB Connector/C++
+#include <mariadb/conncpp/Driver.hpp>
+#include <mariadb/conncpp/Connection.hpp>
+#include <mariadb/conncpp/Exception.hpp>
+#include <mariadb/conncpp/PreparedStatement.hpp>
+#include <mariadb/conncpp/ResultSet.hpp>
+#include <mariadb/conncpp/ResultSetMetaData.hpp>
+#include <mariadb/conncpp/SQLString.hpp>
+#include <mariadb/conncpp/Properties.hpp>
+
 class Maria {
 public:
     Maria(const std::string& dbname);  // Constructor to initialize the database
@@ -18,11 +25,12 @@ public:
     std::vector<std::map<std::string, std::string>> fa(const std::string&, const std::map<int, std::string>&);
     std::map<std::string, std::string> f(const std::string&, const std::map<int, std::string>&);
     bool inse(std::string, std::map<std::string, std::string>);
+    bool q(const std::string&, const std::map<int, std::string>&);
 
 private:
     std::string dbname_;  // Store the database name
-    sql::mysql::MySQL_Driver* driver_; // MySQL driver (use only if C++ Connector is needed)
-    sql::Connection* conn_;            // Database connection
+    sql::Driver* driver_; // MySQL driver (use only if C++ Connector is needed)
+    std::shared_ptr<sql::Connection> conn_;            // Database connection
 };
 
 #endif // MARIA_H

@@ -126,7 +126,6 @@ protected function renderAdminHead() {
        $this->loadDynamicActions([]);
        ?>
 
-
     <!-- Additional External Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.3/Sortable.min.js" integrity="sha512-8AwTn2Tax8NWI+SqsYAXiKT8jO11WUBzTEWRoilYgr5GWnF4fNqBRD+hCr4JRSA1eZ/qwbI+FPsM3X/PQeHgpQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
        <script src="https://apis.google.com/js/api.js"></script>

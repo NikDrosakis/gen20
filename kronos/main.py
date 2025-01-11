@@ -8,7 +8,7 @@ from core.Maria import Maria
 #from pysolr import Solr
 from config import settings
 #from connection import get_db_connection
-from action import exe_actions
+from action import action_loop
 from datetime import datetime  # Import datetime module
 from core.WS import WSClient, wsinit
 from core.Watch import Watch
@@ -64,23 +64,6 @@ app.include_router(gaia_route, prefix="/apy/v1/gaia")
 # WSManager Initialize
 # ws_manager = WSManager(settings.REDIS_URL)
 
-# Function to handle custom shortcuts
-async def handle_shortcuts():
-    print("Keyboard listener started. Press 'Ctrl+C' to stop.")
-    while True:
-        # Check for specific keyboard shortcuts
-        if keyboard.is_pressed("ctrl+1"):  # Example: Ctrl+1 triggers a specific action
-            print("Ctrl+1 detected. Executing action_id 1.")
-            # Fetch actions from the database
-            actions = await fetch_actions()
-            for action in actions:
-                if action["id"] == 1:  # Replace '1' with the actual ID for this shortcut
-                    if action['type'] == 'api':
-                        await exe_action(action)
-                    else:
-                        print(f"Unknown action type for ID {action['id']}.")
-        await asyncio.sleep(0.1)  # Prevent CPU overload
-
 @app.on_event("startup")
 async def startup():
     print("running startup")
@@ -90,7 +73,7 @@ async def startup():
     # Send the notification asynchronously
     # Fetch actions from the database (using maria_admin instance)
     logging.info("Executing Actions on startup...")
-    await exe_actions()
+    await action_loop()
      # Start watching the YAML file for changes
     json= Yaml.read_yaml_and_convert_to_json("manifest.yml")
     Watch.start_watching("manifest.yml", "systems", "yaml")

@@ -6,7 +6,7 @@ Actions: This section lists specific actions that the system can perform, such a
 Configuration: This provides database or system configuration options that are required to run the project.
 
 
-#v1 - 
+#v1 - Integration Level 
 - Input cli level
 - Parse yaml file
 - core.Maria > maria connector CRUD & INDEX AND MANAGE THE WHOLE SCHEMA
