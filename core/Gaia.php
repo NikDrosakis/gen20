@@ -381,8 +381,12 @@ Handle XHR request.
         }
     }
 
+/**
+db-centric
+checks db gen_admin.admin_sub for details of admin page
+if
+ */
     protected function has_maria(string $name='') {
-
         if ($this->G['SYSTEM']=='admin'){
          $name = $name!='' ? $name : $this->sub;
          $has_maria = $this->db->f("SELECT has_maria FROM gen_admin.admin_sub WHERE name=?",[$name])['has_maria'];
@@ -390,14 +394,10 @@ Handle XHR request.
          $name = $name!='' ? $name : $this->page;
          $has_maria = $this->db->f("SELECT has_maria FROM {$this->publicdb}.main WHERE name=?",[$name])['has_maria'];
         }
-        if($has_maria!=false){
-        $has_maria_array= explode('.',$has_maria);
-        if(!empty($has_maria_array) && $has_maria_array[0] == 'TEMPLATE'){
-             $table = $has_maria_array[1];
-            return $db.'.'.$table;
+        if($has_maria){
+           return $has_maria;
         }else{
-        return $has_maria;
-        }
+        return false;
         }
     }
 

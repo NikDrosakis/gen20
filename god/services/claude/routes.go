@@ -1,7 +1,6 @@
 package claude
 
 import (
-
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -25,6 +24,7 @@ var (
     conversations = make(map[uuid.UUID][]map[string]string)
     apiKey        = "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"
 )
+
 func NewClient(apiKey string) *Client {
 	return &Client{APIKey: apiKey}
 }
@@ -93,11 +93,17 @@ func (c *Client) GetConversation(conversationID uuid.UUID) (*Conversation, error
 	}
 	return &Conversation{ID: conversationID, Messages: messages}, nil
 }
-
+func (c *Client) createConversation(ctx *gin.Context) {
+    newID := uuid.New()
+    conversations[newID] = []map[string]string{}
+    ctx.JSON(http.StatusOK, gin.H{"id": newID.String()})
+}
 func (c *Client) SetupRouter(router *gin.Engine) *gin.Engine {
     api := router.Group("/god/v1/claude")
     api.Use(c.authMiddleware())
+    api.POST("/conversations", c.createConversation)
     api.POST("/conversations/:conversation_id/messages", c.addMessage)
     api.GET("/conversations/:conversation_id", c.getConversation)
     return router
 }
+

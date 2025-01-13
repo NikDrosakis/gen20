@@ -1,4 +1,4 @@
-module god
+module module github.com/NkDrosakis/gen20/god
 
 go 1.23
 
