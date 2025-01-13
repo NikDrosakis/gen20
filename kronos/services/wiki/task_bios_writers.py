@@ -1,21 +1,12 @@
 # coding=utf-8
-import mysql.connector
+from core.Maria import Maria  # Import Maria class
+
+# Initialize Maria instance for gen_admin database access
+mariadmin = Maria("gen_admin")
 import wikipedia
 
 # Set the language to Greek
 wikipedia.set_lang("en")
-
-# MySQL Connection Configuration
-def connect_db():
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="n130177!",  # Replace with your MySQL password
-        database="gen_vivalibrocom",
-        use_unicode=True,
-        charset="utf8mb4",
-        collation='utf8mb4_general_ci'
-    )
 
 def update_writer_bio(id, bio):
     """Update the writer's bio in the database."""
@@ -50,12 +41,7 @@ def ask(name):
 
 def fetch_writers_without_bio(limit=100):
     """Fetch writers without bios from the database."""
-    db = connect_db()
-    cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT id, name FROM c_book_writer WHERE bio IS NULL LIMIT %s", (limit,))
-    writers = cursor.fetchall()
-    cursor.close()
-    db.close()
+    writers = mariadmin.fa("SELECT id, name FROM c_book_writer WHERE bio IS NULL LIMIT %s", (limit,))
     return writers
 
 # Main execution

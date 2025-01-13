@@ -2,11 +2,14 @@ import os
 from fastapi import APIRouter, Request, HTTPException
 import google.generativeai as genai
 from core.Maria import Maria  # Import Maria class
+import json
+from action import add
 # Initialize Maria instance for gen_admin database access
 mariadmin = Maria("gen_admin")
 # mariadmin.fa(query,params) for fetch,mariadmin.q(query,params) for query, mariadmin.f(query,params) for fetch one, mariadmin.inse(table,array_soc) for INSERT
 router= APIRouter()
-
+actiongrp = "gemini"
+a = []
 # Initialize the Gemini API key
 genai.configure(api_key="AIzaSyBzMZiTWZPLZuoPkPhCyeFGMa0DhCUcS3M")  # Replace with your actual key
 
@@ -24,7 +27,21 @@ model = genai.GenerativeModel(
     model_name="gemini-1.5-pro",
     generation_config=generation_config,
 )
+
 # API Endpoints
+# 1. Continue Conversation
+a.append({
+    "actiongrp": actiongrp,
+    "name": "gemini_continue_conversation",
+    "description": "Continues a conversation with the Gemini model.",
+    "meta": "conversation",
+    "endpoint": "/conversation",
+    "method": "POST",
+    "params": json.dumps({
+        "message": "string",
+        "conversation_id": "string"
+    })
+})
 @router.post("/conversation")
 async def continue_conversation(request: Request):
     try:
@@ -59,7 +76,16 @@ async def continue_conversation(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing the conversation: {e}")
 
-# Endpoint to get the list of databases
+# 2. Get Databases Schema
+a.append({
+    "actiongrp": actiongrp,
+    "name": "gemini_get_databases",
+    "description": "Retrieves a list of databases.",
+    "meta": "schema",
+    "endpoint": "/schema",
+    "method": "GET",
+    "params": json.dumps({})
+})
 @router.get("/schema")
 async def get_databases():
     try:
@@ -68,7 +94,16 @@ async def get_databases():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching databases: {e}")
 
-# Endpoint to get all tables with their corresponding databases
+# 3. Get Tables
+a.append({
+    "actiongrp": actiongrp,
+    "name": "gemini_get_tables",
+    "description": "Retrieves a list of tables with their corresponding databases.",
+    "meta": "tables",
+    "endpoint": "/tables",
+    "method": "GET",
+    "params": json.dumps({})
+})
 @router.get("/tables")
 async def get_tables():
     try:
@@ -77,7 +112,16 @@ async def get_tables():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching tables with databases: {e}")
 
-# Endpoint to get metadata of a specific table (columns, types, comments, etc.)
+# 4. Get Table Metadata
+a.append({
+    "actiongrp": actiongrp,
+    "name": "gemini_get_table_meta",
+    "description": "Retrieves metadata for a specific table.",
+    "meta": "table_meta",
+    "endpoint": "/table_meta/{table_name}",
+    "method": "GET",
+    "params": json.dumps({})
+})
 @router.get("/table_meta/{table_name}")
 async def get_table_meta(table_name: str):
     try:
@@ -87,3 +131,33 @@ async def get_table_meta(table_name: str):
         return {"table_metadata": table_metadata}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching table metadata: {e}")
+
+# 5. Generate Prompt
+a.append({
+    "actiongrp": actiongrp,
+    "name": "gemini_generate_prompt",
+    "description": "Generates a response from the Gemini model based on a single prompt.",
+    "meta": "prompt",
+    "endpoint": "/prompt",
+    "method": "POST",
+    "params": json.dumps({
+        "prompt": "string"
+    })
+})
+@router.post("/prompt")
+async def generate_prompt(request: Request):
+    try:
+        request_data = await request.json()
+        prompt = request_data.get("prompt")
+
+        if not prompt:
+            raise HTTPException(status_code=400, detail="Missing 'prompt' field in request body")
+
+        response = model.generate_content(prompt)
+        return {"response": response.text}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating response: {e}")
+
+
+add(a)

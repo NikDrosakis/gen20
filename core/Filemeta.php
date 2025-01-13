@@ -138,7 +138,7 @@ protected function extractComments($content) {
             'features' => $comments['features'],
             'updatelog' => $comments['updatelog']
         ];
-        $this->admin->inse("filemeta", $cols);
+        $this->db->inse("gen_admin.filemeta", $cols);
     }
 
 /**
@@ -147,7 +147,7 @@ protected function extractComments($content) {
  */
 protected function updateFile(string $file, $cols = []) {
     // Fetch the current metadata from the database
-    $currentMetadata = $this->admin->f("SELECT * FROM filemeta WHERE name = ?", [basename($file)]);
+    $currentMetadata = $this->db->f("SELECT * FROM gen_admin.filemeta WHERE name = ?", [basename($file)]);
 
     // Get the content of the file
     $content = file_get_contents($file);
@@ -181,7 +181,7 @@ protected function updateFile(string $file, $cols = []) {
 
     // @filemetacore.features If there are changes, update the database
     if ($changes) {
-        $this->admin->q(
+        $this->db->q(
             "UPDATE filemeta SET description = ?, style = ?, php = ?, pug = ?, js = ?, doc = ?, todo = ?, dependent = ?, updated = ?, status = ? WHERE name = ?",
             array_values($newCols)
         );
@@ -220,7 +220,7 @@ Process all files recursively in the specified directory.
         foreach ($files as $file) {
             if ($file->isFile() && in_array($file->getExtension(), ['php', 'html', 'css', 'js', 'pug'])) {
                 $filepath = $file->getPathname();
-                $cols = $this->admin->f("SELECT * FROM filemeta WHERE name = ?", [basename($filepath)]);
+                $cols = $this->db->f("SELECT * FROM gen_admin.filemeta WHERE name = ?", [basename($filepath)]);
 
                 if (!$cols) {
                     $this->insertFile($filepath,$cols);

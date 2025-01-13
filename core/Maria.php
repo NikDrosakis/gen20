@@ -286,7 +286,7 @@ protected function getInputFormat(string $table, $column = null): ?array {
 }
 protected function getInputTypeOld(string $table): ?array {
     // @filemetacore.features Fetch metadata for the table columns (including comments)
-    $columns = $this->dbForm->tableMeta($table);
+    $columns = $this->db->tableMeta($table);
 
     // @filemetacore.features Define a mapping of SQL data types to HTML input types
     $typeMapping = [
@@ -681,7 +681,7 @@ public function fl(string|array $rows, string $table, $clause=''): bool|array {
 
 	//setting table
 	public function is(string $name): bool|string{
-		$fetch = $this->admin->f("SELECT val FROM globs WHERE name=?", array($name));
+		$fetch = $this->db->f("SELECT val FROM gen_admin.globs WHERE name=?", array($name));
 		if (!empty($fetch)) {
 			return urldecode($fetch['val']);
 		} else {
@@ -750,16 +750,19 @@ $table = $exp[1];
  * @param string $table The name of the table.
  * @return array An associative array of column names and their comments.
  */
-public function colFormat(string $table, $column = null): array|string|bool {
+public function colFormat(string $tableName, $column = null): array|string|bool {
+$exp=explode('.',$tableName);
+$db = $exp[0];
+$table = $exp[1];
     if ($column) {
-        $res = $this->_db->prepare("SHOW FULL COLUMNS FROM `$table` WHERE Field = :column");
+        $res = $this->_db->prepare("USE $db;SHOW FULL COLUMNS FROM `$table` WHERE Field = :column");
         $res->bindParam(':column', $column);
         $res->execute();
         if (!$res) return false;
         $select = $res->fetch(PDO::FETCH_ASSOC);
         return $select ? trim($select['Comment']) : false;
     } else {
-        $res = $this->_db->prepare("SHOW FULL COLUMNS FROM `$table`");
+        $res = $this->_db->prepare("USE $db;SHOW FULL COLUMNS FROM `$table`");
         $res->execute();
         if (!$res) return false;
         $select = [];

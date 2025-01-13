@@ -18,6 +18,11 @@ use Cubo;
            parent::__construct();
    }
 
+/**
+ * Undocumented function
+ *
+ * @return void
+ */   
 	 public function handleRequest() {
   // if ($this->isApiRequest()) {
    // Now calls isApiRequest() from Gaia
@@ -39,7 +44,12 @@ use Cubo;
     }
     }
 
-	protected function publicRouter() {
+/**
+ * Undocumented function
+ *
+ * @return void
+ */
+    protected function publicRouter() {
 
      echo  $this->renderPublicHead();
       try {
@@ -104,14 +114,14 @@ echo '<div id="m" style="width:' . $main_width . '%">';
       foreach ($pc['m'] as $cubo) {
            echo '<div id="' . $cubo . '" class="row archive-content">';
               //include CUBO_ROOT.$cubo."/public.php";
-              $main= $this->db->f("select * from main where name=?",[$this->page]);
+              $main= $this->db->f("select * from {$this->publicdb}.main where name=?",[$this->page]);
               echo  $this->buildTemplateArchive($main);
               echo '</div>';
       }
   }elseif(!empty($this->G['PAGECUBO'])){
-                      $pageTemplate= $this->db->f("select * from main where name=?",[$this->page]);
+                      $pageTemplate= $this->db->f("select * from {$this->publicdb}.main where name=?",[$this->page]);
  }else{
-     $template= $this->db->f("select template_read from main where name=?",['404'])['template_read'];
+     $template= $this->db->f("select template_read from {$this->publicdb}.main where name=?",['404'])['template_read'];
      echo $this->renderTemplatePug($template);
  }
   /*

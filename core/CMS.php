@@ -4,7 +4,7 @@ namespace Core;
 
 trait CMS {
 protected function getUsers() {
-        return $this->db->fa("SELECT * FROM user");
+        return $this->db->fa("SELECT * FROM {$this->publicdb}.user");
     }
 
     protected function postlist(){
@@ -40,7 +40,7 @@ protected function getUsers() {
         // Method to retrieve comments for a specific type and ID
        protected function getComments($type = 'book') {
             $sel = $this->db->fa("SELECT comment.*, CONCAT(user.firstname, ' ', user.lastname) AS fullname, user.img
-              FROM comment
+              FROM {$this->publicdb}.comment
               LEFT JOIN user ON comment.uid=user.id
               WHERE comment.type=? AND comment.typeid=? AND comment.reply_id=0
               ORDER BY comment.created DESC", [$type, $_GET['id']]);
@@ -48,7 +48,7 @@ protected function getUsers() {
             if (!empty($sel)) {
                 foreach ($sel as $i => $comment) {
                     $sel[$i]['replies'] = $this->db->fa("SELECT comment.*, CONCAT(user.firstname,' ',user.lastname) AS fullname, user.img
-                                                         FROM comment
+                                                         FROM {$this->publicdb}.comment
                                                          LEFT JOIN user ON comment.uid=user.id
                                                          WHERE comment.reply_id=?
                                                          ORDER BY comment.created DESC", [$comment['id']]);
@@ -59,11 +59,11 @@ protected function getUsers() {
         }
 
     protected function getLinks() {
-            return $this->db->fa("SELECT * FROM links WHERE linksgrpid=2 ORDER BY sort");
+            return $this->db->fa("SELECT * FROM {$this->publicdb}.links WHERE linksgrpid=2 ORDER BY sort");
     }
 
     protected function getMaincubo() {
-        return $this->admin->fa("SELECT * from cubo order by name");
+        return $this->db->fa("SELECT * from gen_admin.cubo order by name");
     }
 
 }

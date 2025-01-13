@@ -1,17 +1,11 @@
 <?php
 /** 
 @filemeta.description CRUD Actions from Users & Admins, administers forms and tables, trait form (based in Maria.COMMENT) ADMIN to all page tables - Form class dynamic forms from mysql.comment
-*/
-
-/** 
-@filemetacore.updatelog
+@fm.updatelog
 v1 reusable method buildForm for all admin pages / used in tables for select join [USED IN all PAGEVIEWS where form or table is visible]
 v2 added buildTable with pagination,search,sort,uploadMedia,dropdown filters, metrics, boxes on top of table [to use in > 30 pageviews]
 v3 Create Table from JSON
 v4 Updated file format for Filemeta
-*/
-
-/**
 @filemeta.features
 table page (with table & grouptable)
 Byid page _edit, sort drag&drop
@@ -30,18 +24,14 @@ filter based select + selectjoin
 meta added
 sort desc added
 search added on top
-**/
-
-/** 
-@filemeta.todo 
+@filemeta.todo
 automatic links to selectjoined table 
 */
 
 namespace Core;
 use CKEditor\CKEditor;
-use Twig\Environment;
-use Twig\Loader\ArrayLoader;
 use Pug\Pug;
+use Exception;
 
 trait Form {
 
@@ -53,18 +43,16 @@ protected $resultsPerPage=9; #used for pagination
 protected $totalRes;         #total results
 protected $currentPage;      #current page 
 protected $searchTerm;      #
-protected $dbForm;           #instance of a new database
-protected $twig;            #
+protected $db;           #instance of a new database
 protected $res;             #results
 
-#description analyzed db $table COMMENTS AND format, providing input types for table & forms
-#doc use anywhere as a root function of dbcentrism
-#todo instead of table, insert sql query for more complex inputs
+//description analyzed db $table COMMENTS AND format, providing input types for table & forms
+//doc use anywhere as a root function of dbcentrism
+//todo instead of table, insert sql query for more complex inputs
 protected function getInputType(string $table): ?array {
-    // @filemetacore.features Fetch metadata for the table columns (including comments)
-    $columns = $this->dbForm->tableMeta($table);
-
-    // @filemetacore.features Define a mapping of SQL data types to HTML input types
+    // @fm.features Fetch metadata for the table columns (including comments)
+    $columns = $this->db->tableMeta($table);
+    // @fm.features Define a mapping of SQL data types to HTML input types
     $typeMapping = [
         'varchar'    => 'text',
         'char'       => 'text',
@@ -85,14 +73,13 @@ protected function getInputType(string $table): ?array {
         'enum'       => 'select',
         'boolean'    => 'checkbox',
     ];
-    // @filemetacore.features Initialize an array to store input types for each column
+    // @fm.features Initialize an array to store input types for each column
     $inputTypes = [];
-
-    // @filemetacore.features Loop through each column and map the SQL type to the HTML input type
+    // @fm.features Loop through each column and map the SQL type to the HTML input type
     foreach ($columns as $column) {
         $colName = $column['COLUMN_NAME'];
-        $colType = strtolower($column['COLUMN_TYPE']); // @filemetacore.features Get the SQL type (e.g., varchar, int)
-        $colComment = $column['COLUMN_COMMENT']; // @filemetacore.features Get the comment
+        $colType = strtolower($column['COLUMN_TYPE']); // @fm.features Get the SQL type (e.g., varchar, int)
+        $colComment = $column['COLUMN_COMMENT']; // @fm.features Get the comment
         $list = [];
         $filters = [];
 
@@ -101,18 +88,18 @@ protected function getInputType(string $table): ?array {
                      $list=$this->getEnumOptions($colType);
                      $colType = substr($colType, 0, strpos($colType, '('));
                   }
-              // @filemetacore.features after get the type clean the types from parenthesis
+              // @fm.features after get the type clean the types from parenthesis
             if (strpos($colType, '(') !== false) {
                    $colType = substr($colType, 0, strpos($colType, '('));
              }
-               // @filemetacore.features Default HTML type based on SQL type mapping
-               $htmlType = $typeMapping[$colType] ?? 'text'; // @filemetacore.features Fallback to 'text' if no match
+               // @fm.features Default HTML type based on SQL type mapping
+               $htmlType = $typeMapping[$colType] ?? 'text'; // @fm.features Fallback to 'text' if no match
 
-               // @filemetacore.features Override HTML type based on the column comment
+               // @fm.features Override HTML type based on the column comment
                if ($colComment=='readonly' || $colName=='id' || $colName=='sort') {
-                   $htmlType = 'label'; // @filemetacore.features Render as label for readonly
+                   $htmlType = 'label'; // @fm.features Render as label for readonly
 
-               } elseif (in_array($colComment,['method','json','twig','pug','cron','sql','md','comma','yaml','javascript'])){
+               } elseif (in_array($colComment,['method','json','pug','cron','sql','md','comma','yaml','javascript'])){
                 $htmlType = $colComment;
                } elseif (strpos($colComment, 'selectG') !== false){
                 $htmlType = 'select';
@@ -122,51 +109,46 @@ protected function getInputType(string $table): ?array {
                 }
 
                }elseif (strpos($colComment, 'exe') !== false) {
-                   $htmlType = 'button'; // @filemetacore.features Render as button
+                   $htmlType = 'button'; // @fm.features Render as button
 
                }elseif (strpos($colComment, 'selectjoin') !== false) {
-                   $htmlType = 'select'; // @filemetacore.features Render as select dropdown for custom selection
+                   $htmlType = 'select'; // @fm.features Render as select dropdown for custom selection
 
                } elseif (strpos($colComment, 'upload') !== false) {
                    $uploadType=explode('-',$colComment)[0];
-                   $htmlType = $uploadType; // @filemetacore.features Render file input for uploads
+                   $htmlType = $uploadType; // @fm.features Render file input for uploads
 
                }elseif ($colType === 'tinyint' && $colComment === 'boolean') {
                  $htmlType= 'checkbox';
                }
-               // @filemetacore.features Store the input type for this column
+               // @fm.features Store the input type for this column
                $inputTypes[$colName] = [
-                   'type'     => $htmlType,  // @filemetacore.features HTML input type
-                   'sql_type' => $colType,   // @filemetacore.features SQL type
-                   'comment'  => $column['COLUMN_COMMENT'], // @filemetacore.features Original column comment
-                   'list'  =>  $list ?? [], // @filemetacore.features Original column comment
+                   'type'     => $htmlType,  // @fm.features HTML input type
+                   'sql_type' => $colType,   // @fm.features SQL type
+                   'comment'  => $column['COLUMN_COMMENT'], // @fm.features Original column comment
+                   'list'  =>  $list ?? [], // @fm.features Original column comment
                ];
            }
     return $inputTypes;
 }
 
-
- /*
+/**
   abstraction to all tables
   counter UC
- */
+*/
  protected function buildCharts(string $table){
- if(!$this->dbForm){
- $this->dbForm=$this->getDBInstance($table);
- }
-
-$chart['line'] = $this->dbForm->fa("SELECT YEARWEEK(published) AS week, COUNT(*) AS num_posts
-                                 FROM $table
+$chart['line'] = $this->db->fa("SELECT YEARWEEK(published) AS week, COUNT(*) AS num_posts
+                                 FROM {$this->publicdb}.$table
                                  WHERE published IS NOT NULL
                                  GROUP BY YEARWEEK(published)
                                  ORDER BY week");
-$chart['pie'] = $this->dbForm->fa("SELECT postgrp.name AS label, COUNT(*) AS total
-                                FROM $table
-                                LEFT JOIN postgrp ON post.postgrpid = postgrp.id
+$chart['pie'] = $this->db->fa("SELECT postgrp.name AS label, COUNT(*) AS total
+                                FROM {$this->publicdb}.$table
+                                LEFT JOIN {$this->publicdb}.postgrp ON post.postgrpid = postgrp.id
                                 GROUP BY post.postgrpid");
-$chart['bar'] = $this->dbForm->fa("SELECT tax.name AS label, COUNT(*) AS total
-                                FROM $table
-                                LEFT JOIN tax ON tax.id = post.taxid
+$chart['bar'] = $this->db->fa("SELECT tax.name AS label, COUNT(*) AS total
+                                FROM {$this->publicdb}.$table
+                                LEFT JOIN {$this->publicdb}.tax ON tax.id = post.taxid
                                 GROUP BY post.taxid");
 $piejson = json_encode(["res" => $chart["pie"]]);
 $linejson = json_encode(["res" => $chart["line"]]);
@@ -188,13 +170,12 @@ return '<div style="display:flex">
 
 }
 
-// @filemetacore.description Build an HTML table based on the data provided.
+// @fm.description Build an HTML table based on the data provided.
 protected function buildTable($tableName,array $params=[]): string {
 
 $table = is_array($tableName) ? $tableName['table'] : $tableName;
 #instantiate those public vars
 $cols = $params['cols'] ?? [];
-$this->dbForm=$this->getDBInstance($table);
 $this->table=$table;
 $subpage=explode('.',$table)[1];
 $cols = $params['cols'] ?? [];
@@ -202,9 +183,9 @@ $searchTerm=$params['q'] ?? null;
 $style = $this->sub!=''
         ? "margin:0;" #in subpage large
         : "zoom:0.8;";  #in 6channel small
-// @filemetacore.features Fetch column types and definitions via getInputType
+// @fm.features Fetch column types and definitions via getInputType
 if (empty($cols)) {
-$cols = $this->getInputType($table); // @filemetacore.features Get column metadata
+$cols = $this->getInputType($table); // @fm.features Get column metadata
 }
 $tableHtml='';
 $custom_tools_beforetable = ADMIN_ROOT."main/".$this->page."/".$subpage.".php";
@@ -223,47 +204,51 @@ $tableHtml .= '<div style="display:none" id="new_'.$subpage.'_box">
     </div></div>';
 $tableHtml .= $this->formSearch($table);
 
-#formFilter with renderSelectField and inputype if has COMMENT =='selectjoin', status
-foreach ($cols as $colName => $colData) {
-    // @filemetacore.features Skip 'textarea', 'MEDIUMTEXT', and 'LONGTEXT' columns entirely
-        if (strpos($colData['comment'], 'selectjoin') !== false) {
-        $tableHtml .= $this->formFilters($colData);
-    }
+foreach($cols as $colName => $colData){
+if(strpos($colData['comment'],'selectjoin')!==false){
+    $tableHtml .= $this->formFilters($colData);
 }
-
+}
+    try {
 $tableHtml .= $this->buildCoreTable($tableName,$cols=[]);
-if($this->totalRes > 0){
-$tableHtml .= $this->formPagination($this->totalRes, $this->currentPage);
-}
+} catch (Exception $e) {
+            $tableHtml .= "<div class='error'>Error loading $tableName. Please check table and db name.</div>";
+  }
 
-  if($table=='post'){   $tableHtml .= $this->buildCharts($table); }
+   if($this->totalRes > 0){
+        $tableHtml .= $this->formPagination($this->totalRes, $this->currentPage);
+    }
+  if($table=='post'){
+    $tableHtml .= $this->buildCharts($table);
+    }
     $tableHtml .= '</div>';
+
     return $tableHtml;
 }
 
-// @filemetacore.features only the core table without top inputs
+// @fm.features only the core table without top inputs
 protected function buildCoreTable($tableName,$cols=[]) {
     $table = is_array($tableName) ? $tableName['table'] : $tableName;
     $subpage=explode('.',$table)[1];
     $searchTerm=is_array($tableName) ? $tableName['q'] : null;
     $orderbyTerm=$tableName['orderby'] ?? false;
 if (empty($cols)) {
-$cols = $this->getInputType($table); // @filemetacore.features Get column metadata
+$cols = $this->getInputType($table); // @fm.features Get column metadata
 }
-   // @filemetacore.features Fetch current page from query parameters (default to 1)
+   // @fm.features Fetch current page from query parameters (default to 1)
     $this->currentPage =is_array($tableName) && $tableName['pagenum'] ? str_replace($subpage,'',$tableName['pagenum']) : 1;
 
     $searchTerm=is_array($tableName) ? $tableName['q'] : null;
     #instantiate those public vars
-    $this->dbForm=$this->getDBInstance($table);
+  //  $this->db=$this->getDBInstance($table);
     $this->table=$table;
     $subtable = explode('.',$this->table)[1];
 
-    // @filemetacore.features Calculate the starting row for the current page
-   // @filemetacore.features $offset = ((int)$this->currentPage - 1) * $this->resultsPerPage;
+    // @fm.features Calculate the starting row for the current page
+   // @fm.features $offset = ((int)$this->currentPage - 1) * $this->resultsPerPage;
 
       $query= "SELECT * FROM $table";
-      // @filemetacore.features Modify query for search capabilities
+      // @fm.features Modify query for search capabilities
         if ($searchTerm) {
             $query .= " WHERE name LIKE '%$searchTerm%'";
         }
@@ -274,34 +259,33 @@ $cols = $this->getInputType($table); // @filemetacore.features Get column metada
         $q .= " ORDER BY sort ASC";
       }
        #$query .=" LIMIT $offset, $this->resultsPerPage ";
-       // @filemetacore.features Fetch paginated rows based on current page and results per page
-       $rows = $this->dbForm->fetch($query,[],$this->resultsPerPage,$this->currentPage,$orderbyTerm);
-       // @filemetacore.features Fetch total number of rows in the table
+       // @fm.features Fetch paginated rows based on current page and results per page
+
+       $rows = $this->db->fetch($query,[],$this->resultsPerPage,$this->currentPage,$orderbyTerm);
+       // @fm.features Fetch total number of rows in the table
        $this->totalRes = $rows['total'];
         $data= $rows['data'];
 
-
     #create the table container
     $tableHtml = '<table  id="' . $subpage . '_table" class="styled-table">';
-
     $tableHtml .= '<thead>';
     $tableHtml .= '<tr>';
 
     #loop of head
     foreach ($cols as $colName => $colData) {
-        // @filemetacore.features Skip 'textarea', 'MEDIUMTEXT', and 'LONGTEXT' columns entirely
+        // @fm.features Skip 'textarea', 'MEDIUMTEXT', and 'LONGTEXT' columns entirely
         if (in_array($colData['type'], ['textarea', 'editor'])) {
             continue;
         }
-        $label = ucfirst($colName); // @filemetacore.features Use comment or column name as label
+        $label = ucfirst($colName); // @fm.features Use comment or column name as label
         $tableHtml .= '<th>';
-        // @filemetacore.features Check if the column is 'sort' for sorting behavior
+        // @fm.features Check if the column is 'sort' for sorting behavior
         $tableHtml .= '<button class="orderby" onclick="gs.form.updateTable(this, \'buildCoreTable\');" data-table="'.$table.'" data-orderby="'.$colName . '" id="order:' . $subtable.':'.$colName . '">' . $label . '</button>';
         $tableHtml .= '</th>';
     }
     $tableHtml .= '<th></th></tr>';
-    $tableHtml .= '</thead>'; // @filemetacore.features End header row
-    // @filemetacore.features Build table body
+    $tableHtml .= '</thead>'; // @fm.features End header row
+    // @fm.features Build table body
     $tableHtml .= '<tbody id="list">';
 
     #loop of body
@@ -312,14 +296,14 @@ $cols = $this->getInputType($table); // @filemetacore.features Get column metada
      $tableHtml .= '<tr id="'.$table.'_'.$row['id'].'" class="menuBox">';
        #loop of data
         foreach ($cols as $colName => $colData) {
-            // @filemetacore.features Skip 'textarea', 'MEDIUMTEXT', and 'LONGTEXT' fields entirely
+            // @fm.features Skip 'textarea', 'MEDIUMTEXT', and 'LONGTEXT' fields entirely
             if (in_array($colData['type'], ['textarea', 'editor'])) {
                 continue;
             }
             $tableHtml .= '<td>';
             $inputType = $colData['type'];
 
-            // @filemetacore.features Auto ID column
+            // @fm.features Auto ID column
             if ($colName === 'id') {
                  $tableHtml .= '<a href="/admin/'.$this->page.'/'.$subpage.'?id='.$row['id'].'"><span class="glyphicon glyphicon-edit"></span></a>';
                  $tableHtml .= htmlspecialchars($row['id']);
@@ -327,17 +311,17 @@ $cols = $this->getInputType($table); // @filemetacore.features Get column metada
             }elseif ($colName === 'sort') {
                  $tableHtml .= '<span id="menusrt'.$row['id'].'">'.$row['sort'].'</span>';
 
-            // @filemetacore.features Render label for readonly fields
+            // @fm.features Render label for readonly fields
             } elseif ($inputType === 'label') {
                 $tableHtml .= is_string($value) ? htmlspecialchars($value, ENT_QUOTES, 'UTF-8') : '';
 
             } elseif ($inputType === 'javascript') {
-                $tableHtml .= $this->renderRunField($colData['comment'],$row['id'],$row[$colName]);
+                $tableHtml .= $this->renderRunField($colData['comment'],$row['name'],$row[$colName]);
 
             } elseif ($inputType === 'button') {
                 $tableHtml .= $this->renderButtonField($colData['comment'],$row[$colName]);
 
-            // @filemetacore.features Handle selectjoin to create a link
+            // @fm.features Handle selectjoin to create a link
             } elseif (strpos($colData['comment'], 'selectjoin') !== false) {
                         $rowtable = str_replace('selectjoin-', '', $colData['comment']);
                         $tableName = explode('.', $rowtable)[0];
@@ -347,7 +331,7 @@ $cols = $this->getInputType($table); // @filemetacore.features Get column metada
                         $options=$this->getSelectOptions($colData['comment'],$row[$colName]);
                         $tableHtml .=  $this->renderSelectField($colName, $row[$colName], $options);
 
-            // @filemetacore.features Render select field (fetch options using getSelectOptionsFromComment)
+            // @fm.features Render select field (fetch options using getSelectOptionsFromComment)
             }elseif ($inputType === 'checkbox') {
                 $tableHtml .= '<input id="'.$colName.$row['id'].'"   onchange="gs.form.updateRow(this, \'' . $table . '\')" type="checkbox" switch="" '.($row[$colName] ? "checked":"").' class="switcher">';
 
@@ -362,7 +346,7 @@ $cols = $this->getInputType($table); // @filemetacore.features Get column metada
                 }
                     $tableHtml .= $this->renderSelectField($colName, $row[$colName], $options);
 
-            // @filemetacore.features Render an image for img fields
+            // @fm.features Render an image for img fields
             }elseif ($inputType === 'img') {
                 $imgPath = $this->validateImg($row[$colName]);
                 $tableHtml .= '<img src="' . htmlspecialchars($imgPath) . '" alt="' . $colName . '" style="height:40px; max-width:100px;" />';
@@ -400,30 +384,29 @@ $cols = $this->getInputType($table); // @filemetacore.features Get column metada
     }
     $tableHtml .= '</tbody>';
         $tableHtml .= '</table>';
-        // @filemetacore.features Add pagination AFTER the table
-
+        // @fm.features Add pagination AFTER the table
     return $tableHtml;
 }
 
-// @filemetacore.description filters on top of the table from selectjoin or selectG
-protected function formFilters($colData) {
-                        $rowtable = str_replace('selectjoin-', '', $colData['comment']);
-                        $tableName = explode('.', $rowtable)[0];
-                        $rowId = explode('.', $rowtable)[1];
-                        $link=$this->page==$tableName ? $tableName.'?id=' . $row[$rowId] : $this->page.'/'.$tableName.'?id=' . $row[$rowId];
-                        $tableHtml .= '<a href="/admin/' . $link . '"><span class="glyphicon glyphicon-link"></span></a> ';
-                        $options = $this->getSelectOptions($colData['comment'], $row[$colName]);
-                        if($options){
-                        return $this->renderSelectField($colName, $row[$colName], $options);
-                        }
-                        return '';
+// @fm.description filters on top of the table from selectjoin or selectG
+protected function formFilters($colData,$row=[]) {
+        $rowtable = str_replace('selectjoin-', '', $colData['comment']);
+        $tableName = explode('.', $rowtable)[1];
+        $colName = explode('.', $rowtable)[2];
+        $link=$this->page==$tableName ? $tableName.'?id=' . $row["id"] : $this->page.'/'.$tableName.'?id=';
+        $tableHtml .= '<a href="/admin/' . $link . '"><span class="glyphicon glyphicon-link"></span></a> ';
+        $options = $this->getSelectOptions($colData['comment'], $row[$colName]);
+        if($options){
+        return $this->renderSelectField($colData['comment'], $row[$colName], $options);
+        }
+        return '';
 }
 
-// @filemetacore.description form search bar
+// @fm.description form search bar
 protected function formSearch($table): string {
     $params = [];
-    $params['q'] = htmlspecialchars($this->searchTerm ?? ''); // @filemetacore.features Keep the previous search term
-    // @filemetacore.features Use json_encode to safely embed PHP variables into JavaScript as a string
+    $params['q'] = htmlspecialchars($this->searchTerm ?? ''); // @fm.features Keep the previous search term
+    // @fm.features Use json_encode to safely embed PHP variables into JavaScript as a string
     return <<<HTML
     <div class="search-container">
         <input type="text" data-table='$table' onkeyup="this.dataset.q = this.value; gs.form.updateTable(this, 'buildCoreTable')" placeholder="Search..." class="search-input">
@@ -432,9 +415,9 @@ protected function formSearch($table): string {
 HTML;
 }
 
-// @filemetacore.description form pagination bar
+// @fm.description form pagination bar
 protected function formPagination(int $totalRes,int $cur=1): string {
-    // @filemetacore.features Use the pagination details from the buildForm call
+    // @fm.features Use the pagination details from the buildForm call
     $current = $this->currentPage ??  $cur;
     $this->resultsPerPage= $this->resultsPerPage ?? 10;
     $table= explode('.',$this->table)[1];
@@ -443,7 +426,7 @@ protected function formPagination(int $totalRes,int $cur=1): string {
         return '';
     }
 
-    // @filemetacore.features Fix the onclick syntax here
+    // @fm.features Fix the onclick syntax here
 $onclick = 'data-table="' . $this->table . '" onclick="this.dataset.pagenum = this.id.replace(\'page_\',\'\'); gs.form.updateTable(this, \'buildCoreTable\');gs.form.go2page(this)"';
     $previous = $current > 1 ? '<button class="page-link" ' . $onclick . ' id="page_' . ($current - 1) . '">Previous</button>' : '';
     $firstb = '<button ' . $onclick . ' id="page_1" ' . ($current == 1 ? ' class="page-link active"' : '') . '>1</button>';
@@ -477,43 +460,15 @@ protected function renderCronEditor($post) {
 <small>Use standard cron format (minute, hour, day, month, weekday).</small>
 HTML;
 }
-// @filemetacore.description render twig
-protected function renderTwigContent($post) {
-    // @filemetacore.features Decode JSON template
-    $template = is_json($post) ? json_decode($post, true) : $post;
-
-    if (!$template) {
-        return "Error: Invalid JSON template format.";
-    }
-
-    // @filemetacore.features Initialize Twig with the decoded template
-    $loader = new ArrayLoader(["index"=>$template]);
-    $twig = new Environment($loader);
-
-    // @filemetacore.features Ensure `$this->res` contains the required data
-    if (!isset($this->res) || !is_array($this->res)) {
-        return "Error: Template data (`\$this->res`) is not set or invalid.";
-    }
-
-    try {
-        // @filemetacore.features Render the "Archive" template
-        $htmlContent = $twig->render('index', $this->res);
-        return $htmlContent;
-    } catch (\Exception $e) {
-        // @filemetacore.features Catch and return any Twig rendering errors
-        return "Error rendering Twig template: " . $e->getMessage();
-    }
-}
-
-// @filemetacore.description render doc
+// @fm.description render doc
 protected function renderDoc(string $table){
 $html = "<h3>Documentation $table</h3>";
-$doc= $this->admin->f("select doc from admin_sub where name=?",[$table])['doc'];
+$doc= $this->db->f("select doc from gen_admin.admin_sub where name=?",[$table])['doc'];
 $html .="<p>$doc</p>";
 return $html;
 }
 
-// @filemetacore.description render form head
+// @fm.description render form head
 protected function renderFormHead($table){
 $subpage=explode('.',$table)[1];
  $page = $this->G['subparent'][$subpage];
@@ -525,12 +480,12 @@ return '<h3>
   </h3>';
 }
 
-// @filemetacore.description Generate a form for a given table, schema, columns.
+// @fm.description Generate a form for a given table, schema, columns.
   protected function buildForm(string $table,array $params=[]): string {
-         // @filemetacore.features Default values for each parameter
+         // @fm.features Default values for each parameter
          $this->table=$table;
          $defaults = [
-             'db' => "gen_".TEMPLATE,
+             'db' => $this->publicdb,
              'table' => '',
              'res' => [],
              'form' => false,
@@ -538,16 +493,16 @@ return '<h3>
              'id' => $this->id,
              'labeled' => true,
          ];
-         // @filemetacore.features Merge provided params with defaults
+         // @fm.features Merge provided params with defaults
          $params = array_merge($defaults, $params);
-// @filemetacore.dependent getDBInstance
-         $this->dbForm = $this->getDBInstance($table);
+// @fm.dependent getDBInstance
+      //   $this->db = $this->getDBInstance($table);
         #set db
-       // @filemetacore.features $this->dbForm=$params['db']=="gen_".TEMPLATE ? $this->db: $this->admin;
+       // @fm.features $this->db=$params['db']=="gen_".TEMPLATE ? $this->db: $this->db;
          if(empty($params['res'])){
-         $params['res'] = $this->dbForm->f("SELECT * from $table where id=?",[$params['id']]);
+         $params['res'] = $this->db->f("SELECT * from $table where id=?",[$params['id']]);
         }
-         // @filemetacore.features Access parameters using $params array
+         // @fm.features Access parameters using $params array
          $res = $this->res = $params['res'];
          $form = $params['form'];
          $cols = $params['cols'];
@@ -556,7 +511,7 @@ return '<h3>
       #instantiate those public vars
          $this->labeled=$labeled;
          $this->formid=$res['id'];
-// @filemetacore.dependent renderFormHead
+// @fm.dependent renderFormHead
         $formHead=$this->renderFormHead($table);
 #TODO add metadata links
         $return = $formHead.'<div class="pagetitle-container">
@@ -569,27 +524,27 @@ return '<h3>
                                Next <i class="glyphicon glyphicon-chevron-right"></i>
                            </span>
                    </div>';
-// @filemetacore.dependent validateImg
+// @fm.dependent validateImg
         $img = $this->validateImg($res['img']);
-        // @filemetacore.features If we are building a form, start with form tags
+        // @fm.features If we are building a form, start with form tags
         if ($form) {
             $return .= "<form id='form_$table'><input type='hidden' name='a' value='new'>";
             $return .= "<input type='hidden' name='table' value='$table'>";
         }else{
             $return .= "<section id='form_$table'>";
         }
-// @filemetacore.dependent getInputType
-        $tableMeta = $this->getInputType($table);  // @filemetacore.features Get column type and related info
-        // @filemetacore.features Loop through each column to build form fields
+// @fm.dependent getInputType
+        $tableMeta = $this->getInputType($table);  // @fm.features Get column type and related info
+        // @fm.features Loop through each column to build form fields
        if(empty($cols)){
         $cols=array_keys($tableMeta);
         }
         foreach ($cols as $col) {
-             $resVal = $res[$col] ?? '';  // @filemetacore.features Get the value from the result array or use an empty string
-            // @filemetacore.features Render form fields based on the column type
+             $resVal = $res[$col] ?? '';  // @fm.features Get the value from the result array or use an empty string
+            // @fm.features Render form fields based on the column type
             $return .= $this->renderFormField($col, $tableMeta[$col], $resVal);
         }
-        // @filemetacore.features If form tags were opened, close them
+        // @fm.features If form tags were opened, close them
         if ($form) {
             $return .= "</form>";
         }else{
@@ -598,7 +553,7 @@ return '<h3>
         return $return;
     }
 
-// @filemetacore.description builds dropdown
+// @fm.description builds dropdown
 protected function drop(array $options, $dbtable, string $method="", string $onchangeMethod=""): string {
       $select = "<select id='$method' class='gs-select' onchange=\"updateForm(this, '$onchangeMethod')\"><option value=''>Select</option>";
             $selectedkey= $method=='getMariaTree' ? $_COOKIE['selected_db'] :$_COOKIE['selected_table'];
@@ -609,19 +564,10 @@ protected function drop(array $options, $dbtable, string $method="", string $onc
                      $select .= "</select>";
         return $select;
      }
-    //  Helper function to parse the column type
-   //  protected function getColumnType(string $type): array {
-     //    $typ = explode('-', $type);  //  Split the type on "-"
-       //  return [
-         //    'main' => $typ[0],  //  Main type (text, number, select, etc.)
-           //  'related' => $typ[1] ?? null  //  Related data (like foreign key or editor type)
-        #];
-    #}
 
- // @filemetacore.description builds list
+ // @fm.description builds list
 protected function renderFileFormList(array $list, string $title = "File List"): string {
     $html = "<div class='file-list-container'>";
-
     //  Add the title
     $html .= "<h3 class='file-list-title'>$title</h3>";
 
@@ -650,8 +596,8 @@ protected function renderFileFormList(array $list, string $title = "File List"):
     return $html;
 }
 
-// @filemetacore.features Helper function to render select dropdowns
-// @filemetacore.features Helper to render select dropdowns
+// @fm.features Helper function to render select dropdowns
+// @fm.features Helper to render select dropdowns
 #$this->getMariaTree(),$domain,'getMariaTree',"listMariaTables","listMariaTables"
 #$this->drop($this->listMariaTables($domain),'','listMariaTables',"buildTable")
 protected function renderSelectField($fieldName, $selectedValue, array $options=[]): string {
@@ -665,16 +611,15 @@ protected function renderSelectField($fieldName, $selectedValue, array $options=
         return $html;
      }
 
-// @filemetacore.description builds button
+// @fm.description builds button
 protected function renderButtonField($comment,$value): string {
-    // @filemetacore.features Define the load command
+    // @fm.features Define the load command
     $loadCommand = str_replace('exe-', '', $comment);
-    // @filemetacore.features Check mark or X based on $value
+    // @fm.features Check mark or X based on $value
     $icon = $value == 1
         ? '<span style="color: green; font-size: 1.2em;">✔️</span>'
         : '<span style="color: red; font-size: 1.2em;">❌</span>';
-
-    // @filemetacore.features Return the HTML with icon and button
+    // @fm.features Return the HTML with icon and button
         return "
         <div id='{$loadCommand}_container'>
             <div id='{$loadCommand}'>$icon</div>
@@ -682,50 +627,50 @@ protected function renderButtonField($comment,$value): string {
         </div>";
 }
 
-protected function renderRunField($comment,$id,$value): string {
+protected function renderRunField($comment,$name,$value): string {
         return "<div id='gs_container'>
-            <div id='runAction$id'></div>
-               <button class='button' onclick=\"gs.form.loadButton('runAction','$id')\">🏃‍♂️</button>
+            <div id='runAction$name'></div>
+               <button class='button' onclick=\"gs.runAction('$name')\">⚡</button>
         </div>";
 }
 
-
-// @filemetacore.features Function to handle select dropdown options from comment or subtable
-protected function getSelectOptions(string $comment): array|false {
-    // @filemetacore.features If selectG or selectjoin, parse and fetch options dynamically from a subtable
+// @fm.features Function to handle select dropdown options from comment or subtable
+protected function getSelectOptions(string $comment,$value): array|false {
+    // @fm.features If selectG or selectjoin, parse and fetch options dynamically from a subtable
     if (strpos($comment, 'selectG') !== false) {
-        // @filemetacore.features Handle logic to fetch dynamic options from a table or predefined array
+        // @fm.features Handle logic to fetch dynamic options from a table or predefined array
         $list=str_replace('selectG-','',$comment);
-        return $this->G[$list]; // @filemetacore.features Example static options
+        return $this->G[$list]; // @fm.features Example static options
     }elseif(strpos($comment, 'selectjoin') !== false){
-        $rowtable=str_replace('selectjoin-','',$comment);
-        $table=explode('.',$rowtable)[0];
-        $row=explode('.',$rowtable)[1];
-        return $this->dbForm->flist("SELECT id,$row FROM $table order by $row");
+        $dbqueryrow=explode('.',str_replace('selectjoin-','',$comment));
+        $table=$dbqueryrow[0].'.'.$dbqueryrow[1];
+        $row=$dbqueryrow[2];
+
+        return $this->db->flist("SELECT id,$row FROM $table order by $row");
     }
     return [];
 }
 
-// @filemetacore.description renders ENUM sql format
+// @fm.description renders ENUM sql format
 protected function getEnumOptions($sqlType) {
-    // @filemetacore.features Extract ENUM values from the SQL type definition (e.g., "ENUM('value1', 'value2')")
+    // @fm.features Extract ENUM values from the SQL type definition (e.g., "ENUM('value1', 'value2')")
     if (preg_match("/^enum\((.*)\)$/i", $sqlType, $matches)) {
-        // @filemetacore.features Extract the values and trim any quotes around them
+        // @fm.features Extract the values and trim any quotes around them
         $enumValues = explode(',', str_replace("'", "", $matches[1]));
 
-        // @filemetacore.features Return key-value pairs where the key and value are the same
+        // @fm.features Return key-value pairs where the key and value are the same
         $enumOptions = [];
         foreach ($enumValues as $value) {
-            $enumOptions[$value] = $value; // @filemetacore.features Key and value are the same
+            $enumOptions[$value] = $value; // @fm.features Key and value are the same
         }
         return $enumOptions;
     }
     return [];
 }
 
-// @filemetacore.description renderFormField with all file types for buildForm
+// @fm.description renderFormField with all file types for buildForm
 protected function renderFormField(string $col, array $fieldData, $value = ''): string{
-    // @filemetacore.features Extract the type and any additional data (e.g., comments or SQL type)
+    // @fm.features Extract the type and any additional data (e.g., comments or SQL type)
     $inputType = $fieldData['type'];
     $comment   = $fieldData['comment'] ?? '';
     $sqlType   = $fieldData['sql_type'] ?? '';
@@ -733,7 +678,6 @@ protected function renderFormField(string $col, array $fieldData, $value = ''): 
 
   $supportedCodeMirrorModes = [
         'json' => 'application/json',
-        'twig' => 'text/x-twig',
         'pug' => 'text/x-pug',
         'cron' => 'text/plain',  // Assuming cron syntax needs plain text, can be customized
         'sql' => 'text/x-sql',
@@ -742,27 +686,26 @@ protected function renderFormField(string $col, array $fieldData, $value = ''): 
         'javascript' => 'text/javascript'
     ];
 $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
-    // @filemetacore.features Generate the appropriate HTML field based on the type
+    // @fm.features Generate the appropriate HTML field based on the type
 
     switch ($inputType) {
-        case 'label':  // @filemetacore.features Read-only field rendered as label
+        case 'label':  // @fm.features Read-only field rendered as label
             return "<div class='gs-span'><label for='$col'>$col</label><p class='static-value'>$value</p></div>";
         break;
-        case 'select':  // @filemetacore.features Dropdown field
-            // @filemetacore.features Generate options from the comment or an external source
+        case 'select':  // @fm.features Dropdown field
+            // @fm.features Generate options from the comment or an external source
           if ($sqlType == 'enum') {
-                $options = $list; // @filemetacore.features Extract ENUM options
+                $options = $list; // @fm.features Extract ENUM options
             }else{
                 $options = $this->getSelectOptions($comment, $value);
             }
                 return $this->renderSelectField($col, $value,$options);
         break;
-        case 'img':  // @filemetacore.features File upload field
+        case 'img':  // @fm.features File upload field
           $imgPath = $this->validateImg($value);
             return "<label for='$col'>$col</label><button ondblclick='openPanel(`compos/mediac.php`)' class='gs-span' id='drop-zone' ondrop='handleDrop(event)' ondragover='handleDragOver(event)'>
                 <img src='$imgPath' style='height: 100%;width:100%;' draggable='false'></button>";
         break;
-  case 'twig':
         case 'sql':
         case 'javascript':
         case 'json':
@@ -792,7 +735,7 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
                 <button class='button save-button' onclick='saveContent(\"$col\", \"$table\")' type='button' id='save_$col'>Save Content</button>
             ";
         case 'sql':
-                // @filemetacore.features Handle SQL preview (raw SQL code)
+                // @fm.features Handle SQL preview (raw SQL code)
               //  $preview= xechox($this->db->fetch($value));
                 $preview= xechox($value);
                 return "<div class='gs-span'>
@@ -805,7 +748,7 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
         </div>";
          break;
         case 'json':
-     // @filemetacore.features   $value = json_decode($value,true);
+     // @fm.features   $value = json_decode($value,true);
                return "<div class='gs-span'><label for='$col'>$col</label>
                        <code><textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'><code>$value</code></textarea></code>
                        </div><button class='button save-button' onclick='saveContent(\"$col\", \"$table\")' type='button' id='save_$col'>Save Content</button>";
@@ -817,7 +760,7 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
         case 'textarea':
         $col = htmlspecialchars($col, ENT_QUOTES, 'UTF-8');
         $table = htmlspecialchars($this->table, ENT_QUOTES, 'UTF-8');
-        $value = htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); // @filemetacore.features Escaping the value a
+        $value = htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); // @fm.features Escaping the value a
                if($comment =='code'){
                return "<div class='gs-span'><label for='$col'>$col</label>
                 <button onclick='navigator.clipboard.writeText(this.nextElementSibling.innerText || this.nextElementSibling.value)' class='glyphicon glyphicon-copy'></button>
@@ -831,10 +774,10 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
         case 'button':
           return $this->renderButtonField($comment,$value);
         break;
-        case 'editor':  // @filemetacore.features CKEditor or rich-text editor
+        case 'editor':  // @fm.features CKEditor or rich-text editor
                 $col = htmlspecialchars($col, ENT_QUOTES, 'UTF-8');
                 $table = htmlspecialchars($this->table, ENT_QUOTES, 'UTF-8');
-                $value = htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); // @filemetacore.features Escaping the value a
+                $value = htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); // @fm.features Escaping the value a
         return "<div class='gs-span'>
                     <label for='$col'>$col</label>
                      <textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'>$value</textarea>
@@ -847,25 +790,24 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
                     CKEDITOR.replace('$col');
                 </script>";
         break;
-        case 'number':  // @filemetacore.features Numeric input (int, float, etc.)
+        case 'number':  // @fm.features Numeric input (int, float, etc.)
             return "<div class='gs-span'><label for='$col'>$col</label><input class='gs-input'  onkeyup='gs.form.updateRow(this, \"$this->table\")'  onchange='gs.form.updateRow(this, \"$this->table\")' type='number' name='$col' id='$col' value='$value'></div>";
-        break;        case 'date':  // @filemetacore.features Date input
-        case 'datetime-local':  // @filemetacore.features Datetime input
+        break;        case 'date':  // @fm.features Date input
+        case 'datetime-local':  // @fm.features Datetime input
               $datevalue = date('Y-m-d', strtotime($value));
               return "<div class='gs-span'><label for='$col'>$col</label>
               <input class='gs-input' name='$col' id='$col' type='date' value='$datevalue' placeholder='$col'>
               </div>";
         break;
-        case 'checkbox':  // @filemetacore.features Boolean input (checkbox)
+        case 'checkbox':  // @fm.features Boolean input (checkbox)
             $checked = ($value) ? 'checked' : '';
             return "<div class='gs-span'><label for='$col'>$col</label><input class='gs-input' onclick='gs.form.updateRow(this, \"$this->table\")'  type='checkbox' name='$col' id='$col' $checked></div>";
          break;
-        case 'text':  // @filemetacore.features Default text input
+        case 'text':  // @fm.features Default text input
         default:
             return "<div class='gs-span'><label for='$col'>$col</label><input class='gs-input' onkeyup='gs.form.updateRow(this, \"$this->table\")'  type='text' name='$col' id='$col' value='$value'></div>";
         break;
     }
 }
-
 
 }

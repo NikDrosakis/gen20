@@ -27,5 +27,5 @@ $user=$this->gpm->f("SELECT * from action where id=?",[$this->id]);
         <button onclick='location.href="/system/actiongrp"' class="bare" id="groups">ErmisGroups</button>
         <button onclick='location.href="/system/action"' class="bare" id="groups">Ermis</button>
 <?php
-echo $this->buildForm("action",$user);
+echo $this->buildForm("gen_admin.action",$user);
 ?>

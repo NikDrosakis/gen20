@@ -16,16 +16,16 @@ $table="tax";
 //xecho($this->applySchemaStandards("links"));
 ?>
 <?php
-$fa=$this->db->f("SELECT * from user");
+$fa=$this->db->f("SELECT * from {$this->publicdb}.user");
 ?>
-<?=$this->buildForm("TEMPLATE.cubo",$fa,false,["name"],false)?>
+<?=$this->buildForm("gen_admin.cubo",$fa,false,["name"],false)?>
 <?php
-xecho($this->db->fl(['id','name'],"user","where id=1"));
+xecho($this->db->fl(['id','name'],"{$this->publicdb}.user","where id=1"));
 
 ?>
 
 <!---FROM HEREE START UPDATING $options  -->
-<?=$this->renderSelectField("name",$fa['id'],$this->db->fl(['id,name',"user","where id=1"))?>
+<?=$this->renderSelectField("name",$fa['id'],$this->db->fl(['id,name',"{$this->publicdb}.user","where id=1"))?>
 <!--------POST TABLE-------------->
 <!----BUILD TABLE-->
    	<?php

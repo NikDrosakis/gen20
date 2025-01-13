@@ -15,7 +15,7 @@ return !$img ? "/admin/img/myface.jpg" : (strpos($img, 'https://') === false ? M
        */
       protected function updateImg() {
           // 1. Fetch metadata from the database for entries without images - assoc array
-          $metadataRecords = $this->db->flist("SELECT id, meta FROM post ");
+          $metadataRecords = $this->db->flist("SELECT id, meta FROM gen_admin.post ");
 
           if (empty($metadataRecords)) {
               throw new Exception('No metadata records found for image fetching.');
@@ -45,7 +45,7 @@ if($imageUrl!=null){
                   file_put_contents($localFilePath, file_get_contents($imageUrl));
 
                   // 5. Insert update database record with image data
-                  $this->db->q("UPDATE post SET img = ? WHERE id = ?", [MEDIA_URL.basename($localFilePath), $postId]);
+                  $this->db->q("UPDATE {$this->publicdb}.post SET img = ? WHERE id = ?", [MEDIA_URL.basename($localFilePath), $postId]);
 }
                   // Limit to saving one image per metadata set, or comment out to save all images
                   break;
@@ -83,7 +83,7 @@ if($imageUrl!=null){
    }
 
   protected function updateImgs2() {
-      $metadataRecords = $this->db->flist("SELECT id, meta FROM actiongrp WHERE img IS NULL");
+      $metadataRecords = $this->db->flist("SELECT id, meta FROM gen_admin.actiongrp WHERE img IS NULL");
 
       if (empty($metadataRecords)) {
           echo "No metadata records found for image fetching.\n";

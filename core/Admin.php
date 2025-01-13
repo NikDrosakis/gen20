@@ -42,6 +42,8 @@ use Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Templat
 protected $database;
 protected $layout_selected;
 protected $layout;
+protected $db_sub;
+protected $db_page;
 protected $layouts=[
       '1'=>['name'=>'1','columns'=>"1fr", 'rows'=>"1fr",'channels'=>1],
       '2'=>['name'=>'1X2','columns'=>"2fr 1fr", 'rows'=>"1fr",'channels'=>2],  //70-30
@@ -226,13 +228,13 @@ protected function produce6channel($name,$ch,$page,$type,$table){
  protected function channelRender($name,$table,$ch='1'){
  $Position=['1'=>'top-left','2'=>'top-right','3'=>'top-center','4'=>'bottom-center','5'=>'bottom-left','6'=>'bottom-right'];
   if($this->sub!=''){
-       $this->admin_sub=$this->admin->f("SELECT * FROM admin_sub where name=?",[$name]);
+       $this->db_sub=$this->db->f("SELECT * FROM gen_admin.admin_sub where name=?",[$name]);
        }
     $html='';
     $html .='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'" class="channel '.$Position[$ch].'">';
 
       //CHANNEL FILE SUB FILE
-    if ($this->admin_sub['type'] == 'table') {
+    if ($this->db_sub['type'] == 'table') {
           //select * from admin_page  and sub=$this->sub
              //add also the file after the table
          if($this->id !='' && $this->mode ==''){
@@ -255,7 +257,7 @@ protected function produce6channel($name,$ch,$page,$type,$table){
        //THEN RUN THE TABLE
             $html .=  $this->buildTable($table);
          }
-      }elseif ($this->admin_sub['type'] == 'cubos') {
+      }elseif ($this->db_sub['type'] == 'cubos') {
         $chan = $this->produceCuboadmin($name);
          $html .= $this->channelCheck($chan);
 
@@ -271,17 +273,16 @@ protected function produce6channel($name,$ch,$page,$type,$table){
 protected function channelDispatch() {
    // $channels=$this->layouts[$this->layout_selected]['channels'];
     //this is for 6 channels
- $this->admin_page = $this->admin->f("SELECT * FROM admin_page where name=?",[$this->page]);
+ $this->db_page = $this->db->f("SELECT * FROM gen_admin.admin_page where name=?",[$this->page]);
     //add automatice table and forms based on metadata admin.admin_sub.type=='table'
 //NO SUBPAGE - MULTIPLE CHANNELS 6
 if($this->sub==''){
-    $admin_pageid = $this->admin_page['id'];
+    $admin_pageid = $this->db_page['id'];
     if($this->page=='home'){
-    $admin_subs = $this->admin->fa("SELECT * FROM admin_sub order by sort limit 6");  //6th is notifications
+    $admin_subs = $this->db->fa("SELECT * FROM gen_admin.admin_sub order by sort limit 6");  //6th is notifications
     }else{
-    $admin_subs = $this->admin->fa("SELECT * FROM admin_sub where admin_pageid=? order by sort limit 6",[$admin_pageid]);  //6th is notifications
+    $admin_subs = $this->db->fa("SELECT * FROM gen_admin.admin_sub where admin_pageid=? order by sort limit 6",[$admin_pageid]);  //6th is notifications
     }
-
     $html='';
     foreach ($admin_subs as $channel => $content){
       $name = $content['name'];
@@ -307,7 +308,7 @@ if($this->sub==''){
       $html .= '<script>gs.ui.sort(`UPDATE ${G.has_maria} SET sort=? WHERE id = ?`, "list", G.has_maria);</script>';
       //add notification bar
     //  $html .= $this->channelRenderFile($this->notification_file,2);
-      //add doc bar if type==table select doc from table with form input
+      //add doc bar if type==table select doc FROM gen_admin.table with form input
    //   $html .= $this->channelRenderFile($this->notification_file,3);
            //channel doc
 
@@ -322,7 +323,7 @@ navigation
 */
 protected function navigate() {
     // Fetch data from the database
-    $pages = $this->admin->fa("SELECT * FROM admin_page ORDER BY sort");
+    $pages = $this->db->fa("SELECT * FROM gen_admin.admin_page ORDER BY sort");
 
     // Initialize the navigation structure
     $this->G['apages'] = [];
@@ -344,7 +345,7 @@ protected function navigate() {
         }
 
         // Add sub-navigation if applicable
-         $subs = $this->admin->fa("SELECT * FROM admin_sub order by sort");
+         $subs = $this->db->fa("SELECT * FROM gen_admin.admin_sub order by sort");
          if(!empty($subs)){
          foreach ($subs as $sub) {
          if($sub['admin_pageid']==$page['id']){

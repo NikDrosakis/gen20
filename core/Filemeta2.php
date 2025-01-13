@@ -102,7 +102,7 @@ trait Filemeta2 {
                 'updatelog' => $comments['updatelog']
             ];
 
-            return $this->admin->inse("filemeta", $cols);
+            return $this->db->inse("gen_admin.filemeta", $cols);
         } catch (\Exception $e) {
             // Log the error appropriately
             error_log("Error inserting file metadata: " . $e->getMessage());
@@ -116,7 +116,7 @@ trait Filemeta2 {
     protected function updateFile(string $file): bool {
         try {
             $basename = basename($file);
-            $currentMetadata = $this->admin->f("SELECT * FROM filemeta WHERE name = ?", [$basename]);
+            $currentMetadata = $this->db->f("SELECT * FROM gen_admin.filemeta WHERE name = ?", [$basename]);
 
             if (!$currentMetadata) {
                 throw new \RuntimeException("No existing metadata found for file: $basename");
@@ -145,11 +145,11 @@ trait Filemeta2 {
             $changes = array_diff_assoc($newMetadata, array_intersect_key($currentMetadata, $newMetadata));
 
             if (!empty($changes)) {
-                $sql = "UPDATE filemeta SET " .
+                $sql = "UPDATE gen_admin.filemeta SET " .
                        implode(', ', array_map(fn($key) => "$key = ?", array_keys($newMetadata))) .
                        " WHERE name = ?";
 
-                return $this->admin->q($sql, [...array_values($newMetadata), $basename]);
+                return $this->db->q($sql, [...array_values($newMetadata), $basename]);
             }
 
             return true;
@@ -177,7 +177,7 @@ trait Filemeta2 {
             foreach ($iterator as $file) {
                 if ($file->isFile() && in_array($file->getExtension(), self::SUPPORTED_EXTENSIONS)) {
                     $filepath = $file->getPathname();
-                    $exists = $this->admin->f("SELECT * FROM filemeta WHERE name = ?", [basename($filepath)]);
+                    $exists = $this->db->f("SELECT * FROM gen_admin.filemeta WHERE name = ?", [basename($filepath)]);
 
                     if (!$exists) {
                         $stats['inserted'] += $this->insertFile($filepath) ? 1 : 0;

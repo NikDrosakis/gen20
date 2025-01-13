@@ -21,7 +21,7 @@
     <span style="float:left;" onclick="gs.ui.goto(['previous','user','id',s.get.uid,'/admin/user?uid='])" class="next glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
     <span style="float:right" onclick="gs.ui.goto(['next','user','id',g.get.uid,'/admin/user?uid='])" class="next glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
 
-    <?php $sel= $this->db->f("SELECT user.*,usergrp.name as usergrp FROM user
+    <?php $sel= $this->db->f("SELECT user.*,usergrp.name as usergrp FROM {$this->publicdb}.user
   LEFT JOIN usergrp ON user.grp=usergrp.id
     WHERE user.id=?",array($this->uid));
     ?>

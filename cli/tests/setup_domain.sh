@@ -145,7 +145,7 @@ fi
 #6 create db && install gaia.sql
 mysql -u$dbuser -p$dbpass --host=$dbhost -e "create database $dbname"; 
 mysql -u$dbuser -p$dbpass --host=$dbhost $dbname < /var/www/admin/gaia.sql
-mysql -u$dbuser -p$dbpass gs_$domain -e "UPDATE globs SET en='$ver' WHERE name='system_version';"
+mysql -u$dbuser -p$dbpass gs_$domain -e "UPDATE gen_admin.globs SET en='$ver' WHERE name='system_version';"
 
 #7 create user
 mysql -u$dbuser -p$dbpass gs_$domain -e "INSERT INTO user(name,pass,mail,grp,auth) VALUES($dbuser,$dbpass,$email,7,1);"

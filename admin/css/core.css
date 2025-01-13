@@ -223,7 +223,6 @@ buildArchive
     /* PAGINATION */
     /* Basic styling for the tabs */
     #pagination,.pagination {
-        margin-top: 20px;
         text-align: center;
     }
 
@@ -349,8 +348,7 @@ buildArchive
         border-radius: 5px;
         transition: border-color 0.3s ease;
         background-color: #fff;
-        width: 123px;
-        box-sizing: border-box;
+            box-sizing: border-box;
     }
     .gs-input:focus,.gs-textarea:focus,.gs-select:focus   {
         border-color: #007bff;

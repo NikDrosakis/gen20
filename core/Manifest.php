@@ -26,7 +26,7 @@ BATCH created manifests and updated DB
  * @param string $table The database table to query.
  */
 protected function batchManifestFilesFromDB(string $table, string $path=''): void {
-    $systemPaths = $this->admin->flist("SELECT name, path FROM $table");
+    $systemPaths = $this->db->flist("SELECT name, path FROM $table");
     if($systemPaths && count($systemPaths) > 0){
     foreach ($systemPaths as $name => $path) {
         $this->manifestFileFromDB("SELECT * FROM $table WHERE name = ?", [$name],$path);
@@ -42,7 +42,7 @@ protected function batchManifestFilesFromDB(string $table, string $path=''): voi
  * @param string $table The database table to query.
  */
 protected function batchYamlUpdateDB(string $table): void {
-    $systemPaths = $this->admin->flist("SELECT name, path FROM $table");
+    $systemPaths = $this->db->flist("SELECT name, path FROM $table");
    if($systemPaths && count($systemPaths) > 0){
 foreach ($systemPaths as $name => $path) {
         $yamlPath = ROOT . $path . '/manifest.yml';
@@ -95,9 +95,9 @@ ONE RECORD created manifests and updated DB
           // Remove the central key and use the rest as data
           $yamlParsedKeyless = $yamlParsed[$centralKey];
 
-      $update = $this->admin->upsert($table,$yamlParsedKeyless);
+      $update = $this->db->upsert($table,$yamlParsedKeyless);
       //check if manifest row exists and update with all the $yamlParsed
-      $update_manifest =$this->admin->q("update $table set manifest=? where name=?",[yaml_emit($yamlParsed),$name]);
+      $update_manifest =$this->db->q("update $table set manifest=? where name=?",[yaml_emit($yamlParsed),$name]);
 
           if ($update && $update_manifest) {
               echo "Table $table, record $name updated successfully.";
@@ -130,7 +130,7 @@ protected function manifestFileFromDB(string $query, $params = [],$savepath=''):
 
 protected function manifestFromDB(string $query, $params = []): ?string {
     // Execute the query
-     $results =$this->admin->f($query, $params);
+     $results =$this->db->f($query, $params);
      $name=  $results['name'] ?? $results['id'];
     // Extract the table name from the query (for example, from a SELECT statement)
     preg_match('/FROM\s+`?(\w+)`?/i', $query, $matches);
@@ -139,9 +139,9 @@ protected function manifestFromDB(string $query, $params = []): ?string {
         throw new InvalidArgumentException("Table name could not be determined from the query.");
     }
     // Get the column format (comments) for the table
-    $columnsFormat = $this->admin->colFormat($table);
+    $columnsFormat = $this->db->colFormat($table);
     // Process the results by extending the column format (reversing the transformations)
-    $extendedRow[$name.'_'.$table] = $this->admin->extendColumnFormat($results, $columnsFormat);
+    $extendedRow[$name.'_'.$table] = $this->db->extendColumnFormat($results, $columnsFormat);
     // Convert the array to YAML format
     return yaml_emit($extendedRow);
 }
@@ -163,14 +163,14 @@ Parent Actiongrp creating manifest files from DB
  protected function manifestActiongrpFromDB(string $name): ?string{
     // Execute the query
     $table= "actiongrp";
-    $actiongrp =$this->admin->f("select * from $table where name=?", [$name]);
+    $actiongrp =$this->db->f("select * from $table where name=?", [$name]);
      if ($actiongrp) {
     // Get the column format (comments) for the table
-        $colFormat = $this->admin->colFormat($table);
-        $grsExtended=$this->admin->extendColumnFormat($actiongrp, $colFormat);
-      //  $actionColumnsFormat = $this->admin->colFormat("action");
+        $colFormat = $this->db->colFormat($table);
+        $grsExtended=$this->db->extendColumnFormat($actiongrp, $colFormat);
+      //  $actionColumnsFormat = $this->db->colFormat("action");
     if ($grsExtended) {
-        $actions = $this->admin->fa("SELECT * FROM action WHERE actiongrpid=?", [$actiongrp['id']]);
+        $actions = $this->db->fa("SELECT * FROM gen_admin.action WHERE actiongrpid=?", [$actiongrp['id']]);
         // Add actions to the action group array
         $grsExtended['actions'] = array_values($actions);
     } else {

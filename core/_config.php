@@ -160,6 +160,19 @@ $this->G= array(
         '7'=>'rgba(85,45,95,0.3)',
         '8'=>'rgba(85,45,95,0.3)'
     ),
+    'action_status'=>array(
+        0 => 'DEPRECATED',
+        1 => 'DANGEROUS',
+        2 => 'MISSING_INFRASTRUCTURE',
+        3 => 'NEEDS_UPDATES',
+        4 => 'INACTIVE_WRONG_FAILED',
+        5 => 'NEW',
+        6 => 'WORKING_TESTING_EXPERIMENTAL',
+        7 => 'ALPHA_RUNNING_READY',
+        8 => 'BETA_WORKING',
+        9 => 'STABLE',
+        10 => 'STABLE_DEPENDS_OTHERS',
+    ),
     'post_status'=>array(
         0=>'Closed',
         1=>'Inactive',

@@ -67,5 +67,5 @@
 //xecho ($this->yamlParseFile(ADMIN_ROOT."manifest.yml"));
 //xecho ($this->yamlUpdateDB(ADMIN_ROOT."manifest.yml"));
 //xecho ($this->yamlFromDB("select * from action where id=1"));
-//xecho ($this->admin->colFormat("systems"));
+//xecho ($this->db->colFormat("gen_admin.systems"));
 

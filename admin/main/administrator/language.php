@@ -17,7 +17,7 @@ body.grid-enabled {
 </style>
 <?php
 $current_code=$this->G['is']['lang_primary'];
-$langList=$this->db->flist("select code,name from language");
+$langList=$this->db->flist("select code,name from gen_admin.language");
 $dropNewLangs=$this->drop($langList,"language",'addLangColumn');
 ?>
 <h2>Current Language: <?=$langList[$current_code]?><h2>

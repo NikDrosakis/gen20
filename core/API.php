@@ -34,7 +34,7 @@ if ($this->isApiRequest()) {
         // VL-specific normal request handling:
   //      if ($_SERVER['SYSTEM'] == 'admin') {
 
-    //        $this->adminUI_router();
+    //        $this->dbUI_router();
       //  }
 	  //else{
          //   $this->publicUI_router();
@@ -174,7 +174,7 @@ primary executes A) maria methods IN post
       $response=[];
      if($this->resource=="maria" || $this->resource=="admin"){
             if($this->method=='POST'){
-                $database = $this->resource=='maria' ? $this->db : $this->admin;
+                $database = $this->resource=='maria' ? $this->db : $this->db;
                 if ($database && method_exists($database,$this->id)) {  //id is the method of the class
                     //if decoding was successful
                     $execute=$database->{$this->id}(...array_values($request));

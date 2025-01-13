@@ -91,8 +91,8 @@ $domain = is_array($domainame) ? $domainame['key'] : $domainame;
 
     // Update the MariaDB record in the domain table with SSL info
     if($output){
-    $maria_file = $this->admin->q(
-        "UPDATE domain SET maria_file = ?, maria_check = 1 WHERE name = ?",
+    $maria_file = $this->db->q(
+        "UPDATE gen_admin.domain SET maria_file = ?, maria_check = 1 WHERE name = ?",
         [$maria_file, $domain]
     );
     }
@@ -126,7 +126,7 @@ $domain = is_array($domainame) ? $domainame['key'] : $domainame;
             $ssl_expires = isset($matches[1]) ? $matches[1] : null;
 
             // Update the database with the SSL certificate info
-            $ssl_file = $this->admin->q("UPDATE domain SET ssl_file=?, ssl_check=1, ssl_expires=? WHERE name=?", [$folder, $ssl_expires, $domain]);
+            $ssl_file = $this->db->q("UPDATE gen_admin.domain SET ssl_file=?, ssl_check=1, ssl_expires=? WHERE name=?", [$folder, $ssl_expires, $domain]);
             // Check if the update was successful
             if ($ssl_file) {
                 echo "SSL certificate successfully generated for $domain!";
@@ -244,7 +244,7 @@ apt install php-ssh2 && service php7.2-fmp restart
         shell_exec("sudo service bind9 reload");
 
         // Update the database with the SSL certificate info
-        $zone_file = $this->admin->q("UPDATE domain SET zone_file=?, zone_check=1 WHERE name=?", [$sys_absolute_file, $domain]);
+        $zone_file = $this->db->q("UPDATE gen_admin.domain SET zone_file=?, zone_check=1 WHERE name=?", [$sys_absolute_file, $domain]);
         if($zone_file){
         echo "Zone file created successfully";
         }
@@ -269,7 +269,7 @@ apt install php-ssh2 && service php7.2-fmp restart
         shell_exec("sudo service nginx reload");
 
         // Update the database with the SSL certificate info
-        $nginx_file = $this->admin->q("UPDATE domain SET nginx_file=?, nginx_check=1 WHERE name=?", [$local_file, $domain]);
+        $nginx_file = $this->db->q("UPDATE gen_admin.domain SET nginx_file=?, nginx_check=1 WHERE name=?", [$local_file, $domain]);
         if($nginx_file){
         echo "Zone file created successfully";
         }
@@ -414,7 +414,7 @@ protected function standardNginx($domain) {
                 }
             }
         // Update the database with the SSL certificate info
-        $fsys_check = $this->admin->q("UPDATE domain SET fsys_file=?, fsys_check=1 WHERE name=?", [$domain_folder,$domain]);
+        $fsys_check = $this->db->q("UPDATE gen_admin.domain SET fsys_file=?, fsys_check=1 WHERE name=?", [$domain_folder,$domain]);
         if($fsys_file){
         return "All folders created successfully";
         }
@@ -702,7 +702,7 @@ protected function setupDomain($jsonsetup,$url){
 			system("chmod -R 777 $dom_folder.tar.bz2");
 
 			//update version database
-			$updateVersion = $this->admin->q("UPDATE globs SET val=? WHERE name=?", array($replica, 'domain-version'));
+			$updateVersion = $this->db->q("UPDATE gen_admin.globs SET val=? WHERE name=?", array($replica, 'domain-version'));
 			if (!$updateVersion) {return $this->error[2];}else{return 'yes';}
 		} else {
 			return $this->error[1];

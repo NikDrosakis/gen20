@@ -70,9 +70,9 @@
 <div class="sidebar">
     <ul class="nav-menu">
     <?php
-    $sys= $this->admin->fa("select * from systems");
+    $sys= $this->db->fa("select * from gen_admin.systems");
     //xecho($sys);
-    //$subdoc= $this->admin->f("select doc from admin_sub where name=?",[$sub]);
+    //$subdoc= $this->db->f("select doc from admin_sub where name=?",[$sub]);
  //   $systms= file_get_contents(GSROOT."SYSTEMS.md");
    // $mdsystems= $this->md_decode($systms);
 //    $lines = explode(PHP_EOL, $mdsystems);
@@ -90,7 +90,7 @@ foreach($sys as $sysdat){
         <section id="content">
             <?php
             $sub=$this->sub;
-               $subdoc= $this->admin->f("select * from systems where name=?",[$sub]);
+               $subdoc= $this->db->f("select * from gen_admin.systems where name=?",[$sub]);
             ?>
             <!-- Page content goes here -->
             <h1>[<?=$subdoc['name']?>]</h1>

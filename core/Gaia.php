@@ -6,7 +6,7 @@ use DOMDocument;
 abstract class Gaia {
  use Tree;
 	 protected $db;
-	 protected $admin;
+	 protected $publicdb;
      protected $mon;
 	protected $redis;
 
@@ -67,23 +67,30 @@ abstract class Gaia {
          * START MARIADB in ABSTRACTED GAIA
          *****/
          //xecho(TEMPLATE);
-        $this->instantiateDBs();
+          $this->publicdb = "gen_".TEMPLATE;
+         $this->db = new Mari();
+            //mongo db instantiate
+              $this->mon = new Mon('vox');
+                //solr instantiate
+               // $this->gsolr = new GSolr('solr_vivalibro');
+                //redis instantiate
+                $this->redis=new Gredis("1");
 
 
         $this->G['loggedin'] = isset($_COOKIE['GSID']) && $_COOKIE['GSGRP'] > 1;
         $this->G['me'] = $_COOKIE['GSID'];
         if ($this->G['loggedin']) {
-            $this->G['my'] = $this->db->f("SELECT * from user where id=?", [$_COOKIE['GSID']]);
+            $this->G['my'] = $this->db->f("SELECT * from {$this->publicdb}.user where id=?", [$_COOKIE['GSID']]);
             $this->me = $this->G['my']['id'];
             $this->fullname = $this->G['my']['fullname'] = $this->G['my']['firstname'] . ' ' . $this->G['my']['lastname'];
             $this->img = "/media/" . $this->G['my']['img'];
         }
 		//$this->G['is'] = $this->redis->get("is");
 		//if(!$this->G['is']){        
-        $this->G['is'] = $this->admin->flist("SELECT name, val from globs");
+        $this->G['is'] = $this->db->flist("SELECT name, val from gen_admin.globs");
 		//$this->redis->set("is",$this->G['is']);
 		//}
-        $this->G['usergrps'] = $this->db->fl(["id", "name"], "usergrp");
+        $this->G['usergrps'] = $this->db->fl(["id", "name"], "{$this->publicdb}.usergrp");
        $this->G['globs_tags'] = $this->getGlobs();
 //all $this->G to local variables
         foreach ($this->G as $gkey => $gval) {
@@ -92,8 +99,8 @@ abstract class Gaia {
 		}
         }
 
-        $this->G['pagelist'] = $this->admin->flist("SELECT id, name FROM admin_page");
-        $this->G['subparent'] = $this->admin->flist("SELECT admin_sub.name, admin_page.name as parent FROM admin_sub LEFT JOIN admin_page on admin_sub.admin_pageid=admin_page.id");
+        $this->G['pagelist'] = $this->db->flist("SELECT id, name FROM gen_admin.admin_page");
+        $this->G['subparent'] = $this->db->flist("SELECT admin_sub.name, admin_page.name as parent FROM gen_admin.admin_sub LEFT JOIN gen_admin.admin_page on admin_sub.admin_pageid=admin_page.id");
         if ($this->G['SYSTEM']=='admin'){
         $this->G['has_maria'] = $this->has_maria($this->sub);
         } elseif($this->G['SYSTEM']==$this->G['TEMPLATE']){
@@ -105,16 +112,7 @@ abstract class Gaia {
     }
 	abstract protected function handleRequest();
 
-protected function instantiateDBs() {
-    $this->db = new Maria('gen_' . TEMPLATE);
-    $this->admin = new Maria('gen_admin');
-          //mongo db instantiate
-            $this->mon = new Mon('vox');
-        //solr instantiate
-       // $this->gsolr = new GSolr('solr_vivalibro');
-        //redis instantiate
-        $this->redis=new Gredis("1");
-}
+
     protected function isCuboRequest(): bool {
         return $this->SYSTEM=== 'cubos';
     }
@@ -185,7 +183,7 @@ to be updated to $_post AND json content
     }
 
 protected function renderCubo(string $name): string {
-         $cubo = $this->admin->fa('SELECT * FROM cubo WHERE name=?',[$name]);
+         $cubo = $this->db->fa('SELECT * FROM gen_admin.cubo WHERE name=?',[$name]);
          $uri=CUBO_ROOT.$name."/public.php";
          return $this->include_buffer($uri);
 }
@@ -205,10 +203,10 @@ protected function getPageMetatags(): array {
             $metaString .= ',' . $this->sub;
 
             // Add metadata based on the type of admin subpage
-            if ($this->admin_sub['type'] == 'table') {
-                $meta = $this->admin->f("SELECT meta FROM metadata WHERE name = ?", [$this->sub]);
+            if ($this->db_sub['type'] == 'table') {
+                $meta = $this->db->f("SELECT meta FROM gen_admin.metadata WHERE name = ?", [$this->sub]);
             } else {
-                $meta = $this->admin->f("SELECT meta FROM admin_sub WHERE name = ?", [$this->sub]);
+                $meta = $this->db->f("SELECT meta FROM gen_admin.admin_sub WHERE name = ?", [$this->sub]);
             }
 
             // Append comma-separated meta if found
@@ -217,7 +215,7 @@ protected function getPageMetatags(): array {
             }
         } else {
             // MAIN ADMIN PAGE
-            $meta = $this->admin->f("SELECT meta FROM admin_page WHERE name = ?", [$this->page]);
+            $meta = $this->db->f("SELECT meta FROM gen_admin.admin_page WHERE name = ?", [$this->page]);
             if ($meta) {
                 $metaString .= ',' . $meta['meta'];
             }
@@ -226,10 +224,10 @@ protected function getPageMetatags(): array {
         // PUBLIC SYSTEM
         if (!empty($this->page)) {
             // PUBLIC PAGE
-            $meta = $this->db->f("SELECT meta FROM main WHERE name = ?", [$this->page]);
+            $meta = $this->db->f("SELECT meta FROM gen_admin.main WHERE name = ?", [$this->page]);
         } else {
             // PUBLIC MAIN PAGE
-            $meta = $this->db->f("SELECT meta FROM metadata WHERE name = ?", [$this->page]);
+            $meta = $this->db->f("SELECT meta FROM gen_admin.metadata WHERE name = ?", [$this->page]);
         }
 
         // Append comma-separated meta if found
@@ -384,17 +382,17 @@ Handle XHR request.
     }
 
     protected function has_maria(string $name='') {
+
         if ($this->G['SYSTEM']=='admin'){
          $name = $name!='' ? $name : $this->sub;
-         $has_maria = $this->admin->f("SELECT has_maria FROM admin_sub WHERE name=?",[$name])['has_maria'];
+         $has_maria = $this->db->f("SELECT has_maria FROM gen_admin.admin_sub WHERE name=?",[$name])['has_maria'];
         } elseif($this->G['SYSTEM']==$this->G['TEMPLATE']){
          $name = $name!='' ? $name : $this->page;
-         $has_maria = $this->db->f("SELECT has_maria FROM main WHERE name=?",[$name])['has_maria'];
+         $has_maria = $this->db->f("SELECT has_maria FROM {$this->publicdb}.main WHERE name=?",[$name])['has_maria'];
         }
         if($has_maria!=false){
         $has_maria_array= explode('.',$has_maria);
         if(!empty($has_maria_array) && $has_maria_array[0] == 'TEMPLATE'){
-             $db = "gen_".TEMPLATE;
              $table = $has_maria_array[1];
             return $db.'.'.$table;
         }else{
@@ -413,7 +411,7 @@ Handle XHR request.
     }
 
     protected function getDBInstance(string $table) {
-        return $this->getDB($table)=='gen_admin' ? $this->admin: $this->db;
+        return $this->getDB($table)=='gen_admin' ? $this->db: $this->db;
     }
     protected function isAuthorised($level = []) {
         if ($this->inside()) {
@@ -443,7 +441,7 @@ Handle XHR request.
 
 protected function getGlobs(){
            // Fetch all tags as an array
-           $tagsList = $this->admin->fl('tag', 'globs');
+           $tagsList = $this->db->fl('tag', "gen_admin.globs");
            // Initialize an empty array to collect split tags
            $allTags = [];
            // Loop through each row and split by comma

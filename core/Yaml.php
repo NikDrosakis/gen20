@@ -49,7 +49,7 @@ trait  Manifest {
           // Remove the central key and use the rest as data
           $yamlParsedKeyless = $yamlParsed[$centralKey];
 
-      $update = $this->admin->upsert($centralKey,$yamlParsedKeyless);
+      $update = $this->db->upsert($centralKey,$yamlParsedKeyless);
           if ($update) {
               echo "Database updated successfully.";
           } else {
@@ -65,7 +65,7 @@ trait  Manifest {
  */
 protected function yamlFromDB(string $query, $params = []): void {
     // Execute the query
-     $results =$this->admin->f($query, $params);
+     $results =$this->db->f($query, $params);
      $name=  $results['name'] ?? $results['id'];
     // Extract the table name from the query (for example, from a SELECT statement)
     preg_match('/FROM\s+`?(\w+)`?/i', $query, $matches);
@@ -75,10 +75,10 @@ protected function yamlFromDB(string $query, $params = []): void {
     }
 
     // Get the column format (comments) for the table
-    $columnsFormat = $this->admin->colFormat($table);
+    $columnsFormat = $this->db->colFormat($table);
 
     // Process the results by extending the column format (reversing the transformations)
-    $extendedRow[$name] = $this->admin->extendColumnFormat($results, $columnsFormat);
+    $extendedRow[$name] = $this->db->extendColumnFormat($results, $columnsFormat);
 
     // Convert the array to YAML format
     $yaml_raw = yaml_emit($extendedRow);
