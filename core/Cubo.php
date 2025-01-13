@@ -7,7 +7,7 @@ use Symfony\Component\Yaml\Yaml;
 trait Cubo {
 
   protected function getLinks() {
-            return $this->db->fa("SELECT * FROM links WHERE linksgrpid=1 ORDER BY sort");
+            return $this->db->fa("SELECT * FROM {$this->publicdb}.links WHERE linksgrpid=1 ORDER BY sort");
     }
 
 protected function updateCuboImg($table = '',$current_name = '') {
@@ -55,8 +55,8 @@ $db=explode('.',$table)[0];
         $buffer = array();
         $sel = array();
    		$query='SELECT * FROM cubo ORDER BY valuability DESC';
-   		$sel=$this->admin->fa($query);
-   		$count = count($this->admin->fa($query));
+   		$sel=$this->db->fa($query);
+   		$count = count($this->db->fa($query));
            // Create buffer for output
    		$params['statuses']=[0=>'archived',1=>'deprecated',2=>'pending',3=>'active'];
            $buffer['count'] = $count;
@@ -67,18 +67,18 @@ $db=explode('.',$table)[0];
 
    // Retrieve all cubos
     protected function getCubos(): array {
-        return $this->admin->fa('SELECT * FROM cubo');
+        return $this->db->fa('SELECT * FROM gen_admin.cubo');
     }
     // Retrieve  cubos buffer
 
     // Retrieve a single cubos by ID
     protected function getCubo(int $id): array {
-        return $this->admin->f('SELECT * FROM cubo WHERE id = ?',[$id]);
+        return $this->db->f('SELECT * FROM gen_admin.cubo WHERE id = ?',[$id]);
     }
 
     // Retrieve cubos logs
     protected function getCuboLogs(int $widgetId): array {
-        return $this->admin->fa('SELECT * FROM cubo_logs WHERE widget_id =? ',[$widgetId]);
+        return $this->db->fa('SELECT * FROM gen_admin.cubo_logs WHERE widget_id =? ',[$widgetId]);
     }
     // Retrieve cubos logs
     protected function test(): array {
@@ -87,8 +87,8 @@ $db=explode('.',$table)[0];
     protected function getSystemLogsBuffer(): ?array {
        $buffer = array();
         $sel = array(); 
-		$query='SELECT systems.*,system_ver.* FROM systems left join system_ver ON systems.id=system_ver.systemsid ';
-		$selsystems=$this->admin->fa($query);
+		$query='SELECT systems.*,system_ver.* FROM gen_admin.systems left join system_ver ON systems.id=system_ver.systemsid ';
+		$selsystems=$this->db->fa($query);
 			for($i=0;$i<count($selsystems);$i++) { 
 				$sel[$selsystems[$i]["systemsid"]][]=$selsystems[$i];
 			}      
@@ -104,8 +104,8 @@ $db=explode('.',$table)[0];
         foreach ($data as $key => $value) {
             $fields[] = "$key = :$key";
         }
-        $sql = 'UPDATE cubos SET ' . implode(', ', $fields) . ' WHERE id = ?';
-        return $this->admin->q($sql,[$id]);
+        $sql = 'UPDATE gen_admin.cubo SET ' . implode(', ', $fields) . ' WHERE id = ?';
+        return $this->db->q($sql,[$id]);
     }
 
     // Add a new widget
@@ -114,19 +114,19 @@ $db=explode('.',$table)[0];
         $columns = implode(', ', $keys);
         $placeholders = ':' . implode(', :', $keys);
         $sql = "INSERT INTO cubos ($columns) VALUES ($placeholders)";
-        return $this->admin->q($sql);
+        return $this->db->q($sql);
     }
 // metric.php sub
 protected function addMetric(array $params = []): ?array {
     // SQL query to fetch the required data
     $sql = "SELECT s.name, DATE_FORMAT(tr.created, '%Y-%m-%d') AS week, tr.progress_level
-            FROM action_task_report tr
-            JOIN systems s ON tr.systemsid = s.id
+            FROM gen_admin.action_task_report tr
+            JOIN gen_admin.systems s ON tr.systemsid = s.id
             WHERE tr.created BETWEEN '2024-07-05' AND '2024-09-08'
             ORDER BY tr.created";
 
     // Execute the query
-    $res = $this->admin->fa($sql);
+    $res = $this->db->fa($sql);
     $data = ['res' => []]; // Initialize with 'res' key
 
     // Check if there are results and structure them accordingly
@@ -146,7 +146,7 @@ protected function addMetric(array $params = []): ?array {
 
     // Delete a widget
     protected function deleteCubo(int $id): bool {
-        return $this->admin->q('DELETE FROM cubos WHERE id =?',[$id]);
+        return $this->db->q('DELETE FROM gen_admin.cubos WHERE id =?',[$id]);
     }
 
     // Example of using proc_open() for shell execution and logging
@@ -240,7 +240,7 @@ protected function addMetric(array $params = []): ?array {
             'description' => $description,
             'created' => date('Y-m-d H:i:s')
         ];
-        $insert = $this->admin->inse("cubos", $data);
+        $insert = $this->db->inse("gen_admin.cubo", $data);
 
         // Run shell command to set permissions (example)
         $command = 'chmod -R 755 ' . escapeshellarg($cuboDir);
@@ -253,7 +253,7 @@ protected function addMetric(array $params = []): ?array {
         return $insert;
     }
 protected function getUsers() {
-        return $this->db->fa("SELECT * FROM user");
+        return $this->db->fa("SELECT * FROM {$this->publicdb}.user");
     }
 
     protected function postlist(){
@@ -289,7 +289,7 @@ protected function getUsers() {
         // Method to retrieve comments for a specific type and ID
        protected function getComments($type = 'book') {
             $sel = $this->db->fa("SELECT comment.*, CONCAT(user.firstname, ' ', user.lastname) AS fullname, user.img
-              FROM comment
+              FROM {$this->publicdb}.comment
               LEFT JOIN user ON comment.uid=user.id
               WHERE comment.type=? AND comment.typeid=? AND comment.reply_id=0
               ORDER BY comment.created DESC", [$type, $_GET['id']]);
@@ -297,7 +297,7 @@ protected function getUsers() {
             if (!empty($sel)) {
                 foreach ($sel as $i => $comment) {
                     $sel[$i]['replies'] = $this->db->fa("SELECT comment.*, CONCAT(user.firstname,' ',user.lastname) AS fullname, user.img
-                                                         FROM comment
+                                                         FROM {$this->publicdb}.comment
                                                          LEFT JOIN user ON comment.uid=user.id
                                                          WHERE comment.reply_id=?
                                                          ORDER BY comment.created DESC", [$comment['id']]);
@@ -309,14 +309,14 @@ protected function getUsers() {
 
 
     protected function getMaincubo() {
-        return $this->db->fa("SELECT * from cubo order by name");
+        return $this->db->fa("SELECT * from gen_admin.cubo order by name");
     }
     protected function getMaincuboBypage(string $page): bool|array {
 
       $list=[];
         $fetch = $this->db->fa("SELECT maincubo.area, maincubo.name as cubo
-        FROM maincubo
-        left join main on main.id=maincubo.mainid
+        FROM {$this->publicdb}.maincubo
+        left join {$this->publicdb}.main on main.id=maincubo.mainid
         where main.name=?",[$page]);
             if (!empty($fetch)) {
                     foreach ($fetch as $row) {

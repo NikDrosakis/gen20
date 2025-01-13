@@ -1,14 +1,20 @@
 <?php
+//$update_array= ['status' => 9, 'log' => "testing llama", 'exe_time' => 1444, 'name' => 'llama'];
+echo $this->runAction(["key"=>"gemini_kronos_conversation"]);
+//echo $this->buildTable("gen_admin.action_plan");
+echo $this->buildTable("gen_admin.systems");
+echo $this->buildTable("gen_admin.actiongrp");
 echo $this->buildTable("gen_admin.action_plan");
+echo $this->buildTable("gen_admin.plan");
 echo $this->buildTable("gen_admin.action");
 //$this->storeAction();
 //xecho ($this->yamlParseFile(ADMIN_ROOT."manifest.yml"));
 //xecho ($this->yamlUpdateDB(ADMIN_ROOT."manifest.yml"));
 //xecho($this->manifestFileActiongrpFromDB('fswatch'));
 //xecho($this->manifestFileActiongrpFromDB('counters'));
-//xecho ($this->admin->colFormat("systems"));
+//xecho ($this->db->colFormat("systems"));
 
-//$systempaths = $this->admin->flist("select name,path FROM systems");
+//$systempaths = $this->db->flist("select name,path FROM gen_admin.systems");
 //xecho($systempaths);
 //foreach($systempaths as $name => $path){
 //$this->manifestFileFromDB("select * FROM systems where name=?",[$name],$path);

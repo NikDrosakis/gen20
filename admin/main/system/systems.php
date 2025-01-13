@@ -8,8 +8,8 @@
 </h3>
 <!----BUILD TABLE-->
    	<?php
- //  	xecho($this->dbForm);
-   //	xecho($this->dbForm->tableMeta("gen_admin.action"));
+ //  	xecho($this->db);
+   //	xecho($this->db->tableMeta("gen_admin.action"));
     	echo $this->buildTable("gen_admin.systems");
     	?>
 <script>

@@ -4,11 +4,11 @@ import logging
 import keyboard
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from core.Maria import Maria
+from core.Mari import Mari
 #from pysolr import Solr
 from config import settings
 #from connection import get_db_connection
-from action import action_loop
+from action import action_loop, add
 from datetime import datetime  # Import datetime module
 from core.WS import WSClient, wsinit
 from core.Watch import Watch
@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.DEBUG)
 from services.bloom.routes import router as bloom_route
 #from services.bloom.task_book_summaries import router as bloom_route
 from services.claude.routes import router as claude_route
-#from services.gptneo.routes import router as gptneo_route
+from services.gptneo.routes import router as gptneo_route
 # from services.llama.routes import router as llama_route
 # from services.transformers.routes import router as transformers_route
 #from services.cohere.routes import router as cohere_route
@@ -49,7 +49,7 @@ app.add_middleware(
 
 
 # Includes
-app.include_router(bloom_route, prefix="/apy/v1/bloom") #pretrained
+#app.include_router(bloom_route, prefix="/apy/v1/bloom") #pretrained
 app.include_router(claude_route, prefix="/apy/v1/claude")
 #app.include_router(gptneo_route, prefix="/apy/v1/gptneo")
 # app.include_router(llama_route, prefix="/apy/v1/llama")
@@ -67,22 +67,22 @@ app.include_router(gaia_route, prefix="/apy/v1/gaia")
 @app.on_event("startup")
 async def startup():
     print("running startup")
-    app.state.maria_vivalibro = Maria(settings.MARIA)
-    app.state.maria_admin = Maria(settings.MARIADMIN)
+    app.state.maria_vivalibro = Mari(settings.MARIA)
+    app.state.maria_admin = Mari(settings.MARIADMIN)
     #app.state.solr = Solr(settings.DATABASE_SOLR_VIVALIBRO)
     # Send the notification asynchronously
     # Fetch actions from the database (using maria_admin instance)
     logging.info("Executing Actions on startup...")
     await action_loop()
      # Start watching the YAML file for changes
-    json= Yaml.read_yaml_and_convert_to_json("manifest.yml")
-    Watch.start_watching("manifest.yml", "systems", "yaml")
+    #json= Yaml.read_yaml_and_convert_to_json("manifest.yml")
+    #Watch.start_watching("manifest.yml", "systems", "yaml")
     # Start watching the YAML file for changes
     #await asyncio.gather(handle_shortcuts())
     # Start the periodic ping task
     #asyncio.create_task(periodic_ping())
     print("\n".join([str(route) for route in app.routes]))
-    await wsinit()
+    #await wsinit()
     logging.info("Startup completed")
 
 

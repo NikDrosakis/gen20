@@ -22,4 +22,11 @@ accessed in APY, python fastapi runs with uvicorn in venv
 2. Scrape automation (together WITH GSCLI) service as Soup
 3. WS connect communication
 
-## v.4 December 2024
+## v.4 Jan2025
+1) Action.go, Actionplan.go 
+2) AI Training
+3) AI Gen
+4) WS Client connected (Ermis Server)
+5) Manifest --> Messenger
+6) Maria 
+7) Security API REST standards

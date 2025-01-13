@@ -89,11 +89,11 @@ display: table;
       <button onclick="gs.scrollToBottom('chatresponse')">Scroll to Bottom</button>
     <div id="chatresponse">
     <?php
-    $dialogue=$this->admin->fa("
+    $dialogue=$this->db->fa("
         SELECT actiongrp_chat.*, s1.name AS from_name, s2.name AS to_name
-        FROM actiongrp_chat
-        LEFT JOIN actiongrp AS s1 ON s1.id = actiongrp_chat.fromid
-        LEFT JOIN actiongrp AS s2 ON s2.id = actiongrp_chat.toid
+        FROM gen_admin.actiongrp_chat
+        LEFT JOIN gen_admin.actiongrp AS s1 ON s1.id = actiongrp_chat.fromid
+        LEFT JOIN gen_admin.actiongrp AS s2 ON s2.id = actiongrp_chat.toid
         order by id asc
     ");
     if(!empty($dialogue)){

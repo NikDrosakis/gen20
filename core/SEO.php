@@ -10,11 +10,11 @@ trait SEO {
     protected $langs;
 
 protected function seoPosts(){
-return $this->db->fa("SELECT post.title,post.subtitle,post.uri,post.excerpt,post.modified,tax.name as taxname from post left join tax on tax.id=post.taxid  WHERE post.status=2");
+return $this->db->fa("SELECT post.title,post.subtitle,post.uri,post.excerpt,post.modified,tax.name as taxname from {$this->publicdb}.post left join tax on tax.id=post.taxid  WHERE post.status=2");
 }
 
 protected function seoUsers(){
-return $this->db->fa("SELECT user.name,user.bio,user.modified,user.fullname,user.url from user");
+return $this->db->fa("SELECT user.name,user.bio,user.modified,user.fullname,user.url from {$this->publicdb}.user");
 }
 
 protected function buildMeta(){

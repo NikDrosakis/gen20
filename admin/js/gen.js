@@ -98,6 +98,7 @@ var gs= {
 
     return stylesMap;
 },
+    clipboard_copy : '<button onclick="navigator.clipboard.writeText(this.nextElementSibling.innerText || this.nextElementSibling.value)" class="glyphicon glyphicon-copy"></button>',
     date : function (format, timestamp) {
         var that = this;
         var jsdate, f;
@@ -962,7 +963,7 @@ actions = [
                 }
                 // Determine if response is HTML or JSON
                 const contentType = response.headers.get('Content-Type');
-                console.log(contentType);
+                console.log("contentType",contentType);
                 let result;
                 if (contentType && contentType.includes('application/json')) {
                     result = await response.json(); // Handle JSON response
@@ -993,6 +994,7 @@ actions = [
                 }
 
                 const result = await response.json();
+                console.log(typeof(result));
                 console.log(result);
                 return result;
             } catch (error) {
@@ -1031,8 +1033,72 @@ actions = [
             console.error("Error updating content:", error);
         }
     },
+    //TODO gen.js:977 Error updating content: SyntaxError: Unexpected token '✗', "✗  Action "... is not valid JSON
+    runAction: async function(name) {
+        try {
+            // Make the API request to runAction
+            const getResult = await gs.callapi.post('runAction', { key: name });
+            console.log(getResult);
 
-    /*
+            // Construct the content to append
+            let content = '';
+            let success = false; // Default to false
+
+            if (getResult && getResult.success) {
+                // Check if there is a nested data object
+                if (getResult.data && getResult.data.success) {
+                    success = true;
+                    content = `✔️ ${gs.clipboard_copy} Action "${name}" completed successfully.`;
+                    if (getResult.data.message) {
+                        content += ` Message: ${getResult.data.message}`;
+                    }
+                    if (getResult.data.data) {
+                        content += ` Data: ${JSON.stringify(getResult.data.data)}`;
+                    }
+                    console.log(`Action "${name}" completed successfully.`);
+                } else {
+                    content = `❌${gs.clipboard_copy} Action "${name}" failed: `;
+                    if (getResult.data && getResult.data.error) {
+                        content += getResult.data.error;
+                    } else if (getResult.error) {
+                        content += getResult.error;
+                    } else {
+                        content += "Unknown error";
+                    }
+                    console.error(`Action "${name}" failed:`, getResult.data && getResult.data.error ? getResult.data.error : getResult.error ? getResult.error : "Unknown error");
+                }
+            } else {
+                content = `❌${gs.clipboard_copy} Action "${name}" failed: `;
+                if (getResult && getResult.error) {
+                    content += getResult.error;
+                } else {
+                    content += "Unknown error";
+                }
+                console.error(`Action "${name}" failed:`, getResult && getResult.error ? getResult.error : "Unknown error");
+            }
+
+            // Get the target element by ID
+            const targetElement = document.getElementById(`runAction${name}`);
+            if (targetElement) {
+                // Append the content to the target element
+                targetElement.innerHTML += `${content}`;
+            } else {
+                console.warn(`Target element with ID 'runAction${name}' not found.`);
+            }
+            return success; // Return the success status
+        } catch (error) {
+            const content = `❌ Error running action "${name}": ${error.message}`;
+            console.error(`Error running action "${name}":`, error);
+            const targetElement = document.getElementById(`runAction${name}`);
+            if (targetElement) {
+                targetElement.innerHTML += `${content}`;
+            } else {
+                console.warn(`Target element with ID 'runAction${name}' not found.`);
+            }
+            return false; // Indicate failure
+        }
+    },
+        /*
     const newpage = form.generate(params,callback).attach(id);
     * */
     form :{
@@ -1103,8 +1169,7 @@ actions = [
                 // Check if the db exists and is valid
                 if (!!db) {
                     // Insert the new row into the database/table using gs.api
-                    const dbcalled= G.TEMPLATE==db ? 'maria' : db;
-                    const newRow = await gs.api[dbcalled].inse(tableName, params);  // Use tableName here
+                    const newRow = await gs.api[db].inse(field, params);  // Use tableName here
                     console.log(newRow);  // Log the result of the insert
                     // Find the table body and rows
                     if(newRow.success){

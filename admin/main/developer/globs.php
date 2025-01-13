@@ -1,7 +1,7 @@
 <button id="newGlobalBtn" class="button">+</button>
 <div id="newglobal"></div>
 
-<?php  $globlist=$this->admin->fl(array("tag","id"),"globs");  ?>
+<?php  $globlist=$this->db->fl(array("tag","id"),"gen_admin.globs");  ?>
 
 
 <div class="table-container">
@@ -22,7 +22,7 @@ foreach($globlist as $tag => $tagcount){ ?>
 </div>
 
 <?php foreach($globlist as $tag => $tagcount){
-$sel= $this->db->fa("SELECT * FROM globs WHERE tag=?",array($tag));
+$sel= $this->db->fa("SELECT * FROM {$this->publicdb}.globs WHERE tag=?",array($tag));
 ?>
 
 <div id="globs_<?=$tag?>"  class="gs-databox-inside" style="display:<?=isset($_COOKIE['globs_tab']) && $_COOKIE['globs_tab']==$tag ?'block':'none'?>">

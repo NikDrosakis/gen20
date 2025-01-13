@@ -7,7 +7,7 @@ router = APIRouter()
 class QueryRequest(BaseModel):
     querystring: str
     fun: str = "fa"
-    database: str = "vivalibro" # Add a field to specify the database
+    database: str = "gen_admin" # Add a field to specify the database
     params: Optional[Union[tuple, list]] = None
 
 

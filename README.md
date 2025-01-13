@@ -2425,7 +2425,7 @@ class Maria {
 
 	//setting table
 	public   function is(string $name): bool|string{
-		$fetch = $this->admin->f("SELECT val FROM globs WHERE name=?", array($name));
+		$fetch = $this->db->f("SELECT val FROM gen_admin.globs WHERE name=?", array($name));
 		if (!empty($fetch)) {
 			return urldecode($fetch['val']);
 		} else {
@@ -2946,3 +2946,14 @@ if __name__ == '__main__':
     )
 
 
+API Standards v0.60 for Kronos, Ermis, Mars, God
+1) Action.go, Actionplan.go 
+2) AI Training
+3) AI Gen
+4) WS Client connected (Ermis Server)
+5) Manifest (yaml) --> Messenger 
+6) Core Maria 
+7) REST API standards
+8) Microservices 
+9) ci/cd
+10) Gaia 

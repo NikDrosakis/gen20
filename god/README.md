@@ -1,13 +1,16 @@
 # GO > GEN20
-- Rust Operations
+- Go Operations
 
 ## v.1 September2024
-1) Rewritten from Apigo
-2) integration  core.Maria semi-functional but not effective
+1) API GIN from Apigo
+2) core.Maria integration API capabilities
 
 ## v.2 NOT FUNCTIONAL Maria October2024
-1) Serve as fast integrator 
-2) Core Maria , API capabilities
-3) Serve as modular integrator with APIs and AIs
+1) Testing Serve as fast integrator 
 
-## v.3 Serve microservices CI/CD implementation of Action
+## v.3 January2025  
+1) Action.go, Actionplan.go
+2) Training
+3) Ai Gen
+4) WS Client connected
+5) Manifest

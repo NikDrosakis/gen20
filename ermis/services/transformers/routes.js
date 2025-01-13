@@ -1,19 +1,28 @@
-const actiongrp = "botpress";
+const path = require('path');
 const express = require('express');
 // Middleware to parse JSON body
 const router = express.Router();
 const axios = require('axios');
 
+const actiongrp = "botpress";
 const BOTPRESS_API_URL = 'https://chat.botpress.cloud/api/v1/botpress'; // Adjust this to match your Botpress server URL
 const BOT_ID = '76eec27b-d95d-4c66-aa35-96b8babbbe72'; // Replace with your actual bot ID
 const webhookId = "dae518d0-b501-4b2b-92d1-895b460d25cb";
 
-let a=[];
+let a = [];
+
 a.push({
     name: "botpress_fetch_conversation",
     method: "GET",
     endpoint: '/messages/:conversationId',
-    actiongrp:actiongrp,
+    actiongrp: actiongrp,
+    params: JSON.stringify({
+        url: `${BOTPRESS_API_URL}/bots/${BOT_ID}/conversations/{conversationId}/messages`,
+        method: "GET",
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
 });
 router.get(a[0].endpoint, async (req, res) => {
     try {
@@ -35,7 +44,19 @@ a.push({
     name: "botpress_send_message",
     method: "POST",
     endpoint: "/send-message",
-    actiongrp:actiongrp,
+    actiongrp: actiongrp,
+    params: JSON.stringify({
+        url: `${BOTPRESS_API_URL}/bots/${BOT_ID}/conversations/{conversationId}/messages`,
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: {
+            userId: "string",
+            type: "string",
+            payload: {}
+        }
+    })
 });
 router.post(a[1].endpoint, async (req, res) => {
     try {
@@ -58,5 +79,6 @@ router.post(a[1].endpoint, async (req, res) => {
         });
     }
 });
+
 require('../../action').add(a);
 module.exports = router;

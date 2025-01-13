@@ -9,7 +9,7 @@
 <div id="new_postgrp_box"></div>
     <?php
     // Fetch slides from the database
-    $postgrps = $this->db->fa("SELECT * FROM postgrp");
+    $postgrps = $this->db->fa("SELECT * FROM {$this->publicdb}.postgrp");
     ?>
     <div class="table-container">
         <table id="postgrp_table" class="styled-table">
@@ -155,7 +155,7 @@
 
 	<tbody id="list1" class="group1">
 	<?php
-	   $posts = $this->db->fa("SELECT * FROM post");
+	   $posts = $this->db->fa("SELECT * FROM {$this->publicdb}.post");
 	$langprefix=$this->G['langprefix'];
 	foreach($posts as $vals){  ?>
 		<tr id="nodorder1_<?=$postid?>" style="cursor:move;">

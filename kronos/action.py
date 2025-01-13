@@ -211,7 +211,7 @@ async def action_loop():
             SELECT actiongrp.keys, actiongrp.name as grpName, actiongrp.base, action.*
             FROM action
             LEFT JOIN actiongrp ON actiongrp.id = action.actiongrpid
-            WHERE action.systemsid in (0,3)
+            WHERE action.systemsid in (0,7)
             ORDER BY action.sort;
             """
         )
@@ -623,45 +623,28 @@ async def upsert_action(action_grp_data: ActionGrpData, action_data: ActionData)
         print(f"Error adding action: {error}")
         return None
 
-# FastAPI Endpoints
-@app.get("/action/{name}", response_model=ActionResponse)
-async def get_action(name: str):
-    return await run_action(name)
+async def add(routes):
+    """
+    Asynchronously adds or updates actions in the database.
 
-@app.post("/action", response_model=Optional[dict])
-async def create_action(action_grp_data: ActionGrpData, action_data: ActionData):
-    return await upsert_action(action_grp_data, action_data)
+    Args:
+        routes (list): A list of action dictionaries.
+    """
+    for route in routes:
+        try:
+            route["systemsid"] = 7
+            route["type"] = 'apint'
+            folder_name = route["actiongrp"]
+            print('what is the folder', folder_name)
+            del route["actiongrp"]
+            route["actiongrpid"] = await mariadmin.upsert("actiongrp", {"name": folder_name})
 
-@app.get("/loop")
-async def run_loop():
-    asyncio.create_task(action_loop())
-    return {"message": "Action loop started"}
+            # Insert into action
+            insert_action = await mariadmin.upsert("action", route)
 
-@app.get("/status_counts", response_model=StatusCounts)
-async def get_status_counts():
-    return await get_action_status_counts()
+            if not insert_action:
+                raise Exception('Error inserting action')
 
-@app.get("/health")
-async def health_check():
-    return {"status": "ok"}
-
-@app.get("/ping")
-async def ping_check():
-    return {"status": "pong"}
-
-# Main function to start the loop
-async def main():
-    while True:
-        await action_loop()
-        actions = await db_query(
-            """
-            SELECT actiongrp.keys, actiongrp.name as grpName, actiongrp.base, action.*
-            FROM action
-            LEFT JOIN actiongrp ON actiongrp.id = action.actiongrpid
-            WHERE action.systemsid in (0,3)
-            ORDER BY action.sort;
-            """
-        )
-        interval = get_next_interval_time(actions)
-        await asyncio.sleep(interval)
-
+            print(f"Action added/updated to {folder_name} with ID {insert_action}")
+        except Exception as error:
+            print(f"Error adding action: {error}")

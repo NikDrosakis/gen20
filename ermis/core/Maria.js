@@ -104,29 +104,35 @@ class Maria {
             delete params.name; // Remove 'name' for update/insert fields
 
             // Check if the record exists
-            const checkSql = `SELECT COUNT(*) AS count FROM ?? WHERE name = ?`;
+            const checkSql = `SELECT id FROM ?? WHERE name = ?`;
             const [checkResult] = await this.pool.query(checkSql, [table, name]);
-            const exists = checkResult[0].count > 0;
+            const exists = checkResult.length > 0;
 
             if (exists) {
+                // If params has only 'name', return the existing record's ID
+                if (Object.keys(params).length === 0) {
+                    return checkResult[0].id; // Return the existing record ID
+                }
+
                 // Prepare and execute the UPDATE statement
                 const updateColumns = Object.keys(params).map(key => `${key} = ?`).join(', ');
                 const updateSql = `UPDATE ?? SET ${updateColumns} WHERE name = ?`;
                 await this.pool.query(updateSql, [...Object.values(params), table, name]);
-                return true; // Indicate successful update
+                return checkResult[0].id; // Return the record ID after update
             } else {
                 // Prepare and execute the INSERT statement
                 const insertColumns = Object.keys(params).join(', ');
                 const placeholders = Object.values(params).map(() => '?').join(', ');
                 const insertSql = `INSERT INTO ?? (name, ${insertColumns}) VALUES (?, ${placeholders})`;
                 const [insertResult] = await this.pool.query(insertSql, [table, name, ...Object.values(params)]);
-                return insertResult.insertId || true; // Return the insert ID or true
+                return insertResult.insertId; // Return the new insert ID
             }
         } catch (err) {
             console.error(`Error in upsert: ${err.message}`);
             return false;
         }
     }
+
 
 
     // Fetch column comments for a table, or a specific column

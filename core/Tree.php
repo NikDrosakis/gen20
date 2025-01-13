@@ -146,7 +146,7 @@ protected function listMariaTables($tableName): array {
     // Fetch tables from the specified database
     $table = is_array($tableName) ? $tableName['table'] : $tableName;
     $this->connectTree();
-//xecho($this->dbForm);
+//xecho($this->db);
 //xecho($params);
 //die();
     $database = $this->getDB($table);

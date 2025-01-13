@@ -1,84 +1,83 @@
 const express = require('express');
-/**
- * @type {express.Router}
- * Express router object
- */
 const router = express.Router();
 const timetable = require('./timetable');
+const actiongrp = "timetable"; // Define the action group
+let a = [];
 
-/**
- * GET route to retrieve timetable data.
- * @name get/
- * @route {GET} /
- * @params {}
- */
+// 1. Get Timetable
+a.push({
+    actiongrp: actiongrp,
+    name: "timetable_get",
+    description: "Retrieves the timetable data",
+    meta: "GET,/",
+    params: JSON.stringify({
+        url: "/",
+        method: "GET",
+    })
+});
 router.get('/', (req, res) => {
     timetable({ type: 'get' }).get((result) => {
         res.json(result);
     });
 });
 
-/**
- * POST route to create or update timetable data.
- * @name post/
- * @route {POST} /
- * @params {
- "body": {
- "type": "object",
- "description": "The object with data to use for updating/creating records",
- "in": "body",
- "required": false
- }
- }
- */
+// 2. Create Timetable Entry
+a.push({
+    actiongrp: actiongrp,
+    name: "timetable_create",
+    description: "Creates a new timetable entry",
+    meta: "POST,/",
+    params: JSON.stringify({
+        url: "/",
+        method: "POST",
+        body: {
+            // Define your expected body parameters
+        }
+    })
+});
 router.post('/', (req, res) => {
     timetable({ type: 'post', body: req.body }).post((result) => {
         res.json(result);
     });
 });
 
-/**
- * PUT route to update timetable data by ID.
- * @name put/:id
- * @route {PUT} /:id
- *  @params {
- "id": {
- "type": "string",
- "description": "ID of record to be updated",
- "in": "path",
- "required": true
- },
- "body": {
- "type": "object",
- "description": "Object with data to update record",
- "in": "body",
- "required": false
- }
- }
- */
+
+// 3. Update Timetable Entry
+a.push({
+    actiongrp: actiongrp,
+    name: "timetable_update",
+    description: "Updates an existing timetable entry by ID",
+    meta: "PUT,/:id",
+    params: JSON.stringify({
+        url: "/{id}",
+        method: "PUT",
+        body: {
+            // Define your expected body parameters
+        }
+    })
+});
 router.put('/:id', (req, res) => {
     timetable({ type: 'put', body: req.body, id: req.params.id }).put((result) => {
         res.json(result);
     });
 });
 
-/**
- * DELETE route to delete timetable data by ID.
- * @name delete/:id
- * @route {DELETE} /:id
- *  @params {
- "id": {
- "type": "string",
- "description": "ID of the record to delete",
- "in": "path",
- "required": true
- }
- }
- */
+// 4. Delete Timetable Entry
+a.push({
+    actiongrp: actiongrp,
+    name: "timetable_delete",
+    description: "Deletes a timetable entry by ID",
+    meta: "DELETE,/:id",
+    params: JSON.stringify({
+        url: "/{id}",
+        method: "DELETE",
+    })
+});
 router.delete('/:id', (req, res) => {
     timetable({ type: 'delete', id: req.params.id }).delete((result) => {
         res.json(result);
     });
 });
 
+require('../../action').add(a);
 module.exports = router;

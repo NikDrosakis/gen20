@@ -1,3 +1,15 @@
+from fastapi import FastAPI, HTTPException, Depends
+from pydantic import BaseModel
+import core.Maria as maria
+import action as action
+
+app = FastAPI()
+
+# Dependency Injection for MariaDB
+def get_mariadmin():
+    # Your MariaDB configuration logic here
+    return maria.Maria(config)
+
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Load Bloom model and tokenizer

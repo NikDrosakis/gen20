@@ -19,7 +19,7 @@ if (json_last_error() !== JSON_ERROR_NONE) {
     $fullname = $post['name'] ?? null;
     $img =   $post['picture'] ?? false;
     // check if user exist else insert user
-    $user_exist=$this->db->f("SELECT id FROM user where email=? and name=?",[$email,$name]);
+    $user_exist=$this->db->f("SELECT id FROM {$this->publicdb}.user where email=? and name=?",[$email,$name]);
     if(empty($user_exist)){
     $uid=$this->db->inse("user",["email"=>$mail,"name"=>$name,"fullname"=>$fullname,"img"=>$img]);
     }else{

@@ -36,7 +36,7 @@ if ($this->isXHRRequest()) {
         // VL-specific normal request handling:
         if ($_SERVER['SYSTEM'] == 'admin') {
 
-            $this->adminDomWrap();
+            $this->dbDomWrap();
         }
 	  //else{
          //   $this->publicUI_router();

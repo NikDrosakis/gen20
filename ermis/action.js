@@ -19,14 +19,13 @@ Executes each action using executeAction.
 Updates action status and tracks execution results.
 
 executeAction(rec):
-Based on rec.type, calls specific logic for route, int_resource, ext_resource, generate (or ai), N, and fs.
+Based on rec.type, calls specific logic for route, int_resource, apext, generate (or ai), N, and fs.
 buildRoute(rec):
 Loads route files.
 Performs health checks on the route.
 
 buildAI(rec):
 Builds the ai api endpoint based on settings.
-renderKeys(rawurl, rec):
 Renders keys to url parameters based on config.
 
 runExternalRecource(rec):
@@ -69,9 +68,10 @@ const ACTION_STATUS = {
 async function runAction(name) {
     try {
         const record = await mariadmin.f(`
-            SELECT actiongrp.keys, actiongrp.name as grpName, actiongrp.base, action.*
+            SELECT actiongrp.keys, actiongrp.name as grpName, actiongrp.base,systems.apiprefix, action.*
             FROM action
-            LEFT JOIN actiongrp ON actiongrp.id = action.actiongrpid
+            LEFT JOIN gen_admin.actiongrp ON actiongrp.id = action.actiongrpid
+            LEFT JOIN gen_admin.systems ON systems.id = action.systemsid
             WHERE action.name='${name}'
         `);
         if (!record) {
@@ -120,9 +120,10 @@ async function actionLoop() {
         console.table(preLoopCounts);
         // Fetch only actions that need processing
         const actions = await mariadmin.fa(`
-            SELECT actiongrp.keys, actiongrp.name as grpName, actiongrp.base, action.*
-            FROM action
-            LEFT JOIN actiongrp ON actiongrp.id = action.actiongrpid
+            SELECT actiongrp.keys, actiongrp.name as grpName, actiongrp.base, systems.apiprefix,action.*
+            FROM gen_admin.action
+            LEFT JOIN gen_admin.actiongrp ON actiongrp.id = action.actiongrpid
+            LEFT JOIN gen_admin.systems ON systems.id = action.systemsid
             WHERE action.systemsid in (0,3) 
             ORDER BY action.sort;
         `);
@@ -209,12 +210,9 @@ function getNextIntervalTime(actions){
 async function executeAction(rec) {
     try {
         switch (rec.type) {
-            case 'route':
-                await buildRoute(rec);
-                return true;
-            case 'int_resource':
+            case 'apint':
                 return await runInternalRecource(rec);
-            case 'ext_resource':
+            case 'apext':
                 return await runExternalRecource(rec);
             case 'generate':
             case 'ai':
@@ -236,13 +234,14 @@ async function executeAction(rec) {
 async function updateEndpointParams(endpoint, params, name) {
     try {
         const stringifiedParams = JSON.stringify(params);
-        await mariadmin.q("UPDATE action SET params=?, endpoint=? WHERE actiongrp.name=?", [
+        await mariadmin.q("UPDATE action SET params=?, method=?,endpoint=? WHERE actiongrp.name=?", [
             stringifiedParams,
+            method,
             endpoint,
             name,
         ]);
         process.stdout.write(
-            `✓ Updated action table with: params = ${stringifiedParams}, endpoint = ${endpoint} \n`
+            `✓ Updated action table with: params = ${stringifiedParams}, ${method} ${endpoint} \n`
         );
     } catch (e) {
         console.error("Error while reading, parsing file or updating db:", e);
@@ -251,7 +250,7 @@ async function updateEndpointParams(endpoint, params, name) {
 
 async function updateStatus(rec, newstatus, log = '', exeTime = 0) {
     await mariadmin.q(
-        "UPDATE action SET status = ?, log = ?, updated = CURRENT_TIMESTAMP, exe_time = ? WHERE id = ?",
+        "UPDATE gen_admin.action SET status = ?, log = ?, updated = CURRENT_TIMESTAMP, exe_time = ? WHERE id = ?",
         [newstatus, log, exeTime, rec.id]
     )
         .then(() => process.stdout.write(`💾 Action ${rec.id} set to status ${newstatus}`))
@@ -280,7 +279,11 @@ function parseJsdoc(comment) {
     }
     return params;
 }
-function scanRoutes(router, prefix = '') {
+
+/**
+ Update action
+ */
+function scanRoutes(rec,router, prefix = '') {
     const mappings = [];
     if (router && router) {
 
@@ -354,8 +357,9 @@ async function buildRoute(rec) {
                // const healthCheckResult = await checkRouteHealth(rec);
 
                 //update with fswatch
-                const routeMappings = await scanRoutes(routes, `/ermis/v1/${rec.grpName}`);
-                return !!routeMappings;
+               // const routeMappings = await scanRoutes(rec,routes, `${rec.apiprefix}/${rec.grpName}`);
+           //    console.info(routeMappings);
+                //return !!routeMappings;
             } else {
                 process.stdout.write(`✗  Error: No valid router exported from ${routerPath}`);
                 return false;
@@ -372,14 +376,9 @@ async function buildRoute(rec) {
 }
 async function buildAI(rec) {
     try {
-        // Parse the AI endpoint and method from `rec.endpoint`
-        const [method, rawurl] = rec.endpoint.split(',');
-
-        // Replace variables in the URL using `renderKeys`
-        const url = await renderKeys(rawurl, rec);
-
+        const url= process.env.URI+rec.apiprefix+rec.endpoint;
         // Example: Only support POST method for AI operations
-        if (method === 'POST') {
+        if (rec.method === 'POST') {
             process.stdout.write(`--> Processing AI POST request to: ${url}`);
 
             try {
@@ -412,29 +411,6 @@ async function buildAI(rec) {
     } catch (err) {
         process.stdout.write(`✗  Error building AI route:`, err.message);
         return false;
-    }
-}
-
-//check this endpoint: UNSPLASH_API_KEY=zUylrbwfwdI2Q9NiSV85oZZcF8oc6CIAJWEwC5sR91Y
-async function renderKeys(rawurl, rec) {
-    const keyValuePairs = rec.keys.split(',').reduce((acc, pair) => {
-        const [key, value] = pair.split('=');
-        if (key && value) {
-            acc[key] = value;
-        }
-        return acc;
-    }, {});
-    try{
-        const url = new URL(rawurl);
-        for (const [key, value] of url.searchParams.entries()) {
-            if (value.startsWith('{') && value.endsWith('}')) {
-                const varName = value.slice(1, -1);
-                url.searchParams.set(key, keyValuePairs.hasOwnProperty(varName) ? keyValuePairs[varName] : value)
-            }
-        }
-        return url.toString();
-    } catch(e){
-        console.error(`✗  Error in render keys`,e.message,rawrul,rec);
     }
 }
 
@@ -487,23 +463,20 @@ async function renderKeys(text, data) {
  */
 async function runExternalRecource(rec) {
     try {
-        // Parse the method and URL
-        const [method, rawurl] = rec.endpoint.split(',');
-
         // Replace variables in the URL using renderKeys function
-        const url = await renderKeys(rawurl, rec);
+        const url= process.env.URI+rec.apiprefix+rec.endpoint;
 
         let data = null;
         let response = null;
 
-        if (method === 'GET' || method === 'POST') {
-            process.stdout.write(`--> Processing ${method} request to: ${url} \n`);
+        if (rec.method === 'GET' || rec.method === 'POST') {
+            process.stdout.write(`--> Processing ${rec.method} request to: ${url} \n`);
             try {
                 let options = {
-                    method: method
+                    method: rec.method
                 }
 
-                if(method === 'POST') {
+                if(rec.method === 'POST') {
                     const bodyData = await renderKeys(JSON.stringify(rec.body || {}), rec);
                     options = {
                         ...options,
@@ -512,7 +485,6 @@ async function runExternalRecource(rec) {
                         },
                         body: bodyData
                     }
-
                     process.stdout.write(`--> POST body: ${bodyData} \n`);
                 }
                 // Make the fetch request
@@ -551,6 +523,8 @@ async function runExternalRecource(rec) {
  * @throws {Error} If any error occurs during the process of serving.
  */
 async function runInternalRecource(rec, app) {
+    //route
+        await buildRoute(rec);
     // Check for requires first
     if (rec.requires) {
         try {
@@ -558,24 +532,23 @@ async function runInternalRecource(rec, app) {
             if(typeof requiredModule === 'function'){
                 await requiredModule(app);
             }else{
-                console.error(`Error loading required module ${rec.requires}: Module is not a function`);
+                process.stdout.write(`Error loading required module ${rec.requires}: Module is not a function`);
                 return false;
             }
         } catch (requireError) {
-            console.error(`Error loading required module ${rec.requires}:`, requireError);
+            process.stdout.write(`Error loading required module ${rec.requires}:`, requireError);
             return false;
-        }
+             }
     }
+    const path= process.env.URI+rec.apiprefix+rec.endpoint;
     try {
         // Parse the method and URL
-        const [method, path] = rec.endpoint.split(',');
-
-        if(method !== 'GET'){
-            console.trace(`✗  Unsupported HTTP method: ${method}`);
+        if(rec.method !== 'GET' && rec.method !== 'POST'){
+            process.stdout.write(`✗  Unsupported HTTP method: ${method}`);
             return false;
         }
         if(!path){
-            console.trace(`✗  Path not defined ${path}`);
+            process.stdout.write(`✗  Path not defined ${path}`);
             return false;
         }
         process.stdout.write(`--> Processing internal GET request to: ${path}`);
@@ -583,7 +556,7 @@ async function runInternalRecource(rec, app) {
         if(app){
             app.get(path, (req, res) => {
                 // Your logic to handle the internal resource
-                const file = `./services/${rec.grpName}/docs/index.html`
+                const file = `./services/${rec.grpName}/index.html`
                 if(fs.existsSync(file)){
                     const params = getResourcesParams(res);
                     rec.action = {
@@ -605,11 +578,11 @@ async function runInternalRecource(rec, app) {
             process.stdout.write(`✓ ${rec.name} served from internal endpoint \n`);
             return true;
         }else{
-            console.trace(`✗  App is undefined `);
+            console.log(`✗  App is undefined `);
             return false;
         }
     } catch (err) {
-        console.trace(`✗  Building API route:`, err.message);
+        console.log(`✗  Building API route ${path}:`, err.message);
         return false;
     }
 }
@@ -640,42 +613,30 @@ async function buildN(rec) {
 }
 
 //add action
-async function upsertAction(actionGrpData, actionData) {
-    try {
-        const {name, description, base} = actionGrpData;
-        // Insert into actiongrp
-        const insertActionGrpResult = await mariadmin.inse("actiongrp", {
-            name: name,
-            description: description,
-            base: base,
-            meta:meta
-        });
+async function add(routes) {
 
-        if(!insertActionGrpResult){
-            throw new Error('Error inserting actiongrp');
+    for (const route of routes) {
+        try {
+            route.systemsid = 3;
+            route.type = 'apint';
+            const folderName= route.actiongrp;
+            console.log('what is the folder',folderName)
+            delete route.actiongrp;
+            route.actiongrpid = await mariadmin.upsert("actiongrp", { name: folderName });
+
+            // Insert into actiongrp
+            const insertAction = await mariadmin.upsert("action", route);
+
+            if (!insertAction) {
+                throw new Error('Error inserting actiongrp');
+            }
+            console.info(`Action added/updated to ${fodername} with ID ${insertAction}`)
+        } catch (error) {
+            console.error('Error adding action:', error.message);
         }
-
-        // Insert into action, the new actiongrpid
-        const insertAction = await mariadmin.inse("action", {
-            name: actionData.name,
-            systemsid: actionData.systemsid || 3, // default value
-            actiongrpid: insertActionGrpResult.insertId,
-            endpoint: actionData.endpoint
-        });
-
-        if(!insertAction) {
-            throw new Error('Error inserting action')
-        }
-        return {
-            actiongrpid: insertActionGrpResult.insertId,
-            actionid: insertAction.insertId
-        };
-    } catch (error) {
-        console.error('Error adding action:', error.message);
-        return false;
     }
 }
 //fswatch();
 //start main loop
 
-module.exports = { actionLoop,runAction,updateEndpointParams };
+module.exports = { actionLoop,runAction,updateEndpointParams,add };
