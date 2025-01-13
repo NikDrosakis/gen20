@@ -117,7 +117,12 @@ protected function adminDomWrap() {
 
       //1channel grid-template-columns:2fr 1fr 1fr;grid-template-rows:1fr;
       //2 right thin channels grid-template-columns:2fr 1fr 1fr;grid-template-rows:1fr;
+       if($this->G['sub']!=''){
+        echo '<div id="mainpage2">';
+
+       }else{
         echo '<div id="mainpage" style="grid-template-columns:'.$columns.';grid-template-rows:'.$rows.';">';
+        }
         //echo '<div id="'.$mainpageName.'">';
 
         //mainpage dom php file in channels default ONE
@@ -182,19 +187,18 @@ protected function produce6channel($name,$ch,$page,$type,$table){
         $html .= $this->buildTable($table);
         $html .= '<script>gs.ui.sort(`UPDATE '.$table.' SET sort=? WHERE id = ?`, "list", "'.$table.'");</script>';
    }else{
-        switch($type){
-                case "compos" : $chanfile = ADMIN_ROOT."compos/".$name.".php" ; break;
-                case "cubos" : $chanfile = CUBO_ROOT.$name."/public.php" ; break;
-                default:   $chanfile = ADMIN_ROOT."main/".$page."/".$name.".php" ; break;
-        }
-
-        if (file_exists($chanfile)){
-        $buffer = $this->include_buffer($chanfile);
-        if($buffer!=''){
-          $html .= $buffer;
-        }}else{
-          $html .= $this->emptyChannelImg;
-        }
+    switch($type){
+            case "compos" : $chanfile = ADMIN_ROOT."compos/".$name.".php" ; break;
+            case "cubos" : $chanfile = CUBO_ROOT.$name."/public.php" ; break;
+            default:   $chanfile = ADMIN_ROOT."main/".$page."/".$name.".php" ; break;
+    }
+    if (file_exists($chanfile)){
+    $buffer = $this->include_buffer($chanfile);
+    if($buffer!=''){
+      $html .= $buffer;
+    }}else{
+      $html .= $this->emptyChannelImg;
+    }
   }
   $html .='</div>';
       return $html;
@@ -207,7 +211,8 @@ protected function produce6channel($name,$ch,$page,$type,$table){
  protected function channelRenderFile($file,$ch=1){
   $Position=['1'=>'top-left','2'=>'top-right','3'=>'top-center','4'=>'bottom-center','5'=>'bottom-left','6'=>'bottom-right'];
      $html='';
-     $html .='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'" class="channel '.$Position[$ch].'">';
+     //$html .='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'" class="channel '.$Position[$ch].'">';
+     $html .='<div title="CHANNEL '.$ch.'">';
 
         $html .= $this->channelCheck($file);
      $html .='</div>';
@@ -291,14 +296,15 @@ if($this->sub==''){
       $ch = strval($channel+1);
       //get parent page of sub
 
-      $page = $content['has_maria']!=null
-      ? $this->G['subparent'][explode('.',$content['has_maria'])[1]]
+      $page = $content['has_maria']
+      ? $this->G['subparent'][$content['has_maria']]
       : $this->G['subparent'][$name];
       //include _edit page
       //or normal main php file
       //$mp['mainfile'.$ch]= $this->ADMIN_ROOT . "main/" . $this->page . "/" . $this->page . ".php";
       $html .= $this->produce6channel($name,$ch,$page,$content['type'],$table);
       }
+  
       return $html;
 
 //SUB PAGE - DEFAULT 1 CHANNEL subpage + DOC + NOTIFICATION
@@ -312,7 +318,7 @@ if($this->sub==''){
    //   $html .= $this->channelRenderFile($this->notification_file,3);
            //channel doc
 
-      $html .= $this->channelRenderDoc($name);
+      //$html .= $this->channelRenderDoc($name);
 
       return $html;
     }

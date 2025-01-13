@@ -8,32 +8,33 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/gorilla/websocket"
-	"god/services/claude"
-//	"god/services/googleal" // Correct import path
+	"github.com/NikDrosakis/gen20/god/services/claude"
+	"github.com/NikDrosakis/gen20/god/services/mermaid"
+	"github.com/NikDrosakis/gen20/god/core/maria"
+	"github.com/NikDrosakis/gen20/god/core/redis"
+	"github.com/NikDrosakis/gen20/god/core/action"
+	"github.com/NikDrosakis/gen20/god/core/ws"
+
 )
 
 func main() {
 	// Load environment variables
 	godotenv.Load()
 
+	// Initialize action loop
+	go action.ActionLoop()
+
 	// Get API keys from environment variables
-//googleAPIKey := os.Getenv("GOOGLEAI_APIKEY")
 	claudeAPIKey := os.Getenv("CLAUDE_APIKEY")
 
 	// Initialize Gin router
 	router := gin.Default()
 
-	// Initialize Google AI client
-	//googleClient, err := stream.NewClient(googleAPIKey)
-	//if err != nil {
-//		log.Fatalf("Failed to create Google AI client: %v", err)
-///	}
+	// Register the Mermaid routes
+	mermaid.RegisterRoutes(router)
 
 	// Initialize Claude client
 	claudeClient := claude.NewClient(claudeAPIKey)
-
-	// Set up routes for Google AI
-	//router = googleal.SetupRouter(router)
 
 	// Set up routes for Claude
 	router = claudeClient.SetupRouter(router)

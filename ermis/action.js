@@ -124,7 +124,7 @@ async function actionLoop() {
             FROM gen_admin.action
             LEFT JOIN gen_admin.actiongrp ON actiongrp.id = action.actiongrpid
             LEFT JOIN gen_admin.systems ON systems.id = action.systemsid
-            WHERE action.systemsid in (0,3) 
+            WHERE action.systemsid in (0,3) AND action.status > 3
             ORDER BY action.sort;
         `);
         if (!actions || actions.length === 0) {
