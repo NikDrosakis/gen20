@@ -9,7 +9,7 @@ class Gredis extends Redis {
             parent::__construct();
             parent::pconnect('0.0.0.0', 6379);
             parent::auth("yjF1f7uiHttcp" ?? '');
-            parent::select($database ?? 0);
+            parent::select($database ?? 1);
             }
         }
          public function set(string $key, mixed $fetch, mixed $options = null): Redis|string|bool{

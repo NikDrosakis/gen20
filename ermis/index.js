@@ -51,8 +51,8 @@ action.actionLoop();
 const server = https.createServer(credentials, app);
 
 //RUN Ermis WebSocket
-//const { WServer } = require('./ws');
-//WServer(server);
+const { WServer } = require('./ws');
+WServer(server);
 
 const PORT = process.env.ERMIS_PORT || 3010;
 server.listen(PORT, function () {

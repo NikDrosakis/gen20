@@ -3,38 +3,25 @@ package core
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	_ "github.com/go-sql-driver/mysql"
 )
 
-type Maria struct {
+type Mari struct {
 	db *sql.DB
 }
 
 // Initialize database connection
-func NewMaria(dsn string) (*Maria, error) {
+func NewMari(dsn string) (*Mari, error) {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, err
 	}
-	return &Maria{db: db}, nil
+	return &Mari{db: db}, nil
 }
 
-// Check if a specific entry exists
-func (m *Maria) Is(name string) (string, error) {
-	var en string
-	err := m.admin.QueryRow("SELECT val FROM gen_admin.globs WHERE name = ?", name).Scan(&en)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return "", nil
-		}
-		return "", err
-	}
-	return en, nil
-}
 
 // Insert function with optional ID
-func (m *Maria) Inse(table string, params map[string]interface{}, id *int64) (int64, error) {
+func (m *Mari) Inse(table string, params map[string]interface{}, id *int64) (int64, error) {
 	columns := ""
 	values := ""
 	valArgs := []interface{}{}
@@ -67,12 +54,22 @@ func (m *Maria) Inse(table string, params map[string]interface{}, id *int64) (in
 }
 
 // Fetch single row result
-func (m *Maria) F(query string, params ...interface{}) (map[string]interface{}, error) {
-	row := m.db.QueryRow(query, params...)
-	columns, err := row.Columns()
+// Fetch single row result
+func (m *Mari) F(query string, params ...interface{}) (map[string]interface{}, error) {
+	rows, err := m.db.Query(query, params...)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
+
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+
+    if !rows.Next() {
+        return nil, sql.ErrNoRows
+    }
 
 	values := make([]interface{}, len(columns))
 	valuePtrs := make([]interface{}, len(columns))
@@ -81,7 +78,7 @@ func (m *Maria) F(query string, params ...interface{}) (map[string]interface{}, 
 		valuePtrs[i] = &values[i]
 	}
 
-	err = row.Scan(valuePtrs...)
+	err = rows.Scan(valuePtrs...)
 	if err != nil {
 		return nil, err
 	}
@@ -93,9 +90,8 @@ func (m *Maria) F(query string, params ...interface{}) (map[string]interface{}, 
 
 	return result, nil
 }
-
 // Fetch multiple rows
-func (m *Maria) Fa(query string, params ...interface{}) ([]map[string]interface{}, error) {
+func (m *Mari) Fa(query string, params ...interface{}) ([]map[string]interface{}, error) {
 	rows, err := m.db.Query(query, params...)
 	if err != nil {
 		return nil, err
@@ -132,7 +128,7 @@ func (m *Maria) Fa(query string, params ...interface{}) ([]map[string]interface{
 }
 
 // Query method for INSERT, UPDATE, DELETE
-func (m *Maria) Q(query string, params ...interface{}) (bool, error) {
+func (m *Mari) Q(query string, params ...interface{}) (bool, error) {
 	_, err := m.db.Exec(query, params...)
 	if err != nil {
 		return false, err
@@ -141,7 +137,7 @@ func (m *Maria) Q(query string, params ...interface{}) (bool, error) {
 }
 
 // Fetch table columns
-func (m *Maria) Columns(table string) ([]string, error) {
+func (m *Mari) Columns(table string) ([]string, error) {
 	rows, err := m.db.Query("DESCRIBE " + table)
 	if err != nil {
 		return nil, err
@@ -163,7 +159,7 @@ func (m *Maria) Columns(table string) ([]string, error) {
 }
 
 // Count function
-func (m *Maria) Count(rowt, table, clause string, params ...interface{}) (int, error) {
+func (m *Mari) Count(rowt, table, clause string, params ...interface{}) (int, error) {
 	var count int
 	query := fmt.Sprintf("SELECT COUNT(%s) FROM %s %s", rowt, table, clause)
 	err := m.db.QueryRow(query, params...).Scan(&count)
@@ -174,7 +170,7 @@ func (m *Maria) Count(rowt, table, clause string, params ...interface{}) (int, e
 }
 
 // Fetch key-value pairs
-func (m *Maria) FPairs(row1, row2, table, clause string) (map[string]string, error) {
+func (m *Mari) FPairs(row1, row2, table, clause string) (map[string]string, error) {
 	rows, err := m.db.Query(fmt.Sprintf("SELECT %s, %s FROM %s %s", row1, row2, table, clause))
 	if err != nil {
 		return nil, err
