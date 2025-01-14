@@ -7,7 +7,7 @@ Actions: This section lists specific actions that the system can perform, such a
 Configuration: This provides database or system configuration options that are required to run the project.
 
 
-#v1 - Integration Level jan25 
+#v1 - Integration Level jan25
 - Input cli level
 - Parse yaml file
 - core.Maria > maria connector CRUD & INDEX AND MANAGE THE WHOLE SCHEMA
@@ -17,12 +17,15 @@ Configuration: This provides database or system configuration options that are r
 -  MICROSERVICES perform better in terms of processing efficiency and speed, especially for computational tasks
 - AI pretrained Have binding at TensorFlow, Bert, Onnx to train models
 - CLI chat with generatives or irc channel through liburl
-- version.cpp to replace ver.sh 
+- version.cpp to replace ver.sh
 
+1) Maria
+2) Manifest YAML
+3) WS Client connected
+4) Redis read the keys 
 
-1) Action.go, Actionplan.go
-2) Training
-3) Ai Gen
-4) WS Client connected
-5) Manifest
-6) Maria 
+5) Action.go, Actionplan.go
+6) Training
+7) Ai Gen
+ 
+
