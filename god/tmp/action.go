@@ -49,7 +49,6 @@ import (
 	"sync"
 	"time"
 	"github.com/joho/godotenv"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 )
 
@@ -67,6 +66,7 @@ const (
 	STABLE               = 9
 	STABLE_DEPENDS_OTHERS = 10
 )
+
 
 // Global Variables
 var (
@@ -543,8 +543,8 @@ func (s *AppState) parseJsdoc(comment string) map[string]interface{} {
 	re := regexp.MustCompile(`@params\s+({[\s\S]*?})`)
 	match := re.FindStringSubmatch(comment)
 	if len(match) > 1 {
-		var params map[string]interface{}
-		err := json.Unmarshal([]byte(match[1]), ¶ms)
+		var params map[string]interface{}  // Use 'params' as the unmarshaling target
+		err := json.Unmarshal([]byte(match[1]), &params)  // Fix: unmarshal into 'params'
 		if err != nil {
 			log.Printf("Invalid JSON after @params tag: %s\n", match[1])
 			return map[string]interface{}{}
@@ -769,3 +769,44 @@ func (s *AppState) buildAI(rec map[string]interface{}) (bool, error) {
 		payload, ok := rec["payload"].(string)
 		if !ok {
 			payload = "{}"
+		}
+		var payloadData map[string]interface{}
+		err = json.Unmarshal([]byte(payload), &payloadData)
+		if err != nil {
+			return false, fmt.Errorf("build ai json unmarshal error: %w", err)
+		}
+
+		reqBody, err := json.Marshal(payloadData)
+		if err != nil {
+			return false, fmt.Errorf("build ai json marshal error: %w", err)
+		}
+
+		req, err := http.NewRequest("POST", url, strings.NewReader(string(reqBody)))
+		if err != nil {
+			return false, fmt.Errorf("build ai new request error: %w", err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := s.httpClient.Do(req)
+		if err != nil {
+			return false, fmt.Errorf("build ai client do error: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			body, _ := io.ReadAll(resp.Body)
+			return false, fmt.Errorf("build ai http error! status: %d %s", resp.StatusCode, string(body))
+		}
+
+		var data map[string]interface{}
+		err = json.NewDecoder(resp.Body).Decode(&data)
+		if err != nil {
+			return false, fmt.Errorf("build ai json decode error: %w", err)
+		}
+		log.Printf("%s AI responded with data: %v\n", rec["name"], data)
+		return true, nil
+	} else {
+		log.Printf("✗  Unsupported HTTP method for AI: %s\n", method)
+		return false, nil
+	}
+}

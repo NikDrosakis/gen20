@@ -9,8 +9,12 @@
 1) Testing Serve as fast integrator 
 
 ## v.3 January2025  
-1) Action.go, Actionplan.go
-2) Training
-3) Ai Gen
-4) WS Client connected
-5) Manifest
+1) WS Client updated communicating with other systems
+2) Redis Connected 
+
+## TODO
+3) Debug /tmp/Action.go, update Actionplan.go
+4) AI Chatting, Generating, Training
+5) Ai Gen
+6) Manifest YAML
+7) Go mermaid for diagrams 

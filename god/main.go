@@ -4,25 +4,32 @@ import (
 	"fmt"
 	"log"
 	"os"
-
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/gorilla/websocket"
-	"github.com/NikDrosakis/gen20/god/services/claude"
-	"github.com/NikDrosakis/gen20/god/services/mermaid"
-	"github.com/NikDrosakis/gen20/god/core/maria"
-	"github.com/NikDrosakis/gen20/god/core/redis"
-	"github.com/NikDrosakis/gen20/god/core/action"
-	"github.com/NikDrosakis/gen20/god/core/ws"
-
+	"god/services/claude"
+	"god/services/mermaid"
+	"god/core"
 )
 
 func main() {
 	// Load environment variables
 	godotenv.Load()
 
+// Initialize a new Gredis instance
+gredisInstance, err := core.NewGredis()
+if err != nil {
+    log.Fatalf("Failed to create Gredis instance: %v", err)
+}
+
+// Retrieve and print all keys
+keys, err := gredisInstance.Keys("*") // "*" pattern retrieves all keys
+if err != nil {
+    log.Fatalf("Failed to retrieve keys: %v", err)
+}
+fmt.Printf("Keys: %v\n", keys)
 	// Initialize action loop
-	go action.ActionLoop()
+	//go action.ActionLoop()
 
 	// Get API keys from environment variables
 	claudeAPIKey := os.Getenv("CLAUDE_APIKEY")
@@ -63,6 +70,23 @@ func main() {
 			}
 		}
 	})
+
+
+	// Initialize WebSocket client
+	wsClient, err := core.NewWebSocketClient()
+	if err != nil {
+		log.Fatalf("Failed to create WebSocket client: %v", err)
+	}
+	defer wsClient.Close()
+
+	// Send the structured message
+	err = wsClient.SendMessage()
+	if err != nil {
+		log.Fatalf("Failed to send message: %v", err)
+	}
+
+	log.Println("Message sent successfully.")
+
 
 	// Start the server
 	port := os.Getenv("PORT")

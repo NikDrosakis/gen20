@@ -1,57 +1,73 @@
 package core
 
 import (
+	"context"
+	"encoding/json"
 	"log"
 	"net/url"
-	"time"
+	"os"
 
 	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 )
 
-// ConnectToWebSocket establishes a connection to the WebSocket server
-func ConnectToWebSocket() {
-	serverURL := "wss://vivalibro.com:3006/userid=god"
+// WebSocketClient encapsulates the WebSocket connection
+type WebSocketClient struct {
+	client *websocket.Conn
+	ctx    context.Context
+}
 
-	u := url.URL{Scheme: "wss", Host: "vivalibro.com:3006", Path: "/", RawQuery: "userid=god"}
-	log.Printf("Connecting to %s", u.String())
+// NewWebSocketClient initializes a new WebSocketClient instance
+func NewWebSocketClient() (*WebSocketClient, error) {
+	godotenv.Load()
+	serverURL := os.Getenv("WEBSOCKET_URL")
+	if serverURL == "" {
+		log.Println("WEBSOCKET_URL environment variable not set, using default")
+		serverURL = "wss://vivalibro.com:3010/?userid=god"
+	}
 
-	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	u, err := url.Parse(serverURL)
 	if err != nil {
-		log.Fatalf("Failed to connect to WebSocket server: %v", err)
-		return
+		return nil, err
 	}
-	defer conn.Close()
 
-	done := make(chan struct{})
-
-	// Start a goroutine to read messages from the server
-	go func() {
-		defer close(done)
-		for {
-			_, message, err := conn.ReadMessage()
-			if err != nil {
-				log.Println("Error reading message:", err)
-				return
-			}
-			log.Printf("Received message: %s", message)
-		}
-	}()
-
-	// Send a ping message periodically to keep the connection alive
-	ticker := time.NewTicker(time.Second * 10)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-done:
-			return
-		case t := <-ticker.C:
-			err := conn.WriteMessage(websocket.TextMessage, []byte("ping"))
-			if err != nil {
-				log.Println("Error sending ping message:", err)
-				return
-			}
-			log.Printf("Sent ping at %s", t)
-		}
+	conn, _, err := websocket.DefaultDialer.DialContext(context.Background(), u.String(), nil)
+	if err != nil {
+		return nil, err
 	}
+
+	return &WebSocketClient{
+		client: conn,
+		ctx:    context.Background(),
+	}, nil
+}
+
+// SendMessage sends a structured message through the WebSocket connection
+func (ws *WebSocketClient) SendMessage() error {
+	message := map[string]string{
+		"system":    "god",
+		"domaffect": "*",
+		"type":      "open",
+		"verba":     "PING",
+		"userid":    "1",
+		"to":        "1",
+		"cast":      "one",
+	}
+
+	jsonMessage, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	err = ws.client.WriteMessage(websocket.TextMessage, jsonMessage)
+	if err != nil {
+		return err
+	}
+	log.Printf("Sent message: %s", jsonMessage)
+	return nil
+}
+
+// Close gracefully closes the WebSocket connection
+func (ws *WebSocketClient) Close() error {
+	return ws.client.Close()
 }
