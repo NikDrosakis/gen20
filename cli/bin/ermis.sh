@@ -16,7 +16,7 @@ source /var/www/gs/cli/configs/.env
 
 
 # param $1=name, $2=new || delete
-GSROOT="/var/www/gs"
+ROOT="/var/www/gs"
 SERVICE_NAME=$1
 ACTION=$2
 SERVICE_PATH="$GSROOT/ermis/services/$SERVICE_NAME"

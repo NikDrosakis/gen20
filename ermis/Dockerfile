@@ -1,11 +1,11 @@
 FROM node:20-alpine
 
 # No need to COPY ./ermis since it's mounted via volumes in docker-compose.yml
-WORKDIR /app
+WORKDIR /ermis
 
 # Install dependencies (if any)
-RUN npm install
+RUN yarn install
 
-EXPOSE 3005
+EXPOSE 3010
 
 CMD ["node", "index.js"]

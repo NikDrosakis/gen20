@@ -43,7 +43,7 @@ const fs = require('fs');
 const express = require('express');
 const app = express();
 const path = require('path');
-const Maria = require('./core/Maria');
+const Mari = require('./core/Mari');
 const Messenger = require('./core/Messenger');
 require('dotenv').config();
 const ROOT = process.env.ROOT || path.resolve(__dirname);
@@ -114,17 +114,19 @@ async function actionLoop() {
         process.stdout.write('🏃‍♂️ Loop is already running');
         return; // Avoid concurrent executions
     }
+
     executionRunning = true;
     try {
         const preLoopCounts = await getActionStatusCounts();
         console.table(preLoopCounts);
         // Fetch only actions that need processing
         const actions = await mariadmin.fa(`
-            SELECT actiongrp.keys, actiongrp.name as grpName, actiongrp.base, systems.apiprefix,action.*
+            SELECT actiongrp.keys, actiongrp.name as grpName, actiongrp.base,systems.apiprefix, systems.name as systemName, 
+                   action.*
             FROM gen_admin.action
             LEFT JOIN gen_admin.actiongrp ON actiongrp.id = action.actiongrpid
             LEFT JOIN gen_admin.systems ON systems.id = action.systemsid
-            WHERE action.systemsid in (0,3) AND action.status > 3
+            WHERE systems.name = 'ermis' AND action.status > 3
             ORDER BY action.sort;
         `);
         if (!actions || actions.length === 0) {
@@ -622,6 +624,7 @@ async function add(routes) {
             const folderName= route.actiongrp;
             console.log('what is the folder',folderName)
             delete route.actiongrp;
+            return true;
             route.actiongrpid = await mariadmin.upsert("actiongrp", { name: folderName });
 
             // Insert into actiongrp

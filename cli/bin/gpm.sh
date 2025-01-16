@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Directory to monitor (recursively)
-GSROOT="/var/www/gs"
+ROOT="/var/www/gs"
 MONITOR_DIR="/var/www/gs/cubos"
 # Load environment variables
 source /var/www/gs/cli/configs/.env

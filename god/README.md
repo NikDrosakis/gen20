@@ -11,10 +11,11 @@
 ## v.3 January2025  
 1) WS Client updated communicating with other systems
 2) Redis Connected 
+3) API Landing Page
 
 ## TODO
-3) Debug /tmp/Action.go, update Actionplan.go
-4) AI Chatting, Generating, Training
-5) Ai Gen
-6) Manifest YAML
-7) Go mermaid for diagrams 
+4) Debug /tmp/Action.go, update Actionplan.go
+5) AI Chatting, Generating, Training
+6) Ai Gen
+7) Manifest YAML
+8) Go mermaid for diagrams 

@@ -1,6 +1,6 @@
 # GEN20 v0.54
 
-#### Gen20 plan, settled on debian 12 non-gpu, with githbu microservices  & workflows implementation consisted of: 1) mariadb-centric 2) agnostic (yaml & db plans with 5 langs) 3) action-driven ecosystem (plans=series of actions in all subsystems), 4) core php8.2 with strong class sysetm (public, admin, api, ws client), 5) kronos (fastapi) for ai gen & ai bert trained, 6) ermis (express with ws server for intercommunications, webrtc-coturn-ws streaming), 6) god (golang gin api with ws client, for fast services), 7) mars (c++ heredis & mariadb native connector, ws client without api for fast tasks)
+#### Gen20 v0.60 built plan to production v0.90, build primarily in debian12, action driven with high modularity (cubos) -setup consisted of: 1) mariadb-centric 2) agnostic (yaml & db plans with 5 langs) 3) action-driven ecosystem (plans=series of actions in all subsystems), 4) core php8.2 with strong class sysetm (public, admin, api, ws client), 5) kronos (fastapi) for ai gen & ai bert trained, 6) ermis (express with ws server for intercommunications, webrtc-coturn-ws streaming), 6) god (golang gin api with ws client, for fast services), 7) mars (c++ heredis & mariadb native connector, ws client without api for fast tasks)
 
 
 ## Installation of Gen20 in linux console (existing domain) 
@@ -1608,7 +1608,7 @@ this.loop(s.f);
 //list search
 search: function (obj) {
 gs.coo('search', obj.value);
-// cookieSet('userlist_page',1)
+// coo('userlist_page',1)
 gs.ui.reset('#' + gs.f.adata);
 this.loop(s.f)
 },

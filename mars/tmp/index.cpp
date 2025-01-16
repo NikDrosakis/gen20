@@ -12,7 +12,6 @@ void readYamlAndConvertToJson(const std::string& filename) {
             std::cerr << "Error: Could not read YAML file: " << filename << std::endl;
             return;
         }
-
         // Check for 'actions' key
         if (!config["actions"]) {
             std::cerr << "Error: 'actions' key not found in YAML file" << std::endl;
