@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
     //     return 1;
     // }
 
-    // Example Use Gredis class
+ // Example Use Gredis class
     Gredis gredis;
     std::cout << "Setting keys in Redis..." << std::endl;
     gredis.set("key1", "value1");

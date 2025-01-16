@@ -1,26 +1,18 @@
-# Use Debian as the base image
-FROM debian:latest
+# Use an official GCC image as a base
+FROM gcc:latest
 
-# Set working directory
-WORKDIR /app
+# Set the working directory
+WORKDIR /usr/src/app
 
-# Copy project files into the container
+# Copy the source code into the container
 COPY . .
 
-# Install dependencies (build tools, C++ libraries, etc.)
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    cmake \
-    g++ \
-    make \
-    yaml-cpp-dev \
-    nlohmann-json3-dev \
-    hiredis-dev \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Make the install script executable
+RUN chmod +x install.sh
 
-# Build the project
-RUN make
+# Execute the install script
+RUN ./install.sh
 
-# Set the default command to run when the container starts
-CMD ["./main", "plan"]
+
+# Command to run the compiled program
+CMD ["./main"]

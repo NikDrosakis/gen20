@@ -1,5 +1,5 @@
 <?php
-define('CORE_ROOT', '/var/www/gs/');
+define('CORE_ROOT', '/var/www/gs/gaia/');
 spl_autoload_register(function ($class) {
     // Define the base directory for the namespace
     $base_dir = CORE_ROOT. 'core/';

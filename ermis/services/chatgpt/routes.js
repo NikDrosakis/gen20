@@ -106,7 +106,7 @@ a.push({
     actiongrp: actiongrp,
     name: "chatgpt_create_image",
     description: "Creates an image based on a prompt",
-    endpoint: "/images/generations",
+    endpoint: "/generate-image",
     method: "POST",
     params: JSON.stringify({
         prompt: "string",
@@ -124,7 +124,7 @@ router.post(a[3].endpoint, async (req, res) => {
             size
         }, {
             headers: {
-                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                'Authorization': `Bearer ${OPENAI_API_KEY}`,
                 'Content-Type': 'application/json'
             }
         });
@@ -139,5 +139,5 @@ router.post(a[3].endpoint, async (req, res) => {
         });
     }
 });
-require('../../action').add(a);
+//require('../../action').add(a);
 module.exports = router;

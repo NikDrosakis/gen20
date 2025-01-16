@@ -5,7 +5,7 @@ services:
     image: php:8.2-fpm
     container_name: php-fpm
     volumes:
-      - ./app:/app
+      - ./gaia:/gaia
       - ./setup/php.ini:/usr/local/etc/php/php.ini
     networks:
       - gen-network
@@ -24,9 +24,9 @@ services:
       - ./setup/nginx/ssl/ssl.crt:/etc/nginx/ssl/ssl.crt
       - ./setup/nginx/ssl/ssl.key:/etc/nginx/ssl/ssl.key
       - ./setup/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
-      - ./admin:/app/admin
-      - ./core:/app/core
-      - ./media:/app/media
+      - ./gaia/admin:/gaia/admin
+      - ./gaia/core:/gaia/core
+      - ./media:/media
     depends_on:
       - php-fpm
       - cubos
@@ -38,7 +38,7 @@ services:
   admin:
     build:
       context: .
-      dockerfile: ./admin/Dockerfile
+      dockerfile: ./gaia/admin/Dockerfile
     ports:
       - "8044:8044"
     depends_on:
@@ -46,20 +46,20 @@ services:
       - apiv1
       - redis
     volumes:
-      - ./admin:/app/admin
-      - ./core:/app/core
+      - ./gaia/admin:/app/admin
+      - ./gaia/core:/app/core
     networks:
       - gen-network
 #2 micro php
   cubos:
     build:
-      dockerfile: ./cubos/Dockerfile
+      dockerfile: ./gaia/cubos/Dockerfile
     depends_on:
       - maria
       - apiv1
     volumes:
-      - ./cubos:/app/cubos
-      - ./core:/app/core
+      - ./gaia/cubos:/gaia/cubos
+      - ./gaia/core:/gaia/core
     networks:
       - gen-network
 #3 micro php
@@ -73,21 +73,21 @@ services:
       - apiv1
       - cubos
     volumes:
-      - ./public/vivalibro.com:/app/public
-      - ./core:/app/core
+      - ./public/vivalibro.com:/public
+      - ./gaia/core:/gaia/core
     networks:
       - gen-network
 #4 micro php api gateway
   apiv1:
     build:
-      dockerfile: ./apiv1/Dockerfile
+      dockerfile: ./gaia/apiv1/Dockerfile
     ports:
       - "8045:8045"
     depends_on:
       - maria
     volumes:
-      - ./apiv1:/app/apiv1
-      - ./core:/app/core
+      - ./gaia/apiv1:/gaia/apiv1
+      - ./gaia/core:/gaia/core
     networks:
       - gen-network
 #10 shared
@@ -138,7 +138,7 @@ services:
     volumes:
       - ./ermis:/app
     ports:
-      - "3005:3005"
+      - "3010:3010"
     command: ["node", "index.js"]
     depends_on:
       - redis
@@ -167,7 +167,7 @@ services:
       context: .
       dockerfile: god/Dockerfile
     ports:
-      - "3007:3007"
+      - "3008:3008"
     depends_on:
       - maria
       - redis

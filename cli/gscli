@@ -1,5 +1,5 @@
 #!/bin/bash
-# Define the global GSROOT path
+# Define the global GAIAROOT path
 GSROOTCLI="/var/www/gs/cli"
 
 # Function to show help information

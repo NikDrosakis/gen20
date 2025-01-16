@@ -53,12 +53,12 @@ function WServer(server) {
             try {
                 let message = Buffer.isBuffer(data) ? JSON.parse(data.toString()) : JSON.parse(data);
 
-                if (!message || typeof message.cast !== 'string') {
+                if (!message || typeof message.cast !== 'string' || !message.to) {
                     console.warn('Invalid message:', data);
                     return;
                 }
 
-                const finalized_messsage = Messenger.buildMessage(message);
+                const finalized_messsage = await Messenger.buildMessage(message);
 
                 switch (message.cast) {
                     case "one":
@@ -68,7 +68,11 @@ function WServer(server) {
                             const recipientWs = Array.from(wss.clients).find(client => client.userid === message.to);
                             if (recipientWs) {
                                 console.log("found recipient and sending to", message.to)
-                                recipientWs.send(finalized_messsage);
+                                try {
+                                    recipientWs.send( JSON.stringify(finalized_messsage));
+                                } catch (sendError) {
+                                    console.error("Failed to send message to recipient:", sendError);
+                                }
                             }
                         }
                         break;

@@ -1,6 +1,7 @@
 package main
 
 import (
+ "net/http"
 	"fmt"
 	"log"
 	"os"
@@ -36,7 +37,10 @@ fmt.Printf("Keys: %v\n", keys)
 
 	// Initialize Gin router
 	router := gin.Default()
-
+router.LoadHTMLGlob("public/*") // <-- THIS IS THE IMPORTANT LINE
+    router.GET("/ping", func(c *gin.Context) {
+          c.JSON(http.StatusOK, gin.H{"message": "pong"})
+      })
 	// Register the Mermaid routes
 	mermaid.RegisterRoutes(router)
 
@@ -69,29 +73,51 @@ fmt.Printf("Keys: %v\n", keys)
 				return
 			}
 		}
-	})
-
-
 	// Initialize WebSocket client
 	wsClient, err := core.NewWebSocketClient()
 	if err != nil {
 		log.Fatalf("Failed to create WebSocket client: %v", err)
 	}
 	defer wsClient.Close()
+		// Send the structured message
+    	err = wsClient.SendMessage()
+    	if err != nil {
+    		log.Fatalf("Failed to send message: %v", err)
+    	}
+    	log.Println("Message sent successfully.")
+	})
 
-	// Send the structured message
-	err = wsClient.SendMessage()
-	if err != nil {
-		log.Fatalf("Failed to send message: %v", err)
-	}
+    // Create a new route group for /god/v1
+         v1 := router.Group("/god/v1")
+         {
+             // Define the index route under /god/v1
+    // Define the index route under /god/v1
+v1.GET("/", func(c *gin.Context) {
+    // Get all the routes defined in the router
+    routes := router.Routes()
 
-	log.Println("Message sent successfully.")
+    // Pass the route data to the HTML template
+    var routeList []map[string]string
+    for _, route := range routes {
+        routeList = append(routeList, map[string]string{
+            "Path":   route.Path,
+            "Method": route.Method,
+        })
+    }
 
+    // Render the index.html page and pass the route data to the template
+    c.HTML(http.StatusOK, "index.html", gin.H{
+        "title":     "God Gin App Landing Page",
+        "endpoints": routeList,
+    })
+})
+
+         }
 
 	// Start the server
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "3006"
+		port = "3008"
 	}
 	log.Printf("Server starting on port %s\n", port)
 	router.Run(fmt.Sprintf(":%s", port))
