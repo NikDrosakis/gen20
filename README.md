@@ -553,7 +553,7 @@ no jquery, no bootstrap
 - soc
 - api
 - apy
-- callapi
+- api
 - loadCumbo
 - loadfile
 - ui
@@ -1141,14 +1141,14 @@ console.error("Worker Error:", error);
   }
   },
   /**
-  callapi
+  api
   executes and gets data any core method
   USAGE:
 
-  callapi: async function (classmethod, params) {
+  api: async function (method, params) {
   try {
   const queryParams = new URLSearchParams(params).toString();
-  const url = `${G.SITE_URL}api/v1/local/${classmethod}?${queryParams}`;
+  const url = `${G.SITE_URL}api/v1/local/${method}?${queryParams}`;
   console.log(url);
   const response = await fetch(url, {
   method: 'GET',
@@ -1164,7 +1164,7 @@ console.error("Worker Error:", error);
   console.error("Error updating content:", error);
   }
   },    */
-  callapi : {
+  api : {
   get: async function(classmethod, params) {
   try {
   const queryParams = new URLSearchParams(params).toString();

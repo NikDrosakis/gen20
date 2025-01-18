@@ -3603,6 +3603,7 @@ th {
   src: url('fonts/glyphicons-halflings-regular.eot');
   src: url('fonts/glyphicons-halflings-regular.eot?#iefix') format('embedded-opentype'), url('fonts/glyphicons-halflings-regular.woff2') format('woff2'), url('fonts/glyphicons-halflings-regular.woff') format('woff'), url('fonts/glyphicons-halflings-regular.ttf') format('truetype'), url('fonts/glyphicons-halflings-regular.svg#glyphicons_halflingsregular') format('svg');
 }
+
 .glyphicon {
   position: relative;
 float:left;
@@ -3613,6 +3614,7 @@ float:left;
   font-weight: normal;
   line-height: 1;
   font-size:20px;
+  color:darkcyan;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -11305,7 +11307,7 @@ ul.tabs li.current {
 /* GRID CHANNELS */
 #mainpage {
   float: left;
-  width: 91%;
+  width: 94%;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr; /* 3 columns by default */
   grid-template-rows: 1fr 1fr; /* 2 rows */

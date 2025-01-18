@@ -67,7 +67,7 @@ abstract class Gaia {
          * START MARIADB in ABSTRACTED GAIA
          *****/
          //xecho(TEMPLATE);
-          $this->publicdb = "gen_".TEMPLATE;
+          $this->G['publicdb'] = $this->publicdb = "gen_".TEMPLATE;
          $this->db = new Mari();
             //mongo db instantiate
               $this->mon = new Mon('vox');
@@ -77,17 +77,17 @@ abstract class Gaia {
                 $this->redis=new Gredis("1");
 
 
-        $this->G['loggedin'] = isset($_COOKIE['GSID']) && $_COOKIE['GSGRP'] > 1;
+        $this->G['loggedin'] = !empty($_COOKIE['GSID']);
         $this->G['me'] = $_COOKIE['GSID'];
         if ($this->G['loggedin']) {
             $this->G['my'] = $this->db->f("SELECT * from {$this->publicdb}.user where id=?", [$_COOKIE['GSID']]);
             $this->me = $this->G['my']['id'];
-            $this->fullname = $this->G['my']['fullname'] = $this->G['my']['firstname'] . ' ' . $this->G['my']['lastname'];
             $this->img = "/media/" . $this->G['my']['img'];
         }
 		//$this->G['is'] = $this->redis->get("is");
 		//if(!$this->G['is']){        
         $this->G['is'] = $this->db->flist("SELECT name, val from gen_admin.globs");
+        $this->G['set'] = $this->db->flist("SELECT name, val from {$this->publicdb}.setup");
 		//$this->redis->set("is",$this->G['is']);
 		//}
         $this->G['usergrps'] = $this->db->fl(["id", "name"], "{$this->publicdb}.usergrp");
@@ -100,7 +100,10 @@ abstract class Gaia {
         }
 
         $this->G['pagelist'] = $this->db->flist("SELECT id, name FROM gen_admin.admin_page");
-        $this->G['subparent'] = $this->db->flist("SELECT admin_sub.name, admin_page.name as parent FROM gen_admin.admin_sub LEFT JOIN gen_admin.admin_page on admin_sub.admin_pageid=admin_page.id");
+        $this->G['subparent'] = $this->db->flist("SELECT admin_sub.name, admin_page.name as parent
+        FROM gen_admin.admin_sub
+        LEFT JOIN gen_admin.admin_page on admin_sub.admin_pageid=admin_page.id");
+
         if ($this->G['SYSTEM']=='admin'){
         $this->G['has_maria'] = $this->has_maria($this->sub);
         } elseif($this->G['SYSTEM']==$this->G['TEMPLATE']){
@@ -468,6 +471,13 @@ protected function getClassMethods() {
             }
         }
 
+       // Get methods from the $this->db object
+        if (is_object($this->db)) {
+            $dbClass = get_class($this->db);
+            foreach (get_class_methods($this->db) as $method) {
+                $methods[$method] = "$method ($dbClass)";
+            }
+        }
         // Move up to the next parent
         $parentClass = get_parent_class($parentClass);
     }

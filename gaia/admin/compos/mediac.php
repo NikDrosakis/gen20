@@ -118,7 +118,7 @@ async function uploadFile(formData) {
     }
     console.log(params)
     try {
-        const upload = await gs.callapi.post("upload_file", formData);
+        const upload = await gs.api.post("upload_file", formData);
         if (upload.success) {
             //oldajax url: '/widgets/slideshow/post_xhr.php',
             console.log(upload)
@@ -139,7 +139,7 @@ async function selectFromMediaFolder(id) {
     const params = {a: "upload_media", filename: filename, folder: folder};
     console.log(params);
     try {
-        const uploadMedia = await gs.callapi.post("upload_media", params);
+        const uploadMedia = await gs.api.post("upload_media", params);
         console.log(uploadMedia)
         if (uploadMedia.success) {
             appendMediaToPlace(uploadMedia.data);
@@ -157,7 +157,7 @@ async function addImageFromUrl(id) {
     const caption = document.getElementById('caption_url').value;
     const params = {url: url, caption: caption, folder: folder};
     try {
-        const uploadUrl = await gs.callapi.post("upload_url", params);
+        const uploadUrl = await gs.api.post("upload_url", params);
         console.log(uploadUrl)
         if (uploadUrl.success) {
             appendMediaToPlace(uploadUrl.data);
@@ -200,7 +200,7 @@ function appendMediaToPlace(slide) {
 // @filemeta.features Populate the media select dropdown with images from the media/slideshow folder
 async function loadMedia(folder = '', pag = 1, limit = 8) {
     const params = {folder: folder, pag: pag, limit: limit};
-    const getMedia = await gs.callapi.get("loadMedia", params);
+    const getMedia = await gs.api.get("loadMedia", params);
     console.log(getMedia)
     if (getMedia.success) {
 

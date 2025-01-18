@@ -23,18 +23,21 @@ $current_code="en";
 //$current_code=$this->G['is']['lang_primary'];
 
 //get all loc fields of database
-
 $langList=$this->db->flist("select code,name from {$this->publicdb}.language");
-$dropNewLangs=$this->drop($langList,"{$this->publicdb}.language",'addLangColumn');
+xecho($langList);
 
-
+//provide the dropdown
+$dropNewLangs=$this->drop($langList,$current_code,'addLangColumn');
+xecho($this->db->show("engine","gen_admin"));
 ?>
-
+<!--default-->
 <h2>Default Language: <?=$current_code?></h2>
-
+<!--change-->
 <h2>Add new language: <?=$dropNewLangs?></h2>
-
+<!--activate-->
 <button id="activationButton" onclick="runAction('buildNewLang','')" data-lang="" class="button">Activate New Language</button>
-
+<!--table-->
 <h2>Language Table:</h2>
 
+<?php exit();?>
+<?=$this->buildTable($this->publicdb.".language");?>

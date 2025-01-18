@@ -68,7 +68,7 @@
   async function updateSortOrder(id, sort) {
       try {
           // Assuming gs.api.maria.q is available and works as a query function
-          const result = await gs.api.maria.q("UPDATE c_slideshow SET sort = ? WHERE id = ?", [sort, id]);
+          const result = await gs.api.maria.q(`UPDATE ${G.publicdb}.c_slideshow SET sort = ? WHERE id = ?`, [sort, id]);
           return result;
       } catch (error) {
           console.error('Error updating sort order:', error);
@@ -81,7 +81,7 @@
           let id = checkbox.id.replace('del','');
           const confirmation = confirm("This image is going to be deleted. Are you sure?");
           if (confirmation) {
-              const delImage = await gs.api.maria.q("DELETE FROM c_slideshow WHERE id = ?", [id]);
+              const delImage = await gs.api.maria.q(`DELETE FROM ${G.publicdb}.c_slideshow WHERE id = ?`, [id]);
               if (delImage.success) {
                   console.log('Slide deleted successfully');
                   document.getElementById(`slide_${id}`).remove();

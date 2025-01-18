@@ -165,7 +165,7 @@ document.querySelectorAll("button[id^='globtitle']").forEach(function(button) {
             var val = this.textContent.trim() === 'Open' ? 1 : 0;
 
             try {
-                const updateglobs = await gs.api.maria.q("UPDATE globs SET status=? WHERE id=?", [val, id]);
+                const updateglobs = await gs.api.maria.q(`UPDATE gen_admin.globs SET status=? WHERE id=?`, [val, id]);
 
                 if (updateglobs.success) {
                     const setBox = document.getElementById('setBox' + id);
@@ -210,7 +210,7 @@ document.querySelectorAll("button[id^='globtitle']").forEach(function(button) {
 
     async function handleSetUpdate(element) {
         var id = element.id.replace('set', '');
-        var query = 'UPDATE globs SET en=? WHERE id=?';
+        var query = `UPDATE gen_admin.globs SET en=? WHERE id=?`;
         const updateglobs = await gs.api.maria.q(query, [encodeURIComponent(element.value), id]);
         if (updateglobs.success) {
            gs.success();
@@ -223,7 +223,7 @@ document.querySelectorAll("button[id^='globtitle']").forEach(function(button) {
     document.querySelectorAll("button[id^='delpvar']").forEach(function (button) {
         button.addEventListener("click", async function () {
             var id = this.id.replace('delpvar', '');
-            const delglobs = await gs.api.maria.q("DELETE FROM globs WHERE id=?", [id]);
+            const delglobs = await gs.api.maria.q("DELETE FROM gen_admin.globs WHERE id=?", [id]);
             if (delglobs.success) {
                 document.getElementById('setBox' + id).remove();
             }
@@ -233,7 +233,7 @@ document.querySelectorAll("button[id^='globtitle']").forEach(function(button) {
     document.querySelectorAll("select[id^='pvartype']").forEach(function (select) {
         select.addEventListener("change", async function () {
             var id = this.id.replace('pvartype', '');
-            const updateglobs = await gs.api.maria.q("UPDATE globs SET type=? WHERE id=?", [this.value, id]);
+            const updateglobs = await gs.api.maria.q("UPDATE gen_admin.globs SET type=? WHERE id=?", [this.value, id]);
             if (updateglobs.success) {
                 gs.success("Globs updated!");
             } else {
@@ -280,7 +280,7 @@ document.querySelectorAll("button[id^='globtitle']").forEach(function(button) {
                     //  console.log(textarea.value);
                     var value = JSON.stringify(editor.get());
                     var id = dbid;
-                    const updateglobs =await gs.api.maria.q('UPDATE globs SET en="' + encodeURIComponent(value) + '" WHERE id=?', [id]);
+                    const updateglobs =await gs.api.maria.q('UPDATE gen_admin.globs SET en="' + encodeURIComponent(value) + '" WHERE id=?', [id]);
                 }
             };
 

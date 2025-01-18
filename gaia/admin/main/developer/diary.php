@@ -107,7 +107,7 @@
                   };
 
                   // Fetch existing entries for the current day
-                  const messageread = await gs.api.admin.fa("SELECT * FROM diary WHERE DATE(created) = CURDATE() ORDER BY created ASC");
+                  const messageread = await ga.api.maria.fa("SELECT * FROM gen_admin.diary WHERE DATE(created) = CURDATE() ORDER BY created ASC");
 console.log(messageread);
                   // Hide the "Start Day" button if entries exist for the current day
                   if (messageread.data && messageread.data.length>0) {
@@ -173,7 +173,7 @@ console.log(messageread);
                                           const time = formatTime(currentTime); // Use the current time to store the entry
                                            const params = {time: time,description: description,created: new Date().toISOString()}
                                            console.log(params)
-                                           const messagesave = await gs.api.admin.inse("diary", params);
+                                           const messagesave = await ga.api.maria.inse("gen_admin.diary", params);
                                           const nextTime = new Date();
                                             currentTimeFormatted = formatTime(nextTime); // Update formatted time
                                             addDiaryEntry(currentTimeFormatted); // Add next entry
@@ -196,7 +196,7 @@ const displayDiaryDates = async () => {
 
     try {
         // Fetch distinct dates
-        const dateResults = await gs.api.admin.fa("SELECT DISTINCT DATE(created) as entry_date FROM diary ORDER BY created DESC");
+        const dateResults = await ga.api.maria.fa("SELECT DISTINCT DATE(created) as entry_date FROM gen_admin.diary ORDER BY created DESC");
 
         dateResults.data.forEach(entry => {
             const entryDate = entry.entry_date;

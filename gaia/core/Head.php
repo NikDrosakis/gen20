@@ -146,7 +146,7 @@ protected function renderAdminHead() {
                             };
                         })();
                 </script>
-    <script type="text/javascript">var G = <?php echo json_encode($this->G, JSON_UNESCAPED_UNICODE); ?>;</script>
+    <script type="text/javascript">var G=<?=json_encode($this->G, JSON_UNESCAPED_UNICODE)?>;</script>
     <script src="/admin/js/gen.js"></script>
     <script src="/admin/js/admin.js"></script>
     <?php

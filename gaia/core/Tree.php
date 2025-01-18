@@ -31,8 +31,6 @@ child: subscribe
 TODO
 ====
 doc standard to admin_sub admin_page and visible only to TEMPLATE.?grp tables
-
-
  */
 
 trait Tree {
@@ -50,11 +48,11 @@ protected $standardSchema=[
 protected $standardPublicTables=[];  //add to integrate other website
 //protected function
 
-
-
 protected function listMariaTables($tableName): array {
+   $db = $tableName['table'];
     // Fetch tables from the specified database
-    $db = explode('.',$tableName)[0];
+
+    //$db = explode('.',$table)[0];
     $query = $this->db->show("tables",$db);
     return $query;
 }
@@ -92,10 +90,9 @@ protected function recognizeDatabases(): array {
     ];
 }
 
-
 protected function insertTablesIntoMetadata($database) {
     // Get the list of tables
-    $tables = $this->db->show("tables");
+    $tables = $this->db->show("tables",$database);
     // Prepare the insert statement
 
     $insertQuery = "INSERT INTO ${publicdb}.metadata (name, title, description, status) VALUES (?, ?, ?, ?)";
@@ -113,7 +110,6 @@ protected function insertTablesIntoMetadata($database) {
          ", Parent Table: " . $fk['parent_table'] . ", Parent Column: " . $fk['parent_column'] . "\n";
          */
 protected function getBranches(array $params): ?array {
- //$db= $database=='db' ? TEMPLATE : $database;
 $db = $params['db'];
          try{
             $tree="SELECT kcu.TABLE_NAME AS `child_table`,
@@ -135,7 +131,6 @@ $db = $params['db'];
             echo "Database error: " . $e->getMessage();
         }
 }
-
 // Method to compare the current table schema with the standard schema and return modification lists
 protected function compareWithStandard($table) {
     // Retrieve the current schema of the table
@@ -189,31 +184,28 @@ protected function compareWithStandard($table) {
 
 // Method to apply schema modifications to the table
 protected function applySchemaStandards($tableName) {
-$table = is_array($tableName) ? $tableName['table'] : $tableName;
     // Get the list of modifications
-    $compare = $this->compareWithStandard($table);
+    $compare = $this->compareWithStandard($tableName);
 
     // If there are no modifications, the table is up-to-date
     if (empty($compare['modificationList'])) {
-        echo "Table `$table` is already up-to-date.\n";
+        echo "Table `$tableName` is already up-to-date.\n";
         return;
     }
-    // Prepare the ALTER TABLE SQL to apply the modifications
-    $alterTableSql = "ALTER TABLE `$table` " . implode(", ", $compare['modificationList']) . ";";
-    $database = $this->getDB($table);
-    $maria= new Maria($database);
-    // Execute the ALTER TABLE SQL
-    try {
-        $maria->exec($alterTableSql);
-        echo "Modifications applied successfully to table `$table`.\n";
-    } catch (Exception $e) {
-        echo "Error applying modifications to table `$table`: " . $e->getMessage() . "\n";
+    // Loop through each modification and apply the schema changes
+    foreach ($compare['modificationList'] as $modification) {
+        try {
+            // Alter the table by applying each modification
+            $this->db->alter($tableName, $modification);
+            echo "Modification applied successfully to table `$tableName`: $modification.\n";
+        } catch (Exception $e) {
+            echo "Error applying modification to table `$tableName`: " . $e->getMessage() . "\n";
+        }
     }
 }
 
 // Method to generate a report for the table and provide an option to apply the changes
-protected function compareWithStandardReport($table) {
-//$table = is_array($tableName) ? $tableName['table'] : $tableName;
+protected function compareWithStandardReport($table): ?array {
     // Ensure database and table are provided
     if ($table) {
         // Get the comparison result
@@ -222,21 +214,21 @@ protected function compareWithStandardReport($table) {
         // Initialize an array for the report output
         $report = [];
 
-        // Report the modification list and provide an apply button
-        if (!empty($compare['modificationList'])) {
-            $report[] = "MODIFICATION LIST for table `$table`:\n" . implode("\n", $compare['modificationList']);
-            $report[] = "<button onclick='gs.callapi.post(\"applySchemaStandards\", { table: \"$table\" })'>Apply</button>";
-        }
+// Report the modification list and provide an apply button
+if (!empty($compare['modificationList'])) {
+    $report[] = "MODIFICATION LIST for table `$table`:\n" . implode("\n", $compare['modificationList']);
+    $report[] = "<button onclick='gs.api.post(\"applySchemaStandards\", { table: \"$table\" })'>Apply</button>";
+}
 
-        // Report any extra columns (common list)
-        if (!empty($compare['commonList'])) {
-            $report[] = "COMMON LIST for table `$table`:\n" . implode("\n", $compare['commonList']);
-        }
+// Report any extra columns (common list)
+if (!empty($compare['commonList'])) {
+    $report[] = "COMMON LIST for table `$table`". implode("\n", $compare['commonList']);
+}
 
-        // If no modifications are required
-        if (empty($compare['modificationList']) && empty($compare['commonList'])) {
-            $report[] = "No modifications required for table `$table`.\n";
-        }
+// If no modifications are required
+if (empty($compare['modificationList']) && empty($compare['commonList'])) {
+    $report[] = "No modifications required for table `$table`";
+}
 
         // Return the report array
         return $report;
@@ -255,12 +247,58 @@ protected function compareWithStandardReport($table) {
              [COLUMN_COMMENT] =>
          )
  */
+protected function table(array $assoc): string {
+    try {
+        if (empty($assoc) || !is_array($assoc)) {
+            return 'Input data is empty or not an array.';
+        }
+        // Start building the HTML table
+        $tableHtml = '<div class="table-container">';
+        $tableHtml .= '<h2>Generated Table</h2>';
+        $tableHtml .= '<table class="styled-table">';
+
+        // Ensure the first element is an array before calling array_keys()
+        $firstRow = $assoc[0];
+
+        // Check if the first row is an array, otherwise throw an exception
+        if (!is_array($firstRow)) {
+           echo 'First row is not an array.';
+        }
+
+        // Table header: Use keys of the first row as column names
+        $tableHtml .= '<thead><tr>';
+        foreach (array_keys($firstRow) as $columnName) {
+            $tableHtml .= '<th>' . htmlspecialchars(is_int($columnName) ? "Index $columnName" : $columnName) . '</th>';
+        }
+        $tableHtml .= '</tr></thead>';
+
+        // Table body: Use values from the associative array
+        $tableHtml .= '<tbody>';
+        foreach ($assoc as $row) {
+            if (!is_array($row)) {
+                continue; // Skip non-array rows
+            }
+
+            $tableHtml .= '<tr>';
+            foreach ($row as $value) {
+                $tableHtml .= "<td>" . htmlspecialchars($value) . "</td>";
+            }
+            $tableHtml .= '</tr>';
+        }
+        $tableHtml .= '</tbody>';
+
+        // Close the table
+        $tableHtml .= '</table></div>';
+        return $tableHtml; // Return the HTML table
+    } catch (Exception $e) {
+        echo "Error generating table: " . $e->getMessage();
+        return ''; // Return an empty string if an error occurs
+    }
+}
 
 
-protected function buildSchema($tableName): string {
+protected function buildSchema($table): string {
   // Fetch column information from information_schema
-$table = is_array($tableName) ? $tableName['table'] : $tableName;
-
    try {
     $columns = $this->db->tableMeta($table);
     // Start building the HTML table
@@ -299,6 +337,5 @@ $table = is_array($tableName) ? $tableName['table'] : $tableName;
             return null; // Return null if an error occurs
         }
 }
-
 
 }

@@ -43,7 +43,7 @@ async function openPanel(filepath) {
     ch1.after(ch2);
 
     // Load the file into ch2
-    await gs.loadfile(G.ADMIN_ROOT + filepath, 'ch2', function () {
+    await gs.api.loadfile(G.ADMIN_ROOT + filepath, 'ch2', function () {
         const folder = !!gs.coo('current_folder') ? gs.coo('current_folder') : G.MEDIA_ROOT;
     });
 }
@@ -73,7 +73,7 @@ async function handleDrop(event) {
     const db = G.has_maria.replace('gen_','').split('.')[0];
     // Set the image preview to the dragged image
     imgPreview.src = filename;
-    await gs.api[db].q(`update ${table}
+    await gs.api.maria.q(`update ${table}
                           set img=?
                           where id = ?`, [imgPreview.src, G.id]);
     // You can optionally update the file input with the image URL as a value if needed for form submission
@@ -128,7 +128,7 @@ async function switchChannels(schema) {
 async function setChannel(targetContainerId, file) {
     console.log('Changing item to:', targetContainerId, 'File:', file);
     try {
-        const fileloading = await gs.loadfile(encodeURIComponent(file), targetContainerId);
+        const fileloading = await gs.api.loadfile(encodeURIComponent(file), targetContainerId);
         if (fileloading.success) {
             console.log('Successfully set channel', targetContainerId, file);
         } else {
@@ -149,7 +149,7 @@ async function dragChangeChannel(targetContainerId, draggedItem) {
     var file = `${G.ADMIN_ROOT}main/${page}/${page}.php`;
     //here get the API and loadfile idea to include a new file instead of the whole page
     console.log('Dragged item:', page, 'to', targetContainerId);
-    const fileloading = await gs.loadfile(encodeURIComponent(file), targetContainerId);
+    const fileloading = await gs.api.loadfile(encodeURIComponent(file), targetContainerId);
     if (fileloading && fileloading.success) {
         //save to cookie
         gs.coo(targetContainerId, file);
@@ -289,7 +289,7 @@ async function updatePost(event, table) {
     const field = input.name;
     const value = input.value;
     try {
-        await gs.api.maria.q(`UPDATE ${table}
+        await gs.api.maria.q(`UPDATE ${field}
                               SET ${field}=?
                               WHERE id = ?`, [value, G.id]);
         console.log(`Updated ${field} for post ID ${G.id}`);
@@ -308,7 +308,7 @@ async function updateForm(selectElement, method, table='') {
         // Fetch the result from the local method
    const tableName = {"table":table}
         console.log(method, tableName)
-        const getResult = await gs.callapi.get(method, tableName);
+        const getResult = await gs.api.get(method, tableName);
         console.log(getResult);
         // Handle response based on method
         if (getResult.data) {
@@ -340,12 +340,12 @@ function handleMethodSpecificParams(method, selectElement, table) {
 }
 async function updateSchemaAndTable(table) {
     // Fetch and update the schema and comparison report
-    const compareWithStandardReport = await gs.callapi.get("compareWithStandardReport", table);
+    const compareWithStandardReport = await gs.api.get("compareWithStandardReport", table);
     const buildTableID = document.getElementById('compareWithStandardReport');
     if (compareWithStandardReport.data) {
         buildTableID.innerHTML = compareWithStandardReport.data.join('<br/>');
     }
-    const buildSchema = await gs.callapi.get("buildSchema", table);
+    const buildSchema = await gs.api.get("buildSchema", table);
     const buildSchemaID = document.getElementById('buildSchema');
     if (buildSchema.data) {
         buildSchemaID.innerHTML = buildSchema.data;

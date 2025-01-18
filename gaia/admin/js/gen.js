@@ -12,7 +12,7 @@ no jquery, no bookstrap
 - soc
 - api
 - apy
-- callapi
+- api
 - loadCumbo
 - loadfile
 - ui
@@ -379,7 +379,7 @@ var gs= {
     },
     //modalize whole file
     modal: async function (file){
-        const html = await gs.loadfile(file);
+        const html = await gs.api.loadfile(file);
         Swal.fire({
             title: `Tab ${file} Content`,
             html: html.data,
@@ -403,7 +403,7 @@ var gs= {
 
         console.log(params);
 
-        const login = await gs.callapi.post("login",params);
+        const login = await gs.api.post("login",params);
 
                 console.log(login.data);
                 if (login.data == 'no_account') {
@@ -486,9 +486,9 @@ var gs= {
 
             s.db().func('validate', mail, function (mailres) {
                 if (mailres == "ok") {
-                    gs.api.maria.f(`SELECT id FROM user WHERE mail='${mail}'`, function (data) {
+                    gs.api.maria.f(`SELECT id FROM ${G.publicdb}.user WHERE mail='${mail}'`, function (data) {
                         if (!data.success) {
-                            gs.api.maria.q(`INSERT INTO user(mail,grp,registered) 
+                            gs.api.maria.q(`INSERT INTO ${G.publicdb}.user(mail,grp,registered) 
                         VALUES('${mail}',1,${s.time()})`, function (insert) {
                                     if (insert.success) {
                                         s.ui.notify("success", "Subscription successful");
@@ -821,6 +821,10 @@ SET SHORT DEFAULT
       (conversation_id: UUID, message: Message):
       {"id":"71e4d685-cde0-4246-9ece-13bf58f4c4e5","messages":[]}
      GET
+
+     stream through
+     access through action
+
      */
     apy: {
         post: async function(route, params) {
@@ -934,7 +938,7 @@ actions = [
                     }
                 } else {
                     // Call the PHP method via the API
-                    const result = await callapi.get(action.method, action.params);
+                    const result = await gs.api.get(action.method, action.params);
                     console.log(`Result of ${action.method}:`, result);
                     lastResult = result; // Store result for next action
                 }
@@ -944,14 +948,14 @@ actions = [
         }
     },
     /**
-     callapi
+     api
      executes and gets data any core method
      */
-    callapi : {
-        get: async function (method, params) {
+    api : {
+        get: async function (method, params, resource='local') {
             try {
                 const queryParams = new URLSearchParams(params).toString();
-                const url = `${G.SITE_URL}api/v1/local/${method}?${queryParams}`;
+                const url = `${G.SITE_URL}api/v1/${resource}/${method}?${queryParams}`;
                 console.log(url);
                 const response = await fetch(url, {
                     method: 'GET',
@@ -979,9 +983,9 @@ actions = [
             }
         },
 
-        post: async function (method, params) {
+        post: async function (method, params,resource) {
             try {
-                const url = `${G.SITE_URL}api/v1/local/${method}`;
+                const url = `${G.SITE_URL}api/v1/${resource}/${method}`;
                 console.log(url);
                 const response = await fetch(url, {
                     method: 'POST',
@@ -1010,8 +1014,7 @@ actions = [
                 console.error("Error updating content:", error);
                 return { error: error.message };
             }
-        }
-    },
+        },
     /***
      loadfile
      get BUFFERS from core API api/bin
@@ -1044,10 +1047,11 @@ actions = [
         }
     },
     //TODO gen.js:977 Error updating content: SyntaxError: Unexpected token '✗', "✗  Action "... is not valid JSON
-    runAction:async function (name, appendid) {
+    run:async function (name, func, appendid) {
         try {
+            const next_state = gs.local("stored_state_"+name) ?? 0;
             // Make the API request to runAction
-            const getResult = await gs.callapi.post('runAction', { key: name });
+            const getResult = await gs.api.post(func, { key: name, state:next_state },'run');
             console.log("API Result:", getResult);
 
             // Construct the content to append
@@ -1057,15 +1061,19 @@ actions = [
             if (getResult) {
                 if (getResult.data) {
                     success = true;
+
                     content = `✔️ ${gs.clipboard_copy} Action "${name}" completed successfully.`;
                     if (getResult.data.message) {
                         content += ` Message: ${getResult.data.message}`;
                     }
+
                     if (getResult.data.data) {
                         try {
-                            content += `<pre>${JSON.stringify(getResult.data.data, null, 2)}</pre>`; // Formatted JSON
+                            content += getResult.data.data; // Formatted JSON
+                            const store_state = getResult.data.sort;
+                            gs.local("stored_state_"+getResult.data.name,store_state+1); //stores the next
                         } catch (e) {
-                            content += ` Data: ${String(getResult.data.data)}`; // Fallback to string
+                            content += ` getResult.data.data`; // Fallback to string
                         }
                     }
                     console.log(`Action "${name}" completed successfully.`);
@@ -1105,68 +1113,8 @@ actions = [
             }
             return false; // Indicate failure
         }
-    },   runPlan:async function (name, appendid) {
-        try {
-            // Make the API request to runAction
-            const getResult = await gs.callapi.post('runPlan', { key: name });
-            console.log("API Result:", getResult);
-
-            // Construct the content to append
-            let content = '';
-            let success = false; // Default to false
-
-            if (getResult) {
-                if (getResult.data) {
-                    success = true;
-                    content = `✔️ ${gs.clipboard_copy} Action "${name}" completed successfully.`;
-                    if (getResult.data.message) {
-                        content += ` Message: ${getResult.data.message}`;
-                    }
-                    if (getResult.data.data) {
-                        try {
-                            content += `<pre>${JSON.stringify(getResult.data.data, null, 2)}</pre>`; // Formatted JSON
-                        } catch (e) {
-                            content += ` Data: ${String(getResult.data.data)}`; // Fallback to string
-                        }
-                    }
-                    console.log(`Action "${name}" completed successfully.`);
-                } else if (getResult.error) {
-                    content = `❌${gs.clipboard_copy} Action "${name}" failed: ${getResult.error}`;
-                    console.error(`Action "${name}" failed:`, getResult.error);
-                } else if (getResult.rawResponse) {
-                    content = `❌${gs.clipboard_copy} Action "${name}" failed: Raw Response: ${getResult.rawResponse}`;
-                    console.error(`Action "${name}" failed:`, getResult.rawResponse);
-                }
-                else {
-                    content = `❌${gs.clipboard_copy} Action "${name}" failed: Unknown error`;
-                    console.error(`Action "${name}" failed: Unknown error`);
-                }
-            } else {
-                content = `❌${gs.clipboard_copy} Action "${name}" failed: Unknown error`;
-                console.error(`Action "${name}" failed: Unknown error`);
-            }
-
-            // Get the target element by ID
-            const targetElement = document.getElementById(`${appendid}`);
-            if (targetElement) {
-                // Append the content to the target element
-                targetElement.innerHTML += `${content}`;
-            } else {
-                console.warn(`Target element with ID '${appendid}' not found.`);
-            }
-            return success; // Return the success status
-        } catch (error) {
-            const content = `❌ Error running action "${name}": ${error.message}`;
-            console.error(`Error running action "${name}":`, error);
-            const targetElement = document.getElementById(`${appendid}`);
-            if (targetElement) {
-                targetElement.innerHTML += `${content}`;
-            } else {
-                console.warn(`Target element with ID '${name}' not found.`);
-            }
-            return false; // Indicate failure
-        }
-    },
+    }
+},
         /*
     const newpage = form.generate(params,callback).attach(id);
     * */
@@ -1180,7 +1128,7 @@ actions = [
             console.log(params);
             try {
                 // Make the API request
-                const getResult = await gs.callapi.get(method, params);
+                const getResult = await gs.api.get(method, params);
 
                 // Retrieve the target element by id
                 const nextMethodElement = document.getElementById(method);
@@ -1202,7 +1150,7 @@ actions = [
             const value = event.value;
             try {
                 if(!!db) {
-                    await gs.api[db].q(`UPDATE ${table}
+                    await gs.api.maria.q(`UPDATE ${table}
                                 SET ${field}=?
                                 WHERE id = ?`, [value, id]);
                 }
@@ -1213,19 +1161,15 @@ actions = [
         insertNewRow : async function (event) {
             // Extract the 'name' attribute from the event target (button)
             const field = event.target.name;  // Use event.target to access the button's name attribute
-
             console.log(field);
-
             // Split 'gen_admin.domain' into 'gen_admin' and 'domain'
-            const db = field.split('.')[0].replace('gen_', '');  // Extract the database name, e.g., 'admin'
             const tableName = field.split('.')[1];  // Extract the table name, e.g., 'domain'
-
-            console.log(db);
             console.log(tableName);
 
             // Get the name value from the input field dynamically (based on tableName)
             const nameValue = document.getElementById(tableName + '_name').value;  // Assuming your input has an ID like 'domain_name'
             console.log(nameValue);
+            console.log(G.subparent[tableName]);
 
             // Prepare the parameters to send to the API
             const params = {
@@ -1233,23 +1177,24 @@ actions = [
                 created: gs.date('Y-m-d H:i:s')  // Use gs.date() to generate a timestamp
             };
             console.log(params);
-
             try {
                 // Check if the db exists and is valid
-                if (!!db) {
                     // Insert the new row into the database/table using gs.api
-                    const newRow = await gs.api[db].inse(field, params);  // Use tableName here
+                    const newRow = await gs.api.maria.inse(field, params);  // Use tableName here
                     console.log(newRow);  // Log the result of the insert
                     // Find the table body and rows
                     if(newRow.success){
                         //location.reload();
                         const page= G.subparent[tableName];
-                        location.href=`/admin/${page}/${tableName}?id=${newRow.data}`;
-                    }
+                        console.log("parenting...")
+                        console.log(field)
+                        console.log(tableName)
+                        console.log(page)
+                   //     location.href=`/admin/${page}/${tableName}?id=${newRow.data}`;
                 }
             } catch (error) {
                 // Catch any errors and log them
-                console.error(`Error inserting new row into ${db}.${tableName}:`, error);
+                console.error(`Error inserting new row into ${tableName}:`, error);
             }
         },
         handleNewRow : async function (event, tableName, list) {
@@ -1289,7 +1234,7 @@ actions = [
             console.log(method);
             console.log(params);
             // Make an API request using the method and parameters
-            const getResult = await gs.callapi.get(method, params);
+            const getResult = await gs.api.get(method, params);
 
             // Get the table element by ID (based on table name)
             const id = tableName.split('.')[1] + '_table';  // Assuming table name format is "db.table"
@@ -1310,15 +1255,11 @@ actions = [
             if (event.id.includes('del')) {
                 const id = event.id.replace('del', '');
                 const table=tableName.split('.')[1];
-                const db = tableName.split('.')[0].replace('gen_', '');
-                console.log(table)
-                console.log(db)
                 const suredelete = await gs.confirm(`You are going to delete id ${id}. Are you sure?`);
                 if (suredelete.isConfirmed) {
                     try {
-                        console.log(`DELETE from ${table} WHERE id = ?`);
-                        const dbcalled= G.TEMPLATE==db ? 'maria' : db;
-                        const deleted = await gs.api[dbcalled].q(`DELETE from ${table} WHERE id = ?`, [id]);
+                        console.log(`DELETE from ${tableName} WHERE id = ?`);
+                        const deleted = await gs.api.maria.q(`DELETE from ${tableName} WHERE id = ?`, [id]);
                         if (deleted.success) {
                             document.getElementById(`${tableName}_${id}`).remove();
                         }
@@ -2533,40 +2474,36 @@ throw error; // Re-throw error to be caught by caller
 }
 };
 */
-const baseApi = {
-    _request: async (fun, query, params, database) => {
+gs.api.maria = gs.api.maria || {};
+// Methods to assign
+const methods = ['create_db', 'q', 'f', 'fa', 'fetch', 'flist', 'fl', 'fPairs', 'fUnique', 'fGroup', 'fetchMax', 'counter', 'inse', 'upsert', 'alter', 'createStandardSchema', 'truncate', 'sort', 'form', 'show', 'listTables', 'types', 'tableMeta', 'char_types', 'getSchemaTable', 'generateFkReport', 'columns', 'colFormat', 'extendColumnFormat', 'prepareColumnFormat', 'is', 'set', 'exec', 'fjsonlist', 'count_'
+];
+// Dynamically assign methods to each database
+methods.forEach((method) => {
+    gs.api.maria[method] = async (query, params, database) => { // Add `database` as an argument
         const pms = { query, params: params || [] };
-        const url= `${G.SITE_URL}api/v1/${database}/${fun}`;
-        console.log(pms);
-        console.log(url);
+        const url = `${G.SITE_URL}api/v1/maria/${method}`;
+
+        console.log('Parameters:', pms);
+        console.log('Request URL:', url);
+
         try {
             const response = await fetch(url, {
                 method: 'POST',
                 body: JSON.stringify(pms),
                 headers: { 'Content-Type': 'application/json' }
             });
+
             if (!response.ok) {
                 throw new Error('HTTP error ' + response.status);
             }
+
             const jsonData = await response.json();
             return jsonData;
         } catch (error) {
             console.error('Error:', error);
-            throw error; // Re-throw error to be caught by caller
+            throw error; // Re-throw error to be caught by the caller
         }
-    }
-};
-
-gs.api = gs.api || {};
-const databases = ['maria','admin'];
-// Methods to assign
-const methods = ['fa', 'f', 'fl','inse', 'q','columns','form','sort'];
-// Dynamically assign to each database
-databases.forEach((db) => {
-    gs.api[db] = Object.assign({}, baseApi);
-    methods.forEach((method) => {
-        gs.api[db][method] = async (query, params) => { // Add `async` here
-            return await gs.api[db]._request(method, query, params, db);
-        };
-    });
+    };
 });
+

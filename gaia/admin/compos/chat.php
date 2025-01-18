@@ -163,7 +163,7 @@ display: table;
      if (message.length > 5) {
          try {
              // Save the message
-             const messagesave = await gs.api.admin.inse("actiongrp_chat", { text: message, fromid: 1, toid: 3 });
+             const messagesave = await ga.api.maria.inse("gen_admin.actiongrp_chat", { text: message, fromid: 1, toid: 3 });
              if (!messagesave.success) throw new Error('Failed to save message');
 
              // Append to div
@@ -191,7 +191,7 @@ display: table;
              console.log("GPY Response:", messageReceived);
 
              // Save the response
-             const responseSave = await gs.api.admin.inse("actiongrp_chat", { text: messageReceived, fromid: 3, toid: 1,conversation_id:messageReceived.conversation_id });
+             const responseSave = await ga.api.maria.inse("gen_admin.actiongrp_chat", { text: messageReceived, fromid: 3, toid: 1,conversation_id:messageReceived.conversation_id });
              if (!responseSave.success) throw new Error('Failed to save response');
 
              // Append response to div

@@ -13,8 +13,7 @@ protected $gpm;
 
    public function __construct() {
              parent::__construct();
-      //       $this->gpm=new Maria('gpm');
-         }
+      }
 
  public function handleRequest() {
 if ($this->isApiRequest()) {
@@ -92,9 +91,7 @@ protected function testapi($params=[]): array{
 
             header("HTTP/2 $status $status_message");
             header("Content-Type: application/json; charset=UTF-8");
-            $response['success'] = $executed['success'];
-            $response['status'] = $executed['status'];
-            $response['error'] = $executed['error'];
+            $response = $executed;
             $response['status_message'] = $this->G['status_message'][$response['status']];
             $response['method'] = $this->method;
             $response['code'] =$executed['code'];
@@ -161,6 +158,61 @@ protected function executeLocalMethod($request): array {
      }
      return $response;
 }
+/**
+ Plan Actionplan Action
+ */
+protected function executeActionMethod($request): array {
+
+  if (method_exists($this, $this->id)) {
+         // Use reflection to get method signature
+         $reflection = new ReflectionMethod($this, $this->id);
+         $parameters = $reflection->getParameters();
+
+       if($this->method=='POST'){
+         // Determine the number of parameters and their types
+         if (count($parameters) == 1 && $parameters[0]->getType() && $parameters[0]->getType()->getName() === 'array') {
+             // If method expects a single array parameter
+             $execute = $this->{$this->id}($request);
+         } else {
+             // Otherwise, spread array values as arguments
+            $execute = $this->{$this->id}($request);
+               // Otherwise, spread array values as arguments
+                      //      $execute = $this->{$this->id}(...array_values($request));
+         }
+        }else{
+     //  $execute = $this->{$this->id}(...array_values($request));
+       // Execute for non-POST requests, passing $request as a single string or array as appropriate
+         $execute = $this->{$this->id}($request); // Pass as a single string
+        }
+    //one more step to response is to return the state of plan or the whole plan 2 more levels
+    if (count($execute)==1){
+         $response = $execute[0];
+         $response["status"] = 200;
+         $response["success"] = true;
+         $response["code"] = 'RUN';
+         return $response;
+    }else{
+    $response = [
+                     "status" => 200,
+                     "success" => true,
+                     "code" => 'RUN',
+                     "state" => 'halt',
+                 ];
+   return $response;
+    }
+    //response
+
+     } else {
+         // Method not found
+         $response = [
+             "status" => 403,
+             "success" => false,
+             "code" => 'ACTION',
+             "error" => "Method {$this->id} not found"
+         ];
+     }
+     return $response;
+}
 /*
 primary executes A) maria methods IN post
     B) REST logic /resource=table/id/
@@ -172,7 +224,7 @@ primary executes A) maria methods IN post
 //A maria fast methods gs.maria.[anydatabase].fa
 //                     gs.maria.[this->id].[this->action]
       $response=[];
-     if($this->resource=="maria" || $this->resource=="admin"){
+     if($this->resource=="maria"){
             if($this->method=='POST'){
                 $database = $this->resource=='maria' ? $this->db : $this->db;
                 if ($database && method_exists($database,$this->id)) {  //id is the method of the class
@@ -190,10 +242,6 @@ primary executes A) maria methods IN post
              $response =["status"=>204,"success"=>false,"code"=>'M02','error'=>'Empty']; //create hook params, if needed empty for now
              }
 //B CALL ANY METHOD resource/id ? params&hooks
-     }elseif($this->resource=='classuse'){
-     $execute=$this->class_use();
-    $response =["status"=>200,"success"=>true,"code"=>'V','data'=>$execute,'error'=>$execute['error']];
-
      }elseif($this->resource=='viewport'){
       $methods = get_class_methods($this);
                  $methodDetails = [];
@@ -209,6 +257,8 @@ primary executes A) maria methods IN post
             //$response =["status"=>200,"success"=>true,"code"=>'V','data'=>["mydata"],'error'=>['noerror']];
 
 //TERASTIO get the expect typeof $params
+     }elseif($this->resource =='run'){
+         $response= $this->executeActionMethod($request);
      }elseif($this->resource =='local'){
        $response= $this->executeLocalMethod($request);
 
@@ -245,7 +295,7 @@ primary executes A) maria methods IN post
                 $response= ['status' => 403,'success' => 'true','code' => 'F0','data' => [],'error'=>''];
              }
      }else{
-           $response['status']=419;
+         $response['status']=419;
          $response['code']='Z';
          $response['success']=false;
           $response['error']='';

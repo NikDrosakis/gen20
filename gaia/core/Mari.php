@@ -5,15 +5,15 @@ use PDOException;
 
 class Mari {
     public $_db;
+    public $dbhost= "localhost";
+    public $dbuser = "root";
+    public $dbpass = "n130177!";
 
     // Constructor: Connect to the server without specifying a database
     public function __construct() {
-        $dbhost = "localhost";
-        $dbuser = "root";
-        $dbpass = "n130177!";
         try {
             // Connect to the server without specifying a database
-            $this->_db = new PDO("mysql:host=$dbhost", $dbuser, $dbpass,
+            $this->_db = new PDO("mysql:host=$this->dbhost", $this->dbuser, $this->dbpass,
                 array(
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_EMULATE_PREPARES => FALSE,
@@ -39,43 +39,148 @@ class Mari {
         $query = '';
         switch ($expression) {
             case 'databases':
-                $query = 'SHOW DATABASES';
-                break;
+                    $query = 'SHOW DATABASES';
+                try {
+                    $stmt = $this->_db->query($query);
+                    $res = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                    return $res;
+                } catch (PDOException $e) {
+                    // Handle database errors
+                    echo "Database error: " . $e->getMessage();
+                }
             case 'triggers':
-                $query = 'SHOW TRIGGERS';
-                break;
+                $query = "SHOW TRIGGERS FROM $var";
+                            try {
+                                $stmt = $this->_db->query($query);
+                                $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                return $res;
+                        } catch (PDOException $e) {
+                            // Handle database errors specifically related to PDO
+                            echo "Database error: " . $e->getMessage();
+                       }
             case 'tables':
                 // Optional: Add a specific database name if required
                 $query = "SHOW TABLES FROM $var";
+                try {
+                    $stmt = $this->_db->query($query);
+                    $res = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                    return $res;
+                } catch (PDOException $e) {
+                    // Handle database errors
+                    echo "Database error: " . $e->getMessage();
+                }
+
                 break;
             case 'status':
                 $query = 'SHOW STATUS';
-                break;
+                        try {
+                            $stmt = $this->_db->query($query);
+                            $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                            $assoc=[];
+                            foreach($res as $key=>$val){
+                            $assoc[$val['Variable_name']]=$val['Value'];
+                            }
+                            return $assoc;
+                        } catch (PDOException $e) {
+                            // Handle database errors
+                            echo "Database error: " . $e->getMessage();
+                        }
             case 'variables':
                 $query = 'SHOW VARIABLES';
-                break;
+                        try {
+                            $stmt = $this->_db->query($query);
+                            $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                            $assoc=[];
+                            foreach($res as $key=>$val){
+                            $assoc[$val['Variable_name']]=$val['Value'];
+                            }
+                            return $assoc;
+                        } catch (PDOException $e) {
+                            // Handle database errors
+                            echo "Database error: " . $e->getMessage();
+                        }
             case 'processlist':
                 $query = 'SHOW PROCESSLIST';
-                break;
+                        try {
+                            $stmt = $this->_db->query($query);
+                            $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                            return $res;
+                        } catch (PDOException $e) {
+                            // Handle database errors
+                            echo "Database error: " . $e->getMessage();
+                        }
             case 'engine':
                 $query = 'SHOW ENGINE STATUS';
-                break;
-            case 'create table':
-                // Example with table name, replace 'your_table_name' with a dynamic input
-                $query = "SHOW CREATE TABLE $var";
-                break;
-            default:
-                throw new InvalidArgumentException("Invalid SHOW expression: $expression");
-        }
-
-        try {
-            $stmt = $this->_db->query($query);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            // Handle database errors
-            throw new RuntimeException("Database error: " . $e->getMessage());
+                    try {
+                        $stmt = $this->_db->query($query);
+                        $res = $stmt->fetch(PDO::FETCH_ASSOC);
+                        return $res;
+                    } catch (PDOException $e) {
+                        // Handle database errors
+                        echo "Database error: " . $e->getMessage();
+                    }
         }
     }
+/**
+to add, alter column or drop column
+USAGE
+$columnDetails = [
+    'name' => 'existing_column',
+    'type' => 'TEXT',
+    'null' => 'NULL'
+];
+$altered = $this->alter('mydb.mytable', 'modify', $columnDetails);
+$columnDetails = [
+    'name' => 'new_column',
+    'type' => 'VARCHAR(255)',
+    'null' => 'NOT NULL'
+];
+$altered = $this->alter('mydb.mytable', 'add', $columnDetails);
+$columnDetails = [
+    'name' => 'old_column'
+];
+$altered = $this->alter('mydb.mytable', 'drop', $columnDetails);
+*/
+public function alter($dbdottable, $operation, $columnDetails) {
+    // Ensure the $dbdottable is sanitized and in the correct format
+    $dbTableParts = explode('.', $dbdottable);
+    if (count($dbTableParts) !== 2) {
+        throw new InvalidArgumentException("Invalid table format. Expected 'database.table'.");
+    }
+
+    $dbName = $dbTableParts[0];
+    $tableName = $dbTableParts[1];
+
+    try {
+        switch (strtolower($operation)) {
+            case 'add':
+                // Add column: expects column details like ['name' => 'column_name', 'type' => 'VARCHAR(255)', 'null' => 'NOT NULL']
+                $sql = "ALTER TABLE `$dbName`.`$tableName` ADD COLUMN `{$columnDetails['name']}` {$columnDetails['type']} {$columnDetails['null']}";
+                break;
+
+            case 'modify':
+                // Modify column: expects column details like ['name' => 'column_name', 'type' => 'VARCHAR(255)', 'null' => 'NOT NULL']
+                $sql = "ALTER TABLE `$dbName`.`$tableName` MODIFY COLUMN `{$columnDetails['name']}` {$columnDetails['type']} {$columnDetails['null']}";
+                break;
+
+            case 'drop':
+                // Drop column: expects column name to drop
+                $sql = "ALTER TABLE `$dbName`.`$tableName` DROP COLUMN `{$columnDetails['name']}`";
+                break;
+
+            default:
+                throw new InvalidArgumentException("Unsupported operation: $operation. Supported operations are 'add', 'modify', 'drop'.");
+        }
+
+        // Execute the query
+        $stmt = $this->_db->query($sql);
+        return true;
+    } catch (PDOException $e) {
+        // Handle database errors using PDOException
+        echo "Database error: " . $e->getMessage();
+        return false;
+    }
+}
 
 public function createStandardSchema($table,$schema) {
     // SQL to create the table
@@ -302,11 +407,7 @@ public function upsert(string $table, array $record): int|bool {
     *	Updated with memcache
     */
     public function fa(string $q, array $params = array()): bool|array    {
-           $queryType = strtoupper(strtok(trim($q), ' ')); // Get the first word of the query
-        if ($queryType !== 'SELECT' && $queryType !== 'DESCRIBE') {
-                   return FALSE;
-               }
-		$res = $this->_db->prepare($q);
+  		$res = $this->_db->prepare($q);
             $res->execute($params);
 		if(!$res) return FALSE;
             return $res->fetchAll(PDO::FETCH_ASSOC);
@@ -617,9 +718,10 @@ public function generateFkReport(string $table, string $column) {
 
     }
 
-	public function  create_db(string $dbname,string $dbhost,string $dbuser,string $dbpass){
+
+	public function create_db(string $dbname,string $dbuser,string $dbpass){
 	try {
-		$this->_db = new PDO("mysql:host=$dbhost", $dbuser, $dbpass);
+		$this->_db = new PDO("mysql:host=localhost", $dbuser, $dbpass);
 		$this->_db->exec("CREATE DATABASE `$dbname`;
 				CREATE USER '$dbuser'@'localhost' IDENTIFIED BY '$dbpass';
 				GRANT ALL ON `$dbname`.* TO '$dbuser'@'localhost';
