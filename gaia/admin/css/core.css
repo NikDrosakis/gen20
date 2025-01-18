@@ -516,8 +516,8 @@ buildArchive
     }
     /* Hide text under 800px */
     @media screen and (max-width: 900px) {
-        #dashbar {width:10%;}
-        #mainpage {width:90%;}
+        #dashbar {width:6%;}
+        #mainpage {width:94%;}
         .menu-text {
             display: none;
         }

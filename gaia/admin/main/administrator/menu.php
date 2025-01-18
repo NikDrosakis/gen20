@@ -179,7 +179,7 @@ if (target.id.startsWith('title' + G.langprefix + '_') || target.id.startsWith('
     var exp = target.id.split('_');
     var val = target.value;
     console.log("UPDATE links SET " + exp[0] + "='" + val + "' WHERE id=" + exp[2]);
-    gs.api.maria.q("UPDATE links SET " + exp[0] + "='" + val + "' WHERE id=" + exp[2]).then(function (updatemenu) {
+    gs.api.maria.q(`UPDATE ${G.publicdb}.links SET ${exp[0]}=${val} WHERE id=${exp[2]}`).then(function (updatemenu) {
         if (updatemenu.success) {
             if (exp[0] === 'title' + G.langprefix) {
                 document.getElementById('menuals' + exp[1] + "_" + exp[2]).textContent = val;
@@ -198,7 +198,7 @@ if (target.id.startsWith('mealias_')) {
 var exp = target.id.split('_');
 var val = target.value;
 console.log("UPDATE menu SET title" + G.langprefix + "='" + val + "' WHERE id=" + exp[1]);
-gs.api.maria.q("UPDATE menu SET title" + G.langprefix + "='" + val + "' WHERE id=?", [exp[1]]).then(function (updatemenu) {
+gs.api.maria.q(`UPDATE menu SET title${G.langprefix}=${val} WHERE id=?`, [exp[1]]).then(function (updatemenu) {
     if (updatemenu.success) {
         document.getElementById('malias_' + exp[1]).textContent = val;
     }

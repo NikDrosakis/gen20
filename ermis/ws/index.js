@@ -1,11 +1,59 @@
 const WebSocket = require('ws');
+//const chat = require('../core/Chat');
+const Rethink = require("../core/Rethink");
 const EventEmitter = require('events');
 const { stats } = require('./stats');
 const Messenger = require('../core/Messenger');
 const emitter = new EventEmitter();
 emitter.setMaxListeners(1000);
-
 let wss;
+
+
+// Usage example:
+(async () => {
+    const rethink = new Rethink();
+    await rethink.connect();
+
+    // Insert a test message in the specified structure
+    const message = {
+        cid: 1,
+        fn: {
+            name: "cia",
+            fname: "Central Intelligence Agency Lt",
+            img: "/uploads/7da2f9c4f064fc722e146073fa05cf65.png"
+        },
+        fn0: {
+            name: "megas",
+            fname: "Megas",
+            img: "/uploads/c5e80b56ea12f376b08a9818c68ba778.jpg"
+        },
+        modified: 1736872571,
+        privacy: 1,
+        uid: 61,
+        unread: 1,
+        chat: [
+            {
+                u: 1,
+                c: "Hello 6",
+                t: 1736872571
+            },
+            {
+                u: 2,
+                c: "Hello 7",
+                t: 1736872581
+            }
+        ]
+    };
+    // await rethink.insertMessage(message);
+    // Call upsert to insert or update chat for the cid
+    //await rethink.upsertChat(message);
+
+    // Get all messages
+    const allmes = await rethink.getMessages();
+    console.table(allmes)
+    // Close the connection
+    await rethink.close();
+})();
 
 function WServer(server) {
     wss = new WebSocket.Server({ server });
@@ -19,7 +67,6 @@ function WServer(server) {
         });
     });
 */
-
     // Health check for WebSocket connections
     setInterval(() => {
         wss.clients.forEach((ws) => {
@@ -57,6 +104,9 @@ function WServer(server) {
                     console.warn('Invalid message:', data);
                     return;
                 }
+               // chat.handleMessage(message, ws); // Use the Chat class to handle messages
+
+
 
                 const finalized_messsage = await Messenger.buildMessage(message);
 
@@ -92,5 +142,4 @@ function WServer(server) {
         });
     });
 }
-
 module.exports = { WServer };

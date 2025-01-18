@@ -20,6 +20,15 @@ g++ Gredis.o Maria.o main.o Yaml.o -o main -lhiredis -lyaml-cpp -lmariadbclient
 #verify
 g++ Gredis.o Maria.o main.o Yaml.o -o main -lhiredis -lyaml-cpp -lmariadbclient -L/usr/lib/x86_64-linux-gnu
 
+#rethink
+sudo apt install librethinkdb-dev libboost-all-dev libprotobuf-dev protobuf-compiler libssl-dev
+git clone https://github.com/AtnNn/librethinkdbxx.git
+cd librethinkdbxx
+mkdir build
+cd build
+sudo apt install git cmake g++ make libboost-all-dev libprotobuf-dev protobuf-compiler libssl-dev
+
+
 make run
 make clean
 

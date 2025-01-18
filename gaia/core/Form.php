@@ -36,6 +36,7 @@ use Exception;
 trait Form {
 
 use Media;
+use Tree;
 protected $labeled; #
 protected $formid; #
 protected $table; #
@@ -173,8 +174,7 @@ return '<div style="display:flex">
 /**
 @fm.description Build an HTML table based on the data provided.
  1) creates the query
- 2) switch cases sth like colFormat Controllers to decide the View
- 3)
+ 2) switch cases of column format returning html
  */
 protected function buildTable($tableName,array $params=[]): string {
 $table = is_array($tableName) ? $tableName['key'] : $tableName;
@@ -198,22 +198,17 @@ $tableHtml .= $this->include_buffer($custom_tools_beforetable,$cols,$params);
 }
 $tableHtml .=  $this->renderFormHead($table);
 $tableHtml .= '<div class="table-container" style="'.$style.'">';
-#gs.form.handleNewRow(event, \'' . $table . '\', {0: {row: \'name\', placeholder: \'Give a Name\'}, 1: {row: \'created\', type: \'hidden\', value: gs.date(\'Y-m-d H:i:s\')}})
-$tableHtml .= '<button class="bare right" onclick="gs.ui.switcher(\'#new_' . $subpage . '_box\')">
-    <span class="glyphicon glyphicon-plus"></span> New ' . $subpage . '</button>';
-$tableHtml .= '<div style="display:none" id="new_'.$subpage.'_box">
-    <div class="gform"><div class="gs-span"><label for="name">Name</label>
-    <input class="gs-input" name="name" placeholder="Give a Name" id="' . $subpage . '_name" type="text" value=""></div>
-        <button class="button" name="' . $table . '" onclick="gs.form.insertNewRow(event)">DO</button>
-    </div></div>';
-$tableHtml .= $this->formSearch($table);
 
+if($this->totalRes > 10){
+$tableHtml .= $this->formSearch($table);
 foreach($cols as $colName => $colData){
-if(strpos($colData['comment'],'selectjoin')!==false){
+if(strpos($colData['comment'],'selectjoin')!==false || strpos($colData['comment'],'selectG')!==false ){
     $tableHtml .= $this->formFilters($colData);
 }
 }
-    try {
+}
+
+try {
 $tableHtml .= $this->buildCoreTable($tableName,$cols=[]);
 } catch (Exception $e) {
             $tableHtml .= "<div class='error'>Error loading $tableName. Please check table and db name.</div>";
@@ -231,66 +226,33 @@ $tableHtml .= $this->buildCoreTable($tableName,$cols=[]);
 }
 
 // @fm.features only the core table without top inputs
-protected function buildCoreTable($tableName,$cols=[]) {
+/**
+ abstraction with pug json
+{
+  "id": "td a(href=`/admin/${page}/${subpage}?id=${row.id}`) span.glyphicon.glyphicon-edit | ${row.id}",
+  "sort": "td span(id=`menusrt${row.id}`) ${row.sort}",
+  "label": "td | ${is_string(value) ? htmlspecialchars(value, 'ENT_QUOTES', 'UTF-8') : ''}",
+  "javascript": "td = renderRunField(method, row.name, row[colName])",
+  "button": "td = renderButtonField(colData.comment, row[colName])",
+  "selectjoin": "td a(style='position: absolute;', href=`/admin/${link}`) span.glyphicon.glyphicon-link | #{renderSelectField(colName, row[colName], options)}",
+  "checkbox": "td input#${colName}${row.id}(type='checkbox', switch='', checked='${row[colName] ? \"checked\" : \"\"}', class='switcher', onchange=`gs.form.updateRow(this, '${table}')`)",
+  "method": "td = renderSelectField(colName, row[colName], getClassMethods())",
+  "select": "td = renderSelectField(colName, row[colName], options)",
+  "img": "td img(src=`${validateImg(row[colName])}`, alt='${colName}', style='height:34px; max-width:100px;') + button(onclick=`gs.form.loadButton('updateCuboImg', '${table}', '${row.name}')`) span.bare.glyphicon.glyphicon-refresh",
+  "datetime-local": "td input(type='datetime-local', onchange=`gs.form.updateRow(this, '${table}')`, name='${colName}', id='${colName}${row.id}', value='${row[colName] !== '' ? htmlspecialchars(row[colName]) : ''}')",
+  "text": "td input(type='text', onkeyup=`gs.form.updateRow(this, '${table}')`, name='${colName}', id='${colName}${row.id}', value='${row[colName] !== '' ? htmlspecialchars(row[colName]) : ''}')",
+  "textarea": "td textarea(onkeyup=`gs.form.updateRow(this, '${table}')`, name='${colName}', id='${colName}${row.id}') | ${row[colName] !== '' ? htmlspecialchars(row[colName]) : ''}",
+  "default": "td input(type='text', name='${colName}', value='${row[colName] !== '' ? htmlspecialchars(row[colName]) : ''}')",
+  "deleteButton": "td button#del${row.id}(type='button', value='${row.id}', title='delete', onclick=`gs.form.deleteRow(this, '${table}')`, class='bare') span.glyphicon.glyphicon-trash"
+}
+ */
+
+protected function tableBody($tableName,$cols=[],$data=[]) {
     $table = is_array($tableName) ? $tableName['table'] : $tableName;
     $subpage=explode('.',$table)[1];
-    $searchTerm=is_array($tableName) ? $tableName['q'] : null;
-    $orderbyTerm=$tableName['orderby'] ?? false;
-if (empty($cols)) {
-$cols = $this->getInputType($table); // @fm.features Get column metadata
-}
-   // @fm.features Fetch current page from query parameters (default to 1)
-    $this->currentPage =is_array($tableName) && $tableName['pagenum'] ? str_replace($subpage,'',$tableName['pagenum']) : 1;
 
-    $searchTerm=is_array($tableName) ? $tableName['q'] : null;
-    #instantiate those public vars
-    $this->table=$table;
-    $subtable = explode('.',$this->table)[1];
-
-    // @fm.features Calculate the starting row for the current page
-   // @fm.features $offset = ((int)$this->currentPage - 1) * $this->resultsPerPage;
-
-      $query= "SELECT * FROM $table";
-      // @fm.features Modify query for search capabilities
-        if ($searchTerm) {
-            $query .= " WHERE name LIKE '%$searchTerm%'";
-        }
-      #include pagination
-      if($orderbyTerm){
-        $q .= " ORDER BY $orderbyTerm desc";
-      }elseif(in_array('sort',array_keys($cols))){
-        $q .= " ORDER BY sort ASC";
-      }
-       #$query .=" LIMIT $offset, $this->resultsPerPage ";
-       // @fm.features Fetch paginated rows based on current page and results per page
-
-       $rows = $this->db->fetch($query,[],$this->resultsPerPage,$this->currentPage,$orderbyTerm);
-       // @fm.features Fetch total number of rows in the table
-       $this->totalRes = $rows['total'];
-        $data= $rows['data'];
-
-    #create the table container
-    $tableHtml = '<table  id="' . $subpage . '_table" class="styled-table">';
-    $tableHtml .= '<thead>';
-    $tableHtml .= '<tr>';
-
-    #loop of head
-    foreach ($cols as $colName => $colData) {
-        // @fm.features Skip 'textarea', 'MEDIUMTEXT', and 'LONGTEXT' columns entirely
-        if (in_array($colData['type'], ['textarea', 'editor'])) {
-            continue;
-        }
-        $label = ucfirst($colName); // @fm.features Use comment or column name as label
-        $tableHtml .= '<th>';
-        // @fm.features Check if the column is 'sort' for sorting behavior
-        $tableHtml .= '<button class="orderby" onclick="gs.form.updateTable(this, \'buildCoreTable\');" data-table="'.$table.'" data-orderby="'.$colName . '" id="order:' . $subtable.':'.$colName . '">' . $label . '</button>';
-        $tableHtml .= '</th>';
-    }
-    $tableHtml .= '<th></th></tr>';
-    $tableHtml .= '</thead>'; // @fm.features End header row
-    // @fm.features Build table body
-    $tableHtml .= '<tbody id="list">';
-
+   // @fm.features Build table body
+   $tableHtml = '<tbody id="list">';
     #loop of body
     foreach ($data as $row) {
     $this->formid=$row['id'];
@@ -299,6 +261,7 @@ $cols = $this->getInputType($table); // @fm.features Get column metadata
      $tableHtml .= '<tr id="'.$table.'_'.$row['id'].'" class="menuBox">';
        #loop of data
         foreach ($cols as $colName => $colData) {
+        $value=$row[$colName];
             // @fm.features Skip 'textarea', 'MEDIUMTEXT', and 'LONGTEXT' fields entirely
             if (in_array($colData['type'], ['textarea', 'editor'])) {
                 continue;
@@ -315,15 +278,17 @@ $cols = $this->getInputType($table); // @fm.features Get column metadata
                  $tableHtml .= '<span id="menusrt'.$row['id'].'">'.$row['sort'].'</span>';
 
             // @fm.features Render label for readonly fields
+            } elseif ($inputType === 'readonly') {
+                $tableHtml .= $value;
             } elseif ($inputType === 'label') {
                 $tableHtml .= is_string($value) ? htmlspecialchars($value, ENT_QUOTES, 'UTF-8') : '';
 
             } elseif (strpos($colData['comment'], 'javascript') !== false) {
                 $method = str_replace('javascript-', '', $colData['comment']);
-                $tableHtml .= $this->renderRunField($method,$row['name'],$row[$colName]);
+                $tableHtml .= $this->renderRunField($method,$row['name'],$value);
 
             } elseif ($inputType === 'button') {
-                $tableHtml .= $this->renderButtonField($colData['comment'],$row[$colName]);
+                $tableHtml .= $this->renderButtonField($colData['comment'],$value);
 
             // @fm.features Handle selectjoin to create a link
             } elseif (strpos($colData['comment'], 'selectjoin') !== false) {
@@ -332,226 +297,140 @@ $cols = $this->getInputType($table); // @fm.features Get column metadata
                         $rowId = explode('.', $rowtable)[1];
                         $link=$this->page==$tableName ? $tableName.'?id=' . $row[$rowId] : $this->page.'/'.$tableName.'?id=' . $row[$rowId];
                         $tableHtml .= '<a style="position: absolute;" href="/admin/' . $link . '"><span class="glyphicon glyphicon-link"></span></a> ';
-                        $options=$this->getSelectOptions($colData['comment'],$row[$colName]);
-                        $tableHtml .=  $this->renderSelectField($colName, $row[$colName], $options);
+                        $options=$this->getSelectOptions($colData['comment'],$value);
+                        $tableHtml .=  $this->renderSelectField($colName, $value, $options);
 
             // @fm.features Render select field (fetch options using getSelectOptionsFromComment)
             }elseif ($inputType === 'checkbox') {
-                $tableHtml .= '<input id="'.$colName.$row['id'].'"   onchange="gs.form.updateRow(this, \'' . $table . '\')" type="checkbox" switch="" '.($row[$colName] ? "checked":"").' class="switcher">';
+                $tableHtml .= '<input id="'.$colName.$row['id'].'"   onchange="gs.form.updateRow(this, \'' . $table . '\')" type="checkbox" switch="" '.($value ? "checked":"").' class="switcher">';
 
            }elseif ($inputType === 'method') {
               $options=$this->getClassMethods();
-                $tableHtml .= $this->renderSelectField($colName, $row[$colName], $options);
+                $tableHtml .= $this->renderSelectField($colName, $value, $options);
+
            }elseif ($inputType === 'select') {
                 if($colData['sql_type']=='enum'){
                     $options=$colData['list'];
                 }else{
-                    $options=$this->getSelectOptions($colData['comment'],$row[$colName]);
+                    $options=$this->getSelectOptions($colData['comment'],$value);
                 }
-                    $tableHtml .= $this->renderSelectField($colName, $row[$colName], $options);
+                    $tableHtml .= $this->renderSelectField($colName, $value, $options);
 
             // @fm.features Render an image for img fields
             }elseif ($inputType === 'img') {
-                $imgPath = $this->validateImg($row[$colName]);
+                $imgPath = $this->validateImg($value);
                 $tableHtml .= '<img src="' . htmlspecialchars($imgPath) . '" alt="' . $colName . '" style="height:34px; max-width:100px;" />';
                 $actions = json_encode([
                   ['method' => 'updateCuboImg', 'params' => ['name' => $row['name']]]
                   ]);
             //       ['method' => 'buildTable', 'params' => ['table' => 'gen_vivalibro.action_task']],
             //instead of gs.form.loadButton(\'updateCuboImg\', \'' . $row['name'] . '\')
-        $tableHtml .= '<button onclick="gs.form.loadButton(\'updateCuboImg\', \'' . $table . '\', \'' . $row['name'] . '\')"><span style="position:absolute" class="bare glyphicon glyphicon-refresh"></span></button>';
+     //   $tableHtml .= '<button onclick="gs.form.loadButton(\'updateCuboImg\', \'' . $table . '\', \'' . $row['name'] . '\')"><span style="position:absolute" class="bare glyphicon glyphicon-refresh"></span></button>';
+          }elseif ($col['type'] == 'int') {
+                           $tableHtml .= '<input type="number"
+                                                   onchange="gs.form.updateRow(this, \'' . $table . '\')"
+                                                   name="' . $colName . '"
+                                                   id="' . $colName . $row['id'] . '"
+                                                   value="' . ($value != '' ? htmlspecialchars($value) : '') . '" />';
 
           }elseif ($inputType == 'datetime-local') {
                           $tableHtml .= '<input type="' . htmlspecialchars($inputType) . '"
                                          onchange="gs.form.updateRow(this, \'' . $table . '\')"
                                          name="' . $colName . '"
                                          id="' . $colName . $row['id'] . '"
-                                         value="' . ($row[$colName] != '' ? htmlspecialchars($row[$colName]) : '') . '" />';
+                                         value="' . ($value != '' ? htmlspecialchars($value) : '') . '" />';
 
           }elseif ($inputType == 'text') {
                     $tableHtml .= '<input type="' . htmlspecialchars($inputType) . '"
                                          onkeyup="gs.form.updateRow(this, \'' . $table . '\')"
                                          name="' . $colName . '"
                                          id="' . $colName . $row['id'] . '"
-                                         value="' . ($row[$colName] != '' ? htmlspecialchars($row[$colName]) : '') . '" />';
+                                         value="' . ($value != '' ? htmlspecialchars($value) : '') . '" />';
           }elseif ($inputType !== 'editor') {
       $tableHtml .= '<textarea type="' . htmlspecialchars($inputType) . '"
                                                onkeyup="gs.form.updateRow(this, \'' . $table . '\')"
                                                name="' . $colName . '"
-                                               id="' . $colName . $row['id'] . '"/>' . ($row[$colName] != '' ? htmlspecialchars($row[$colName]) : '') . '</textarea>';
+                                               id="' . $colName . $row['id'] . '"/>' . ($value != '' ? htmlspecialchars($value) : '') . '</textarea>';
            }
             $tableHtml .= '</td>';
         }
         $tableHtml .= '<td><button id="del' . $row['id'] . '" type="button" value="' . $row['id'] . '" title="delete"
           onclick="gs.form.deleteRow(this, \'' . $table . '\')"
         class="bare"><span class="glyphicon glyphicon-trash"></span></button></td></tr>';
-    }
-    $tableHtml .= '</tbody>';
-        $tableHtml .= '</table>';
-        // @fm.features Add pagination AFTER the table
+        }
+
+        $tableHtml .= '</tbody>';
+       // @fm.features Add pagination AFTER the table
     return $tableHtml;
 }
-// @fm.features only the core table without top inputs
-protected function buildCoreTable2($tableName,$cols=[]) {
-    $table = is_array($tableName) ? $tableName['table'] : $tableName;
-    $subpage=explode('.',$table)[1];
-    $searchTerm=is_array($tableName) ? $tableName['q'] : null;
-    $orderbyTerm=$tableName['orderby'] ?? false;
-if (empty($cols)) {
-$cols = $this->getInputType($table); // @fm.features Get column metadata
-}
-   // @fm.features Fetch current page from query parameters (default to 1)
-    $this->currentPage =is_array($tableName) && $tableName['pagenum'] ? str_replace($subpage,'',$tableName['pagenum']) : 1;
 
-    $searchTerm=is_array($tableName) ? $tableName['q'] : null;
-    #instantiate those public vars
-    $this->table=$table;
-    $subtable = explode('.',$this->table)[1];
-
-    // @fm.features Calculate the starting row for the current page
-   // @fm.features $offset = ((int)$this->currentPage - 1) * $this->resultsPerPage;
-
-      $query= "SELECT * FROM $table";
-      // @fm.features Modify query for search capabilities
-        if ($searchTerm) {
-            $query .= " WHERE name LIKE '%$searchTerm%'";
-        }
-      #include pagination
-      if($orderbyTerm){
-        $q .= " ORDER BY $orderbyTerm desc";
-      }elseif(in_array('sort',array_keys($cols))){
-        $q .= " ORDER BY sort ASC";
-      }
-       #$query .=" LIMIT $offset, $this->resultsPerPage ";
-       // @fm.features Fetch paginated rows based on current page and results per page
-
-       $rows = $this->db->fetch($query,[],$this->resultsPerPage,$this->currentPage,$orderbyTerm);
-       // @fm.features Fetch total number of rows in the table
-       $this->totalRes = $rows['total'];
-        $data= $rows['data'];
-
-    #create the table container
-    $tableHtml = '<div  id="' . $subpage . '_table" class="styled-table">';
-    $tableHtml .= '<div>';
-    $tableHtml .= '<div>';
-
+protected function tableHead($table,$cols=[]) {
     #loop of head
+     $subtable = explode('.',$table)[1];
+     $tableHtml = '<thead>';
+     $tableHtml .= '<tr>';
     foreach ($cols as $colName => $colData) {
         // @fm.features Skip 'textarea', 'MEDIUMTEXT', and 'LONGTEXT' columns entirely
         if (in_array($colData['type'], ['textarea', 'editor'])) {
             continue;
         }
         $label = ucfirst($colName); // @fm.features Use comment or column name as label
-        $tableHtml .= '<div>';
-        // @fm.features Check if the column is 'sort' for sorting behavior
+        $tableHtml .= '<th>';
         $tableHtml .= '<button class="orderby" onclick="gs.form.updateTable(this, \'buildCoreTable\');" data-table="'.$table.'" data-orderby="'.$colName . '" id="order:' . $subtable.':'.$colName . '">' . $label . '</button>';
-        $tableHtml .= '</div>';
+        $tableHtml .= '</th>';
     }
-    $tableHtml .= '<div></div></div>';
-    $tableHtml .= '</div>'; // @fm.features End header row
-    // @fm.features Build table body
-    $tableHtml .= '<div id="list">';
-
-    #loop of body
-    foreach ($data as $row) {
-    $this->formid=$row['id'];
-
-    #add sortable <tr "
-     $tableHtml .= '<div id="'.$table.'_'.$row['id'].'" class="menuBox">';
-       #loop of data
-        foreach ($cols as $colName => $colData) {
-            // @fm.features Skip 'textarea', 'MEDIUMTEXT', and 'LONGTEXT' fields entirely
-            if (in_array($colData['type'], ['textarea', 'editor'])) {
-                continue;
-            }
-            $tableHtml .= '<div>';
-            $inputType = $colData['type'];
-
-            // @fm.features Auto ID column
-            if ($colName === 'id') {
-                 $tableHtml .= '<a href="/admin/'.$this->page.'/'.$subpage.'?id='.$row['id'].'"><span class="glyphicon glyphicon-edit"></span></a>';
-                 $tableHtml .= htmlspecialchars($row['id']);
-
-            }elseif ($colName === 'sort') {
-                 $tableHtml .= '<span id="menusrt'.$row['id'].'">'.$row['sort'].'</span>';
-
-            // @fm.features Render label for readonly fields
-            } elseif ($inputType === 'label') {
-                $tableHtml .= is_string($value) ? htmlspecialchars($value, ENT_QUOTES, 'UTF-8') : '';
-
-            } elseif (strpos($colData['comment'], 'javascript') !== false) {
-                $method = str_replace('javascript-', '', $colData['comment']);
-                $tableHtml .= $this->renderRunField($method,$row['name'],$row[$colName]);
-
-            } elseif ($inputType === 'button') {
-                $tableHtml .= $this->renderButtonField($colData['comment'],$row[$colName]);
-
-            // @fm.features Handle selectjoin to create a link
-            } elseif (strpos($colData['comment'], 'selectjoin') !== false) {
-                        $rowtable = str_replace('selectjoin-', '', $colData['comment']);
-                        $tableName = explode('.', $rowtable)[0];
-                        $rowId = explode('.', $rowtable)[1];
-                        $link=$this->page==$tableName ? $tableName.'?id=' . $row[$rowId] : $this->page.'/'.$tableName.'?id=' . $row[$rowId];
-                        $tableHtml .= '<a style="position: absolute;" href="/admin/' . $link . '"><span class="glyphicon glyphicon-link"></span></a> ';
-                        $options=$this->getSelectOptions($colData['comment'],$row[$colName]);
-                        $tableHtml .=  $this->renderSelectField($colName, $row[$colName], $options);
-
-            // @fm.features Render select field (fetch options using getSelectOptionsFromComment)
-            }elseif ($inputType === 'checkbox') {
-                $tableHtml .= '<input id="'.$colName.$row['id'].'"   onchange="gs.form.updateRow(this, \'' . $table . '\')" type="checkbox" switch="" '.($row[$colName] ? "checked":"").' class="switcher">';
-
-           }elseif ($inputType === 'method') {
-              $options=$this->getClassMethods();
-                $tableHtml .= $this->renderSelectField($colName, $row[$colName], $options);
-           }elseif ($inputType === 'select') {
-                if($colData['sql_type']=='enum'){
-                    $options=$colData['list'];
-                }else{
-                    $options=$this->getSelectOptions($colData['comment'],$row[$colName]);
-                }
-                    $tableHtml .= $this->renderSelectField($colName, $row[$colName], $options);
-
-            // @fm.features Render an image for img fields
-            }elseif ($inputType === 'img') {
-                $imgPath = $this->validateImg($row[$colName]);
-                $tableHtml .= '<img src="' . htmlspecialchars($imgPath) . '" alt="' . $colName . '" style="height:34px; max-width:100px;" />';
-                $actions = json_encode([
-                  ['method' => 'updateCuboImg', 'params' => ['name' => $row['name']]]
-                  ]);
-            //       ['method' => 'buildTable', 'params' => ['table' => 'gen_vivalibro.action_task']],
-            //instead of gs.form.loadButton(\'updateCuboImg\', \'' . $row['name'] . '\')
-        $tableHtml .= '<button onclick="gs.form.loadButton(\'updateCuboImg\', \'' . $table . '\', \'' . $row['name'] . '\')"><span style="position:absolute" class="bare glyphicon glyphicon-refresh"></span></button>';
-
-          }elseif ($inputType == 'datetime-local') {
-                          $tableHtml .= '<input type="' . htmlspecialchars($inputType) . '"
-                                         onchange="gs.form.updateRow(this, \'' . $table . '\')"
-                                         name="' . $colName . '"
-                                         id="' . $colName . $row['id'] . '"
-                                         value="' . ($row[$colName] != '' ? htmlspecialchars($row[$colName]) : '') . '" />';
-
-          }elseif ($inputType == 'text') {
-                    $tableHtml .= '<input type="' . htmlspecialchars($inputType) . '"
-                                         onkeyup="gs.form.updateRow(this, \'' . $table . '\')"
-                                         name="' . $colName . '"
-                                         id="' . $colName . $row['id'] . '"
-                                         value="' . ($row[$colName] != '' ? htmlspecialchars($row[$colName]) : '') . '" />';
-          }elseif ($inputType !== 'editor') {
-      $tableHtml .= '<textarea type="' . htmlspecialchars($inputType) . '"
-                                               onkeyup="gs.form.updateRow(this, \'' . $table . '\')"
-                                               name="' . $colName . '"
-                                               id="' . $colName . $row['id'] . '"/>' . ($row[$colName] != '' ? htmlspecialchars($row[$colName]) : '') . '</textarea>';
-           }
-            $tableHtml .= '</div>';
-        }
-        $tableHtml .= '<div><button id="del' . $row['id'] . '" type="button" value="' . $row['id'] . '" title="delete"
-          onclick="gs.form.deleteRow(this, \'' . $table . '\')"
-        class="bare"><span class="glyphicon glyphicon-trash"></span></div></div></div>';
-    }
-    $tableHtml .= '</div>';
-        $tableHtml .= '</div>';
-        // @fm.features Add pagination AFTER the table
+    $tableHtml .= '<th></th></tr>';
+    $tableHtml .= '</thead>';
     return $tableHtml;
 }
+
+protected function buildCoreTable($tableName,$cols=[]) {
+         $table = is_array($tableName) ? $tableName['table'] : $tableName;
+              $subpage=explode('.',$table)[1];
+              $searchTerm=is_array($tableName) ? $tableName['q'] : null;
+              $orderbyTerm=$tableName['orderby'] ?? false;
+          if (empty($cols)) {
+          $cols = $this->getInputType($table); // @fm.features Get column metadata
+          }
+
+           // @fm.features Fetch current page from query parameters (default to 1)
+            $this->currentPage =is_array($tableName) && $tableName['pagenum'] ? str_replace($subpage,'',$tableName['pagenum']) : 1;
+
+            $searchTerm=is_array($tableName) ? $tableName['q'] : null;
+            #instantiate those public vars
+            $this->table=$table;
+
+            // @fm.features Calculate the starting row for the current page
+           // @fm.features $offset = ((int)$this->currentPage - 1) * $this->resultsPerPage;
+              $query= "SELECT * FROM $table";
+              // @fm.features Modify query for search capabilities
+                if ($searchTerm) {
+                    $query .= " WHERE name LIKE '%$searchTerm%'";
+                }
+              #include pagination
+              if($orderbyTerm){
+                $q .= " ORDER BY $orderbyTerm desc";
+              }elseif(in_array('sort',array_keys($cols))){
+                $q .= " ORDER BY sort ASC";
+              }
+               #$query .=" LIMIT $offset, $this->resultsPerPage ";
+               // @fm.features Fetch paginated rows based on current page and results per page
+
+               $rows = $this->db->fetch($query,[],$this->resultsPerPage,$this->currentPage,$orderbyTerm);
+               // @fm.features Fetch total number of rows in the table
+               $this->totalRes = $rows['total'];
+                $data= $rows['data'];
+
+            #create the table container
+            $tableHtml = '<table class="styled-table" id="' . $subpage . '_table" >';
+        //call buildHead
+         $tableHtml .= $this->tableHead($table,$cols);
+        //call buildCore
+        $tableHtml .= $this->tableBody($table,$cols,$data);
+        $tableHtml .= '</table>';
+    return $tableHtml;
+}
+
 
 // @fm.description filters on top of the table from selectjoin or selectG
 protected function formFilters($colData,$row=[]) {
@@ -637,11 +516,19 @@ return $html;
 protected function renderFormHead($table){
 $subpage=explode('.',$table)[1];
  $page = $this->G['subparent'][$subpage];
+ #gs.form.handleNewRow(event, \'' . $table . '\', {0: {row: \'name\', placeholder: \'Give a Name\'}, 1: {row: \'created\', type: \'hidden\', value: gs.date(\'Y-m-d H:i:s\')}})
 return '<h3>
             <input id="cms_panel" class="red indicator">
            <button class="bare" onclick="openPanel(\'compos/doc.php\')"><span class="glyphicon glyphicon-info-sign bare"></span></button>
            <button class="bare" onclick="openPanel(\'compos/guide.php\')"><span class="glyphicon glyphicon-question-sign"></span></button>
             <a href="/admin/'.$page.'/'.$subpage.'"><span class="glyphicon glyphicon-edit"></span>'.ucfirst($subpage).'</a>
+            <button class="bare right" onclick="gs.ui.switcher(\'#new_' . $subpage . '_box\')">
+                <span class="glyphicon glyphicon-plus"></span></button>
+                <div style="display:none" id="new_'.$subpage.'_box">
+                <div class="gform"><div class="gs-span"><label for="name">Name</label>
+                <input class="gs-input" name="name" placeholder="Give a Name" id="' . $subpage . '_name" type="text" value=""></div>
+                    <button class="button" name="' . $table . '" onclick="gs.form.insertNewRow(event)">DO</button>
+                </div></div>
   </h3>';
 }
 
@@ -717,11 +604,16 @@ return '<h3>
     }
 
 // @fm.description builds dropdown
-protected function drop(array $options, $dbtable, string $method="", string $onchangeMethod=""): string {
-      $select = "<select id='$method' class='gs-select' onchange=\"updateForm(this, '$onchangeMethod')\"><option value=''>Select</option>";
-                  foreach ($options as $key => $label) {
-                     $selected = ($label == $selectedkey) ? 'selected="selected"' : '';
-                      $select .= "<option value='$label' $selected>$label</option>";
+//array $options, string $selected="", string $method="", string $name=""
+protected function drop(array $params=[]): string {
+    extract($params);
+    $escapedMethod = htmlspecialchars($method, ENT_QUOTES, 'UTF-8');
+    $escapedName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+    $appendid=$escapedMethod.$escapedName;
+      $select = "<select id='$method' class='gs-select' onchange=\"gs.api.run('{$escapedName}','{$escapedMethod}','{$appendid}')\"><option value=''>Select</option>";
+                  foreach ($output as $key => $label) {
+                     $selectedQ = ($key == $selected) ? 'selected="selected"' : '';
+                      $select .= "<option value='$label' $selectedQ>$label</option>";
                      }
                      $select .= "</select>";
         return $select;
@@ -793,7 +685,7 @@ protected function renderRunField($method, $name, $value): string {
     $escapedMethod = htmlspecialchars($method, ENT_QUOTES, 'UTF-8');
     $escapedName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
     $appendid=$escapedMethod.$escapedName;
-    return "<button class='button' onclick=\"gs.{$escapedMethod}('{$escapedName}','{$appendid}')\">⚡</button><div id='{$appendid}'></div>";
+    return "<button class='button' onclick=\"gs.api.run('{$escapedName}','{$escapedMethod}','{$appendid}')\">⚡</button><div id='{$appendid}'></div>";
 }
 
 // @fm.features Function to handle select dropdown options from comment or subtable

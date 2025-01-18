@@ -24,8 +24,7 @@ self.addEventListener('fetch', (event) => {
     );
 });
 // Start the WebSocket connection
-const userid=!!gs.coo('GSID') ?  gs.coo('GSID') : '0';
-const my={};
+const userid=G.my.id ?? 0;
 
 
 // Function to update UI indicators based on WebSocket status
@@ -54,7 +53,7 @@ function updateConnectionIndicator(connection, isConnected) {
 }
 
 // WebSocket instance creation
-const ws = gs.soc.init('ermis', `vivalibro.com:3010/?user=${my.userid}`);
+const ws = gs.soc.init('ermis', `vivalibro.com:3010/?user=${G.my.userid}`);
 window[`wsermis`] = ws;  // Store WebSocket instance in window for global access if needed
 setTimeout(() => {
     checkWebSocketStatus();

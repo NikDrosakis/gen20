@@ -125,7 +125,7 @@ html+= `<option value="${j}" ${j==loopi.status ? 'selected="selected"':''} >${G.
         return html;
 }
 async function checkname(name){
-const checkname= await gs.api.maria.f("SELECT count(name) as num FROM maincubo where name=?",[name]);
+const checkname= await gs.api.maria.f(`SELECT count(name) as num FROM ${G.publicdb}.maincubo where name=?`,[name]);
  if(name.length>2 && checkname.success && checkname.data.num==0){
 document.getElementById('namecorrect').className = 'green indicator';
  }else{

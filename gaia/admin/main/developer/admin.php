@@ -133,7 +133,7 @@ document.addEventListener('input', function(event) {
         console.log(query);
 
         // Call the API and handle the response
-        gs.api.admin.q(query, [event.target.value, id])
+        gs.api.maria.q(query, [event.target.value, id])
             .then(res => {
                 console.log(res);
             })

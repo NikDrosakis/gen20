@@ -47,7 +47,7 @@ const Mari = require('./core/Mari');
 const Messenger = require('./core/Messenger');
 require('dotenv').config();
 const ROOT = process.env.ROOT || path.resolve(__dirname);
-const mariadmin = new Maria(process.env.MARIADMIN);
+const mariadmin = new Mari(process.env.MARIADMIN);
 
 let executionRunning = false;
 //for new default is 5
@@ -568,7 +568,7 @@ async function runInternalRecource(rec, app) {
                     process.stdout.write(`--> Params: ${JSON.stringify(params)} \n`);
                     // Update the action params
                     db('systems').where({ id: rec.id }).update({ action: JSON.stringify(rec.action) }).then(()=>{
-                        process.stdout.write(`✓ Updated system ${rec.id} with params: ${JSON.stringify(rec.action.params)} \n`);
+                        process.stdout.write(`✓ Updated system ${rec.id} with params: ${JSON.stringify(rec.action.body)} \n`);
                     }).catch((err)=>{
                         console.error('✗ Error updating action params:', err);
                     })

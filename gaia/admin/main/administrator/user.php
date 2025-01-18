@@ -161,7 +161,7 @@ if(my.userid!=""){
 			$('#name').text(this.value)
 		}		
 		var value=this.value.trim();
-		 const updateuser=awaitgs.api.maria.q("UPDATE user SET "+this.id+"=? WHERE id=?",[value, my.userid]);
+		 const updateuser=awaitgs.api.maria.q(`UPDATE user SET ${this.id}=? WHERE id=?`,[value, my.userid]);
 		  if(updateuser && updateuser.success){
          		gs.success("User updated!");
          		 }else{
@@ -174,7 +174,7 @@ if(my.userid!=""){
 	.on('click', "#submit_content", async function () {
 		var row =this.id.replace('submit_', '');
 		var value=$('#' + row).summernote('code');
-		 const updateuser=awaitgs.api.maria.q("UPDATE user SET "+row+"='"+value+"' WHERE id="+my.userid);
+		 const updateuser=awaitgs.api.maria.q(`UPDATE user SET ${row}=? WHERE id=?`,[value,my.userid]);
 		 if(updateuser && updateuser.success){
 		gs.success("User updated!");
 		 }else{
@@ -256,11 +256,11 @@ if(my.userid!=""){
 }
 
 	 //delete
-	$(document).on('click', "button[id^='delete']", function () {
+	$(document).on('click', "button[id^='delete']", async function () {
 		var id=this.id.replace('delete','');
 		s.confirm("This user will be deleted. Are you sure?",function(res){
 		if(res){
-  	   gs.api.maria.q("DELETE FROM user WHERE id="+id, function(data){console.log(data);
+  	   const data = await gs.api.maria.q(`DELETE FROM ${G.publicdb}.user WHERE id=?`,[id]);
 		if(data!='No'){
 			$('#nodorder1_'+id).hide();
 			}else{
@@ -268,7 +268,6 @@ if(my.userid!=""){
 			}
 			 })
 			 }
-		})	
 		})	
 
 })

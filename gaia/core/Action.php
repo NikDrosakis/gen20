@@ -1,6 +1,5 @@
 <?php
 namespace Core;
-use PDO;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -42,7 +41,6 @@ the Core does not need to publish to WS just in case of realtime need
 */
 use WS, Manifest;
 
-    protected PDO $mariadmin;
     protected bool $executionRunning = false;
     protected array $actionStatus = [
         'DEPRECATED' => 0,
@@ -129,28 +127,129 @@ that's the return format
         }
     }
 
-protected function atest($a,$b){
-    return ["data"=>"first action $a"];
-}
-protected function atest2($c='',$d=''){
-    return ["data"=>"second action $d"];
-}
-protected function atest3($e='',$f=''){
-    return ["data"=>"third action!!!$e"];
-}
+/**
+@context the returned output of the previous executed or [];
+*/
+ protected function runActionplan(array $params = []): array{
+        $action = $params['key'];
+        $context = $params['context'];
+        //this is one action later execute a plan (series of actions)
+        try {
+            $record = $this->db->f("
+                SELECT actiongrp.keys, actiongrp.name as grpName, actiongrp.base,
+                action_plan.*,plan.name
+                FROM gen_admin.action_plan
+                LEFT JOIN gen_admin.actiongrp ON actiongrp.id = action_plan.actiongrpid
+                LEFT JOIN gen_admin.plan ON plan.id = action_plan.planid
+                WHERE action_plan.name=?
+            ",[$action]);
+            if (!$record) {
+                return [
+                    'status' => 404,
+                    'success' => false,
+                    'code' => 'LOCAL',
+                    'error' => "Action with name {$action} not found."
+                ];
+            }
 
+            $startTime = microtime(true);
+            $result = $this->executeAction($record);
+            $endTime = microtime(true);
+            $exeTime = ($endTime - $startTime) * 1000; // in milliseconds
+
+            if ($result) {
+                //upgrades or downgrades action based on result
+                $this->updateStatus($record, $this->actionStatus['ALPHA_RUNNING_READY'], 'Action completed', $exeTime);
+                //send message to ermis
+            //   $this->connectToWebSocket();
+              //  $payload = $this->createWSPayload(json_encode($result));
+               // $this->sendMessage($payload);
+                //$this->disconnect();
+
+                return $result;
+            } else {
+                $this->updateStatus($record, $this->actionStatus['INACTIVE_WRONG_FAILED'], 'Action failed', $exeTime);
+                return [
+                    'status' => 500,
+                    'success' => false,
+                    'code' => 'LOCAL',
+                    'error' => 'No result'
+                ];
+            }
+        } catch (Exception $err) {
+            return [
+                'status' => 500,
+                'success' => false,
+                'error' => 'LOCAL',
+                'code' => 'LOCAL',
+                'error' => "Error processing action {$action}: " . $err->getMessage()
+            ];
+        }
+    }
+
+/**
+Runs local PHP Methods
+ */
+protected function runLocalMethod(array $rec): mixed {
+    $allowedMethods = [
+        'atest3',
+        'unsplash',
+        'login',
+        'buildTable',
+        'a1',
+        'fa',
+        'login_3',
+        // Add more allowed methods here
+    ];
+    $methodName = $rec['requires'] ?? null;
+    if (!$methodName) {
+        error_log("Error: 'method' field is missing or empty.");
+        return ['success' => false, 'error' => "'method' field is missing or empty."];
+    }
+
+ //   if (!in_array($methodName, $allowedMethods)) {
+   //     error_log("Error: Method '" . $methodName . "' is not allowed.");
+     //   return ['success' => false, 'error' => "Method '" . $methodName . "' is not allowed."];
+    //}
+
+    if (!method_exists($this, $methodName)  && !method_exists($this->db, $methodName)) {
+        error_log("Error: Method '" . $methodName . "' does not exist.");
+        return ['success' => false, 'error' => "Method '" . $methodName . "' does not exist."];
+    }
+//parse params
+$params = json_decode($rec['params'],true) ?? $rec['params'];
+//execute method
+    try {
+     //  $result = $this->{$methodName}(...array_values($params));
+     if(method_exists($this->db, $methodName)){
+        $result = $this->db->{$methodName}(...array_values($params));
+     }else{
+        $result = $this->{$methodName}($params);
+     }
+
+        return is_array($result) ? $result : ["data"=>$result];
+
+    } catch (Exception $e) {
+        error_log("Error executing method '" . $methodName . "': " . $e->getMessage());
+        return ['success' => false, 'error' => "Error executing method '" . $methodName . "': " . $e->getMessage()];
+    }
+}
 /**
 Runs series of Actions
  */
 protected function runPlan($params){
+//$startTime = microtime(true);
+$plan = $params['key'];
 $startTime = microtime(true);
-        $plan = $params['key'];
         try {
-            $actionplan = $this->db->fa("select action.name as actionName,action.id as actionId, plan.* from gen_admin.action_plan
+            $actionplan = $this->db->fa("select
+            plan.*,
+            action_plan.name as actionplanName,action_plan.id as actionplanId,
+            action_plan.requires,action_plan.params,action_plan.afterstate,action_plan.output,action_plan.sort,action_plan.output_params,
+            from gen_admin.action_plan
             left join gen_admin.plan on action_plan.planid = plan.id
-            left join gen_admin.action on action_plan.actionid = action.id
             where plan.name=? ORDER BY action_plan.sort",[$plan]);
-            if (empty($actionplan)) {
+            if (empty($actionplan)){
                 return [
                     'status' => 203,
                     'success' => true,
@@ -165,17 +264,34 @@ $startTime = microtime(true);
                     'error' => "Action with name {$plan} not found."
                 ];
             } else {
+            $steps = count($actionplan); //step is integer starting from zero
             $pipeline=[];
+            $context=[];
             //iterate actions through plan
-             foreach($actionplan as $action){
-               $pipeline[$action['actionId']] = $this->runAction(["key"=>$action['actionName']]);
+
+             foreach($actionplan as $i => $action){
+
+             $output = $this->runActionplan(["key" => $action['actionplanName'],"context" => $context]);
+              $pipeline[$i] = $action;
+              $pipeline[$i]['output'] = $output;
+                        $endTime = microtime(true);
+                        $exeTime = ($endTime - $startTime) * 1000; // in milliseconds
+              $pipeline[$i]['exe_time'] = $exeTime;
+              $pipeline[$i]['steps'] = $steps;
+              //create the event of the data
+              $output_params = json_decode($action['output_params'],true);
+              $output_params['output'] = $output;
+              //create the data output
+              $pipeline[$i]['data'] = $action['output'] ? $this->{$action['output']}($output_params) : "json";
+              if($action['afterstate']=='halt' || $action['afterstate']=='completed'){
+              return $pipeline;
+              }
+              // $pipeline = $this->runActionplan(["key"=>$action['actionplanName']]);
              }
 
-            $endTime = microtime(true);
-            $exeTime = ($endTime - $startTime) * 1000; // in milliseconds
             //count success
              //upgrades or downgrades plan based on result
-            $this->updatePlanStatus($actionplan, $this->actionStatus['ALPHA_RUNNING_READY'], 'Action completed', $exeTime);
+       //     $this->updatePlanStatus($actionplan, $this->actionStatus['ALPHA_RUNNING_READY'], 'Action completed', $exeTime);
             return $pipeline;
         }
         } catch (Exception $err) {
@@ -187,48 +303,6 @@ $startTime = microtime(true);
                 'error' => "Error processing action {$plan}: " . $err->getMessage()
             ];
         }
-}
-/**
-Runs local PHP Methods
- */
-protected function runLocalMethod(array $rec): mixed {
-    $allowedMethods = [
-        'atest3',
-        'unsplash',
-        'login',
-        'buildTable',
-        'a1',
-        'a2',
-        // Add more allowed methods here
-    ];
-    $methodName = $rec['requires'] ?? null;
-    if (!$methodName) {
-        error_log("Error: 'requires' field is missing or empty.");
-        return ['success' => false, 'error' => "'requires' field is missing or empty."];
-    }
-
-    if (!in_array($methodName, $allowedMethods)) {
-        error_log("Error: Method '" . $methodName . "' is not allowed.");
-        return ['success' => false, 'error' => "Method '" . $methodName . "' is not allowed."];
-    }
-
-    if (!method_exists($this, $methodName)) {
-        error_log("Error: Method '" . $methodName . "' does not exist.");
-        return ['success' => false, 'error' => "Method '" . $methodName . "' does not exist."];
-    }
-//parse params
-$params = json_decode($rec['params'],true) ?? $rec['params'];
-//execute method
-    try {
-     //  $result = $this->{$methodName}(...array_values($params));
-        $result = $this->{$methodName}($params);
-
-        return is_array($result) ? $result : ["data"=>$result];
-
-    } catch (Exception $e) {
-        error_log("Error executing method '" . $methodName . "': " . $e->getMessage());
-        return ['success' => false, 'error' => "Error executing method '" . $methodName . "': " . $e->getMessage()];
-    }
 }
 
 protected function createWSPayload(array $rec, array $res): array{
@@ -244,7 +318,7 @@ protected function createWSPayload(array $rec, array $res): array{
 }
 
 
-protected function fetch(string $url, array $options = []): array{
+protected function fetchUrl(string $url, array $options = []): array{
     $this->httpClient = new Client();
     try {
         $response = $this->httpClient->request(
@@ -293,16 +367,13 @@ public function actionLoop(): void
         echo "Pre-Loop Status Counts:\n";
         print_r($preLoopCounts);
 
-        $stmt = $this->db->prepare("
+        $actions = $this->db->fa("
             SELECT actiongrp.keys, actiongrp.name as grpName, actiongrp.base, action.*
             FROM action
             LEFT JOIN actiongrp ON actiongrp.id = action.actiongrpid
             WHERE action.systemsid in (0,3)
             ORDER BY action.sort
         ");
-        $stmt->execute();
-        $actions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
         if (!$actions || empty($actions)) {
             echo "✗  No pending actions. Waiting...\n";
         } else {
@@ -352,15 +423,13 @@ protected function processActions(array $actions): array
     return ['total' => $total, 'success' => $success, 'statusStats' => $statusStats, 'percentage' => $percentage];
 }
 
-protected function getActionStatusCounts(): array
-{
+protected function getActionStatusCounts(){
     $queryParts = [];
     foreach ($this->actionStatus as $key => $val) {
         $queryParts[] = "COUNT(CASE WHEN status = {$val} THEN 1 END) as {$key}";
     }
     $query = "SELECT " . implode(', ', $queryParts) . " FROM action WHERE systemsid in(0,3)";
-    $stmt = $this->db->query($query);
-    return $stmt->fetch(PDO::FETCH_ASSOC);
+    return $this->db->f($query);
 }
 
 protected function getNextIntervalTime(array $actions): int
@@ -391,8 +460,7 @@ protected function executeAction(array $rec): ?array{
             case 'fs':
                 return true;
             default:
-                echo "✗  Unknown type '{$rec['type']}' for action ID {$rec['id']}.\n";
-                return false;
+                 return $this->runLocalMethod($rec);
         }
     } catch (Exception $error) {
         echo "✗  Error executing action: " . $error->getMessage() . "\n";
@@ -400,18 +468,6 @@ protected function executeAction(array $rec): ?array{
     }
 }
 
-
-public function updateEndpointParams(string $endpoint, array $params, string $name): string
-{
-    try {
-        $stringifiedParams = json_encode($params);
-        $stmt = $this->db->upsert("UPDATE action SET params = :params, endpoint = :endpoint WHERE actiongrp.name = :name");
-        $stmt->execute(['params' => $stringifiedParams, 'endpoint' => $endpoint, 'name' => $name]);
-        return "✓ Updated action table with: params = {$stringifiedParams}, endpoint = {$endpoint}\n";
-    } catch (Exception $e) {
-        return "Error while reading, parsing file or updating db: " . $e->getMessage() . "\n";
-    }
-}
 
 protected function updatePlanStatus(array $rec, int $newStatus, string $log = '', float $exeTime = 0.01): string {
 $update_array= ['status' => $newStatus, 'log' => $log, 'exe_time' => $exeTime, 'name' => $rec['name']];
@@ -472,30 +528,6 @@ protected function scanRoutes(array $routes, string $prefix = ''): array
     return $mappings;
 }
 
-protected function checkRouteHealth(array $rec): bool
-{
-    $healthEndpoint = 'health';
-    $pingEndpoint = 'ping';
-    $endpoints = [$healthEndpoint, $pingEndpoint];
-
-    foreach ($endpoints as $endpoint) {
-        $host = $rec['base'] . $endpoint;
-        try {
-            return "--> Checking health at: {$host}\n";
-            $response = $this->fetch($host);
-            if (isset($response['body'])) {
-                return "✓ Health Check OK: {$host}\n";
-                return true;
-            } else {
-                return "✗ Health Check Failed: {$host} status: " . json_encode($response) . "\n";
-            }
-        } catch (Exception $error) {
-            return "✗ Health Check Error for: {$host} " . $error->getMessage() . "\n";
-        }
-    }
-    return false;
-}
-
 protected function buildRoute(array $rec): bool
 {
     $routerPath = "services/{$rec['grpName']}/routes.php";
@@ -530,7 +562,7 @@ protected function buildAI(array $rec): bool
             return "--> Processing AI POST request to: {$url}\n";
             try {
                 $payload = json_decode($rec['payload'] ?? '{}', true);
-                $response = $this->fetch($url, [
+                $response = $this->fetchUrl($url, [
                     'method' => 'POST',
                     'headers' => ['Content-Type' => 'application/json'],
                     'body' => json_encode($payload),
@@ -761,7 +793,7 @@ protected function renderKeysString(string $text, array $data): string
 /**
 Gaia Admin for external resources
 */
-protected function runExternalRecource(array $rec): ?array{
+protected function runExternalRecource(array $rec){
     try {
         $method = $rec['method'];
 
@@ -789,7 +821,7 @@ protected function runExternalRecource(array $rec): ?array{
                 }
 
                 // Perform the request
-                $response = $this->fetch($url, $options);
+                $response = $this->fetchUrl($url, $options);
 
                 // Return the response if successful
                 return $response;
@@ -810,27 +842,12 @@ protected function runExternalRecource(array $rec): ?array{
     }
 }
 
-
 protected function runInternalRecource(array $rec): bool {
-
     // when relying on other APIs than gaia calls, then internally using systems.apiprefix
     if (in_array($rec['systemName'], ['apiv1', 'vivalibrocom', 'admin'])) {
         $rawurl = $rec['endpoint'];
     } else {
         $rawurl = $rec['apiprefix'] . $rec['endpoint'];
-    }
-//route resource
-    if (isset($rec['requires'])) {
-        try {
-            $requiredModule = include $rec['requires'];
-            if (is_callable($requiredModule)) {
-                $requiredModule();
-            } else {
-                return "Error loading required module {$rec['requires']}: Module is not a function\n";
-            }
-        } catch (Exception $requireError) {
-            return "Error loading required module {$rec['requires']}: " . $requireError->getMessage() . "\n";
-        }
     }
     try {
        $method = $rec['method'];
@@ -888,35 +905,23 @@ protected function buildN(array $rec): bool
     }
 }
 
-public function upsertAction(array $actionGrpData, array $actionData): array|bool
-{
+public function upsertAction(array $actionGrpData, array $actionData): array|bool{
     try {
         $name = $actionGrpData['name'];
         $description = $actionGrpData['description'];
         $base = $actionGrpData['base'];
         $meta = $actionGrpData['meta'] ?? null;
 
-        $stmt = $this->db->prepare("INSERT INTO actiongrp (name, description, base, meta) VALUES (:name, :description, :base, :meta)");
-        $stmt->execute(['name' => $name, 'description' => $description, 'base' => $base, 'meta' => $meta]);
-        $actionGrpId = $this->db->lastInsertId();
-
+        $actionGrpId = $this->db->inse("gen_admin.actiongrp",['name' => $name, 'description' => $description, 'base' => $base, 'meta' => $meta]);
         if (!$actionGrpId) {
             throw new Exception('Error inserting actiongrp');
         }
 
-        $stmt = $this->db->prepare("INSERT INTO action (name, systemsid, actiongrpid, endpoint) VALUES (:name, :systemsid, :actiongrpid, :endpoint)");
-        $stmt->execute([
-            'name' => $actionData['name'],
-            'systemsid' => $actionData['systemsid'] ?? 3,
-            'actiongrpid' => $actionGrpId,
-            'endpoint' => $actionData['endpoint'],
-        ]);
-        $actionId = $this->db->lastInsertId();
-
-        if (!$actionId) {
-            throw new Exception('Error inserting action');
-        }
-
+        $actionId = $this->db->inse("gen_admin.action",['name' => $actionData['name'],
+                                                               'systemsid' => $actionData['systemsid'] ?? 3,
+                                                               'actiongrpid' => $actionGrpId,
+                                                               'endpoint' => $actionData['endpoint'],
+                                                   ]);
         return [
             'actiongrpid' => $actionGrpId,
             'actionid' => $actionId,

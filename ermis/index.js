@@ -54,6 +54,9 @@ const server = https.createServer(credentials, app);
 const { WServer } = require('./ws');
 WServer(server);
 
+
+
+
 const PORT = process.env.ERMIS_PORT || 3010;
 server.listen(PORT, function () {
     console.log('Server listening on port ' + PORT);

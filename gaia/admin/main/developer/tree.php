@@ -1,5 +1,5 @@
 <script>
-
+/*
     async function updateForm(selectElement, method) {
         // Get selected database and table
         let name, getResult;
@@ -9,7 +9,7 @@
             case 'listMariaTables':
                 //provide listMariaTables
                 name = { "table" : selectElement.value}
-                getResult = await gs.callapi.get(method, name);
+                getResult = await gs.api.get(method, name);
                 console.log(selectElement.value)
                 gs.coo('selected_db',selectElement.value);
                 gs.cooDel('selected_table');
@@ -20,17 +20,17 @@
             //switch tables and select columns table (buildTable)
             case 'buildTable':
                 name = { "table" : gs.coo('selected_db')+'.'+selectElement.value}
-                getResult = await gs.callapi.get(method, name);
+                getResult = await gs.api.get(method, name);
                 gs.coo('selected_table',selectElement.value);
                 //provide compareWithStandardReport
-                const compareWithStandardReport= await gs.callapi.get("compareWithStandardReport",name);
+                const compareWithStandardReport= await gs.api.get("compareWithStandardReport",name);
                 const buildTableID = document.getElementById('compareWithStandardReport');
                 if(compareWithStandardReport.data){
                     buildTableID.innerHTML=compareWithStandardReport.data.join('<br/>');
                 }
 
                 //provide buildSchema
-                const buildSchema= await gs.callapi.get("buildSchema",name);
+                const buildSchema= await gs.api.get("buildSchema",name);
                 const buildSchemaID = document.getElementById('buildSchema');
                 if(buildSchema.data){
                     buildSchemaID.innerHTML=buildSchema.data;
@@ -41,7 +41,7 @@
         console.log(name)
         // Fetch the corresponding tables for the selected database
         try {
-            const getResult = await gs.callapi.get(method,name);
+            const getResult = await gs.api.get(method,name);
             //append result to id ...table-container
             // Ensure the container element exists
             // Get the next dropdown where the result will be appended
@@ -76,32 +76,63 @@
             console.error("Error fetching tables: ", error);
         }
     }
-
+*/
 </script>
 <h3>Database Migrate Standardize (Tree)</h3>
-<?php
-$dbtable = $this->publicdb."post";
-?>
-<!---------DATABASE DROP DOWN--------------->
-<?=$this->drop($this->db->show("databases"),$dbtable,'getMariaTree',"listMariaTables")?>
+<!------ αυτός ο κώδικας αν και λειτουργικός έχει δύο ελλαττώματα
+a) χρησιμοποιεί σύνθετη non standardized js
+b) χρησιμοποιεί cookie για να κάνει ένα απλό chain
+implement ActionPlan =  applySchemaStandards
+plan([
+<drop> db->show("databases") ==tableList==>
+<drop>db->show("tables",publicdb) ==tableName==>
+    1) <table>compareWithStandard($dbtable)
+    2) <table>buildTable($dbtable);
+    3) <button>applySchemaStandards
+        ==tableName==>
+        D
+])
+----------------------------------------------->
 
-<!---------DATABASE DROP DOWN--------------->
-<div id="getBranches"><?php //xecho($this->getBranches($params))?></div>
+<?php echo $this->buildTable("gen_admin.plan") ?>
+<?php echo $this->buildTable("gen_admin.action_plan") ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+        await gs.api.run('tree','runPlan','runPlantree1');
+    });
+</script>
+<div id="runPlantree1"></div>
+<!---------DATABASE DROP DOWN A) Action A change database to to runAction table drop --------------->
+<?php //echo $this->drop($this->db->show("databases"),$dbtable,'getMariaTree',"listMariaTables") ?>
+
+<!---------DATABASE DROP DOWN B) A) Action B change table drop to runAction $this->compareWithStandard and $this->buildTable  --------------->
+<div id="getBranches"><?php //xecho($this->getBranches($params)) ?></div>
 
 <!---------TABLESS DROP DOWN
 drop(array $options, $dbtable, string $method="", string $onchangeMethod="")
 --------------->
-<?=$this->drop($this->listMariaTables,$dbtable,'listMariaTables',"buildTable")?>
+<?php //$this->drop($this->db->show("tables",$this->publicdb),$dbtable,'listMariaTables',"buildTable") ?>
 
 <!---------COMPARE WITH STANDARD--------------->
-<div id="compareWithStandardReport"><?=implode('<br/>',$this->compareWithStandardReport($dbtable))?></div>
+<div id="compareWithStandardReport">
+<?php
+//xecho($this->compareWithStandard($dbtable));
+//<button onclick='gs.api.post("applySchemaStandards", { table: "$dbtable" })'>applySchemaStandards</button>
+?>
+
+</div>
 
 <!---------BUILD SCHEMA--------------->
-<div id="buildSchema"><?=$this->buildSchema($dbtable)?></div>
+<div id="buildSchema"><?php
+//$assoc= $this->db->tableMeta($dbtable);
+//echo $this->table($assoc);
+?>
+</div>
 
-<!---------BUILD TABLE--------------->>
+<!---------BUILD TABLE--------------->
 <div id="buildTable">
-    <?=$this->buildTable($dbtable)?>
+    <?php //$this->buildTable($dbtable) ?>
 </div>
 
 <?php
@@ -169,18 +200,7 @@ $request=["value"=>$domain];
 ?>
 
 <!---FROM HEREE START UPDATING $options  -->
-<?php //$this->renderSelectField("name",$fa['id'],$this->db->flist("SELECT id,name from user where id=1"))?>
+<?php //$this->renderSelectField("name",$fa['id'],$this->db->flist("SELECT id,name from user where id=1")) ?>
 <!--------POST TABLE-------------->
 <!----BUILD TABLE-->
 <?php //	echo $this->buildTable($table); ?>
-
-<script>
-(function(){
-let table="metadata";
-let newformlist= {
-                   0: {row: 'name',placeholder: "Give a Title"}
-                  };
-})();
-</script>
-
-

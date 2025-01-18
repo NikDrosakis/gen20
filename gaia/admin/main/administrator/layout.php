@@ -204,7 +204,7 @@ for($i=0;$i<count($cubos);$i++){             ?>
 
     async function restoreAllStates() {
     try {
-   const getpages = await gs.api.maria.fa(`SELECT * FROM gen_vivalibrocom.main`);
+   const getpages = await gs.api.maria.fa(`SELECT * FROM ${G.publicdb}.main`);
           // Get all available pages
         const pageOptions = getpages.data || [];
 
@@ -269,7 +269,7 @@ for($i=0;$i<count($cubos);$i++){             ?>
 
     // Function to save the state
        //find mainid in maincubo=fetchid > if !=false in mainid update maincubo SET cuboid=draggedItemId where id=fetchid > else INSERT maincubo (mainid,cuboid,area)
-      //  const updatepage= await gs.api.maria.q(`UPDATE maincubo SET ${dropTargetId}=? WHERE id=?`,[draggedItemId,selectedPageName]);
+      //  const updatepage= await gs.api.maria.q(`UPDATE ${G.publicdb}.maincubo SET ${dropTargetId}=? WHERE id=?`,[draggedItemId,selectedPageName]);
 async function saveState(evt) {
   var draggedItem = evt.item;  // The dragged element
 
@@ -281,17 +281,17 @@ async function saveState(evt) {
        try {
             // Find the record in maincubo
             const fetchResult = await gs.api.maria.f(`
-                SELECT id FROM gen_vivalibrocom.maincubo
+                SELECT id FROM ${G.publicdb}.maincubo
                     WHERE mainid = ? AND area = ?`,[mainId, dropTargetId]);
 
             // Check if a record was found
             if (fetchResult && fetchResult.length > 0) {
                 // Record exists, update cuboid for the found id
                 const fetchId = fetchResult.data.id;
-                await gs.api.maria.q('UPDATE gen_vivalibrocom.maincubo SET cuboid = ? WHERE id = ?',[draggedItemId, fetchId]);
+                await gs.api.maria.q(`UPDATE ${G.publicdb}.maincubo SET cuboid = ? WHERE id = ?`,[draggedItemId, fetchId]);
             } else {
                 // No matching record, insert new row
-                await gs.api.maria.q('INSERT INTO gen_vivalibrocom.maincubo (mainid, cuboid, area) VALUES (?, ?, ?)',[mainId, draggedItemId, dropTargetId]);
+                await gs.api.maria.q(`INSERT INTO ${G.publicdb}.maincubo (mainid, cuboid, area) VALUES (?, ?, ?)`,[mainId, draggedItemId, dropTargetId]);
                 }
             //auto render page on change of layout > send reload message to Ermis
                 gs.soc.send('action',{system:"vivalibrocom",page:G.page,verba:"layout notification", to:my.uid,type:"reload",cast:"all"})
@@ -321,8 +321,8 @@ async function restoreState(layoutpage, pageName, cubocont, dropareas) {
     try {
         const getpage = await gs.api.maria.fa(`
             SELECT cubo.id as cuboid, maincubo.area, cubo.name as cubo
-            FROM gen_vivalibrocom.maincubo
-            LEFT JOIN gen_vivalibrocom.main ON main.id = maincubo.mainid
+            FROM ${G.publicdb}.maincubo
+            LEFT JOIN ${G.publicdb}.main ON main.id = maincubo.mainid
             LEFT JOIN gen_admin.cubo ON cubo.id = maincubo.cuboid
             WHERE main.id = ?`, [layoutpage]);
 

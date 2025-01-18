@@ -106,7 +106,7 @@ button {
           $('input, textarea, select').each(function() {
             const name = $(this).attr('class');
             const value = $(this).val();
-            await gs.api.admin.q('/update', { date: formattedDate, field: name, value: value });
+            await ga.api.maria.q('/update', { date: formattedDate, field: name, value: value });
           });
         };
 
