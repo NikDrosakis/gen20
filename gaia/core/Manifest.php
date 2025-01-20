@@ -17,9 +17,50 @@ maria.prepareColumnFormat
 */
 trait  Manifest {
 
+
 /**
 BATCH created manifests and updated DB
  */
+
+ /**
+  * Extend and reformat data from DB into appropriate structure (reverses `prepareColumnFormat` logic).
+  */
+ public function extendColumnFormat(array $params, array $columnsFormat): array {
+
+
+     foreach ($params as $key => &$value) {
+         if (isset($columnsFormat[$key])) {
+             $comment = $columnsFormat[$key];
+
+             // Handle 'comma' fields - convert comma-separated strings back to arrays
+             if (strpos($comment, 'comma') !== false && is_string($value)) {
+                 $value = explode(',', $value);  // Convert comma-separated string to array
+             }
+
+             // Handle 'json' fields - decode JSON string back to array
+             elseif (strpos($comment, 'json') !== false && is_string($value)) {
+                 $value = json_decode($value, true);  // Convert JSON string to array
+             }
+
+             // Handle 'includes' fields - if it's a file path, store it as an 'includes' key
+             elseif (is_string($value) && file_exists($value)) {
+                 $value = ['includes' => $value];  // Store file path as an 'includes' key
+             }
+
+             // Handle simple string fields - no conversion needed, just ensure it is trimmed
+             elseif (is_string($value)) {
+                 $value = trim($value);  // Remove whitespace from string
+             }
+
+             // Handle integer fields - ensure it's an integer
+             elseif (is_int($value)) {
+                 // No transformation needed, just ensure it's an integer (useful for strict types)
+                 $value = (int)$value;
+             }
+         }
+     }
+     return $params;
+ }
 /**
  * Processes manifest files from the database and generates the manifest for each system.
  *
@@ -141,7 +182,7 @@ protected function manifestFromDB(string $query, $params = []): ?string {
     // Get the column format (comments) for the table
     $columnsFormat = $this->db->colFormat($table);
     // Process the results by extending the column format (reversing the transformations)
-    $extendedRow[$name.'_'.$table] = $this->db->extendColumnFormat($results, $columnsFormat);
+    $extendedRow[$name.'_'.$table] = $this->extendColumnFormat($results, $columnsFormat);
     // Convert the array to YAML format
     return yaml_emit($extendedRow);
 }
@@ -167,7 +208,7 @@ Parent Actiongrp creating manifest files from DB
      if ($actiongrp) {
     // Get the column format (comments) for the table
         $colFormat = $this->db->colFormat($table);
-        $grsExtended=$this->db->extendColumnFormat($actiongrp, $colFormat);
+        $grsExtended=$this->extendColumnFormat($actiongrp, $colFormat);
       //  $actionColumnsFormat = $this->db->colFormat("action");
     if ($grsExtended) {
         $actions = $this->db->fa("SELECT * FROM gen_admin.action WHERE actiongrpid=?", [$actiongrp['id']]);
@@ -188,5 +229,6 @@ $result=[];
             return null; // Return null if no action group is found
         }
  }
+
 
 }

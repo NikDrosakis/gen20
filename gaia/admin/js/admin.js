@@ -462,14 +462,15 @@ function createPagination(totalPages, currentPage, folder, limit) {
 
 // For Previous Page
 async function previd() {
+    const table =  `${G.publicdb}.${G.sub}`;
     try {
         let prev = await gs.api.maria.f(`SELECT id
-                                         FROM ${G.sub}
+                                         FROM ${table}
                                          WHERE id < ${G.id}
                                          ORDER BY id DESC LIMIT 1`);
 console.log(prev)
         if (prev.success) {
-            location.href = `/${G.page}/${G.sub}?id=${prev.data.id}`;
+            location.href = `/admin/${G.page}/${G.sub}?id=${prev.data.id}`;
         } else {
             console.log("No previous page found");
         }
@@ -481,12 +482,13 @@ console.log(prev)
 // For Next Page
 async function nextid() {
     try {
+        const table =  `${G.publicdb}.${G.sub}`;
         let next = await gs.api.maria.f(`SELECT id
-                                         FROM ${G.sub}
+                                         FROM ${table}
                                          WHERE id > ${G.id}
                                          ORDER BY id ASC LIMIT 1`);
         if (next.success) {
-            location.href = `/${G.page}/${G.sub}?id=${next.data.id}`;
+            location.href = `/admin/${G.page}/${G.sub}?id=${next.data.id}`;
         } else {
             console.log("No next page found");
         }

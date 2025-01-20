@@ -227,7 +227,7 @@ if($a=='exec'){
 
     $where= strpos($b, 'WHERE')==false ?"WHERE":"AND";
 
-    $fromto= $from!="" && $to!="" ? "$where $table.registered BETWEEN UNIX_TIMESTAMP('$from') AND UNIX_TIMESTAMP('$to')" :"";
+    $fromto= $from!="" && $to!="" ? "$where $table.created BETWEEN UNIX_TIMESTAMP('$from') AND UNIX_TIMESTAMP('$to')" :"";
 
     $search = !empty($_COOKIE['search']) ? trim($_COOKIE['search']) :'';
 

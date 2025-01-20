@@ -143,12 +143,20 @@ that's the return format
                 LEFT JOIN gen_admin.plan ON plan.id = action_plan.planid
                 WHERE action_plan.name=?
             ",[$action]);
+
+
             if (!$record) {
+            //if actionplan does not exist just execute the key if exist in methods
+            //eg
+            //errors 
+                unset($params['key']);
+                $atLeastExecuted = $this->{$action}(...array_values($params));
                 return [
-                    'status' => 404,
-                    'success' => false,
-                    'code' => 'LOCAL',
-                    'error' => "Action with name {$action} not found."
+                    'status' => 409,
+                    'success' => true,
+                    'code' => 'RUN',
+                    'data' => $atLeastExecuted,
+                    'error' => "Action {$action} not found. I just executed the function!"
                 ];
             }
 
@@ -240,12 +248,13 @@ Runs series of Actions
 protected function runPlan($params){
 //$startTime = microtime(true);
 $plan = $params['key'];
+$state = $params['state'] ?? 0;
 $startTime = microtime(true);
         try {
             $actionplan = $this->db->fa("select
             plan.*,
             action_plan.name as actionplanName,action_plan.id as actionplanId,
-            action_plan.requires,action_plan.params,action_plan.afterstate,action_plan.output,action_plan.sort,action_plan.output_params,
+            action_plan.requires,action_plan.params,action_plan.afterstate,action_plan.output,action_plan.sort,action_plan.output_params
             from gen_admin.action_plan
             left join gen_admin.plan on action_plan.planid = plan.id
             where plan.name=? ORDER BY action_plan.sort",[$plan]);
@@ -270,23 +279,25 @@ $startTime = microtime(true);
             //iterate actions through plan
 
              foreach($actionplan as $i => $action){
-
-             $output = $this->runActionplan(["key" => $action['actionplanName'],"context" => $context]);
+  if ($i < $state) {
+        continue;
+    }
+             $res = $this->runActionplan(["key" => $action['actionplanName'],"context" => $context]);
               $pipeline[$i] = $action;
-              $pipeline[$i]['output'] = $output;
+              $pipeline[$i]['output'] = $res;
                         $endTime = microtime(true);
                         $exeTime = ($endTime - $startTime) * 1000; // in milliseconds
               $pipeline[$i]['exe_time'] = $exeTime;
               $pipeline[$i]['steps'] = $steps;
-              //create the event of the data
+              //create the event of output
               $output_params = json_decode($action['output_params'],true);
-              $output_params['output'] = $output;
+              $output_params['output'] = $res;
               //create the data output
               $pipeline[$i]['data'] = $action['output'] ? $this->{$action['output']}($output_params) : "json";
               if($action['afterstate']=='halt' || $action['afterstate']=='completed'){
               return $pipeline;
               }
-              // $pipeline = $this->runActionplan(["key"=>$action['actionplanName']]);
+
              }
 
             //count success

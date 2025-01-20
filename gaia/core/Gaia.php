@@ -90,8 +90,8 @@ abstract class Gaia {
         $this->G['set'] = $this->db->flist("SELECT name, val from {$this->publicdb}.setup");
 		//$this->redis->set("is",$this->G['is']);
 		//}
-        $this->G['usergrps'] = $this->db->fl(["id", "name"], "{$this->publicdb}.usergrp");
-       $this->G['globs_tags'] = $this->getGlobs();
+        $this->G['usergrps'] = $this->db->flist("SELECT id, name FROM {$this->publicdb}.usergrp");
+
 //all $this->G to local variables
         foreach ($this->G as $gkey => $gval) {
 		if (property_exists($this, $gkey)) {
@@ -421,20 +421,6 @@ if
             });
     }
 
-protected function getGlobs(){
-           // Fetch all tags as an array
-           $tagsList = $this->db->fl('tag', "gen_admin.globs");
-           // Initialize an empty array to collect split tags
-           $allTags = [];
-           // Loop through each row and split by comma
-           foreach ($tagsList as $tags) {
-               $splitTags = explode(',', $tags); // Split tags by comma
-               $allTags = array_merge($allTags, array_map('trim', $splitTags)); // Trim and merge into the collection
-           }
-           // Remove duplicates and reindex the array
-           return array_values(array_unique($allTags));
-        }
-
 protected function getClassMethods() {
     $methods = [];
 
@@ -471,15 +457,16 @@ protected function getClassMethods() {
             }
         }
 
-       // Get methods from the $this->db object
-        if (is_object($this->db)) {
-            $dbClass = get_class($this->db);
-            foreach (get_class_methods($this->db) as $method) {
-                $methods[$method] = "$method ($dbClass)";
-            }
-        }
         // Move up to the next parent
         $parentClass = get_parent_class($parentClass);
+    }
+
+    // Get methods from the $this->db object if it's an object
+    if (isset($this->db) && is_object($this->db)) {
+        $dbClass = get_class($this->db);
+        foreach (get_class_methods($this->db) as $method) {
+            $methods[$method] = "$method ($dbClass)";
+        }
     }
 
     // Sort methods alphabetically by method name
@@ -488,5 +475,30 @@ protected function getClassMethods() {
     return $methods;
 }
 
+
+	//globs table
+	public function is(string $name): bool|string{
+		$fetch = $this->db->f("SELECT val FROM gen_admin.globs WHERE name=?", array($name));
+		if (!empty($fetch)) {
+			return urldecode($fetch['val']);
+		} else {
+			return false;
+		}
+	}
+//setup table
+	public function set(string $name, $value=''): bool|string{
+
+	 if($value!=''){
+		$fetch = $this->db->q("UPDATE {$this->publicdb}.setup SET name=? WHERE name=?", array($value,$name));
+	 }else{
+		$fetch = $this->db->f("SELECT val FROM {$this->publicdb}.setup WHERE name=?", array($name));
+		if (!empty($fetch)) {
+			return urldecode($fetch['val']);
+		} else {
+			return false;
+		}
+    }
+
+	}
 
 }

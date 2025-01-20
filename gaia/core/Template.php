@@ -35,7 +35,7 @@ protected $pug;
         $params=[];
         if(!empty($query['params'])){
         foreach($query['params'] as $param){
-        $params[]=$this->G[$param];
+        $params[] = $this->G[$param];
         }}
         $totalRes = $this->db->fa($query['query'],$params);
 

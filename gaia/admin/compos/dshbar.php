@@ -13,7 +13,7 @@
 <header>
     <nav class="navbar">
     <div id="progressBarContainer"><div id="progressBar"><p id="progressText"></p></div></div>
-    <a href="/admin/home/profile" class="logo_image_id">
+    <a href="/admin/user/user?id=<?=$this->me?>" class="logo_image_id">
         <img src="<?=isset($_COOKIE['GSIMG']) ? MEDIA_URL.$_COOKIE['GSIMG'] : '/admin/img/user.png'?>" width="48" height="48" style="margin-top: 3px;border-radius:50px">
     </a>
 <!------------- @filemeta.features HORIZONTAL_MENU ------------------------------------>
