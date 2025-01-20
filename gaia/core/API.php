@@ -192,12 +192,11 @@ protected function executeActionMethod($request): array {
          $response["code"] = 'RUN';
          return $response;
     }else{
-    $response = [
-                     "status" => 200,
-                     "success" => true,
-                     "code" => 'RUN',
-                     "state" => 'halt',
-                 ];
+         $response = $execute[0];
+         $response["status"] = 200;
+         $response["success"] = true;
+         $response["code"] = 'RUN';
+         return $response;
    return $response;
     }
     //response
@@ -225,8 +224,9 @@ primary executes A) maria methods IN post
 //                     gs.maria.[this->id].[this->action]
       $response=[];
      if($this->resource=="maria"){
+
             if($this->method=='POST'){
-                $database = $this->resource=='maria' ? $this->db : $this->db;
+                $database = $this->db;
                 if ($database && method_exists($database,$this->id)) {  //id is the method of the class
                     //if decoding was successful
                     $execute=$database->{$this->id}(...array_values($request));
@@ -239,7 +239,25 @@ primary executes A) maria methods IN post
                   $response =["status"=>419,"success"=>false,"code"=>'M2',"error"=>""];
                  }
              }elseif($this->method=='GET'){
-             $response =["status"=>204,"success"=>false,"code"=>'M02','error'=>'Empty']; //create hook params, if needed empty for now
+
+                $database = $this->db;
+                            if ($database && method_exists($database,$this->id)) {  //id is the method of the class
+                                //if decoding was successful
+                                $params=$request;
+                                unset($params['resource']);
+                                unset($params['id']);
+                                unset($params['action']);
+                     //                       error_log(print_r($params, true));
+                                $execute=$database->{$this->id}(...array_values($params));
+                                if(!$execute){
+                                $response =["status"=>400,"success"=>false,"code"=>'M01','error'=>"Method not executed"];
+                                }else{
+                                $response =["status"=>200,"success"=>true,"code"=>'M1',"data"=> $execute,'error'=>""];
+                                }
+                            } else {
+                              $response =["status"=>419,"success"=>false,"code"=>'M2',"error"=>""];
+                             }
+                    //$response =["status"=>204,"success"=>false,"code"=>'M02','error'=>'Empty']; //create hook params, if needed empty for now
              }
 //B CALL ANY METHOD resource/id ? params&hooks
      }elseif($this->resource=='viewport'){

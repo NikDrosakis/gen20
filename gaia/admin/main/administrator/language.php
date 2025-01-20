@@ -27,17 +27,33 @@ $langList=$this->db->flist("select code,name from {$this->publicdb}.language");
 xecho($langList);
 
 //provide the dropdown
-$dropNewLangs=$this->drop($langList,$current_code,'addLangColumn');
-xecho($this->db->show("engine","gen_admin"));
+$dropNewLangs=$this->renderSelectField("language",$current_code,$langList);
 ?>
 <!--default-->
 <h2>Default Language: <?=$current_code?></h2>
 <!--change-->
-<h2>Add new language: <?=$dropNewLangs?></h2>
+<h2>Add new language: <?php echo $dropNewLangs?></h2>
+<!--colFormat-->
+<?php
+$allcolumnskeyword= $this->db->getColumnsWithComment($this->publicdb,'loc-default');
+echo count($allcolumnskeyword)." in $this->publicdb";
+//foreach($allcolumnskeyword as $columnDetails){
+  //  $columnDetails['COLUMN_COMMENT'] = 'loc-default';
+//$this->db->alter("$this->publicdb.{$columnDetails['TABLE_NAME']}", 'modify', $columnDetails);
+//}
+?>
+<!--modify comments to loc-default -->
+
+<!--table-->
+<h2>Language Selected : </h2>
 <!--activate-->
 <button id="activationButton" onclick="runAction('buildNewLang','')" data-lang="" class="button">Activate New Language</button>
-<!--table-->
-<h2>Language Table:</h2>
 
-<?php exit();?>
-<?=$this->buildTable($this->publicdb.".language");?>
+
+<?php //echo $this->buildTable($this->publicdb.".language");?>
+<div id="justrun"></div>
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+await gs.api.run("runActionplan","buildTable",{key:"gen_admin.systems",state:0},"justrun");
+  })
+  </script>

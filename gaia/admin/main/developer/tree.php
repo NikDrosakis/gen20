@@ -78,7 +78,7 @@
     }
 */
 </script>
-<h3>Database Migrate Standardize (Tree)</h3>
+
 <!------ αυτός ο κώδικας αν και λειτουργικός έχει δύο ελλαττώματα
 a) χρησιμοποιεί σύνθετη non standardized js
 b) χρησιμοποιεί cookie για να κάνει ένα απλό chain
@@ -102,7 +102,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         await gs.api.run('tree','runPlan','runPlantree1');
     });
 </script>
+<?php //xecho($this->runPlan(["key"=>"tree"]));?>
 <div id="runPlantree1"></div>
+<div id="runActiontree"></div>
 <!---------DATABASE DROP DOWN A) Action A change database to to runAction table drop --------------->
 <?php //echo $this->drop($this->db->show("databases"),$dbtable,'getMariaTree',"listMariaTables") ?>
 
@@ -117,9 +119,19 @@ drop(array $options, $dbtable, string $method="", string $onchangeMethod="")
 <!---------COMPARE WITH STANDARD--------------->
 <div id="compareWithStandardReport">
 <?php
-//xecho($this->compareWithStandard($dbtable));
-//<button onclick='gs.api.post("applySchemaStandards", { table: "$dbtable" })'>applySchemaStandards</button>
+
+$table=$this->publicdb.".post";
+xecho($this->buildChart($table,'pie'));
+xecho($this->buildChart($table,'bar'));
+xecho($this->buildChart($table,'line'));
+
 ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+
+  })
+  </script>
 
 </div>
 

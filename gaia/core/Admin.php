@@ -37,7 +37,7 @@ TO HEAD CSS
 */
 
 class Admin extends Gaia {
-use Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Bundle, Media, Filemeta, My, Cubo;
+use System, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Bundle, Media, Filemeta, My, Cubo;
 
 protected $database;
 protected $layout_selected;

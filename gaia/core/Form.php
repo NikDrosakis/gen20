@@ -136,39 +136,48 @@ protected function getInputType(string $table): ?array {
 /**
   abstraction to all tables
   counter UC
+  updated to working $key_fields
+
+foreign keys
+bases on selectjoin/status/ENUM aka on children not on parents
+
 */
- protected function buildCharts(string $table){
-$chart['line'] = $this->db->fa("SELECT YEARWEEK(published) AS week, COUNT(*) AS num_posts
-                                 FROM {$this->publicdb}.$table
-                                 WHERE published IS NOT NULL
-                                 GROUP BY YEARWEEK(published)
-                                 ORDER BY week");
-$chart['pie'] = $this->db->fa("SELECT postgrp.name AS label, COUNT(*) AS total
-                                FROM {$this->publicdb}.$table
-                                LEFT JOIN {$this->publicdb}.postgrp ON post.postgrpid = postgrp.id
-                                GROUP BY post.postgrpid");
-$chart['bar'] = $this->db->fa("SELECT tax.name AS label, COUNT(*) AS total
-                                FROM {$this->publicdb}.$table
-                                LEFT JOIN {$this->publicdb}.tax ON tax.id = post.taxid
-                                GROUP BY post.taxid");
-$piejson = json_encode(["res" => $chart["pie"]]);
-$linejson = json_encode(["res" => $chart["line"]]);
-$barjson = json_encode(["res" => $chart["bar"]]);
-return '<div style="display:flex">
-  <div class="chart-container"><canvas id="pieChart" width="400" height="200"></canvas></div>
-  <div class="chart-container"><canvas id="lineChart" width="400" height="200"></canvas></div>
-  <div class="chart-container"><canvas id="barChart" width="400" height="200"></canvas></div>
-</div><script>
-  const pie = "' . addslashes($piejson) . '";
-  buildChart2(pie, "pie", "pieChart");
+protected function buildChart(string $table, $joinedKeys){
+   // Unset the table itself from $joinedKeys if it exists
+   // xecho($table);
+        unset($joinedKeys[$key]);
+  // xecho($joinedKeys);
+$types=['line','pie','bar'];
+//xecho($joinedKeys);
+$justTable=explode('.',$table)[1];
 
-  const line = "' . addslashes($linejson) . '";
-  buildChart2(line, "line", "lineChart");
+//get all strpos selectjoin,selectG & format ENUMS of $table
+//$selectjoin="gen_vivalibrocom.postgrp";
 
-  const bar = "' . addslashes($barjson) . '";
-  buildChart2(bar, "bar", "barChart");
-    </script>';
+$return=[];
+foreach($joinedKeys as $selectjoin){
 
+$joinedRow=explode('.',$selectjoin)[1];
+try {
+$query = "SELECT YEARWEEK(created) AS week,COUNT(*) AS num FROM $table WHERE status = 2 GROUP BY YEARWEEK(created) ORDER BY week";
+$return[]["line"]= $this->db->flist($query);
+ } catch (Exception $e) {
+            $return[]["line"] = ['error' => $query . $e->getMessage()];
+        }
+try {
+$query = "SELECT $justTable.name AS label,COUNT(*) AS total FROM $table LEFT JOIN $selectjoin ON $justTable.{$joinedRow}id = {$justTable}.id GROUP BY {$joinedRow}.id";
+$return[]["pie"]= $this->db->flist($query);
+} catch (Exception $e) {
+            $return[]["pie"] = ['error' => $query . $e->getMessage()];
+        }
+try{
+$query = "SELECT $justTable.name AS label,COUNT(*) AS total FROM $table LEFT JOIN $selectjoin ON $justTable.{$joinedRow}id = {$justTable}.id GROUP BY {$joinedRow}.id";
+$return[]["bar"]= $this->db->flist($query);
+} catch (Exception $e) {
+            $return[]["bar"] = ['error' => $query . $e->getMessage()];
+        }
+}
+return $return;
 }
 
 /**
@@ -178,11 +187,11 @@ return '<div style="display:flex">
  */
 protected function buildTable($tableName,array $params=[]): string {
 $table = is_array($tableName) ? $tableName['key'] : $tableName;
+error_log(print_r($table),true);
 #instantiate those public vars
 $cols = $params['cols'] ?? [];
 $this->table=$table;
 $subpage=explode('.',$table)[1];
-$cols = $params['cols'] ?? [];
 $searchTerm=$params['q'] ?? null;
 $style = $this->sub!=''
         ? "margin:0;" #in subpage large
@@ -191,6 +200,7 @@ $style = $this->sub!=''
 if (empty($cols)) {
 $cols = $this->getInputType($table); // @fm.features Get column metadata
 }
+error_log(print_r($cols),true);
 $tableHtml='';
 $custom_tools_beforetable = ADMIN_ROOT."main/".$this->page."/".$subpage.".php";
 if(file_exists($custom_tools_beforetable)){
@@ -199,14 +209,22 @@ $tableHtml .= $this->include_buffer($custom_tools_beforetable,$cols,$params);
 $tableHtml .=  $this->renderFormHead($table);
 $tableHtml .= '<div class="table-container" style="'.$style.'">';
 
-if($this->totalRes > 10){
+//if($this->totalRes > 10){
 $tableHtml .= $this->formSearch($table);
+
+$joinedKeys=[];
 foreach($cols as $colName => $colData){
 if(strpos($colData['comment'],'selectjoin')!==false || strpos($colData['comment'],'selectG')!==false ){
     $tableHtml .= $this->formFilters($colData);
+    //$joinedKeys[]=$tableName.".".$colName;
+    if(strpos($colData['comment'],'selectjoin')!==false){
+    $join=explode('-',$colData['comment'])[1];
+    $joinedKeys[]=explode('.',$join)[0].'.'.explode('.',$join)[1];
+    }
 }
 }
-}
+   $tableHtml .= $this->buildChart($table,$joinedKeys);
+//}
 
 try {
 $tableHtml .= $this->buildCoreTable($tableName,$cols=[]);
@@ -216,9 +234,6 @@ $tableHtml .= $this->buildCoreTable($tableName,$cols=[]);
 
    if($this->totalRes > 0){
         $tableHtml .= $this->formPagination($this->totalRes, $this->currentPage);
-    }
-  if($table=='post'){
-    $tableHtml .= $this->buildCharts($table);
     }
     $tableHtml .= '</div>';
 
@@ -308,16 +323,16 @@ protected function tableBody($tableName,$cols=[],$data=[]) {
               $options=$this->getClassMethods();
                 $tableHtml .= $this->renderSelectField($colName, $value, $options);
 
-           }elseif ($inputType === 'select') {
-                if($colData['sql_type']=='enum'){
+           }elseif ($inputType === 'select' && $colData['sql_type']=='enum') {
                     $options=$colData['list'];
-                }else{
+                $tableHtml .= $this->renderSelectField($colName, $value, $options);
+
+          } elseif (strpos($colData['comment'], 'selectjoin') !== false) {
                     $options=$this->getSelectOptions($colData['comment'],$value);
-                }
-                    $tableHtml .= $this->renderSelectField($colName, $value, $options);
+                $tableHtml .= $this->renderSelectField($colName, $value, $options);
 
             // @fm.features Render an image for img fields
-            }elseif ($inputType === 'img') {
+          }elseif ($inputType === 'img') {
                 $imgPath = $this->validateImg($value);
                 $tableHtml .= '<img src="' . htmlspecialchars($imgPath) . '" alt="' . $colName . '" style="height:34px; max-width:100px;" />';
                 $actions = json_encode([
@@ -512,10 +527,21 @@ $html .="<p>$doc</p>";
 return $html;
 }
 
-// @fm.description render form head
+/**
+  @fm.description render form head
+  works on tables in form           gen_admin.systems (with dot)
+  and for files in this in format   developer/schema  (with slash)
+ */
 protected function renderFormHead($table){
-$subpage=explode('.',$table)[1];
- $page = $this->G['subparent'][$subpage];
+if (strpos($table, "/") !== false) {
+    $parts = explode('/', $table);
+    $subpage = $parts[1];
+    $page = $parts[0];
+} elseif (strpos($table, ".") !== false) {
+    $parts = explode('.', $table);
+    $subpage = $parts[1];
+    $page =$this->G['subparent'][$subpage];
+}
  #gs.form.handleNewRow(event, \'' . $table . '\', {0: {row: \'name\', placeholder: \'Give a Name\'}, 1: {row: \'created\', type: \'hidden\', value: gs.date(\'Y-m-d H:i:s\')}})
 return '<h3>
             <input id="cms_panel" class="red indicator">
@@ -607,7 +633,7 @@ return '<h3>
 //array $options, string $selected="", string $method="", string $name=""
 protected function drop(array $params=[]): string {
     extract($params);
-    $escapedMethod = htmlspecialchars($method, ENT_QUOTES, 'UTF-8');
+    $escapedMethod = $method;
     $escapedName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
     $appendid=$escapedMethod.$escapedName;
       $select = "<select id='$method' class='gs-select' onchange=\"gs.api.run('{$escapedName}','{$escapedMethod}','{$appendid}')\"><option value=''>Select</option>";

@@ -456,7 +456,7 @@ var gs= {
                             if (pass == pass2) {
                                 s.api.maria.f(`SELECT id FROM user WHERE mail='${mail}' OR name='${name}'`, function (data) {
                                     if (!data.success) {
-                                        gs.api.maria.q(`INSERT INTO user(name,firstname,lastname,mail,pass,grp,auth,registered) 
+                                        gs.api.maria.q(`INSERT INTO user(name,firstname,lastname,mail,pass,grp,auth,created) 
                                         VALUES('${name}','${firstname}','${lastname}','${mail}','${pass}',2,1,${s.time()})`,
                                             function (insert) {
                                                 if (insert.success) {
@@ -488,7 +488,7 @@ var gs= {
                 if (mailres == "ok") {
                     gs.api.maria.f(`SELECT id FROM ${G.publicdb}.user WHERE mail='${mail}'`, function (data) {
                         if (!data.success) {
-                            gs.api.maria.q(`INSERT INTO ${G.publicdb}.user(mail,grp,registered) 
+                            gs.api.maria.q(`INSERT INTO ${G.publicdb}.user(mail,grp,created) 
                         VALUES('${mail}',1,${s.time()})`, function (insert) {
                                     if (insert.success) {
                                         s.ui.notify("success", "Subscription successful");
@@ -1047,11 +1047,17 @@ actions = [
         }
     },
     //TODO gen.js:977 Error updating content: SyntaxError: Unexpected token '✗', "✗  Action "... is not valid JSON
-    run:async function (name, func, appendid) {
+    run:async function (name, func, appendid,params={}) {
         try {
             const next_state = gs.local("stored_state_"+name) ?? 0;
+            const requestParams = {
+                key: name,
+                state: next_state,
+                ...params
+            };
+
             // Make the API request to runAction
-            const getResult = await gs.api.post(func, { key: name, state:next_state },'run');
+            const getResult = await gs.api.post(func, requestParams,'run');
             console.log("API Result:", getResult);
 
             // Construct the content to append

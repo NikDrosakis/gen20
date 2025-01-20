@@ -53,7 +53,7 @@
                     <th><button onclick="gs.table.orderby(this);" class="orderby" id="order_status">status</button></th>
                     <th><button onclick="gs.table.orderby(this);" class="orderby" id="order_uri">uri</button></th>
                     <th><button onclick="gs.table.orderby(this);" class="orderby" id="order_usergrpid">usergrp</button></th>
-                    <th><button onclick="gs.table.orderby(this);" class="orderby" id="order_published">registered</button></th>
+                    <th><button onclick="gs.table.orderby(this);" class="orderby" id="order_published">created</button></th>
                     <th><button onclick="gs.table.orderby(this);" class="orderby" id="order_delete">delete</button></th>
                 </tr></thead>
                 <?php
@@ -72,7 +72,7 @@
                         <td id="status<?=$userid?>"><span id="status<?=$userid?>"><?=$G['status'][$sel[$i]['status']]?></span></td>
                         <td><a href="/<?=$sel[$i]['uri']?>"><?=$sel[$i]['uri']?></a></td>
                         <td><?=$this->usergrps[$sel[$i]['grp']]?></td>
-                        <td id="published<?=$userid?>"><?=date('Y-m-d H:i',$sel[$i]['registered'])?></td>
+                        <td id="published<?=$userid?>"><?=date('Y-m-d H:i',$sel[$i]['created'])?></td>
                         <td><button id="delete<?=$userid?>" value="<?=$userid?>" title="delete" class="btn btn-default btn-xs" >Delete</button></td>
                     </tr>
                 <?php } ?>
@@ -196,7 +196,7 @@ if(my.userid!=""){
 		var formid=$("#form_user");
 		event.preventDefault();
 		var form = formid.serializeArray();
-		form[s.size(form)]={name:'registered',value:gs.time()}
+		form[s.size(form)]={name:'created',value:gs.time()}
 		form[s.size(form)]={name:'modified',value:gs.time()}
 		console.log(form)
 		$.post(s.ajaxfile, form, function (data, textStatus, jqXHR) {
