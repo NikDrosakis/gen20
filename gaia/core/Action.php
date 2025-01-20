@@ -148,7 +148,7 @@ that's the return format
             if (!$record) {
             //if actionplan does not exist just execute the key if exist in methods
             //eg
-            //errors 
+            //errors
                 unset($params['key']);
                 $atLeastExecuted = $this->{$action}(...array_values($params));
                 return [

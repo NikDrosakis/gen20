@@ -54,6 +54,7 @@
 <div style="position:absolute;left:0"><?php echo $this->renderCubo("metatags"); ?></div>
     </nav>
 
+
 </header>
 <!----------------------------@filemeta.features VERTICAL_MENU with Admin navigate method---------------------------->
 <div id="dashbar">
