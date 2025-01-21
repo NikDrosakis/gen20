@@ -77,7 +77,7 @@ font-size:12px;
 
 
 <?php
-$pages = $this->db->fa("SELECT * FROM gen_vivalibrocom.main");
+$pages = $this->db->fa("SELECT * FROM {$this->publicdb}.main");
 $cubos= $this->db->fa("SELECT * from gen_admin.cubo order by name ASC");
 ?>
 

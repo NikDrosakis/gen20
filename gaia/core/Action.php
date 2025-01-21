@@ -137,11 +137,11 @@ that's the return format
         try {
             $record = $this->db->f("
                 SELECT actiongrp.keys, actiongrp.name as grpName, actiongrp.base,
-                action_plan.*,plan.name
-                FROM gen_admin.action_plan
-                LEFT JOIN gen_admin.actiongrp ON actiongrp.id = action_plan.actiongrpid
-                LEFT JOIN gen_admin.plan ON plan.id = action_plan.planid
-                WHERE action_plan.name=?
+                actionplan.*,plan.name
+                FROM gen_admin.actionplan
+                LEFT JOIN gen_admin.actiongrp ON actiongrp.id = actionplan.actiongrpid
+                LEFT JOIN gen_admin.plan ON plan.id = actionplan.planid
+                WHERE actionplan.name=?
             ",[$action]);
 
 
@@ -253,11 +253,11 @@ $startTime = microtime(true);
         try {
             $actionplan = $this->db->fa("select
             plan.*,
-            action_plan.name as actionplanName,action_plan.id as actionplanId,
-            action_plan.requires,action_plan.params,action_plan.afterstate,action_plan.output,action_plan.sort,action_plan.output_params
-            from gen_admin.action_plan
-            left join gen_admin.plan on action_plan.planid = plan.id
-            where plan.name=? ORDER BY action_plan.sort",[$plan]);
+            actionplan.name as actionplanName,actionplan.id as actionplanId,
+            actionplan.requires,actionplan.params,actionplan.afterstate,actionplan.output,actionplan.sort,actionplan.output_params
+            from gen_admin.actionplan
+            left join gen_admin.plan on actionplan.planid = plan.id
+            where plan.name=? ORDER BY actionplan.sort",[$plan]);
             if (empty($actionplan)){
                 return [
                     'status' => 203,

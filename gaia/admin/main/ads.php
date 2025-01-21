@@ -8,6 +8,8 @@ $config = [
             'access_type' => 'offline',
         ];
 $this->initAdService($config);
+
 xecho($this->fetchAdReport('2024-01-01', '2024-01-31'));
+
 xecho($this->getAdUnits());
 

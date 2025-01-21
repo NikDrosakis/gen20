@@ -99,7 +99,7 @@ plan([
 ----------------------------------------------->
 
 <?php echo $this->buildTable("gen_admin.plan") ?>
-<?php echo $this->buildTable("gen_admin.action_plan") ?>
+<?php echo $this->buildTable("gen_admin.actionplan") ?>
 
 <script>
 document.addEventListener('DOMContentLoaded', async function() {

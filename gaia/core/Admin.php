@@ -1,6 +1,6 @@
 <?php
 namespace Core;
-
+use Exception;
 /*
 ADMIN Core Class ROUTING
 layout with channels and drag and drop
@@ -230,36 +230,44 @@ protected function produce6channel($name,$ch,$page,$type,$table){
 
  protected function channelRender($name,$table,$ch='1'){
  $Position=['1'=>'top-left','2'=>'top-right','3'=>'top-center','4'=>'bottom-center','5'=>'bottom-left','6'=>'bottom-right'];
-  if($this->sub!=''){
-       $this->db_sub=$this->db->f("SELECT * FROM gen_admin.alinks where name=?",[$name]);
-       }
-    $html='';
-    $html .='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'" class="channel '.$Position[$ch].'">';
 
-         $mainplan = $this->db->f("SELECT mainplan FROM gen_admin.alinks WHERE name=?",[$name])['mainplan'];
-         $plan= json_decode($mainplan,true);
-         print_r($plan);
-         //execute the plan to be included in core.Action switch cases
-         foreach($plan as $step => $action){
-            foreach($action as $method=>$params){
+    $html ='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'" class="channel '.$Position[$ch].'">';
+
+    if($this->id !='' && $this->mode ==''){
+          $html .=  $this->buildForm($table);
+
+    }elseif($this->sub !=''){
+
+     $mainplan = $this->db->f("SELECT * FROM gen_admin.alinks WHERE name=?",[$name]);
+     $plan= json_decode($mainplan['mainplan'],true) ?? $mainplan['mainplan'];
+     $html .= $this->renderFormField("mainplan",["type"=>"json","comment"=>"json","table"=>"gen_admin.alinks","id"=>$mainplan['id']],$mainplan['mainplan']);
+     //execute the plan to be included in core.Action switch cases
+     foreach($plan as $step => $action){
+        foreach($action as $method=>$params){
+    try {
+    switch($method) {
+        case 'iframe':
+            $html .= '<iframe id="sandbox" src="'.$params.'" width="100%" height="1000px" sandbox="allow-scripts allow-same-origin allow-forms" style="border:1px solid black;"></iframe>';
+            break;
          //fs
-         switch($method){
-         case 'iframe':
-          $html .= '<iframe id="sandbox" src="'.$params.'" width="100%" height="1000px" sandbox="allow-scripts allow-same-origin allow-forms" style="border:1px solid black;"></iframe>';
-         break;
-         case 'include_buffer':
-         $params= $this->ADMIN_ROOT.$params.".php";
-                  if(file_exists($params)){
-                  $html .= $this->{$method}($params);
-                  }
-        break;
+        case 'include_buffer':
+            $params = $this->ADMIN_ROOT . $params . ".php";
+            if (file_exists($params)) {
+                $html .= $this->{$method}($params);
+            } else {
+                $html .= "File not found in $params";
+            }
+            break;
         default:
-        $html .= $this->{$method}($params);
-        break;
-         }
-
-         }
-         }
+            $html .= $this->{$method}($params);
+            break;
+    }
+    } catch (Exception $e) {
+        // Catch any exceptions that might occur
+        $html .= "<p>Error: " . $e->getMessage() . "</p>";
+    }
+}}
+}
 
 /*
       //CHANNEL FILE SUB FILE
@@ -319,15 +327,11 @@ if($this->sub==''){
     foreach ($alinks as $channel => $content){
       $name = $content['name'];
 
-
-      $table=$this->mainplan($name);
       //$table = $content['mainplan']!=null ?  $this->mainplan($content['mainplan']) : $name;
       $ch = strval($channel+1);
       //get parent page of sub
 
-      $page = $content['mainplan']
-      ? $this->G['subparent'][$content['mainplan']]
-      : $this->G['subparent'][$name];
+      $page = $this->G['subparent'][$name];
       //include _edit page
       //or normal main php file
       //$mp['mainfile'.$ch]= $this->ADMIN_ROOT . "main/" . $this->page . "/" . $this->page . ".php";
@@ -408,39 +412,5 @@ protected function navigate() {
         }
         return $subs;
     }
-
-/**
-GET all dependencies for head
-build the body here not in  body.php
-*/
- protected function experimental_pages(string $mainpage): ?array    {
-        // Directory where PHP files are stored
-        $directory = ADMIN_ROOT . "main/$mainpage";
-
-        // Get all PHP files from the directory
-        $files = glob($directory . '/*.php');
-
-        // Initialize an array to store filtered files
-        $filteredFiles = [];
-
-        // Get the filenames to be excluded (those in 'subs' and the main page itself)
-        $excludedFileNames = !empty($this->apages[$mainpage]['subs']) ? array_keys($this->apages[$mainpage]['subs']):[];
-        $excludedFileNames[] = $mainpage; // Add the main page itself to the exclusion list
-
-        // Loop through the files and filter out those containing 'buffer' or 'xhr'
-        foreach ($files as $file) {
-            // Get the base file name (without path) and remove '.php' extension
-            $filename = pathinfo($file, PATHINFO_FILENAME);
-
-            // Exclude files containing 'buffer' or 'xhr', and files in the excluded list
-            if (!preg_match('/buffer|xhr/i', $filename) && !in_array($filename, $excludedFileNames)) {
-                $filteredFiles[] = $filename; // Add to the filtered list if valid
-            }
-        }
-        // Return the filtered file list, or null if none found
-        return !empty($filteredFiles) ? $filteredFiles : [];
-  }
-
-
 
 }

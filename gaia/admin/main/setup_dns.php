@@ -1,3 +1,4 @@
+<?php
 //automate page title and main links (from metadata)
 //update form set limit to 10
 //get nginx webservers
@@ -6,7 +7,6 @@
 //switch admin domain from setup & all dashboard will change domain
 //check filesystem (standardize public filesystem)
 
-<?php
 
 xecho($this->getZones());
 

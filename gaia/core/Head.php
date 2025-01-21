@@ -62,8 +62,7 @@ protected function loadDynamicActions($libraries) {
             <link href="https://unpkg.com/ionicons@4.5.10-0/dist/css/ionicons.min.css" rel="stylesheet">
             <link href="atom.xml" type="application/atom+xml" rel="alternate" title="Sitewide ATOM Feed">
             <link rel="icon" href="/img/icon.png" />';
-            //<!---loadHeadSetup-->
-            $this->loadHeadSetup();
+
     if (isset($_GET['page']) && $_GET['page'] === 'ebook') {
           $html .= '<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.7.570/pdf.min.js"></script>';
       }
@@ -88,11 +87,15 @@ protected function renderAdminHead() {
         <!-- Main Styles -->
         <link rel="stylesheet" href="/admin/css/dashboard.css">
         <link rel="stylesheet" href="/admin/css/core.css">
-        <!-- Load Actions Based on Page -->
+      <!---loadHeadSetup-->
         <?php
-       // Dynamic CDN Actions
-       $this->loadDynamicActions([]);
+               $scripts=  $this->loadHeadSetup();
+               if(!empty($scripts)){
+               echo implode('',$scripts);
+               }
        ?>
+              <!-- Dynamic CDN Actions-->
+            <!-- $this->loadDynamicActions([]);-->
     <!-- Additional External Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.3/Sortable.min.js" integrity="sha512-8AwTn2Tax8NWI+SqsYAXiKT8jO11WUBzTEWRoilYgr5GWnF4fNqBRD+hCr4JRSA1eZ/qwbI+FPsM3X/PQeHgpQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
        <script src="https://apis.google.com/js/api.js"></script>
@@ -118,20 +121,22 @@ protected function renderAdminHead() {
     <?php
 }
 
-
 protected function loadHeadSetup() {
-    $cssArray = $this->setup("head-css*");
-    $jsArray = $this->setup("head-js*");
+    $return = [];
+    $table = "{$this->publicdb}.setup";
 
     // Load CSS files
+    $cssArray = $this->db->flist("SELECT val FROM $table WHERE tag = 'head-css' AND status=2");
     foreach ($cssArray as $css) {
-        echo "<link rel='stylesheet' href='$css'>\n";
+        $return[] = "<link rel='stylesheet' href='" . htmlspecialchars($css, ENT_QUOTES) . "'>\n";
     }
-
     // Load JS files
+    $jsArray = $this->db->flist("SELECT val FROM $table WHERE tag = 'head-js' AND status=2");
     foreach ($jsArray as $js) {
-        echo "<script src='$js'></script>\n";
+        $return[] = "<script src='" . htmlspecialchars($js, ENT_QUOTES) . "'></script>\n";
     }
+    return $return;
 }
+
 
 }

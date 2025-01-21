@@ -7,12 +7,12 @@
 //xecho($this->runAction(["key"=>"gemini_create_completion"]));
 
 
-//echo $this->buildTable("gen_admin.action_plan");
+//echo $this->buildTable("gen_admin.actionplan");
 //echo $this->buildTable("gen_admin.systems");
 //echo $this->buildTable("gen_admin.actiongrp");
 
 //echo $this->buildTable("gen_admin.plan");
-//echo $this->buildTable("gen_admin.action_plan");
+//echo $this->buildTable("gen_admin.actionplan");
 //echo $this->buildTable("gen_admin.action");
 
 

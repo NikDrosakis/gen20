@@ -250,7 +250,7 @@ function toggleChannelActivation(isActive) {
 }
 
 ///FORM COMMON FUNCTIONS
-async function saveContent(col, table) {
+async function saveContent(col, table,id) {
     try {
         let value;
         // Check if the field is an editor (CKEditor)
@@ -266,22 +266,67 @@ async function saveContent(col, table) {
             throw new Error('Column or value is missing');
         }
         if (!G.id) {
-            throw new Error('G.id is not defined');
+            throw new Error('id is not defined');
         }
         const row = col; // Assuming you want to use the column name for the database update
         console.log(`Saving content for ${table}.${col}:`, value);
         // Call your savePost function
         const rowToSave = await gs.api.maria.q(`UPDATE ${table}
                                                 SET ${row}=?
-                                                WHERE id = ?`, [value, G.id]);
+                                                WHERE id = ?`, [value, id]);
         if (rowToSave.success) {
-            console.log(`Saved ${G.id}`);
+            console.log(`Saved ${id}`);
             gs.success("Save content");
         }
     } catch (error) {
         console.error('Error saving content:', error);
     }
 }
+async function saveContentMirror(col, table, id) {
+    try {
+        let value;
+
+        // Check if CodeMirror is used and get its content
+        if (typeof CodeMirror !== "undefined" && CodeMirror.instances && CodeMirror.instances[col]) {
+            let editor = CodeMirror.instances[col];
+            value = editor.getValue(); // Get content from CodeMirror
+
+            // Update the associated textarea to ensure backend consistency
+            editor.save(); // This updates the textarea value
+        } else {
+            // Fallback to regular textarea
+            value = document.getElementById(col).value;
+        }
+
+        // Validate that the value is valid JSON
+        try {
+            value = JSON.stringify(JSON.parse(value)); // Ensure it's a proper JSON string
+        } catch (e) {
+            throw new Error('Invalid JSON format');
+        }
+
+        // Ensure value, column, and id are defined
+        if (!value || !col || !id) {
+            throw new Error('Column, value, or ID is missing');
+        }
+
+        console.log(`Saving content for ${table}.${col}:`, value);
+
+        // Call your savePost function
+        const rowToSave = await gs.api.maria.q(`UPDATE ${table}
+                                                SET ${col} = ?
+                                                WHERE id = ?`, [value, id]);
+        if (rowToSave.success) {
+            console.log(`Saved ${id}`);
+            gs.success("Content saved successfully");
+            // Optionally reload or update the displayed content
+        }
+    } catch (error) {
+        console.error('Error saving content:', error);
+        gs.error("Error saving content: " + error.message);
+    }
+}
+
 
 async function updatePost(event, table) {
     const input = event.target;

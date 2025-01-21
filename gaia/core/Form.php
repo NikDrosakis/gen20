@@ -324,6 +324,10 @@ protected function tableBody($tableName,$cols=[],$data=[]) {
             }elseif ($inputType === 'checkbox') {
                 $tableHtml .= '<input id="'.$colName.$row['id'].'"   onchange="gs.form.updateRow(this, \'' . $table . '\')" type="checkbox" switch="" '.($value ? "checked":"").' class="switcher">';
 
+           }elseif ($inputType === 'file') {
+                $options= glob(ADMIN_ROOT."main/*",GLOB_ONLYDIR);
+                $tableHtml .= $this->renderSelectField($colName, $value, $options);
+
            }elseif ($inputType === 'method') {
               $options=$this->getClassMethods();
                 $tableHtml .= $this->renderSelectField($colName, $value, $options);
@@ -623,6 +627,7 @@ return '<h3>
         foreach ($cols as $col) {
              $resVal = $res[$col] ?? '';  // @fm.features Get the value from the result array or use an empty string
             // @fm.features Render form fields based on the column type
+            //error_log($tableMeta[$col]);
             $return .= $this->renderFormField($col, $tableMeta[$col], $resVal);
         }
         // @fm.features If form tags were opened, close them
@@ -759,7 +764,8 @@ protected function renderFormField(string $col, array $fieldData, $value = ''): 
     $comment   = $fieldData['comment'] ?? '';
     $sqlType   = $fieldData['sql_type'] ?? '';
     $list   = $fieldData['list'] ?? [];
-
+    $table   = $this->table ?? $fieldData['table'];
+    $id =     $this->G['id']!='' ?  $this->G['id']: $fieldData['id'];
   $supportedCodeMirrorModes = [
         'json' => 'application/json',
         'pug' => 'text/x-pug',
@@ -785,7 +791,17 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
             }
                 return $this->renderSelectField($col, $value,$options);
         break;
-        case 'img':  // @fm.features File upload field
+
+        case 'file':
+           $options= glob(ADMIN_ROOT."main/*",GLOB_ONLYDIR);
+           $tableHtml .= $this->renderSelectField($colName, $value, $options);
+
+        case 'method':
+           $options=$this->getClassMethods();
+           $tableHtml .= $this->renderSelectField($colName, $value, $options);
+
+        case 'img':
+        // @fm.features File upload field
           $imgPath = $this->validateImg($value);
             return "<label for='$col'>$col</label><button ondblclick='openPanel(`compos/mediac.php`)' class='gs-span' id='drop-zone' ondrop='handleDrop(event)' ondragover='handleDragOver(event)'>
                 <img src='$imgPath' style='height: 100%;width:100%;' draggable='false'></button>";
@@ -797,10 +813,9 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
         case 'md':
         case 'yaml':
             $escapedValue = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-            return "
-                <div class='gs-span'>
-                    <label for='$col'>$col ($comment)</label>
+            return "<div class='gs-span'>
                     <div class='gs-preview-container'>
+                         <p for='$col'>$col ($comment)-id.{$id}</p>
                         <textarea name='$col' id='$col' placeholder='$col'>$escapedValue</textarea>
                         <div class='code-editor' id='editor-$col'></div>
                     </div>
@@ -814,9 +829,11 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
                             autoCloseBrackets: true,
                             theme: 'default'
                         });
+                        CodeMirror.instances = CodeMirror.instances || {};
+                        CodeMirror.instances['$col'] = editor;
                     });
                 </script>
-                <button class='button save-button' onclick='saveContent(\"$col\", \"$table\")' type='button' id='save_$col'>Save Content</button>
+                <button class='button save-button' onclick='saveContentMirror(\"$col\", \"$table\",$id)' type='button' id='save_$col'>Save Content</button>
             ";
         case 'sql':
                 // @fm.features Handle SQL preview (raw SQL code)
@@ -828,14 +845,14 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
        <textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'>$value</textarea>
        '.$preview.'
     </div>
-    <button class='button save-button' onclick='saveContent(\'' . $col . '\', \'' . $table . '\')' type='button' id='save_$col'>Save Content</button>
+    <button class='button save-button' onclick='saveContentMirror(\'' . $col . '\', \'' . $table . '\',$id)' type='button' id='save_$col'>Save Content</button>
         </div>";
          break;
         case 'json':
      // @fm.features   $value = json_decode($value,true);
                return "<div class='gs-span'><label for='$col'>$col</label>
                        <code><textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'><code>$value</code></textarea></code>
-                       </div><button class='button save-button' onclick='saveContent(\"$col\", \"$table\")' type='button' id='save_$col'>Save Content</button>";
+                       </div><button class='button save-button' onclick='saveContent(\"$col\", \"$table\",$id)' type='button' id='save_$col'>Save Content</button>";
         break;
         case 'cron':
         return $this->renderCronEditor($value);
@@ -849,10 +866,10 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
                return "<div class='gs-span'><label for='$col'>$col</label>
                 <button onclick='navigator.clipboard.writeText(this.nextElementSibling.innerText || this.nextElementSibling.value)' class='glyphicon glyphicon-copy'></button>
                <code><textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'>$value</textarea></code>
-               </div><button class='button save-button' onclick='saveContent(\"$col\", \"$table\")' type='button' id='save_$col'>Save Content</button>";
+               </div><button class='button save-button' onclick='saveContent(\"$col\", \"$table\",$id)' type='button' id='save_$col'>Save Content</button>";
                }else{
                return "<div class='gs-span'><label for='$col'>$col</label><textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'>$value</textarea>
-                 </div><button class='button save-button' onclick='saveContent(\"$col\", \"$table\")' type='button' id='save_$col'>Save Content</button>";
+                 </div><button class='button save-button' onclick='saveContent(\"$col\", \"$table\",$id)' type='button' id='save_$col'>Save Content</button>";
               }
         break;
         case 'button':
@@ -865,7 +882,7 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
         return "<div class='gs-span'>
                     <label for='$col'>$col</label>
                      <textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'>$value</textarea>
-                    <button class='bare save-button' onclick='saveContent(\"$col\", \"$this->table\")' type='save' id='save_$col'>Save Content</button>
+                    <button class='bare save-button' onclick='saveContent(\"$col\", \"$this->table\",$id)' type='save' id='save_$col'>Save Content</button>
                 </div>
                 <script>
                     if (CKEDITOR.instances['$col']) {

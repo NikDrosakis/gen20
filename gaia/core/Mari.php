@@ -379,7 +379,9 @@ public function inse(string $table, array $params = []) {
 		if(!$res) return FALSE;
             return $res->fetchAll(PDO::FETCH_ASSOC);
     }
-
+/**
+Used only for form records
+*/
 public function fetch(string $q, array $params = [], int $limit = 10, int $currentPage = 1,
     $orderBy="" , // Default order column
     $orderDir="" // Default order direction

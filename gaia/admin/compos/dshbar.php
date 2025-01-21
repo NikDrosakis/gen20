@@ -62,6 +62,7 @@
          <ul id="mainmenu">
             <?php
             foreach($this->navigate() as $mainpage =>$vals){
+
             $targ= $mainpage == $this->page ? 'style="color:darkred;"' : '';
             ?>
             <li <?=$mainpage==$this->page ? $targ : ''?>>
@@ -85,16 +86,18 @@
 					<li>
                         <button class="bare right" onclick="gs.ui.switcher('#new_<?=$mainpage?>_box')">
                          <span class="glyphicon glyphicon-plus"></span></button>
-                        </li>
-<?php /** @filemeta.features EXPERIMENTAL_PAGES */
+                    </li>
+<?php
 						if($mainpage=='lab'){
-						$experimental_pages=$this->experimental_pages($mainpage);
-						if(!empty($experimental_pages)){
-						 foreach($this->experimental_pages($mainpage) as $exp_page){
+						$pages= glob(ADMIN_ROOT . 'main/*.php');
+
+						if(!empty($pages)){
+						 foreach($pages as $exp_page){
+						 $file = basename($exp_page);
 						?>
-					    <li><a href="/admin/lab/<?=$exp_page?>" style="color:red" class="<?=$exp_page==$this->sub ? 'active':''?>">
-                            <?=ucfirst($exp_page)?>
-                            </a></li>
+					    <li><a href="/admin/lab/<?=$file?>" style="color:red" class="<?=$file==$this->sub ? 'active':''?>">
+                            <?=ucfirst($file)?>
+                        </a></li>
 					<?php }}} ?>
 					</ul>
 				<?php } ?>

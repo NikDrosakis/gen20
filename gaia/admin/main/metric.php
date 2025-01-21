@@ -1,3 +1,4 @@
+<!--------with $this->addMetric() use plan -->
 <div style="display:flex">
   <div class="chart-container"><canvas id="progressPieChart" width="400" height="200"></canvas></div>
   <div class="chart-container"><canvas id="progressLineChart" width="400" height="200"></canvas></div>

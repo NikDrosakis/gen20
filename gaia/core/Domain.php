@@ -22,9 +22,10 @@ protected $os;
   protected $hostfile;
 
     protected function getPublicFilesystem(): array {
-                 $localDir = '/var/www/gs/public/';
+                 $localDir = GAIAROOT.'public/'.$_SERVER['SERVER_NAME'];
              // Use glob to get an array of all files in the specified directory
                  $nginxSites = glob($localDir . '*');
+
                  return $nginxSites; // Return the list of zones
     }
 
