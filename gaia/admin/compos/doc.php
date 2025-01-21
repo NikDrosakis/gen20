@@ -5,7 +5,7 @@ $sub= $this->G['sub'];
 if($sub!=''){
 $doc= $this->db->f("select gen_admin.doc from $sub where name=?",[$sub])['doc'];
 }else{
-$doc= $this->db->f("select gen_admin.doc from admin_sub where name=?",[$this->sub])['doc'];
+$doc= $this->db->f("select gen_admin.doc from alinks where name=?",[$this->sub])['doc'];
 }
 echo $doc;
 ?>

@@ -99,15 +99,15 @@ abstract class Gaia {
 		}
         }
 
-        $this->G['pagelist'] = $this->db->flist("SELECT id, name FROM gen_admin.admin_page");
-        $this->G['subparent'] = $this->db->flist("SELECT admin_sub.name, admin_page.name as parent
-        FROM gen_admin.admin_sub
-        LEFT JOIN gen_admin.admin_page on admin_sub.admin_pageid=admin_page.id");
+        $this->G['pagelist'] = $this->db->flist("SELECT id, name FROM gen_admin.alinksgrp");
+        $this->G['subparent'] = $this->db->flist("SELECT alinks.name, alinksgrp.name as parent
+        FROM gen_admin.alinks
+        LEFT JOIN gen_admin.alinksgrp on alinks.alinksgrpid=alinksgrp.id");
 
         if ($this->G['SYSTEM']=='admin'){
-        $this->G['has_maria'] = $this->has_maria($this->sub);
+        $this->G['mainplan'] = $this->mainplan($this->sub);
         } elseif($this->G['SYSTEM']==$this->G['TEMPLATE']){
-        $this->G['has_maria'] = $this->has_maria($this->page);
+        $this->G['mainplan'] = $this->mainplan($this->page);
         }
        // Handle requests (delegated to child classes)
         $this->handleRequest();
@@ -209,7 +209,7 @@ protected function getPageMetatags(): array {
                 $db = $_SERVER['SYSTEM']=='admin' ? "gen_admin" : $this->publicdb;
                 $meta = $this->db->f("SELECT meta FROM {$db}.metadata WHERE name = ?", [$this->sub]);
             } else {
-                $meta = $this->db->f("SELECT meta FROM gen_admin.admin_sub WHERE name = ?", [$this->sub]);
+                $meta = $this->db->f("SELECT meta FROM gen_admin.alinks WHERE name = ?", [$this->sub]);
             }
 
             // Append comma-separated meta if found
@@ -218,7 +218,7 @@ protected function getPageMetatags(): array {
             }
         } else {
             // MAIN ADMIN PAGE
-            $meta = $this->db->f("SELECT meta FROM gen_admin.admin_page WHERE name = ?", [$this->page]);
+            $meta = $this->db->f("SELECT meta FROM gen_admin.alinksgrp WHERE name = ?", [$this->page]);
             if ($meta) {
                 $metaString .= ',' . $meta['meta'];
             }
@@ -387,19 +387,19 @@ Handle XHR request.
 
 /**
 db-centric
-checks db gen_admin.admin_sub for details of admin page
+checks db gen_admin.alinks for details of admin page
 if
  */
-    protected function has_maria(string $name='') {
+    protected function mainplan(string $name='') {
         if ($this->G['SYSTEM']=='admin'){
          $name = $name!='' ? $name : $this->sub;
-         $has_maria = $this->db->f("SELECT has_maria FROM gen_admin.admin_sub WHERE name=?",[$name])['has_maria'];
+         $mainplan = $this->db->f("SELECT mainplan FROM gen_admin.alinks WHERE name=?",[$name])['mainplan'];
         } elseif($this->G['SYSTEM']==$this->G['TEMPLATE']){
          $name = $name!='' ? $name : $this->page;
-         $has_maria = $this->db->f("SELECT has_maria FROM {$this->publicdb}.main WHERE name=?",[$name])['has_maria'];
+         $mainplan = $this->db->f("SELECT mainplan FROM {$this->publicdb}.main WHERE name=?",[$name])['mainplan'];
         }
-        if($has_maria){
-           return $has_maria;
+        if($mainplan){
+           return $mainplan;
         }else{
         return false;
         }

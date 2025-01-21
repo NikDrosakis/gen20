@@ -190,7 +190,7 @@ protected function renderTable($table) {
  */
 protected function buildTable($tableName,array $params=[]): string {
 $table = is_array($tableName) ? $tableName['key'] : $tableName;
-error_log(print_r($table),true);
+//error_log(print_r($table));
 #instantiate those public vars
 $cols = $params['cols'] ?? [];
 $this->table=$table;
@@ -203,7 +203,7 @@ $style = $this->sub!=''
 if (empty($cols)) {
 $cols = $this->getInputType($table); // @fm.features Get column metadata
 }
-error_log(print_r($cols),true);
+//error_log(print_r($cols),true);
 $tableHtml='';
 $custom_tools_beforetable = ADMIN_ROOT."main/".$this->page."/".$subpage.".php";
 if(file_exists($custom_tools_beforetable)){
@@ -228,7 +228,7 @@ if(strpos($colData['comment'],'selectjoin')!==false || strpos($colData['comment'
     }
 }
 }
-   $tableHtml .= $this->buildChart($table,$joinedKeys);
+ //  $tableHtml .= $this->buildChart($table,$joinedKeys);
 //}
 
 try {
@@ -527,7 +527,7 @@ HTML;
 // @fm.description render doc
 protected function renderDoc(string $table){
 $html = "<h3>Documentation $table</h3>";
-$doc= $this->db->f("select doc from gen_admin.admin_sub where name=?",[$table])['doc'];
+$doc= $this->db->f("select doc from gen_admin.alinks where name=?",[$table])['doc'];
 $html .="<p>$doc</p>";
 return $html;
 }

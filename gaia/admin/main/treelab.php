@@ -5,7 +5,7 @@
 
 
 //xecho($this->createDefaultSchema("db","metadata"));
-//echo $this->buildSchema("gen_admin.admin_sub");
+//echo $this->buildSchema("gen_admin.alinks");
 //echo $this->insertTablesIntoMetadata("db");
 
 //xecho($this->getSchemaQuery("gen_admin","systems"));

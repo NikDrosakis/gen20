@@ -35,10 +35,8 @@ TO HEAD CSS
         rows: '1fr'
     }
 */
-
 class Admin extends Gaia {
 use System, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Bundle, Media, Filemeta, My, Cubo;
-
 protected $database;
 protected $layout_selected;
 protected $layout;
@@ -53,9 +51,10 @@ protected $layouts=[
       '6'=>['name'=>'6','columns'=>"1fr 1fr 1fr", 'rows'=>"1fr 1fr",'channels'=>6]
       ];
 
+
 protected $editor;
-protected $admin_sub;
-protected $admin_page;
+protected $alinks;
+protected $alinksgrp;
 protected $emptyChannelImg='<img src="https://scontent.fath6-1.fna.fbcdn.net/v/t39.30808-6/346640854_1464202694405870_4821110064275118463_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=cc71e4&_nc_eui2=AeET8MMdyrrxcZXQPQRHxxULzTMCkFTvUl7NMwKQVO9SXlWjH0Q-knjnox1ZdrOQV0Q&_nc_ohc=kaVtIYyBrmEQ7kNvgHtt038&_nc_zt=23&_nc_ht=scontent.fath6-1.fna&_nc_gid=AKEgjeaOYw12bRkO0FEl6jd&oh=00_AYDlYaFlI9-vLGr2Zyak5KKkzHVXnaDNqSRly3sY4d_zaQ&oe=67232B67">';
 
 
@@ -232,14 +231,40 @@ protected function produce6channel($name,$ch,$page,$type,$table){
  protected function channelRender($name,$table,$ch='1'){
  $Position=['1'=>'top-left','2'=>'top-right','3'=>'top-center','4'=>'bottom-center','5'=>'bottom-left','6'=>'bottom-right'];
   if($this->sub!=''){
-       $this->db_sub=$this->db->f("SELECT * FROM gen_admin.admin_sub where name=?",[$name]);
+       $this->db_sub=$this->db->f("SELECT * FROM gen_admin.alinks where name=?",[$name]);
        }
     $html='';
     $html .='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'" class="channel '.$Position[$ch].'">';
 
+         $mainplan = $this->db->f("SELECT mainplan FROM gen_admin.alinks WHERE name=?",[$name])['mainplan'];
+         $plan= json_decode($mainplan,true);
+         print_r($plan);
+         //execute the plan to be included in core.Action switch cases
+         foreach($plan as $step => $action){
+            foreach($action as $method=>$params){
+         //fs
+         switch($method){
+         case 'iframe':
+          $html .= '<iframe id="sandbox" src="'.$params.'" width="100%" height="1000px" sandbox="allow-scripts allow-same-origin allow-forms" style="border:1px solid black;"></iframe>';
+         break;
+         case 'include_buffer':
+         $params= $this->ADMIN_ROOT.$params.".php";
+                  if(file_exists($params)){
+                  $html .= $this->{$method}($params);
+                  }
+        break;
+        default:
+        $html .= $this->{$method}($params);
+        break;
+         }
+
+         }
+         }
+
+/*
       //CHANNEL FILE SUB FILE
     if ($this->db_sub['type'] == 'table') {
-          //select * from admin_page  and sub=$this->sub
+          //select * from alinksgrp  and sub=$this->sub
              //add also the file after the table
          if($this->id !='' && $this->mode ==''){
             $html .=  $this->buildForm($table);
@@ -269,6 +294,9 @@ protected function produce6channel($name,$ch,$page,$type,$table){
         $chan = $this->produceSubchannel($name);
          $html .= $this->channelCheck($chan);
      }
+
+ */
+
     $html .='</div>';
     return $html;
  }
@@ -277,26 +305,28 @@ protected function produce6channel($name,$ch,$page,$type,$table){
 protected function channelDispatch() {
    // $channels=$this->layouts[$this->layout_selected]['channels'];
     //this is for 6 channels
- $this->db_page = $this->db->f("SELECT * FROM gen_admin.admin_page where name=?",[$this->page]);
-    //add automatice table and forms based on metadata admin.admin_sub.type=='table'
+ $this->db_page = $this->db->f("SELECT * FROM gen_admin.alinksgrp where name=?",[$this->page]);
+    //add automatice table and forms based on metadata admin.alinks.type=='table'
 //NO SUBPAGE - MULTIPLE CHANNELS 6
 if($this->sub==''){
-    $admin_pageid = $this->db_page['id'];
+    $alinksgrpid = $this->db_page['id'];
     if($this->page=='home'){
-    $admin_subs = $this->db->fa("SELECT * FROM gen_admin.admin_sub order by sort limit 6");  //6th is notifications
+    $alinks = $this->db->fa("SELECT * FROM gen_admin.alinks order by sort limit 6");  //6th is notifications
     }else{
-    $admin_subs = $this->db->fa("SELECT * FROM gen_admin.admin_sub where admin_pageid=? order by sort limit 6",[$admin_pageid]);  //6th is notifications
+    $alinks = $this->db->fa("SELECT * FROM gen_admin.alinks where alinksgrpid=? order by sort limit 6",[$alinksgrpid]);  //6th is notifications
     }
     $html='';
-    foreach ($admin_subs as $channel => $content){
+    foreach ($alinks as $channel => $content){
       $name = $content['name'];
-      $table=$this->has_maria($name);
-      //$table = $content['has_maria']!=null ?  $this->has_maria($content['has_maria']) : $name;
+
+
+      $table=$this->mainplan($name);
+      //$table = $content['mainplan']!=null ?  $this->mainplan($content['mainplan']) : $name;
       $ch = strval($channel+1);
       //get parent page of sub
 
-      $page = $content['has_maria']
-      ? $this->G['subparent'][$content['has_maria']]
+      $page = $content['mainplan']
+      ? $this->G['subparent'][$content['mainplan']]
       : $this->G['subparent'][$name];
       //include _edit page
       //or normal main php file
@@ -309,8 +339,10 @@ if($this->sub==''){
 //SUB PAGE - DEFAULT 1 CHANNEL subpage + DOC + NOTIFICATION
 }else{
       $name=$this->sub;
-      $html .= $this->channelRender($name,$this->has_maria());
-      $html .= '<script>gs.ui.sort(`UPDATE ${G.has_maria} SET sort=? WHERE id = ?`, "list", G.has_maria);</script>';
+
+      $html .= $this->channelRender($name,$this->mainplan());
+
+    //  $html .= '<script>gs.ui.sort(`UPDATE ${G.mainplan} SET sort=? WHERE id = ?`, "list", G.mainplan);</script>';
       //add notification bar
     //  $html .= $this->channelRenderFile($this->notification_file,2);
       //add doc bar if type==table select doc FROM gen_admin.table with form input
@@ -328,7 +360,7 @@ navigation
 */
 protected function navigate() {
     // Fetch data from the database
-    $pages = $this->db->fa("SELECT * FROM gen_admin.admin_page ORDER BY sort");
+    $pages = $this->db->fa("SELECT * FROM gen_admin.alinksgrp ORDER BY sort");
 
     // Initialize the navigation structure
     $this->G['apages'] = [];
@@ -350,10 +382,10 @@ protected function navigate() {
         }
 
         // Add sub-navigation if applicable
-         $subs = $this->db->fa("SELECT * FROM gen_admin.admin_sub order by sort");
+         $subs = $this->db->fa("SELECT * FROM gen_admin.alinks order by sort");
          if(!empty($subs)){
          foreach ($subs as $sub) {
-         if($sub['admin_pageid']==$page['id']){
+         if($sub['alinksgrpid']==$page['id']){
             $this->G['apages'][$slug]['subs'][$sub['name']] = [
                 "slug" => $sub['title'],
                 "icon" => $sub['img'],
@@ -366,7 +398,7 @@ protected function navigate() {
     return $this->G['apages'];
 }
 
-    protected function admin_subs() {
+    protected function alinkss() {
         $widgets = read_folder($this->G['WIDGETURI']);
 		$subs=array();
          foreach ($widgets as $wid) {

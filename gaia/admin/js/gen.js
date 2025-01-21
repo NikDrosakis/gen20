@@ -674,7 +674,7 @@ cooDelAll: function (except) {
         init: (connectionName, uri) => {
             const ws = new WebSocket(`wss://${uri}`);
             ws.onopen =  function(){
-                const user = !!my.userid ? my.userid : '1';
+                const user = !!G.my.userid ? G.my.userid : '1';
                 console.info(`${G.SYSTEM}:${G.page} Connection, ${connectionName} established with user:`, user);
                 const mes = { system:G.SYSTEM,domaffect:"*",type: "open", verba: "PING", userid: user, to:user,cast: "one" };
                 ws.send(JSON.stringify(mes));
@@ -1490,13 +1490,11 @@ actions = [
         sort: function(query, table,orderel='nodorder') {
             // Get list elements with id="[table]"
             var listElements = document.querySelectorAll("[id^='"+table+"']");
-            console.log(listElements);
             listElements.forEach(function(listElement) {
                 // Initialize Sortable for each list element
                 Sortable.create(listElement, {
                     onEnd: async function(evt) {
                         var id = evt.from.id.replace(table, '');
-console.log(id)
                         var orderElements = document.querySelectorAll(".menuBox" + id);
                         var allIds = Array.from(orderElements).map(function(el) {
                             return el.id.replace(orderel + id + '_', '');
