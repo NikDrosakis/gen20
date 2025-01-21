@@ -179,7 +179,10 @@ $return[]["bar"]= $this->db->flist($query);
 }
 return $return;
 }
-
+protected function renderTable($table) {
+    $tableid = explode('.',$table)[1]."_table";
+    return "<button onclick=\"gs.form.updateTable('$tableid', 'buildCoreTable');\" class=\"page-link\" >Render</button>";
+}
 /**
 @fm.description Build an HTML table based on the data provided.
  1) creates the query
@@ -211,6 +214,8 @@ $tableHtml .= '<div class="table-container" style="'.$style.'">';
 
 //if($this->totalRes > 10){
 $tableHtml .= $this->formSearch($table);
+
+$tableHtml .= $this->renderTable($table);
 
 $joinedKeys=[];
 foreach($cols as $colName => $colData){
@@ -437,7 +442,7 @@ protected function buildCoreTable($tableName,$cols=[]) {
                 $data= $rows['data'];
 
             #create the table container
-            $tableHtml = '<table class="styled-table" id="' . $subpage . '_table" >';
+        $tableHtml = '<table class="styled-table" data-table="'.$table.'" data-pagenum="1" id="' . $subpage . '_table">';
         //call buildHead
          $tableHtml .= $this->tableHead($table,$cols);
         //call buildCore

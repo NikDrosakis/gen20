@@ -110,16 +110,18 @@ if (!$has_not_sl) {
 // Main content
 echo '<div id="m" style="width:' . $main_width . '%">';
 
-    if (!$has_not_m) {
+if (!$has_not_m) {
       foreach ($pc['m'] as $cubo) {
            echo '<div id="' . $cubo . '" class="row archive-content">';
               //include CUBO_ROOT.$cubo."/public.php";
               $main= $this->db->f("select * from {$this->publicdb}.main where name=?",[$this->page]);
 
+if($main && $main['query_archive']){
               echo  $this->buildTemplateArchive($main);
+              }
               echo '</div>';
       }
-  }elseif(!empty($this->G['PAGECUBO'])){
+}elseif(!empty($this->G['PAGECUBO'])){
                       $pageTemplate= $this->db->f("select * from {$this->publicdb}.main where name=?",[$this->page]);
  }else{
      $template= $this->db->f("select template_read from {$this->publicdb}.main where name=?",['404'])['template_read'];

@@ -1195,7 +1195,8 @@ actions = [
                         console.log("parenting...")
                         console.log(field)
                         console.log(tableName)
-                        console.log(page)
+                        console.log(page);
+                        gs.form.updateTable(`${tableName}_table`, 'buildCoreTable');
                    //     location.href=`/admin/${page}/${tableName}?id=${newRow.data}`;
                 }
             } catch (error) {
@@ -1228,7 +1229,20 @@ actions = [
         },
         updateTable: async function(selectElement, method) {
             // Extract 'table' and other necessary data attributes dynamically
-            const dataset = selectElement.dataset;  // This will contain all data-* attributes
+            // If selectElement is a string (e.g., table ID), find the element
+            if (typeof(selectElement) === 'string') {
+                tableElement = document.getElementById(selectElement);  // Use the string as the table ID
+            } else {
+                // Otherwise, assume selectElement is a DOM element, and use it directly
+                tableElement = selectElement;
+            }
+            // Check if the table element exists
+            if (!tableElement) {
+                console.error('Table element not found.');
+                return;
+            }
+            // Extract the 'dataset' from the element (data-* attributes)
+            const dataset = tableElement.dataset;
             const tableName = dataset.table;  // Dynamically get table name
             const q = dataset.q || '';  // Use search query if available
             const pagenum = dataset.pagenum || 1;  // Use pagination number if available
@@ -1245,7 +1259,6 @@ actions = [
             // Get the table element by ID (based on table name)
             const id = tableName.split('.')[1] + '_table';  // Assuming table name format is "db.table"
             const nextMethodElement = document.getElementById(id);
-
             // Clear the previous content and insert new data
             nextMethodElement.innerHTML = getResult.data;
             // Call gotopage to update pagination styling
@@ -1287,9 +1300,9 @@ actions = [
         go2page: function(buttonElement) {
             // Extract the page number from the data attribute
             const page = buttonElement.dataset.pagenum;
-
+            const table = buttonElement.dataset.table.split('.')[1];
             // Remove 'active' class from all buttons
-            const buttons = document.querySelectorAll('#pagination .page-link');
+            const buttons = document.querySelectorAll(`#pagination button[id^="page_${table}"].page-link`);
             buttons.forEach(button => button.classList.remove('active'));
 
             // Add 'active' class to the clicked button
@@ -1298,6 +1311,10 @@ actions = [
             if (activeButton) {
                 activeButton.classList.add('active');
             }
+            //update dataset in the <table> used for renderTable
+            const tableid = table + "_table";
+            document.getElementById(tableid).setAttribute('data-pagenum', page.replace(table,''));
+
         },
             generate: async function (params) {
                 // Bind the submit event to the form and handle async properly

@@ -56,6 +56,16 @@ class Mari {
                     // Handle database errors
                     echo "Database error: " . $e->getMessage();
                 }
+                case 'plugins':
+                    $query = 'SHOW PLUGINS';
+                try {
+                    $stmt = $this->_db->query($query);
+                    $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    return $res;
+                } catch (PDOException $e) {
+                    // Handle database errors
+                    echo "Database error: " . $e->getMessage();
+                }
             case 'triggers':
                 $query = "SHOW TRIGGERS FROM $var";
                             try {
@@ -66,6 +76,16 @@ class Mari {
                             // Handle database errors specifically related to PDO
                             echo "Database error: " . $e->getMessage();
                        }
+           case 'events':
+               $query = "SHOW EVENTS FROM $var";
+               try {
+                   $stmt = $this->_db->query($query);
+                   $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                   return $res;
+               } catch (PDOException $e) {
+                   // Handle database errors specifically related to PDO
+                   echo "Database error: " . $e->getMessage();
+               }
             case 'tables':
                 // Optional: Add a specific database name if required
                 $query = "SHOW TABLES FROM $var";
