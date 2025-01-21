@@ -9,6 +9,7 @@
 *.pyd
 *.log
 
+
 # Media files
 log/
 media/
