@@ -128,7 +128,7 @@ if($main && $main['query_archive']){
      echo $this->renderTemplatePug($template);
  }
   /*
-    if($this->G['has_maria']){
+    if($this->G['mainplan']){
     //if($this->page!='book'){
     $main= $this->db->f("select * from main where name=?",[$this->page]);
     if(!empty($main) && $main['template_archive']!=null && $main['query_archive']!=null){

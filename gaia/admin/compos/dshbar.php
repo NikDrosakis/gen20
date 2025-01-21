@@ -1,7 +1,7 @@
 <!--
     @filemeta.updatelog
     v.1 manual with json class navigate
-    v.2 automatical from admin_page & admin_sub
+    v.2 automatical from alinksgrp & alinks
     v.3 updated to filemeta style
 -->
 <!--
@@ -81,8 +81,12 @@
 						<span style="margin:0 4px 0 0" class="glyphicon glyphicon-<?=$subvals['icon']?>" aria-hidden="true"></span>
 						<?=$subvals['slug']?></a>
 						</li>
-					<?php }}
-/** @filemeta.features EXPERIMENTAL_PAGES */
+					<?php }} ?>
+					<li>
+                        <button class="bare right" onclick="gs.ui.switcher('#new_<?=$mainpage?>_box')">
+                         <span class="glyphicon glyphicon-plus"></span></button>
+                        </li>
+<?php /** @filemeta.features EXPERIMENTAL_PAGES */
 						if($mainpage=='lab'){
 						$experimental_pages=$this->experimental_pages($mainpage);
 						if(!empty($experimental_pages)){

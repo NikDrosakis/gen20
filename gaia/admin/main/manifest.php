@@ -11,9 +11,9 @@
 //echo $this->buildTable("gen_admin.systems");
 //echo $this->buildTable("gen_admin.actiongrp");
 
-echo $this->buildTable("gen_admin.plan");
-echo $this->buildTable("gen_admin.action_plan");
-echo $this->buildTable("gen_admin.action");
+//echo $this->buildTable("gen_admin.plan");
+//echo $this->buildTable("gen_admin.action_plan");
+//echo $this->buildTable("gen_admin.action");
 
 
 //xecho()
