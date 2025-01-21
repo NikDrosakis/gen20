@@ -1,3 +1,7 @@
+<?php
+$steps=10;
+include ADMIN_ROOT."compos/steps.php";
+?>
 <script>
 /*
     async function updateForm(selectElement, method) {

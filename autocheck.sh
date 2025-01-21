@@ -8,10 +8,7 @@ fi
 
 #SYNOPSIS
 #1 ACTION
-#2 CUBO
-#2A cubo check cubo.tables of dbs and create sql mysqldump of those tables in cubo/[CUBO_NAME]
-#if not exist run existing version sql to CREATE TABLE
-#2B cubo backup
+
 
   #REVERSE
 #4 filemeta ??

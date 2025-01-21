@@ -16,34 +16,6 @@ v.2 dive into Actions SEO Metadata
 trait Head{
 use SEO;
 
-/* key is page or sub '' is global */
-protected $resourceMap = [
-    'timetable' => [
-        'css' => [
-        //'https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.css'
-        ],
-        'js'  => []
-    ],
-    'globs' => [
-        'css' => [
-    //        'https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/10.1.0/jsoneditor.min.css',
-            'https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css',
-            'https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/theme/dracula.min.css',
-        //    'https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css'
-        ],
-        'js'  => [
-  //          'https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/10.1.0/jsoneditor.min.js',
-      //      'https://cdn.jsdelivr.net/npm/marked/marked.min.js',
-            'https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js',
-            'https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/yaml/yaml.min.js',
-     //       'https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js'
-        ]
-    ],
-    '' => [ // Global actiongrp
-        'css' => [],
-        'js'  => []
-    ]
-];
 protected function loadDynamicActions($libraries) {
     foreach ($libraries as $library) {
         $apiUrl = "https://api.cdnjs.com/libraries/$library";
@@ -54,7 +26,8 @@ protected function loadDynamicActions($libraries) {
             $cssFiles = $libraryData['assets'][0]['css'];
             $jsFiles = $libraryData['assets'][0]['js'];
 
-            // Load CSS files
+
+          // Load CSS files
             foreach ($cssFiles as $css) {
                 echo "<link rel='stylesheet' href='$css'>\n";
             }
@@ -89,7 +62,8 @@ protected function loadDynamicActions($libraries) {
             <link href="https://unpkg.com/ionicons@4.5.10-0/dist/css/ionicons.min.css" rel="stylesheet">
             <link href="atom.xml" type="application/atom+xml" rel="alternate" title="Sitewide ATOM Feed">
             <link rel="icon" href="/img/icon.png" />';
-
+            //<!---loadHeadSetup-->
+            $this->loadHeadSetup();
     if (isset($_GET['page']) && $_GET['page'] === 'ebook') {
           $html .= '<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.7.570/pdf.min.js"></script>';
       }
@@ -109,29 +83,21 @@ protected function renderAdminHead() {
     <html>
     <head>
         <?php echo $this->buildMeta();?>
-
         <link rel="icon" href="/img/icon.png">
         <title>Admin GEN20</title>
-
         <!-- Main Styles -->
         <link rel="stylesheet" href="/admin/css/dashboard.css">
         <link rel="stylesheet" href="/admin/css/core.css">
-
         <!-- Load Actions Based on Page -->
         <?php
-       $this->loadActions('timetable');
-       $this->loadActions('globs');
-
        // Dynamic CDN Actions
        $this->loadDynamicActions([]);
        ?>
-
     <!-- Additional External Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.3/Sortable.min.js" integrity="sha512-8AwTn2Tax8NWI+SqsYAXiKT8jO11WUBzTEWRoilYgr5GWnF4fNqBRD+hCr4JRSA1eZ/qwbI+FPsM3X/PQeHgpQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
        <script src="https://apis.google.com/js/api.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     </head>
     <body>
         <script src="https://cdn.ckeditor.com/4.22.0/standard/ckeditor.js"></script>
@@ -153,16 +119,17 @@ protected function renderAdminHead() {
 }
 
 
-protected function loadActions($sub = '') {
-    if (!isset($this->resourceMap[$sub])) return;
+protected function loadHeadSetup() {
+    $cssArray = $this->setup("head-css*");
+    $jsArray = $this->setup("head-js*");
 
     // Load CSS files
-    foreach ($this->resourceMap[$sub]['css'] as $css) {
+    foreach ($cssArray as $css) {
         echo "<link rel='stylesheet' href='$css'>\n";
     }
 
     // Load JS files
-    foreach ($this->resourceMap[$sub]['js'] as $js) {
+    foreach ($jsArray as $js) {
         echo "<script src='$js'></script>\n";
     }
 }

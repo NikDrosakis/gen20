@@ -206,7 +206,8 @@ protected function getPageMetatags(): array {
 
             // Add metadata based on the type of admin subpage
             if ($this->db_sub['type'] == 'table') {
-                $meta = $this->db->f("SELECT meta FROM gen_admin.metadata WHERE name = ?", [$this->sub]);
+                $db = $_SERVER['SYSTEM']=='admin' ? "gen_admin" : $this->publicdb;
+                $meta = $this->db->f("SELECT meta FROM {$db}.metadata WHERE name = ?", [$this->sub]);
             } else {
                 $meta = $this->db->f("SELECT meta FROM gen_admin.admin_sub WHERE name = ?", [$this->sub]);
             }
@@ -224,12 +225,13 @@ protected function getPageMetatags(): array {
         }
     } else {
         // PUBLIC SYSTEM
+             $db = $_SERVER['SYSTEM']=='admin' ? "gen_admin" : $this->publicdb;
         if (!empty($this->page)) {
             // PUBLIC PAGE
-            $meta = $this->db->f("SELECT meta FROM gen_admin.main WHERE name = ?", [$this->page]);
+            $meta = $this->db->f("SELECT meta FROM {$this->publicdb}.main WHERE name = ?", [$this->page]);
         } else {
             // PUBLIC MAIN PAGE
-            $meta = $this->db->f("SELECT meta FROM gen_admin.metadata WHERE name = ?", [$this->page]);
+            $meta = $this->db->f("SELECT meta FROM {$db}.metadata WHERE name = ?", [$this->page]);
         }
 
         // Append comma-separated meta if found
@@ -486,19 +488,25 @@ protected function getClassMethods() {
 		}
 	}
 //setup table
-	public function set(string $name, $value=''): bool|string{
-
-	 if($value!=''){
-		$fetch = $this->db->q("UPDATE {$this->publicdb}.setup SET name=? WHERE name=?", array($value,$name));
-	 }else{
-		$fetch = $this->db->f("SELECT val FROM {$this->publicdb}.setup WHERE name=?", array($name));
-		if (!empty($fetch)) {
-			return urldecode($fetch['val']);
-		} else {
-			return false;
-		}
+public function setup($name = '', $value = ''): bool|string {
+$table="{$this->publicdb}.setup";
+    if ($value !== '') {
+        // Update the value for the given name
+        $fetch = $this->db->q("UPDATE $table SET val=? WHERE name=?", [$value, $name]);
+        return $fetch !== false; // Return true or false depending on the success
+   }elseif ($name == '') {
+                // Fetch all name-value pairs from setup
+                $fetch = $this->db->flist("SELECT name, val FROM $table");
+                return $fetch !== false ? $fetch : '';
+    } elseif (strpos($name, '*') !== false) {
+        // Fetch all values with names starting with the given pattern
+        $fetch = $this->db->flist("SELECT val FROM $table WHERE name LIKE ?", [str_replace('*', '%', $name)]);
+        return $fetch !== false ? $fetch : '';
+    } else {
+        // Fetch a single value for the given name
+        $fetch = $this->db->f("SELECT val FROM $table WHERE name=?", [$name]);
+        return $fetch !== false ? urldecode($fetch['val']) : '';
     }
-
-	}
+}
 
 }
