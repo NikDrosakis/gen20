@@ -68,17 +68,15 @@
 
 <h3>Domains installed on this system</h3>
 
-<?php //$this->buildTable("gen_admin.domain"); ?>
+
+<?php echo $this->renderFileFormList($this->getPublicFilesystem(),"File System"); ?>
+
+<?php echo $this->renderFileFormList($this->getActiveNginx(),"Nginx"); ?>
 
 
-<?php //$this->renderFileFormList($this->getPublicFilesystem(),"File System"); ?>
+<?php echo $this->renderFileFormList($this->getZones(),"Get Zones")?>
 
-<?php //$this->renderFileFormList($this->getActiveNginx(),"Nginx"); ?>
-
-
-<?php //$this->renderFileFormList($this->getZones(),"Get Zones")?>
-
-<?php //$this->renderFileFormList($this->getSSLs(),"GET SSLS")?>
+<?php echo $this->renderFileFormList($this->getSSLs(),"GET SSLS")?>
 
 
 <h3>Integrate existing domain</h3>

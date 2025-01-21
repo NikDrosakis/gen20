@@ -6,7 +6,7 @@
 
 <?php
 // Fetch existing menu list from the database
-$menulist = $this->db->fl(['id', 'title'], 'linksgrp');
+$menulist = $this->db->flist("SELECT id,title FROM {$this->publicdb}.linksgrp");
 ?>
 
 <!-- INSERT AND CREATE MENU -->
@@ -16,7 +16,7 @@ $menulist = $this->db->fl(['id', 'title'], 'linksgrp');
 if (isset($_POST['submit_menu'])) {
     $title = trim($_POST['title']);
     $children = isset($_POST['children']) ? 1 : 0;
-    $query = $this->db->q("INSERT INTO linksgrp (title, children) VALUES (?, ?)", [$title, $children]);
+    $query = $this->db->q("INSERT INTO {$this->publicdb}.linksgrp (title, children) VALUES (?, ?)", [$title, $children]);
     if ($query) {
         location.reload();
     }
@@ -80,7 +80,7 @@ if (!empty($menulist)) {
                     "Register" => "register",
                     "External Link" => "https://"
                 ];
-                $taxgrps= $this->db->fl(["id","name"], "taxgrp");
+                $taxgrps= $this->db->fl(["id","name"], $this->publicdb.".taxgrp");
                 foreach($taxgrps as $tagrpid =>$taxgrpval){
                 $pagemenus[$taxgrpval]=$tagrpid;
                 }
@@ -109,7 +109,7 @@ if (!empty($menulist)) {
 
         <!-- Existing menu links -->
         <?php
-        $sel = $this->db->fa("SELECT * FROM links WHERE linksgrpid=? ORDER BY sort", [$menuid]); ?>
+        $sel = $this->db->fa("SELECT * FROM $this->publicdb.links WHERE linksgrpid=? ORDER BY sort", [$menuid]); ?>
 
         <div id="newlink<?=$menuid?>"></div>
 
@@ -224,7 +224,7 @@ if (target.id.startsWith('newmenuselector')) {
 var menuid = target.id.replace('newmenuselector', '');
 // If TAX
 if (target.type === "taxgrp") {
-const taxgrplist= await gs.api.maria.fl(["id","name"],"tax","where tagrpid="+target.value);
+const taxgrplist= await gs.api.maria.fl(["id","name"],"tax",`where ${G.publicdb}.tagrpid=${target.value}`);
 console.log(taxgrplist)
     if(taxgrplist.success){
     var newo = target.value + '_uri';
@@ -285,7 +285,7 @@ const confirm=await gs.confirm('Are you sure you want to delete this menu?');
 if(confirm){
 try {
     // Send an AJAX request to delete the menu
-    const response = await gs.api.maria.q(`DELETE FROM linksgrp WHERE id=${id}`);
+    const response = await gs.api.maria.q(`DELETE FROM ${G.publicdb}.linksgrp WHERE id=${id}`);
 
     // Check response to confirm deletion success
     if (response) {
@@ -318,7 +318,7 @@ const confirm= await gs.confirm('Are you sure you want to delete this link?');
 if(confirm){
 try {
     // Send an AJAX request to delete the link from the database
-    const response = await gs.api.maria.q(`DELETE FROM links WHERE id=${linkID}`);
+    const response = await gs.api.maria.q(`DELETE FROM ${G.publicdb}.links WHERE id=${linkID}`);
 
     // Check response to confirm deletion success
     if (response) {

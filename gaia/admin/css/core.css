@@ -264,6 +264,7 @@ buildArchive
     margin-top: 10px;       /* Space above the container */
     display: flex;          /* Flex layout */
     flex-direction: column; /* Stack items vertically */
+    max-height:150px;
 }
 
 .gs-preview-container textarea.gs-textarea {

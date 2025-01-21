@@ -211,7 +211,7 @@ protected function generateImg($prompt){
           echo '<div class="error">' . htmlspecialchars($mediaData['error']) . '</div>';
           return;
       }
-xecho($mediaData);
+
       // Extract the media files and directories
       $files = $mediaData['files'];
       $directories = $mediaData['directories'];

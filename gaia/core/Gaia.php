@@ -476,10 +476,13 @@ protected function getClassMethods() {
 
     return $methods;
 }
-
+	protected function delRecordFile(string $query, array $params, string $path): void{
+	$this->db->q($query,$params);
+	unlink($path);
+	}
 
 	//globs table
-	public function is(string $name): bool|string{
+	protected function is(string $name): bool|string{
 		$fetch = $this->db->f("SELECT val FROM gen_admin.globs WHERE name=?", array($name));
 		if (!empty($fetch)) {
 			return urldecode($fetch['val']);
@@ -488,25 +491,32 @@ protected function getClassMethods() {
 		}
 	}
 //setup table
-public function setup($name = '', $value = ''): bool|string {
-$table="{$this->publicdb}.setup";
-    if ($value !== '') {
+protected function setup($name = '', $value = ''){
+   $name = is_array($name) ? $name['key'] : $name;
+    $table = "{$this->publicdb}.setup";
+
+    if (strpos($name, '*') !== false) {
+             // Fetch all values with names starting with the given pattern
+             $fetch = $this->db->flist("SELECT val FROM  $table WHERE tag LIKE '$name%'");
+             return $fetch !== false ? $fetch : ''; // Return empty string if no result
+
+    }elseif($value !== '') {
         // Update the value for the given name
         $fetch = $this->db->q("UPDATE $table SET val=? WHERE name=?", [$value, $name]);
         return $fetch !== false; // Return true or false depending on the success
-   }elseif ($name == '') {
-                // Fetch all name-value pairs from setup
-                $fetch = $this->db->flist("SELECT name, val FROM $table");
-                return $fetch !== false ? $fetch : '';
-    } elseif (strpos($name, '*') !== false) {
-        // Fetch all values with names starting with the given pattern
-        $fetch = $this->db->flist("SELECT val FROM $table WHERE name LIKE ?", [str_replace('*', '%', $name)]);
-        return $fetch !== false ? $fetch : '';
-    } else {
-        // Fetch a single value for the given name
-        $fetch = $this->db->f("SELECT val FROM $table WHERE name=?", [$name]);
-        return $fetch !== false ? urldecode($fetch['val']) : '';
+
+   }elseif($name !='' && $value=='') {
+           // Fetch a single value for the given name
+           $fetch = $this->db->f("SELECT val FROM $table WHERE name=?", [$name]);
+           return $fetch !== false ? urldecode($fetch['val']) : ''; // Return empty string if no result
+
+    } elseif ($name === '' && $value ==='') {
+        // Fetch all name-value pairs from setup
+        $fetch = $this->db->flist("SELECT name, val FROM $table");
+        return $fetch; // Return empty string if no result
     }
+
 }
+
 
 }
