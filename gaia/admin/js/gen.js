@@ -1129,6 +1129,50 @@ actions = [
          * Core form update
          * go to  page 1 with search is clicked
          * */
+        saveContentMirror: async function (col, table, id) {
+            try {
+                let value;
+
+                // Check if CodeMirror is used and get its content
+                if (typeof CodeMirror !== "undefined" && CodeMirror.instances && CodeMirror.instances[col]) {
+                    let editor = CodeMirror.instances[col];
+                    value = editor.getValue(); // Get content from CodeMirror
+
+                    // Update the associated textarea to ensure backend consistency
+                    editor.save(); // This updates the textarea value
+                } else {
+                    // Fallback to regular textarea
+                    value = document.getElementById(col).value;
+                }
+
+                // Validate that the value is valid JSON
+                try {
+                    value = JSON.stringify(JSON.parse(value)); // Ensure it's a proper JSON string
+                } catch (e) {
+                    throw new Error('Invalid JSON format');
+                }
+
+                // Ensure value, column, and id are defined
+                if (!value || !col || !id) {
+                    throw new Error('Column, value, or ID is missing');
+                }
+
+                console.log(`Saving content for ${table}.${col}:`, value);
+
+                // Call your savePost function
+                const rowToSave = await gs.api.maria.q(`UPDATE ${table}
+                                                SET ${col} = ?
+                                                WHERE id = ?`, [value, id]);
+                if (rowToSave.success) {
+                    console.log(`Saved ${id}`);
+                    gs.success("Content saved successfully");
+                    // Optionally reload or update the displayed content
+                }
+            } catch (error) {
+                console.error('Error saving content:', error);
+                gs.error("Error saving content: " + error.message);
+            }
+        },
         loadButton : async function(method, value) {
             const params={key:value}
             console.log(params);

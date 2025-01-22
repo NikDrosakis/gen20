@@ -62,9 +62,11 @@ use Cubo;
       		//load all widgets of the page to the body
     }
 
+
 	protected function getBody() {
 		// Check if there are cubos for the current page
 		$pc=$this->G['PAGECUBO'];
+
 		$has_not_sl=!$pc['sl1'] && !$pc['sl2'] && !$pc['sl3'];
 		$has_not_sr=!$pc['sr1'] && !$pc['sr2'] && !$pc['sr3'];
 		$has_not_f=!$pc['fc'] && !$pc['fr'] && !$pc['fl'];
@@ -88,10 +90,15 @@ use Cubo;
 			<script src="' . ADMIN_URL . 'js/gen.js"></script>
 			<script src="/js/index.js"></script>';
 		echo '<div id="h">';
+
 		include PUBLIC_ROOT_WEB . "main/menuweb.php";
+
+        echo $this->mainplanPublicEditor();
+
 		if($this->page!='home'){include PUBLIC_ROOT_WEB . "compos/searchbox.php"; }
 		echo '</div>';
 		// Left sidebar
+
     /**
     TODO add cubos divs
     ADDED SERVER SIDE RENDERING
@@ -180,4 +187,42 @@ if (!$has_not_f) {
           </body>
           </html>';
 	}
+
+protected function mainplanPublicEditor(){
+
+		     $mainplan = $this->db->f("SELECT * FROM {$this->publicdb}.main WHERE name=?",[$this->page]);
+
+             $plan= json_decode($mainplan['mainplan'],true) ?? $mainplan['mainplan'];
+             $html = $this->renderFormField("mainplan",["type"=>"json","comment"=>"json","table"=>"{$this->publicdb}.main","id"=>$mainplan['id']],$mainplan['mainplan']);
+             //execute the plan to be included in core.Action switch cases
+
+             foreach($plan as $step => $action){
+                foreach($action as $method=>$params){
+            try {
+            switch($method) {
+                case 'iframe':
+                    $html .= '<iframe id="sandbox" src="'.$params.'" width="100%" height="1000px" sandbox="allow-scripts allow-same-origin allow-forms" style="border:1px solid black;"></iframe>';
+                    break;
+                 //fs
+                case 'include_buffer':
+                    $params = $this->PUBLIC_ROOT_WEB . $params . ".php";
+                    if (file_exists($params)) {
+                        $html .= $this->{$method}($params);
+                    } else {
+                        $html .= "File not found in $params";
+                    }
+                    break;
+                default:
+                    $html .= $this->{$method}($params);
+                    break;
+            }
+            } catch (Exception $e) {
+                // Catch any exceptions that might occur
+                $html .= "<p>Error: " . $e->getMessage() . "</p>";
+            }
+            }}
+return $html;
+
+}
+
 }

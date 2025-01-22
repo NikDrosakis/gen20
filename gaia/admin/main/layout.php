@@ -294,7 +294,7 @@ async function saveState(evt) {
                 await gs.api.maria.q(`INSERT INTO ${G.publicdb}.maincubo (mainid, cuboid, area) VALUES (?, ?, ?)`,[mainId, draggedItemId, dropTargetId]);
                 }
             //auto render page on change of layout > send reload message to Ermis
-                gs.soc.send('action',{system:"vivalibrocom",page:G.page,verba:"layout notification", to:my.uid,type:"reload",cast:"all"})
+           //     gs.soc.send('action',{system:"vivalibrocom",page:G.page,verba:"layout notification", to:G.my.uid,type:"reload",cast:"all"})
         } catch (error) {
           console.error("Error updating page:", error);
         }
