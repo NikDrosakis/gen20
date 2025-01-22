@@ -63,6 +63,14 @@ protected function loadDynamicActions($libraries) {
             <link href="atom.xml" type="application/atom+xml" rel="alternate" title="Sitewide ATOM Feed">
             <link rel="icon" href="/img/icon.png" />';
 
+      //<!---loadHeadSetup-->
+
+               $scripts=  $this->loadHeadSetup();
+               if(!empty($scripts)){
+               $html .= implode('',$scripts);
+               }
+
+
     if (isset($_GET['page']) && $_GET['page'] === 'ebook') {
           $html .= '<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.7.570/pdf.min.js"></script>';
       }

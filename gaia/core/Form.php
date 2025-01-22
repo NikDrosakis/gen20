@@ -833,7 +833,7 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
                         CodeMirror.instances['$col'] = editor;
                     });
                 </script>
-                <button class='button save-button' onclick='saveContentMirror(\"$col\", \"$table\",$id)' type='button' id='save_$col'>Save Content</button>
+                <button class='button save-button' onclick='gs.form.saveContentMirror(\"$col\", \"$table\",$id)' type='button' id='save_$col'>Save Content</button>
             ";
         case 'sql':
                 // @fm.features Handle SQL preview (raw SQL code)

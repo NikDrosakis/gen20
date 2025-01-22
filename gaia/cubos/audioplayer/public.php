@@ -100,6 +100,7 @@ $searchSpotifySong = function($songName, $clientId, $clientSecret) {
     curl_close($ch);
     return json_decode($response, true);
 };
+
 // Array of songs to search
 $songs = [
     "Shape of You",
@@ -112,7 +113,6 @@ $songLinks = [];
 // Loop through each song and get the Spotify link
 foreach ($songs as $song) {
     $songData = $searchSpotifySong($song, $clientId, $clientSecret);
-    
     // Check if tracks are returned
     if (!empty($songData['tracks']['items'])) {
         // Get the first track's link
@@ -129,6 +129,7 @@ foreach ($songs as $song) {
   //  echo "Song: $song - Link: $link<br>";
 //}
 ?>
+
 <div class="audio-player-cubo">
     <div class="player-header">
         <h3 id="songTitle">Select a Song</h3>

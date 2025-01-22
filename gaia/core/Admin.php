@@ -238,36 +238,8 @@ protected function produce6channel($name,$ch,$page,$type,$table){
 
     }elseif($this->sub !=''){
 
-     $mainplan = $this->db->f("SELECT * FROM gen_admin.alinks WHERE name=?",[$name]);
-     $plan= json_decode($mainplan['mainplan'],true) ?? $mainplan['mainplan'];
-     $html .= $this->renderFormField("mainplan",["type"=>"json","comment"=>"json","table"=>"gen_admin.alinks","id"=>$mainplan['id']],$mainplan['mainplan']);
-     //execute the plan to be included in core.Action switch cases
-     foreach($plan as $step => $action){
-        foreach($action as $method=>$params){
-    try {
-    switch($method) {
-        case 'iframe':
-            $html .= '<iframe id="sandbox" src="'.$params.'" width="100%" height="1000px" sandbox="allow-scripts allow-same-origin allow-forms" style="border:1px solid black;"></iframe>';
-            break;
-         //fs
-        case 'include_buffer':
-            $params = $this->ADMIN_ROOT . $params . ".php";
-            if (file_exists($params)) {
-                $html .= $this->{$method}($params);
-            } else {
-                $html .= "File not found in $params";
-            }
-            break;
-        default:
-            $html .= $this->{$method}($params);
-            break;
+           $html .= $this->mainPlanAdminEditor($name);
     }
-    } catch (Exception $e) {
-        // Catch any exceptions that might occur
-        $html .= "<p>Error: " . $e->getMessage() . "</p>";
-    }
-}}
-}
 
 /*
       //CHANNEL FILE SUB FILE
@@ -412,5 +384,38 @@ protected function navigate() {
         }
         return $subs;
     }
+
+protected function mainPlanAdminEditor($name){
+     $mainplan = $this->db->f("SELECT * FROM gen_admin.alinks WHERE name=?",[$name]);
+     $plan= json_decode($mainplan['mainplan'],true) ?? $mainplan['mainplan'];
+     $html = $this->renderFormField("mainplan",["type"=>"json","comment"=>"json","table"=>"gen_admin.alinks","id"=>$mainplan['id']],$mainplan['mainplan']);
+     //execute the plan to be included in core.Action switch cases
+     foreach($plan as $step => $action){
+        foreach($action as $method=>$params){
+    try {
+    switch($method) {
+        case 'iframe':
+            $html .= '<iframe id="sandbox" src="'.$params.'" width="100%" height="1000px" sandbox="allow-scripts allow-same-origin allow-forms" style="border:1px solid black;"></iframe>';
+            break;
+         //fs
+        case 'include_buffer':
+            $params = $this->ADMIN_ROOT . $params . ".php";
+            if (file_exists($params)) {
+                $html .= $this->{$method}($params);
+            } else {
+                $html .= "File not found in $params";
+            }
+            break;
+        default:
+            $html .= $this->{$method}($params);
+            break;
+    }
+    } catch (Exception $e) {
+        // Catch any exceptions that might occur
+        $html .= "<p>Error: " . $e->getMessage() . "</p>";
+    }
+    }}
+    return $html;
+}
 
 }
