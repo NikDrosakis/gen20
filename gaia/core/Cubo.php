@@ -145,8 +145,8 @@ protected function addMetric(array $params = []): ?array {
 }
 
     // Delete a widget
-    protected function deleteCubo(int $id): bool {
-        return $this->db->q('DELETE FROM gen_admin.cubos WHERE id =?',[$id]);
+    protected function deleteCubo(string $name): bool {
+        return $this->db->q('DELETE FROM gen_admin.cubos WHERE name =?',[$id]);
     }
 
     // Example of using proc_open() for shell execution and logging
@@ -213,9 +213,11 @@ protected function addMetric(array $params = []): ?array {
 
         return $updateStatus;
     }
-
+        protected function buildCubo(string $name){
+          include CUBO_ROOT.$name."/public.php";
+        }
     // Other methods (existing)...
-    protected function createNewCubo(string $name, string $description, string $ideally): bool|int {
+    protected function createNewCubo(string $name, string $description='', string $ideally=''): bool|int {
         // Create folder and public.php as in the previous code...
         $cuboDir = CUBO_ROOT . $name . '/';
 
@@ -237,8 +239,7 @@ protected function addMetric(array $params = []): ?array {
         $data = [
             'systemsid' => 1,
             'name' => $name,
-            'description' => $description,
-            'created' => date('Y-m-d H:i:s')
+            'description' => $description ?? ""
         ];
         $insert = $this->db->inse("gen_admin.cubo", $data);
 
@@ -247,7 +248,7 @@ protected function addMetric(array $params = []): ?array {
         $result = $this->runShellCommand($command);
 
         if ($result['status'] !== 0) {
-            throw new \Exception('Permission setting failed: ' . $result['error']);
+            throw new Exception('Permission setting failed: ' . $result['error']);
         }
 
         return $insert;
@@ -308,15 +309,13 @@ protected function getUsers() {
         }
 
 
-    protected function getMaincubo() {
-        return $this->db->fa("SELECT * from gen_admin.cubo order by name");
-    }
-    protected function getMaincuboBypage(string $page): bool|array {
+    protected function getMaincubo(string $page): bool|array {
 
       $list=[];
-        $fetch = $this->db->fa("SELECT maincubo.area, maincubo.name as cubo
+        $fetch = $this->db->fa("SELECT maincubo.area, gen_admin.cubo.name as cubo
         FROM {$this->publicdb}.maincubo
         left join {$this->publicdb}.main on main.id=maincubo.mainid
+        left join gen_admin.cubo on cubo.id=maincubo.cuboid
         where main.name=?",[$page]);
             if (!empty($fetch)) {
                     foreach ($fetch as $row) {
@@ -341,7 +340,7 @@ protected function executeSQL($query) {
 }
 
 protected function sendWsNotification($message) {
-    $wsUrl = "ws://localhost:3000";
+    $wsUrl = "wss://".$_SERVER['SERVER_NAME'].":3010/?userid=1";
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $wsUrl);
     curl_setopt($ch, CURLOPT_POST, true);

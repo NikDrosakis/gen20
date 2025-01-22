@@ -62,8 +62,5 @@ protected function getUsers() {
             return $this->db->fa("SELECT * FROM {$this->publicdb}.links WHERE linksgrpid=2 ORDER BY sort");
     }
 
-    protected function getMaincubo() {
-        return $this->db->fa("SELECT * from gen_admin.cubo order by name");
-    }
 
 }

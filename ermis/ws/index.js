@@ -46,7 +46,7 @@ let wss;
     };
     // await rethink.insertMessage(message);
     // Call upsert to insert or update chat for the cid
-    //await rethink.upsertChat(message);
+    await rethink.upsertChat(message);
 
     // Get all messages
     const allmes = await rethink.getMessages();

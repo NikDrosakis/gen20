@@ -4,8 +4,8 @@ class Rethink {
     constructor() {
         this.host = "localhost";
         this.port = 28015;
-        this.dbName = "chat";
-        this.tableName = "messages";
+        this.dbName = "gen20";
+        this.tableName = "chat";
         this.conn = null;
     }
 

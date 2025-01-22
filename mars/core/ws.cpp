@@ -1,4 +1,4 @@
-#include "ws.h"
+#include "core/ws.h"
 #include "Rethink.h" // Include RethinkDB header
 #include <iostream>
 #include <cstdlib>
@@ -6,21 +6,12 @@
 
 using json = nlohmann::json;
 
-WebSocketClient::WebSocketClient() {
-    // Default constructor initializes with default URL
-    server_url = "wss://vivalibro.com:3011/?userid=god";
-    ws_client.init_asio();
-    ws_client.set_message_handler([this](websocketpp::connection_hdl hdl, websocketpp::client<websocketpp::config::asio_client>::message_ptr msg) {
-        on_message(hdl, msg);
-    });
-    // Initialize RethinkDB connection
-    rethink_ = new RethinkDB("localhost", 28015, "chat", "messages");
+typedef websocketpp::client<websocketpp::config::asio_client> client;
+
+WebSocketClient::WebSocketClient() : url_("ws://localhost:8080") {
+    rethink_ = new MyRethinkDB("localhost", 28015, "chat", "messages");
     if (!rethink_->connect()) {
         std::cerr << "Failed to connect to RethinkDB." << std::endl;
-        exit(1);
-    }
-    if (!rethink_->createDatabaseAndTable()) {
-        std::cerr << "Failed to create database and table." << std::endl;
         exit(1);
     }
     changefeed_cursor_ = rethink_->startChangefeed();
@@ -30,21 +21,10 @@ WebSocketClient::WebSocketClient() {
     }
 }
 
-WebSocketClient::WebSocketClient(std::string url) {
-    // Parameterized constructor allows setting custom URL
-    server_url = url;
-    ws_client.init_asio();
-    ws_client.set_message_handler([this](websocketpp::connection_hdl hdl, websocketpp::client<websocketpp::config::asio_client>::message_ptr msg) {
-        on_message(hdl, msg);
-    });
-       // Initialize RethinkDB connection
-    rethink_ = new RethinkDB("localhost", 28015, "chat", "messages");
+WebSocketClient::WebSocketClient(std::string url) : url_(url) {
+    rethink_ = new MyRethinkDB("localhost", 28015, "chat", "messages");
     if (!rethink_->connect()) {
         std::cerr << "Failed to connect to RethinkDB." << std::endl;
-        exit(1);
-    }
-    if (!rethink_->createDatabaseAndTable()) {
-        std::cerr << "Failed to create database and table." << std::endl;
         exit(1);
     }
     changefeed_cursor_ = rethink_->startChangefeed();
@@ -55,7 +35,6 @@ WebSocketClient::WebSocketClient(std::string url) {
 }
 
 WebSocketClient::~WebSocketClient() {
-    // Destructor does any necessary cleanup (if any)
     if(rethink_){
         delete rethink_;
     }
@@ -99,7 +78,7 @@ void WebSocketClient::sendMessage() {
         ws_client.send(connection_handle, json_message, websocketpp::frame::opcode::text);
         std::cout << "Sent message: " << json_message << std::endl;
         // Save the message to RethinkDB
-        rethink_->insertMessage(json_message);
+        rethink_->upsertMessage("1", json_message);
     } catch (websocketpp::exception const& e) {
         std::cerr << "Send error: " << e.what() << std::endl;
     }
@@ -116,6 +95,7 @@ void WebSocketClient::on_message(websocketpp::connection_hdl hdl, websocketpp::c
 void WebSocketClient::startChangefeedListener() {
     std::thread([this]() {
         rdb_datum_t* datum;
+        if (!rethink_) return;
         while ((datum = rdb_cursor_next(changefeed_cursor_))) {
             if (datum) {
                  std::cout << "Received changefeed data: " << rdb_string(datum) << std::endl;
