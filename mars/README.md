@@ -31,6 +31,43 @@ map Mariadb --> binlog -> trigger mars --> fs -> inotify -> mars -> mariadb
 6) Training
 7) Ai Gen
 
+main.cpp:
+
+Initialize Mars components.
+
+Create threads or asynchronous tasks for:
+
+Binlog processing and filesystem writing.
+
+Filesystem monitoring and MariaDB updating.
+
+Handle program termination.
+
+core/Maria.cpp/h:
+
+Add methods to:
+
+Connect to MariaDB.
+
+Consume binlog events.
+
+Execute SQL queries.
+
+core/ws.cpp/h:
+
+(Optional) If you need to send events over websockets
+
+core/Yaml.cpp/h:
+
+(Optional) If you need to use YAML configuration
+
+New core/FS.cpp/h:
+
+Add methods to:
+
+Read and write files.
+
+Monitor filesystem changes using inotify (or similar).
 
 Certainly, here's a concise answer focusing on a fast connection between MariaDB and the file system (FS) using C++ and Mars:
 Approach:

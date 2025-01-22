@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include <functional>
 
 // Include necessary libraries for MariaDB Connector/C++
 #include <mariadb/conncpp/Driver.hpp>
@@ -26,6 +27,7 @@ public:
     std::map<std::string, std::string> f(const std::string&, const std::map<int, std::string>&);
     bool inse(std::string, std::map<std::string, std::string>);
     bool q(const std::string&, const std::map<int, std::string>&);
+    bool consumeBinlog(const std::string& binlogFile, std::function<void(const std::string& event)> callback);
 
 private:
     std::string dbname_;  // Store the database name

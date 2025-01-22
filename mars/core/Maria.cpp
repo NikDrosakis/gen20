@@ -2,6 +2,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <sstream>
 #include <stdexcept> // For exceptions
 #include <memory>    // For std::shared_ptr
 #include <mariadb/conncpp/Driver.hpp>
@@ -15,18 +16,31 @@
 // Constructor
 Maria::Maria(const std::string& dbname)
     : dbname_(dbname), driver_(nullptr), conn_(nullptr) {
+  try {
     driver_ = sql::mariadb::get_driver_instance();
+  } catch (sql::SQLException &e) {
+        std::cerr << "Error creating MariaDB driver: " << e.what() << std::endl;
+    }
+
 }
 
 // Destructor
 Maria::~Maria() {
     if (conn_) {
-        conn_->close();
+         try {
+                   conn_->close();
+               } catch (sql::SQLException &e) {
+                   std::cerr << "Error closing MariaDB connection: " << e.what() << std::endl;
+               }
     }
 }
 
 // Establish connection
 bool Maria::connect() {
+   if (!driver_) {
+        std::cerr << "MariaDB driver not initialized." << std::endl;
+        return false;
+    }
     try {
         sql::SQLString url("tcp://127.0.0.1:3306");  // Adjust host and port as needed
         sql::Properties properties({
@@ -138,3 +152,17 @@ bool Maria::inse(std::string table, std::map<std::string, std::string> data) {
         return false;
     }
 }
+
+ bool Maria::consumeBinlog(const std::string& binlogFile, std::function<void(const std::string& event)> callback) {
+        // Implementation for consuming binlog events
+        // This will involve using the MySQL C API to read binlog events
+        // and calling the callback function for each event
+        // This is a complex task and requires a good understanding of the binlog format
+        // and the MySQL C API
+        // For now, this is a placeholder
+        std::cout << "Consuming binlog from: " << binlogFile << std::endl;
+        // Example of how to use the callback
+        callback("Binlog event 1");
+        callback("Binlog event 2");
+        return true;
+    }
