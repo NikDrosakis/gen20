@@ -50,7 +50,8 @@ protected $res;             #results
 //description analyzed db $table COMMENTS AND format, providing input types for table & forms
 //doc use anywhere as a root function of dbcentrism
 //todo instead of table, insert sql query for more complex inputs
-protected function getInputType(string $table): ?array {
+protected function getInputType($tableName): ?array {
+$table = is_array($tableName) ? $tableName['key'] : $tableName;
     // @fm.features Fetch metadata for the table columns (including comments)
     $columns = $this->db->tableMeta($table);
     // @fm.features Define a mapping of SQL data types to HTML input types
@@ -179,7 +180,7 @@ $return[]["bar"]= $this->db->flist($query);
 }
 return $return;
 }
-protected function renderTable($table) {
+protected function renderButton($table) {
     $tableid = explode('.',$table)[1]."_table";
     return "<button onclick=\"gs.form.updateTable('$tableid', 'buildCoreTable');\" class=\"page-link\" >Render</button>";
 }
@@ -203,24 +204,26 @@ $style = $this->sub!=''
 if (empty($cols)) {
 $cols = $this->getInputType($table); // @fm.features Get column metadata
 }
-//error_log(print_r($cols),true);
+
 $tableHtml='';
 $custom_tools_beforetable = ADMIN_ROOT."main/".$this->page."/".$subpage.".php";
 if(file_exists($custom_tools_beforetable)){
 $tableHtml .= $this->include_buffer($custom_tools_beforetable,$cols,$params);
 }
 $tableHtml .=  $this->renderFormHead($table);
+
 $tableHtml .= '<div class="table-container" style="'.$style.'">';
 
 //if($this->totalRes > 10){
 $tableHtml .= $this->formSearch($table);
 
-$tableHtml .= $this->renderTable($table);
+$tableHtml .= $this->renderButton($table);
+
 
 $joinedKeys=[];
 foreach($cols as $colName => $colData){
 if(strpos($colData['comment'],'selectjoin')!==false || strpos($colData['comment'],'selectG')!==false ){
-    $tableHtml .= $this->formFilters($colData);
+    $tableHtml .= $this->formFilters($colData,[],$table);
     //$joinedKeys[]=$tableName.".".$colName;
     if(strpos($colData['comment'],'selectjoin')!==false){
     $join=explode('-',$colData['comment'])[1];
@@ -336,7 +339,7 @@ protected function tableBody($tableName,$cols=[],$data=[]) {
                     $options=$colData['list'];
                 $tableHtml .= $this->renderSelectField($colName, $value, $options);
 
-          } elseif (strpos($colData['comment'], 'selectjoin') !== false) {
+          } elseif (strpos($colData['comment'], 'selectG') !== false) {
                     $options=$this->getSelectOptions($colData['comment'],$value);
                 $tableHtml .= $this->renderSelectField($colName, $value, $options);
 
@@ -408,64 +411,81 @@ protected function tableHead($table,$cols=[]) {
     return $tableHtml;
 }
 
-protected function buildCoreTable($tableName,$cols=[]) {
-         $table = is_array($tableName) ? $tableName['table'] : $tableName;
-              $subpage=explode('.',$table)[1];
-              $searchTerm=is_array($tableName) ? $tableName['q'] : null;
-              $orderbyTerm=$tableName['orderby'] ?? false;
-          if (empty($cols)) {
-          $cols = $this->getInputType($table); // @fm.features Get column metadata
-          }
+protected function buildTableQuery($tableName, $cols) {
+    $table = is_array($tableName) ? $tableName['table'] : $tableName;
+    $searchTerm = is_array($tableName) ? $tableName['q'] : null;
+   $filterTerm = is_array($tableName) ? $tableName['filter'] : null;
+    $orderbyTerm = $tableName['orderby'] ?? false;
 
-           // @fm.features Fetch current page from query parameters (default to 1)
-            $this->currentPage =is_array($tableName) && $tableName['pagenum'] ? str_replace($subpage,'',$tableName['pagenum']) : 1;
+    // Base query
+    $query = "SELECT * FROM $table";
 
-            $searchTerm=is_array($tableName) ? $tableName['q'] : null;
-            #instantiate those public vars
-            $this->table=$table;
+    // Add search functionality
+    if ($searchTerm) {
+        $query .= " WHERE name LIKE '%$searchTerm%'";
+    }
+   // Add search functionality
+    if ($filterTerm) {
+        $query .= strpos($query,"WHERE")!==false ? " AND " : " WHERE ";
+        $query .= $filterTerm;
+        }
 
-            // @fm.features Calculate the starting row for the current page
-           // @fm.features $offset = ((int)$this->currentPage - 1) * $this->resultsPerPage;
-              $query= "SELECT * FROM $table";
-              // @fm.features Modify query for search capabilities
-                if ($searchTerm) {
-                    $query .= " WHERE name LIKE '%$searchTerm%'";
-                }
-              #include pagination
-              if($orderbyTerm){
-                $q .= " ORDER BY $orderbyTerm desc";
-              }elseif(in_array('sort',array_keys($cols))){
-                $q .= " ORDER BY sort ASC";
-              }
-               #$query .=" LIMIT $offset, $this->resultsPerPage ";
-               // @fm.features Fetch paginated rows based on current page and results per page
+    // Add ordering
+    if ($orderbyTerm) {
+        $query .= " ORDER BY $orderbyTerm DESC";
+    } elseif (in_array('sort', array_keys($cols))) {
+        $query .= " ORDER BY sort ASC";
+    }
 
-               $rows = $this->db->fetch($query,[],$this->resultsPerPage,$this->currentPage,$orderbyTerm);
-               // @fm.features Fetch total number of rows in the table
-               $this->totalRes = $rows['total'];
-                $data= $rows['data'];
+    return $query;
+}
 
-            #create the table container
-        $tableHtml = '<table class="styled-table" data-table="'.$table.'" data-pagenum="1" id="' . $subpage . '_table">';
-        //call buildHead
-         $tableHtml .= $this->tableHead($table,$cols);
-        //call buildCore
-        $tableHtml .= $this->tableBody($table,$cols,$data);
-        $tableHtml .= '</table>';
+protected function buildCoreTable($tableName, $cols = []) {
+    $table = is_array($tableName) ? $tableName['table'] : $tableName;
+    $subpage = explode('.', $table)[1];
+    $this->currentPage = is_array($tableName) && $tableName['pagenum'] ? str_replace($subpage, '', $tableName['pagenum']) : 1;
+    $this->table = $table;
+
+    // Fetch column metadata if not provided
+    if (empty($cols)) {
+        $cols = $this->getInputType($table);
+    }
+    // Build the query using the extracted method
+    $query = $this->buildTableQuery($tableName, $cols);
+    // Fetch data from the database
+    $rows = $this->db->fetch($query, [], $this->resultsPerPage, $this->currentPage);
+    $this->totalRes = $rows['total'];
+    $data = $rows['data'];
+
+    // Build HTML table
+    $tableHtml = '<table class="styled-table" data-table="' . $table . '" data-pagenum="1" id="' . $subpage . '_table">';
+    //the head
+    $tableHtml .= $this->tableHead($table, $cols);  // Build table head
+    //the body
+    $tableHtml .= $this->tableBody($table, $cols, $data);  // Build table body
+    $tableHtml .= '</table>';
     return $tableHtml;
 }
 
 
-// @fm.description filters on top of the table from selectjoin or selectG
-protected function formFilters($colData,$row=[]) {
+/**
+THAT'S ONLY OF THE TOP OF THE TABLES outside loop
+ @fm.description filters on top of the table from selectjoin or selectG
+ */
+protected function formFilters($colData,$row=[],$table='') {
         $rowtable = str_replace('selectjoin-', '', $colData['comment']);
         $tableName = explode('.', $rowtable)[1];
         $colName = explode('.', $rowtable)[2];
+        //page should not be included like that
         $link=$this->page==$tableName ? $tableName.'?id=' . $row["id"] : $this->page.'/'.$tableName.'?id=';
+        //link goto page
         $tableHtml .= '<a href="/admin/' . $link . '"><span class="glyphicon glyphicon-link"></span></a> ';
+        //drop down options
         $options = $this->getSelectOptions($colData['comment'], $row[$colName]);
+        //drop down UI,
         if($options){
-        return $this->renderSelectField($colData['comment'], $row[$colName], $options);
+        $fieldName=explode('-',$colData['comment'])[1];
+        return $this->renderSelectField($fieldName, "", $options,__FUNCTION__);
         }
         return '';
 }
@@ -690,13 +710,22 @@ protected function renderFileFormList(array $list, string $title = "File List"):
 // @fm.features Helper to render select dropdowns
 #$this->getMariaTree(),$domain,'getMariaTree',"listMariaTables","listMariaTables"
 #$this->drop($this->listMariaTables($domain),'','listMariaTables',"buildTable")
-protected function renderSelectField($fieldName, $selectedValue, array $options=[]): string {
-        $select= "<select class='gs-select' onchange='gs.form.updateRow(this, \"$this->table\")' name='$fieldName' id='$fieldName$this->formid'><option value=0>Select</option>";
+protected function renderSelectField($fieldName, $selectedValue, array $options=[], string $func=''): string {
+        if($func=='formFilters'){
+        $select = "<select class='gs-select' data-table='{$this->table}' onchange=\"this.dataset.filter = this.value; gs.form.updateTable(this, 'buildCoreTable')\" name='$fieldName' id='{$fieldName}{$this->formid}'><option value=''>Select</option>";
                   foreach ($options as $key => $label) {
                      $selected = ($key == $selectedValue) ? 'selected="selected"' : '';
                       $select .= "<option value='$key' $selected>$label</option>";
                      }
                      $select .= "</select>";
+        }else{
+        $select= "<select class='gs-select' onchange='gs.form.updateRow(this, \"$this->table\")' name='$fieldName' id='$fieldName$this->formid'><option value=0>Select</option>";
+                          foreach ($options as $key => $label) {
+                             $selected = ($key == $selectedValue) ? 'selected="selected"' : '';
+                              $select .= "<option value='$key' $selected>$label</option>";
+                             }
+                             $select .= "</select>";
+        }
         $html = !$this->labeled ? $select : "<div class='gs-span'><label for='$col'>$col</label>$select</div>";
         return $html;
      }

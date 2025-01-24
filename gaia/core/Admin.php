@@ -168,7 +168,7 @@ protected function channelCheck($chanfile) {
             }
     }
 
-protected function produce6channel($name,$ch,$page,$type,$table){
+protected function produce6channel($name,$ch,$page,$type,$mainplan){
     $Position=['1'=>'top-left','2'=>'top-right','3'=>'top-center','4'=>'bottom-center','5'=>'bottom-left','6'=>'bottom-right'];
  $html = '<div id="ch'.$ch.'" title="CHANNEL '.$ch.'" class="channel '.$Position[$ch].'">';
 
@@ -211,7 +211,6 @@ protected function produce6channel($name,$ch,$page,$type,$table){
      $html='';
      //$html .='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'" class="channel '.$Position[$ch].'">';
      $html .='<div title="CHANNEL '.$ch.'">';
-
         $html .= $this->channelCheck($file);
      $html .='</div>';
      return $html;
@@ -228,18 +227,18 @@ protected function produce6channel($name,$ch,$page,$type,$table){
      return $html;
  }
 
- protected function channelRender($name,$table,$ch='1'){
+ protected function channelRender($name,$ch='1'){
  $Position=['1'=>'top-left','2'=>'top-right','3'=>'top-center','4'=>'bottom-center','5'=>'bottom-left','6'=>'bottom-right'];
 
     $html ='<div id="ch'.$ch.'" title="CHANNEL '.$ch.'" class="channel '.$Position[$ch].'">';
 
-    if($this->id !='' && $this->mode ==''){
-          $html .=  $this->buildForm($table);
+    //if($this->id !='' && $this->mode ==''){
+      //    $html .=  $this->buildForm($table);
 
-    }elseif($this->sub !=''){
+   // }else{
 
            $html .= $this->mainPlanAdminEditor($name);
-    }
+   // }
 
 /*
       //CHANNEL FILE SUB FILE
@@ -307,7 +306,11 @@ if($this->sub==''){
       //include _edit page
       //or normal main php file
       //$mp['mainfile'.$ch]= $this->ADMIN_ROOT . "main/" . $this->page . "/" . $this->page . ".php";
-      $html .= $this->produce6channel($name,$ch,$page,$content['type'],$table);
+   //   xecho($name);
+    //  xecho($content['mainplan']);
+ //   $html .= $this->produce6channel($name,$ch,$page,$content['type'],$content['mainplan']);
+//     xecho($content['mainplan']);
+      $html .= $this->channelRender($name,$ch,$content);
       }
   
       return $html;
@@ -316,7 +319,7 @@ if($this->sub==''){
 }else{
       $name=$this->sub;
 
-      $html .= $this->channelRender($name,$this->mainplan());
+      $html .= $this->channelRender($name,1,$this->mainplan());
 
     //  $html .= '<script>gs.ui.sort(`UPDATE ${G.mainplan} SET sort=? WHERE id = ?`, "list", G.mainplan);</script>';
       //add notification bar
@@ -385,10 +388,12 @@ protected function navigate() {
         return $subs;
     }
 
-protected function mainPlanAdminEditor($name){
-     $mainplan = $this->db->f("SELECT * FROM gen_admin.alinks WHERE name=?",[$name]);
-     $plan= json_decode($mainplan['mainplan'],true) ?? $mainplan['mainplan'];
-     $html = $this->renderFormField("mainplan",["type"=>"json","comment"=>"json","table"=>"gen_admin.alinks","id"=>$mainplan['id']],$mainplan['mainplan']);
+protected function mainPlanAdminEditor($name,$alinks=[]){
+    if(empty($alinks)){
+     $alinks = $this->db->f("SELECT * FROM gen_admin.alinks WHERE name=?",[$name]);
+     }
+     $plan= json_decode($alinks['mainplan'],true) ?? $alinks['mainplan'];
+     $html = $this->renderFormField("mainplan",["type"=>"json","comment"=>"json","table"=>"gen_admin.alinks","id"=>$alinks['id']],$alinks['mainplan']);
      //execute the plan to be included in core.Action switch cases
      foreach($plan as $step => $action){
         foreach($action as $method=>$params){
