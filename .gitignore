@@ -19,6 +19,7 @@ core/test/
 public/
 # But don't ignore these specific folders
 !public/_phpdomain.local/
+public/_reactdomain.local/node_modules/
 !public/_reactdomain.local/
 setup/
 vendor/
