@@ -1,0 +1,12 @@
+{
+  "/_app": "pages/_app.js",
+  "/_error": "pages/_error.js",
+  "/About": "pages/About.js",
+  "/Education": "pages/Education.js",
+  "/Experience": "pages/Experience.js",
+  "/Home": "pages/Home.js",
+  "/Projects": "pages/Projects.js",
+  "/Skills": "pages/Skills.js",
+  "/": "pages/index.js",
+  "/_document": "pages/_document.js"
+}

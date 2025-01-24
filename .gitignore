@@ -16,7 +16,10 @@ media/
 template/
 backup/
 core/test/
-public/
+public/*
+# But don't ignore these specific folders
+!public/_phpdomain.local/
+!public/_reactdomain.local/
 setup/
 vendor/
 rus/target/
