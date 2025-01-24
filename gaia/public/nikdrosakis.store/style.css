@@ -1,0 +1,40 @@
+/* Styles for header, main wrapper, sidebar, and footer */
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+    width: 80%;
+    margin:0 auto;
+}
+
+.wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 80%;
+    margin:0 auto;
+}
+
+main {
+    flex: 70%; /* Adjust the width as needed */
+    padding: 20px;
+}
+
+aside {
+    flex: 30%; /* Adjust the width as needed */
+    background-color: #f4f4f4;
+    padding: 20px;
+    width: 20%;
+    float:right;
+}
+
+footer {
+    background-color: #333;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+    width: 80%;
+    margin:0 auto;
+    height:300px;
+}
