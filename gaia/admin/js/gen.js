@@ -975,8 +975,8 @@ actions = [
                 } else {
                     result = await response.text(); // Handle HTML response
                     console.log("HTML result:", result);
-                }
 
+                }
                 return result;
             } catch (error) {
                 console.error("Error updating content:", error);
@@ -1191,6 +1191,7 @@ actions = [
                 console.error("Error loading button data:", error);
             }
         },
+        //@func is for defining the functionality to save or filterForm
         updateRow: async function (event, table) {
             const field = event.name;
             //if in subpage
@@ -1207,6 +1208,7 @@ actions = [
             } catch (error) {
                 console.error(`Error updating ${field}:`, error);
             }
+
         },
         insertNewRow : async function (event) {
             // Extract the 'name' attribute from the event target (button)
@@ -1289,12 +1291,19 @@ actions = [
             const dataset = tableElement.dataset;
             const tableName = dataset.table;  // Dynamically get table name
             const q = dataset.q || '';  // Use search query if available
+            const name=tableElement.name;
+            const filterid=`${name.split('.')[1]}id`;
+            const datasetFilter=dataset.filter;
+
+            const filter= name=='status' ? `status=${datasetFilter}`: `${filterid}=${datasetFilter}`;
             const pagenum = dataset.pagenum || 1;  // Use pagination number if available
             const orderby =dataset.orderby || '';
 
-
             // Create the params object dynamically with table name, search query, and page number
             const params = { table: tableName, q: q, pagenum: pagenum, orderby: orderby };
+            if(datasetFilter!=''){
+                params['filter'] = filter;
+            }
             console.log(method);
             console.log(params);
             // Make an API request using the method and parameters

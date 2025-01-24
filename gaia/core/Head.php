@@ -131,7 +131,7 @@ protected function renderAdminHead() {
 
 protected function loadHeadSetup() {
     $return = [];
-    $table = "{$this->publicdb}.setup";
+    $table = $this->publicdb.".setup";
 
     // Load CSS files
     $cssArray = $this->db->flist("SELECT val FROM $table WHERE tag = 'head-css' AND status=2");

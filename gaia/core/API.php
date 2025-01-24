@@ -300,7 +300,7 @@ primary executes A) maria methods IN post
       }elseif($this->resource=="bin" && $this->id!=''){
       //id icludes the extension
           if(file_exists(API_ROOT . "bin/". $this->method."/".$this->id)){
-                require_once API_ROOT. "bin/". $this->method."/".$this->id;
+                require_once API_ROOT. "bin/". $this->method."_".$this->id;
             //any file icludes the extension is an action GET , ?file= param the absolute path
              }elseif($this->id=="getfile" && $this->method=="GET" && isset($_GET["file"])){
              $file=urldecode($_GET["file"]);

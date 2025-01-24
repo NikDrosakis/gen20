@@ -3,14 +3,194 @@ namespace Core;
 use Exception;
 use Imagick;
 use Symfony\Component\Yaml\Yaml;
+/**
+χρειάζεται ένα έξυπνο σχήμα όλο αυτό
+ from installation to public & admin Cubo
+ created in gen_admin.cubo where is the main mapping of the module
+ passed in mains and maincubo
+to maingrp has the group of mains defaults,
+schema
+----------
+gen_admin.cubo  setup
+publicdb.maingrp routes group (linked with cubo)
+publicdb.main: a cubo may have one or multiple mains (linked with maingrp, links)
+publicdb.links the menu links  (linked with linkgrp, parent)
+publicdb.linksgrp just a new menu
+publicdb.maincubo: THE CONSTRUCTION layout with all the cubos build in each page
+gen_admin.alinksgrp
+gen_admin.alinks
+------------
+1) default is a cubo with login, 404 etc
+2) main(s) are pages by default contains cubo.mains at the m area
+3) cubo is a resource
+
+Layout has all the publicdb instances of cubos
+all the construction in the maincubo
+
+
+είναι διαθέσιμο σε όλες τις σελίδες του server
+ta cubos μπορεί να χρησιμοποιούνται σαν περιφερειακά modules
+είτε να ξεκινούν να έχουν δικό τους main, αυτό δηλώνεται στο cubo.mains
+είτε να μην έχουν δικό τους main
+cubo --> maingrp --> main (instance of cubo in )--> links (menuid)-->linkgrp (menu) --> maincubo (construction)
+
+
+
+ */
 
 trait Cubo {
 
-  protected function getLinks() {
+protected function getLinks() {
             return $this->db->fa("SELECT * FROM {$this->publicdb}.links WHERE linksgrpid=2 ORDER BY sort");
     }
 
-protected function updateCuboImg($table = '',$current_name = '') {
+/**
+reading manifest.yaml from fs cubos/[cubo]/manifest.yaml
+ cubo installation if cubo.mains
+  1) cubo.sql not null foreach cubo.mains as main... mysql > sql/[main].sql and an sql folder sql in publicdb
+  2) cubo.mains not null gen_admin.links include cubos/[cubo]/admin.php page
+
+ Moreover if cubo.main NOT EMPTY
+ -----------------------------------------
+  1) $this->db->inse($this->publicdb.".maingrp",array); array= cuboid=cubo.id, name=cubo.name  return [insertedid]
+  2) foreach yaml.mains as  $this->db->inse($this->publicdb.".main",array); array= maingrpid=[insertedid], name=cubo.main return []insertedmainid]
+cubo.name > yaml.maykey split _ 0
+  3) check if has links if checked $this->db->inse($this->publicdb.".links",array); array= links.title= ucFirst(cubo.name)
+  4) foreach yaml.mains  $this->db->inse($this->publicdb.".maincubo",array); array=maincubo.mainid=[insertedmainid],maincubo.area='m', maincubo.cuboid=yaml.id, maincubo.name=cubo.name
+ */
+protected function createCubo(string $name): bool|int {
+    // Create folder and files
+    $cuboDir = CUBO_ROOT . $name . '/';
+    if (!mkdir($cuboDir, 0777, true)) {
+        return false;
+    }
+
+    // Create public.php
+    $publicFilePath = $cuboDir . 'public.php';
+    $publicContent = "<?php\n";
+    $publicContent .= "// Auto-generated public.php file for cubo: $name\n\n";
+    $publicContent .= "echo 'Welcome to the $name cubo!';\n";
+    if (file_put_contents($publicFilePath, $publicContent) === false) {
+        return false;
+    }
+
+    // Create admin.php
+    $adminFilePath = $cuboDir . 'admin.php';
+    $adminContent = "<?php\n";
+    $adminContent .= "// Auto-generated admin.php file for cubo: $name\n\n";
+    $adminContent .= "echo 'Admin panel for the $name cubo.';\n";
+    if (file_put_contents($adminFilePath, $adminContent) === false) {
+        return false;
+    }
+
+    // Create manifest.yaml
+    $manifestFilePath = $cuboDir . 'setup.yaml';
+    $manifestContent = "{$name}_cubo:\n";
+    $manifestContent .= "mains:\n";
+    $manifestContent .= "sql:\n";
+    if (file_put_contents($manifestFilePath, $manifestContent) === false) {
+        return false;
+    }
+
+    // Insert cubo into the database
+    $data = [
+        'name' => $name,
+        'description' => $description ?? "",
+    ];
+    $insert = $this->db->inse("gen_admin.cubo", $data);
+
+    // Run shell command to set permissions
+    $command = 'chmod -R 755 ' . escapeshellarg($cuboDir);
+    $result = $this->runShellCommand($command);
+    if ($result['status'] !== 0) {
+        throw new Exception('Permission setting failed: ' . $result['error']);
+    }
+
+    return $insert;
+}
+
+protected function setupCubo($name = '') {
+    $cuboDir = CUBO_ROOT . $name . '/';
+    $setupPath = $cuboDir . 'setup.yml';
+
+    // Check if setup.yml exists
+    if (!file_exists($setupPath)) {
+        throw new Exception("Setup file not found for cubo: $name");
+    }
+
+    // Parse setup.yml
+    $setup = yaml_parse_file($setupPath);
+    if (!$setup || !isset($setup['mains']) || !isset($setup['sql'])) {
+        throw new Exception("Invalid or missing setup data for cubo: $name");
+    }
+
+    $this->publicdb = "publicdb"; // Assuming this is your public database
+    $cuboName = $name; // Use the cubo name directly
+
+    // Step 1: Process SQL scripts
+    if (!empty($setup['sql'])) {
+        foreach ($setup['sql'] as $sqlFile) {
+            $sqlFilePath = $cuboDir . 'sql/' . $sqlFile . '.sql';
+            if (file_exists($sqlFilePath)) {
+                $sql = file_get_contents($sqlFilePath);
+                $this->db->query($sql); // Execute the SQL file
+            } else {
+                throw new Exception("SQL file not found: $sqlFilePath");
+            }
+        }
+    }
+
+    // Step 2: Insert cubo metadata into `maingrp`
+    $maingrpData = [
+        'cuboid' => $this->db->lastInsertId(), // Assuming a cubo ID has been created
+        'name' => $cuboName,
+        'description' => $setup['description'] ?? ''
+    ];
+    $insertedGrpId = $this->db->inse("$this->publicdb.maingrp", $maingrpData);
+
+    // Step 3: Insert `mains` components into `main` table
+    if (!empty($setup['mains'])) {
+        foreach ($setup['mains'] as $main) {
+            $mainData = [
+                'maingrpid' => $insertedGrpId,
+                'name' => $main
+            ];
+            $insertedMainId = $this->db->inse("$this->publicdb.main", $mainData);
+
+            // Step 4: Insert into `maincubo` table for each main
+            $mainCuboData = [
+                'mainid' => $insertedMainId,
+                'area' => 'm',
+                'cuboid' => $insertedGrpId,
+                'name' => $cuboName
+            ];
+            $this->db->inse("$this->publicdb.maincubo", $mainCuboData);
+        }
+    }
+
+    // Step 5: Insert links for admin.php if it exists
+    $adminFilePath = $cuboDir . 'admin.php';
+    if (file_exists($adminFilePath)) {
+        $linksData = [
+            'title' => ucfirst($cuboName),
+            'page' => "/cubos/$name/admin.php"
+        ];
+        $this->db->inse("$this->publicdb.links", $linksData);
+    }
+
+    return true; // Return success
+}
+
+
+//check if cubo has
+protected function checkandreportCubo($table = '',$name = '') {
+//fs
+
+//sql
+
+}
+
+protected function updateCuboImg($table = '',$name = '') {
 $cubo = is_array($current_cubo) ? $current_cubo['key'] : $current_cubo;
 $db=explode('.',$table)[0];
 
@@ -65,10 +245,30 @@ $db=explode('.',$table)[0];
            return $buffer;
        }
 
-   // Retrieve all cubos
-    protected function getCubos(): array {
-        return $this->db->fa('SELECT * FROM gen_admin.cubo');
+
+/**
+ * Adds a 'files' key to each cubo with a file list from glob(CUBO_ROOT.'cubo.name/*')
+ */
+protected function getCubos(): array
+{
+    $cubos = $this->db->fa('SELECT * FROM gen_admin.cubo');
+    if (!is_array($cubos)) {
+        return [];
     }
+    foreach ($cubos as &$cubo) {
+        $cubo_path = $this->G['CUBO_ROOT'] . $cubo['name'];
+        $file_list = glob($cubo_path . '/*');
+        if ($file_list === false) {
+           $file_list = [];
+        }
+          //Convert file list from full path to just file name.
+    //     $base_name_list = array_map(function($path) {
+      //        return basename($path);
+       // }, $file_list);
+        $cubo['files'] = $file_list;
+    }
+    return $cubos;
+}
     // Retrieve  cubos buffer
 
     // Retrieve a single cubos by ID
@@ -217,42 +417,7 @@ protected function addMetric(array $params = []): ?array {
           include CUBO_ROOT.$name."/public.php";
         }
     // Other methods (existing)...
-    protected function createNewCubo(string $name, string $description='', string $ideally=''): bool|int {
-        // Create folder and public.php as in the previous code...
-        $cuboDir = CUBO_ROOT . $name . '/';
 
-        if (!mkdir($cuboDir, 0777, true)) {
-            return false;
-        }
-
-        // Define the path for the public.php file
-        $filePath = $cuboDir . 'public.php';
-        $content = "<?php\n";
-        $content .= "// Auto-generated public.php file for cubo: $name\n\n";
-        $content .= "echo 'Welcome to the $name cubo!';\n";
-
-        if (file_put_contents($filePath, $content) === false) {
-            return false;
-        }
-
-        // Insert cubo into the database
-        $data = [
-            'systemsid' => 1,
-            'name' => $name,
-            'description' => $description ?? ""
-        ];
-        $insert = $this->db->inse("gen_admin.cubo", $data);
-
-        // Run shell command to set permissions (example)
-        $command = 'chmod -R 755 ' . escapeshellarg($cuboDir);
-        $result = $this->runShellCommand($command);
-
-        if ($result['status'] !== 0) {
-            throw new Exception('Permission setting failed: ' . $result['error']);
-        }
-
-        return $insert;
-    }
 protected function getUsers() {
         return $this->db->fa("SELECT * FROM {$this->publicdb}.user");
     }
@@ -312,10 +477,9 @@ protected function getUsers() {
     protected function getMaincubo(string $page): bool|array {
 
       $list=[];
-        $fetch = $this->db->fa("SELECT maincubo.area, gen_admin.cubo.name as cubo
+        $fetch = $this->db->fa("SELECT maincubo.area, maincubo.name as cubo
         FROM {$this->publicdb}.maincubo
         left join {$this->publicdb}.main on main.id=maincubo.mainid
-        left join gen_admin.cubo on cubo.id=maincubo.cuboid
         where main.name=?",[$page]);
             if (!empty($fetch)) {
                     foreach ($fetch as $row) {

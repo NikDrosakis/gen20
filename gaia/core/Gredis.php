@@ -11,7 +11,23 @@ class Gredis extends Redis {
             parent::auth("yjF1f7uiHttcp" ?? '');
             parent::select($database ?? 1);
             }
+
+            // Check if RediSearch is loaded (you can move this check elsewhere if preferred)
+            $modules = $this->rawCommand('MODULE', 'LIST');
+            $redisearchLoaded = false;
+            foreach ($modules as $module) {
+                if ($module[1] === 'ft') {
+                    $redisearchLoaded = true;
+                    break;
+                }
+            }
+            if (!$redisearchLoaded) {
+                // Handle the case where RediSearch is not loaded (e.g., log a warning, throw an exception)
+                error_log("RediSearch module not loaded!");
+            }
+
         }
+
          public function set(string $key, mixed $fetch, mixed $options = null): Redis|string|bool{
             if (!$fetch) {
                 return false;
@@ -102,4 +118,34 @@ class Gredis extends Redis {
            // Process the incoming message here
            echo "Received message: $message\n"; // Example logging
        }
+
+       // RediSearch methods
+
+       public function createIndex(string $indexName, array $schema): bool {
+           if (!$this->redis_running) return false; // Check Redis connection
+           try {
+                $result = $this->rawCommand('FT.CREATE', $indexName, 'ON', 'HASH', 'SCHEMA', ...$schema);
+               return $result === 'OK';
+           } catch (RedisException $e) {
+               // Handle RediSearch errors
+              error_log("RediSearch error: " . $e->getMessage());
+              return false;
+           }
+       }
+
+
+
+
+       public function searchRedis(string $indexName, string $query): array|false {
+          if (!$this->redis_running) return false;  //Check Redis connection
+           try {
+               return $this->rawCommand('FT.SEARCH', $indexName, $query);
+           } catch (RedisException $e) {
+             // Handle RediSearch errors
+               error_log("RediSearch error: " . $e->getMessage());
+             return false;
+
+           }
+       }
+
 }
