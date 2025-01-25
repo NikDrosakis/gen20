@@ -1,3 +1,9 @@
 test2_cubo:
-mains:
-sql:
+  mains:
+    - test1_main
+    - test2_main
+  sql:
+
+
+
+

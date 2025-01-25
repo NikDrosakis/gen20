@@ -1,12 +1,13 @@
 #include <iostream>
 #include <fstream>
 #include "core/Maria.h"
+#include "core/Cubo.h"
 #include "core/FS.h"
 #include <yaml-cpp/yaml.h>
 #include <nlohmann/json.hpp>
 #include "core/Yaml.h"
-#include "core/ws.h"
-#include "core/Gredis.h"
+//#include "core/ws.h"
+//#include "core/Gredis.h"
 #include <thread>
 #include <map>
 #include <hiredis/hiredis.h>
@@ -23,6 +24,7 @@ int main(int argc, char* argv[]) {
     // }
 
  // Example Use Gredis class
+ /*
     Gredis gredis;
     std::cout << "Setting keys in Redis..." << std::endl;
     gredis.set("key1", "value1");
@@ -36,7 +38,8 @@ int main(int argc, char* argv[]) {
         std::cout << key << std::endl;
     }
     gredis.close();
-
+*/
+/*
     // Connect & send message to WebSocket (Ermis)
     try {
         WebSocketClient ws_client;
@@ -52,7 +55,7 @@ int main(int argc, char* argv[]) {
     } catch (const std::exception& e) {
         std::cerr << "Exception: " << e.what() << std::endl;
     }
-
+*/
     // Commented out YAML handling code
     // std::string filename = argv[1];
     // std::string table = argv[2];
@@ -75,6 +78,7 @@ int main(int argc, char* argv[]) {
         }
 
         // Binlog processing
+        /*
         std::string binlogFile = "/var/log/mysql/mysql-bin.000001"; // Replace with your binlog file
         std::function<void(const std::string&)> binlogCallback = [&](const std::string& event) {
             std::cout << "Binlog Event: " << event << std::endl;
@@ -86,25 +90,50 @@ int main(int argc, char* argv[]) {
         std::thread binlogThread([&]() { // Capture all by reference
             maria.consumeBinlog(binlogFile, binlogCallback);
         });
+        */
+         // Binlog processing
+                std::string binlogFile = "/var/log/mysql/mysql-bin.000001"; // Replace with your binlog file
+                std::function<void(const std::string&)> binlogCallback = [&](const std::string& event) {
+                    std::cout << "Binlog Event: " << event << std::endl;
+                    // Process the binlog event and write to the filesystem
+                    // Example:
+                    std::string fileContent = "Data from binlog: " + event;
+                    fs.writeFile("/var/www/gs/manifest/first_binlog_output.txt", fileContent);
+                };
+                std::thread binlogThread([&]() { // Capture all by reference
+                    maria.consumeBinlog(binlogFile, binlogCallback);
+                });
 
         // Filesystem monitoring
-        std::string watchDirectory = "/tmp/watch_dir"; // Replace with your watch directory
-        std::function<void(const std::string&)> fsCallback = [&](const std::string& event) {
-            std::cout << "Filesystem Event: " << event << std::endl;
-            // Process the filesystem event and update MariaDB
-            // Example:
-            std::string fileContent;
-            fs.readFile("/tmp/watch_dir/some_file.txt", fileContent);
-            std::string sql = "INSERT INTO your_table (data) VALUES ('" + fileContent + "')";
-            maria.q(sql, {});
-        };
+        std::string watchDirectory = "/var/www/gs/gaia/cubos/test2/"; // Replace with your watch directory
+       std::function<void(const std::string&)> fsCallback = [&](const std::string& event) {
+           std::cout << "Filesystem Event: " << event << std::endl;
+
+           // Extract file path from the event string
+           size_t pos = event.find(": ");
+           if (pos == std::string::npos) {
+               std::cerr << "Invalid event format: " << event << std::endl;
+               return;
+           }
+           std::string eventPath = event.substr(pos + 2);
+           std::cout << "Extracted Event Path: " << eventPath << std::endl; // Log the extracted path
+
+           // Specific setup.yaml logic
+           if (eventPath == "setup.yaml") {
+                Cubo cubo("gen_vivalibrocom");
+               if (!cubo.setupCubo("test2")) {
+                   std::cerr << "Failed to process setup for: test2" << std::endl;
+               } else {
+                   std::cout << "Setup processed successfully for: test2" << std::endl;
+               }
+           }
+       };
         fs.monitorChanges(watchDirectory, fsCallback);
 
         // Keep main thread alive
         while (true) {
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
-
         binlogThread.join();
     }
 

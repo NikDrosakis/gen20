@@ -16,11 +16,15 @@ media/
 template/
 backup/
 core/test/
-public/
-# But don't ignore these specific folders
+# Ignore everything in public/
+public/*
+
+# Allow these specific folders
 !public/_phpdomain.local/
-public/_reactdomain.local/node_modules/
 !public/_reactdomain.local/
+
+# Ignore node_modules inside public/_reactdomain.local
+public/_reactdomain.local/node_modules/
 setup/
 vendor/
 rus/target/
