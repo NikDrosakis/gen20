@@ -21,6 +21,10 @@ namespace mars {
         buffer << file.rdbuf();
         content = buffer.str();
         file.close();
+        if (content.empty()) {
+            std::cerr << "File is empty: " << filePath << std::endl;
+            return false;
+        }
         return true;
     }
 

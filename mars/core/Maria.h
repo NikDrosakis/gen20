@@ -1,6 +1,6 @@
 #ifndef MARIA_H
 #define MARIA_H
-
+#include "Yaml.h"  // Include Yaml class header
 #include <string>
 #include <map>
 #include <vector>
@@ -25,8 +25,10 @@ public:
     bool connect();  // Method to establish a database connection
     std::vector<std::map<std::string, std::string>> fa(const std::string&, const std::map<int, std::string>&);
     std::map<std::string, std::string> f(const std::string&, const std::map<int, std::string>&);
-    bool inse(std::string, std::map<std::string, std::string>);
+    int inse(std::string, std::map<std::string, std::string>);
     bool q(const std::string&, const std::map<int, std::string>&);
+    int lastInsertId();
+
     bool consumeBinlog(const std::string& binlogFile, std::function<void(const std::string& event)> callback);
 
 private:

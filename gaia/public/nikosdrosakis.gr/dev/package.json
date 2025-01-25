@@ -1,0 +1,54 @@
+{
+  "name": "dev",
+  "version": "0.2.0",
+  "private": false,
+  "dependencies": {
+    "@testing-library/jest-dom": "*",
+    "@testing-library/react": "*",
+    "@testing-library/user-event": "*",
+    "axios": "*",
+    "bootstrap": "*",
+    "core-js-pure": "*",
+    "prop-types": "*",
+    "react": "*",
+    "react-bootstrap": "~2.9.2",
+    "react-chrono": "~2.3.1",
+    "react-dark-mode-toggle": "*",
+    "react-dom": "*",
+    "react-markdown": "*",
+    "react-reveal": "*",
+    "react-router": "*",
+    "react-router-dom": "*",
+    "react-scripts": "*",
+    "react-social-icons": "*",
+    "styled-components": "*",
+    "typewriter-effect": "*",
+    "use-dark-mode": "*",
+    "vertical-timeline-component-for-react": "*",
+    "web-vitals": "*"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "devDependencies": {
+    "react-error-overlay": "*"
+  },
+  "resolutions": {
+    "react-error-overlay": "*"
+  }
+}

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <fstream>
 #include <sstream>
 #include <stdexcept> // For exceptions
 #include <memory>    // For std::shared_ptr
@@ -123,7 +124,7 @@ bool Maria::q(const std::string& query, const std::map<int, std::string>& params
 }
 
 // Insert a row
-bool Maria::inse(std::string table, std::map<std::string, std::string> data) {
+int Maria::inse(std::string table, std::map<std::string, std::string> data) {
     try {
         std::string columns;
         std::string placeholders;
@@ -152,7 +153,7 @@ bool Maria::inse(std::string table, std::map<std::string, std::string> data) {
         return false;
     }
 }
-
+/*
  bool Maria::consumeBinlog(const std::string& binlogFile, std::function<void(const std::string& event)> callback) {
         // Implementation for consuming binlog events
         // This will involve using the MySQL C API to read binlog events
@@ -166,3 +167,48 @@ bool Maria::inse(std::string table, std::map<std::string, std::string> data) {
         callback("Binlog event 2");
         return true;
     }
+*/
+bool Maria::consumeBinlog(const std::string& binlogFile, std::function<void(const std::string& event)> callback) {
+    try {
+        // Set the binlog file
+        sql::SQLString setBinlogFileQuery = "SET @master_binlog_file = ?";
+        std::shared_ptr<sql::PreparedStatement> pstmtFile(conn_->prepareStatement(setBinlogFileQuery));
+        pstmtFile->setString(1, binlogFile);
+        pstmtFile->execute();
+
+        // Set the binlog position to 0
+        sql::SQLString setBinlogPosQuery = "SET @master_binlog_pos = 0";
+        std::shared_ptr<sql::PreparedStatement> pstmtPos(conn_->prepareStatement(setBinlogPosQuery));
+        pstmtPos->execute();
+
+        // Execute the binlog dump
+        std::shared_ptr<sql::PreparedStatement> binlogStmt(conn_->prepareStatement("SHOW BINLOG EVENTS"));
+        std::shared_ptr<sql::ResultSet> res(binlogStmt->executeQuery());
+
+        while (res->next()) {
+            sql::SQLString eventData = res->getString(1); // Assuming the binlog event data is in column 1
+            callback(std::string(eventData));
+        }
+        return true;
+    } catch (sql::SQLException &e) {
+        std::cerr << "consumeBinlog failed: " << e.what() << std::endl;
+        return false;
+    }
+}
+
+// In Maria.cpp
+
+int Maria::lastInsertId() {
+    try {
+        // Use a Statement to retrieve the last inserted ID
+        std::shared_ptr<sql::Statement> stmt(conn_->createStatement());
+        std::shared_ptr<sql::ResultSet> res(stmt->executeQuery("SELECT LAST_INSERT_ID()"));
+
+        if (res->next()) {
+            return res->getInt(1);  // Return the last inserted ID (first column)
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error in lastInsertId: " << e.what() << std::endl;
+    }
+    return -1;  // Return -1 if there's an error
+}

@@ -1,5 +1,5 @@
 # GEN20 Documentation v0.42
-
+----------
 ## Introduction
 The purpose of this system is to develop smart applications that harness the power of AI and modern web technologies to enhance mental and scientific knowledge. The goal is to utilize the vast resources available online while integrating AI capabilities to create useful, scalable applications. These tools aim to improve the way people interact with information, providing smarter, faster, and more insightful solutions.
 

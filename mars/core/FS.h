@@ -1,9 +1,8 @@
-#ifndef MARS_FS_H
-#define MARS_FS_H
+#ifndef CORE_FS_H
+#define CORE_FS_H
 
 #include <string>
 #include <functional>
-
 
 namespace mars {
     class FS {

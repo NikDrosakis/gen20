@@ -1,20 +1,17 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -Wall -std=c++17 # Add -v for debugging
+CXXFLAGS = -Wall -std=c++17 # Add -v for verbose output
 
 # Define paths
 INC_DIR = /usr/include
 LIB_DIR = /usr/lib
-RDB_INC_DIR = /root/dev/librethinkdbxx/build/include
-RDB_LIB_DIR = /root/dev/librethinkdbxx/build
 
 # Explicit include paths
 INC = -I$(INC_DIR) \
       -I$(INC_DIR)/yaml-cpp \
       -I$(INC_DIR)/mariadb \
       -I$(INC_DIR)/mariadb/conncpp \
-      -I./core \
-      -I$(RDB_INC_DIR)
+      -I./core
 
 # Get the correct lib path from mariadb_config
 MYSQL_LIB_DIR := $(shell mariadb_config --libs)
@@ -26,13 +23,11 @@ LIB = -lhiredis \
       -lmariadbcpp \
       -lssl \
       -lcrypto \
-      -pthread \
-      -L$(RDB_LIB_DIR) \
-      -lrethinkdb++
+      -pthread
 
 # Source and object files
-SOURCES = core/Gredis.cpp core/Maria.cpp core/Yaml.cpp core/ws.cpp main.cpp
-OBJECTS = core/build/Gredis.o core/build/Maria.o core/build/Yaml.o core/build/ws.o
+SOURCES = core/Maria.cpp core/Yaml.cpp core/FS.cpp core/Cubo.cpp main.cpp
+OBJECTS = core/build/Maria.o core/build/Yaml.o core/build/FS.o core/build/Cubo.o
 
 # Executable name
 TARGET = main
@@ -58,7 +53,10 @@ core/build/Maria.o: core/Maria.cpp
 core/build/Yaml.o: core/Yaml.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INC)
 
-core/build/ws.o: core/ws.cpp
+core/build/Cubo.o: core/Cubo.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INC)
+
+core/build/FS.o: core/FS.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INC)
 
 # Clean up object files and the target executable
