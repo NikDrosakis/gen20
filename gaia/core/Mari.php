@@ -172,6 +172,42 @@ class Mari {
 
  $this->alter('main.old_column', 'drop', $columnDetails);
  */
+public function drop(string $dbdottable, string $operation): bool {
+    // Ensure the $dbdottable is in the correct 'database.table' format
+    $dbTableParts = explode('.', $dbdottable);
+    if (count($dbTableParts) !== 2) {
+        throw new InvalidArgumentException("Invalid table format. Expected 'database.table'.");
+    }
+    $dbName = $dbTableParts[0];
+    $tableName = $dbTableParts[1];
+
+    // Construct the SQL query based on the operation
+    try {
+        switch (strtolower($operation)) {
+            case 'table':
+                $sql = "DROP TABLE IF EXISTS `$dbName`.`$tableName`";
+                break;
+            case 'database':
+                $sql = "DROP DATABASE IF EXISTS `$dbName`";
+                break;
+            case 'other':
+                throw new InvalidArgumentException("Unsupported operation: $operation");
+            default:
+                throw new InvalidArgumentException("Invalid operation. Allowed values are 'table', 'database', or 'other'.");
+        }
+
+        // Execute the query
+        $this->_db->exec($sql);
+        echo ucfirst($operation) . " `$dbdottable` successfully dropped.\n";
+        return true;
+    } catch (PDOException $e) {
+        // Handle database errors
+        echo "Database error: " . $e->getMessage() . "\n";
+        return false;
+    }
+}
+
+
 public function alter($dbdottable, $operation, $columnDetails, $afterColumn = null) {
     // Ensure the $dbdottable is sanitized and in the correct format
     $dbTableParts = explode('.', $dbdottable);
@@ -268,6 +304,23 @@ public function create_table($table,$schema) {
         echo "Error creating table `$table`: " . $e->getMessage() . "\n";
     }
 }
+public function runSqlFile($filePath,$db='gen_admin') {
+        // Check if the SQL file exists
+        if (!file_exists($filePath)) {
+            echo "SQL file not found: $filePath\n";
+            return;
+        }
+        // Read the SQL file content
+        $file = file_get_contents($filePath);
+        $command = "mysql -uroot -p{$this->dbpass} database $db < " . escapeshellarg($file);
+        try {
+            $this->_db->exec($command,$output, $returnVar);
+            return $returnVar;
+        } catch (PDOException $e) {
+            echo "Error executing SQL file `$filePath`: " . $e->getMessage() . "\n";
+        }
+}
+
 public function create_trigger(string $dbname, string $triggerName, string $tableName, string $timing, string $event, string $body) {
         try {
             $this->_db->exec("USE `$this->dbname`");
@@ -318,39 +371,67 @@ public function getDatabasesInfo() {
 /**
 
  B TYPES OF METHODS - HELPERS & Content Operators CRUD
-
+addresses the "Duplicate entry" scenario by checking for a PDOException with a specific error code (23000) and extracting the ID of the existing entry from the database rather than throwing an error.
 
  */
 public function inse(string $table, array $params = []) {
-    // Check if the parameters are associative and build the query accordingly
-    if (is_assoc($params)) {
+    // Check if 'name' exists in $params
+    if (isset($params['name'])) {
+        $uniqueName = $params['name'];
+
+        try {
+            // Check if an entry with the same 'name' already exists
+            $query = "SELECT id FROM $table WHERE name = ?";
+            $stmt = $this->_db->prepare($query);
+            $stmt->execute([$uniqueName]);
+
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($result && isset($result['id'])) {
+                // If the record exists, return its ID
+                return $result['id'];
+            }
+        } catch (PDOException $e) {
+            // Handle query errors during the check
+            echo "Database error during existence check: " . $e->getMessage() . "\n";
+            return false;
+        }
+    }
+
+    // If 'name' doesn't exist in $params or no matching record was found, proceed with the insert
+    try {
+        // Build the insert query
         $columns = implode(',', array_keys($params));
         $placeholders = implode(',', array_fill(0, count($params), '?'));
         $sql = "INSERT INTO $table ($columns) VALUES ($placeholders)";
         $params = array_values($params);  // Extract the values for prepared statement
-    } else {
-        // For non-associative arrays
-        $placeholders = implode(',', array_fill(0, count($params), '?'));
-        $sql = "INSERT INTO $table VALUES ($placeholders)";
-    }
 
-    // Try executing the query
-    try {
-        $res = $this->_db->prepare($sql);
-        $res->execute($params);
+        $stmt = $this->_db->prepare($sql);
+        $stmt->execute($params);
 
-        if ($res) {
-            return $this->_db->lastInsertId() ?: true;  // Return the last insert ID or true if no ID
-        }
-        return false;  // Return false in case of an error
+        // Return the last insert ID if successful
+        return $this->_db->lastInsertId() ?: true;
     } catch (PDOException $e) {
-        if ($e->getCode() == 23000) {
-            echo "Duplicate entry found. Entry was not added.";
-        } else {
-            echo "Database error occurred: " . $e->getMessage();
+        // Handle insert errors, including duplicate entry exceptions
+        if ($e->getCode() == 23000 && isset($params['name'])) {
+            // Duplicate entry for 'name', return existing ID
+            $query = "SELECT id FROM $table WHERE name = ?";
+            $stmt = $this->_db->prepare($query);
+            $stmt->execute([$params['name']]);
+
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($result && isset($result['id'])) {
+                return $result['id'];
+            }
         }
+
+        // Handle other errors
+        echo "Database error occurred during insert: " . $e->getMessage() . "\n";
+        return false;
     }
 }
+
+
     /*
     *Query Method replaces standard pdo query method
     Usage: with	INSERT, UPDATE, DELETE queries

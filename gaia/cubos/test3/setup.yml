@@ -1,0 +1,5 @@
+test3_cubo:
+  mains:
+    - test3main1
+    - test3main2
+  sql:

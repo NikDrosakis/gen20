@@ -319,6 +319,8 @@ protected function parse_systems_md($systems_content) {
 add switch-on param
 */
 protected function include_buffer(string $file, array $sel = [], array $params = []) {
+    $file = is_array($file) ? $file['key'] : $file;
+    if (file_exists($file)) {
     // Get the file extension
     $extension = pathinfo($file, PATHINFO_EXTENSION);
     // Handle PHP files with output buffering
@@ -328,7 +330,8 @@ protected function include_buffer(string $file, array $sel = [], array $params =
         }
         ob_start();
         // Include the file
-        include $file;
+
+                include $file;
 
         $output = ob_get_clean(); // Capture the output
         flush(); // Ensure all output is flushed
@@ -357,6 +360,26 @@ protected function include_buffer(string $file, array $sel = [], array $params =
     // Default: return raw content for unsupported formats
     else {
         return file_get_contents($file);
+    }
+    } else {
+                return "File $file not found";
+    }
+}
+protected function include_cubofile(string $file){
+$file = is_array($file) ? $file['key'] : $file;
+    $extension = pathinfo(CUBO_ROOT.$file, PATHINFO_EXTENSION);
+    // Handle PHP files with output buffering
+    if ($extension === 'php') {
+        if (ob_get_level()) {
+            ob_end_clean(); // Clears existing buffer
+        }
+        ob_start();
+        // Include the file
+        include CUBO_ROOT.$file;
+
+        $output = ob_get_clean(); // Capture the output
+        flush(); // Ensure all output is flushed
+        return $output;
     }
 }
 /**

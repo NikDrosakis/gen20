@@ -6,15 +6,16 @@
 #include <yaml-cpp/yaml.h>
 #include <nlohmann/json.hpp>
 #include "core/Yaml.h"
-//#include "core/ws.h"
+#include "core/Ws.h"
 //#include "core/Gredis.h"
 #include <thread>
 #include <map>
-#include <hiredis/hiredis.h>
+//#include <hiredis/hiredis.h>
 #include <string>
 #include <vector>
 #include <chrono>
 #include <functional>
+#include <boost/asio/io_context.hpp>
 
 int main(int argc, char* argv[]) {
     // Commented out the arguments section for now
@@ -39,23 +40,43 @@ int main(int argc, char* argv[]) {
     }
     gredis.close();
 */
-/*
-    // Connect & send message to WebSocket (Ermis)
-    try {
-        WebSocketClient ws_client;
-        std::cout << "Connecting to WebSocket..." << std::endl;
-        ws_client.connect();
-        std::cout << "Sending WebSocket message..." << std::endl;
-        ws_client.sendMessage();
 
-        // Give time for messages to send/receive
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        std::cout << "Closing WebSocket..." << std::endl;
-        ws_client.close();
+    // Connect & send message to WebSocket (Ermis)
+
+    try {
+        // Create an io_context
+        net::io_context ioc;
+
+        // Create a WebSocket client
+        Ws ws(ioc, "wss://vivalibro.com:3010/?userid=mars");
+
+        // Set up the message handler
+        ws.setOnMessageHandler([](const std::string& message) {
+            std::cout << "Received: " << message << std::endl;
+        });
+
+        // Connect to the server
+        ws.connect([](bool success) {
+            if (success) {
+                std::cout << "Connected to the server!" << std::endl;
+            } else {
+                std::cerr << "Failed to connect to the server!" << std::endl;
+            }
+        });
+
+        // Send a message
+        ws.sendMessage("PING");
+
+        // Run the io_context in a separate thread
+        std::thread ioc_thread([&ioc]() {
+            ioc.run();
+        });
+
+        // Keep the main thread alive
+        ioc_thread.join();
     } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << std::endl;
     }
-*/
     // Commented out YAML handling code
     // std::string filename = argv[1];
     // std::string table = argv[2];

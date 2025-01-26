@@ -58,14 +58,18 @@ cubo.name > yaml.maykey split _ 0
   3) check if has links if checked $this->db->inse($this->publicdb.".links",array); array= links.title= ucFirst(cubo.name)
   4) foreach yaml.mains  $this->db->inse($this->publicdb.".maincubo",array); array=maincubo.mainid=[insertedmainid],maincubo.area='m', maincubo.cuboid=yaml.id, maincubo.name=cubo.name
  */
+
+ /**
+  A setup.yml is started in a new folder with the basic configuration files
+  */
 protected function createCubo(string $name): bool|int {
-    // Create folder and files
+    //Step 1 -  Create folder and files
     $cuboDir = CUBO_ROOT . $name . '/';
     if (!mkdir($cuboDir, 0777, true)) {
         return false;
     }
 
-    // Create public.php
+    //Step 2 -  Create public.php
     $publicFilePath = $cuboDir . 'public.php';
     $publicContent = "<?php\n";
     $publicContent .= "// Auto-generated public.php file for cubo: $name\n\n";
@@ -74,7 +78,7 @@ protected function createCubo(string $name): bool|int {
         return false;
     }
 
-    // Create admin.php
+    //Step 3 -  Create admin.php
     $adminFilePath = $cuboDir . 'admin.php';
     $adminContent = "<?php\n";
     $adminContent .= "// Auto-generated admin.php file for cubo: $name\n\n";
@@ -83,76 +87,112 @@ protected function createCubo(string $name): bool|int {
         return false;
     }
 
-    // Create manifest.yaml
-    $manifestFilePath = $cuboDir . 'setup.yaml';
-    $manifestContent = "{$name}_cubo:\n";
-    $manifestContent .= "mains:\n";
-    $manifestContent .= "sql:\n";
-    if (file_put_contents($manifestFilePath, $manifestContent) === false) {
-        return false;
-    }
+// Step 4 - Create manifest.yaml
+$manifestFilePath = $cuboDir . 'setup.yml';
 
-    // Insert cubo into the database
-    $data = [
-        'name' => $name,
-        'description' => $description ?? "",
-    ];
-    $insert = $this->db->inse("gen_admin.cubo", $data);
+// Initialize YAML content
+$manifestContent = "{$name}_cubo:\n";
+$manifestContent .= "  mains:\n";
+$manifestContent .= "    # Add your main files here (indented correctly)\n";
+$manifestContent .= "  sql:\n";
+$manifestContent .= "    # Add your SQL files here (indented correctly)\n";
 
-    // Run shell command to set permissions
+// Write to the YAML file
+if (file_put_contents($manifestFilePath, $manifestContent) === false) {
+    echo "Error: Unable to create manifest file at $manifestFilePath\n";
+    return false;
+}
+
+
+    //Step 5 -  Run shell command to set permissions
     $command = 'chmod -R 755 ' . escapeshellarg($cuboDir);
     $result = $this->runShellCommand($command);
     if ($result['status'] !== 0) {
         throw new Exception('Permission setting failed: ' . $result['error']);
     }
 
-    return $insert;
+    return $result;
 }
 
+/**
+After edited the setup.yml file & the sql files are created
+ @setupCubo all db mains & sql installation
+ */
 protected function setupCubo($name = '') {
     $cuboDir = CUBO_ROOT . $name . '/';
     $setupPath = $cuboDir . 'setup.yml';
-
+        xecho(GLOB("$cuboDir*"));
     // Check if setup.yml exists
     if (!file_exists($setupPath)) {
         throw new Exception("Setup file not found for cubo: $name");
     }
-
     // Parse setup.yml
     $setup = yaml_parse_file($setupPath);
-    if (!$setup || !isset($setup['mains']) || !isset($setup['sql'])) {
-        throw new Exception("Invalid or missing setup data for cubo: $name");
-    }
-
-    $this->publicdb = "publicdb"; // Assuming this is your public database
     $cuboName = $name; // Use the cubo name directly
 
-    // Step 1: Process SQL scripts
-    if (!empty($setup['sql'])) {
-        foreach ($setup['sql'] as $sqlFile) {
-            $sqlFilePath = $cuboDir . 'sql/' . $sqlFile . '.sql';
-            if (file_exists($sqlFilePath)) {
-                $sql = file_get_contents($sqlFilePath);
-                $this->db->query($sql); // Execute the SQL file
+    //step 1: setup cubo table into the database
+        $sqls=!empty($setup['sql']) ? implode(',',$setup['sql']):'';
+        $mains=!empty($setup['main']) ? implode(',',$setup['main']):'';
+        $data = [
+            'name' => $name,
+            'tables' => $sqls,
+            'mains' => $mains
+        ];
+     $cuboId = $this->db->inse("gen_admin.cubo", $data);
+
+    // Step 2: Process SQL scripts
+if (!empty($setup['sql'])) {
+    foreach ($setup['sql'] as $sqlFile) {
+        $sqlFilePath = $cuboDir . 'sql/' . $sqlFile . '.sql';
+        // Ensure the file exists before running the MySQL command
+        if (file_exists($sqlFilePath)) {
+           $returnVar= $this->db->runSqlFile($sqlFilePath);
+            // Check for command success
+            if ($returnVar !== 0) {
+                echo "Error running SQL script: $sqlFilePath\n";
             } else {
-                throw new Exception("SQL file not found: $sqlFilePath");
+                echo "Successfully ran SQL script: $sqlFilePath\n";
             }
+        } else {
+            echo "SQL file not found: $sqlFilePath\n";
         }
     }
+}
 
-    // Step 2: Insert cubo metadata into `maingrp`
+// Step 3: Process Main PHP files
+if (!empty($setup['main'])) {
+    foreach ($setup['main'] as $mainFile) {
+        $mainFilePath = $cuboDir . $name . '/' . $mainFile . '.php';
+
+        // Create the file with an example if it doesn't already exist
+        if (!file_exists($mainFilePath)) {
+            $exampleContent = "<?php\n\n// Example content for $mainFile\n";
+            $exampleContent .= "// Generated on " . date('Y-m-d H:i:s') . "\n\n";
+            file_put_contents($mainFilePath, $exampleContent);
+
+            echo "Created file: $mainFilePath\n";
+        } else {
+            echo "File already exists: $mainFilePath\n";
+        }
+    }
+}
+    // Step 4: Insert cubo metadata into `maingrp`
     $maingrpData = [
-        'cuboid' => $this->db->lastInsertId(), // Assuming a cubo ID has been created
+        'cuboid' => $cuboId, // Assuming a cubo ID has been created
         'name' => $cuboName,
         'description' => $setup['description'] ?? ''
     ];
-    $insertedGrpId = $this->db->inse("$this->publicdb.maingrp", $maingrpData);
+    $maingrpGrpId = $this->db->inse("$this->publicdb.maingrp", $maingrpData);
+    if($maingrpGrpId){
+    echo "Inserted maincubo $maingrpGrpId";
+    }
 
-    // Step 3: Insert `mains` components into `main` table
+    // Step 5: Insert `mains` components into `main` table
     if (!empty($setup['mains'])) {
         foreach ($setup['mains'] as $main) {
             $mainData = [
-                'maingrpid' => $insertedGrpId,
+                'maingrpid' => $maingrpGrpId,
+                'mainplan' => '{"m":"'.$main.'"}',
                 'name' => $main
             ];
             $insertedMainId = $this->db->inse("$this->publicdb.main", $mainData);
@@ -164,21 +204,82 @@ protected function setupCubo($name = '') {
                 'cuboid' => $insertedGrpId,
                 'name' => $cuboName
             ];
-            $this->db->inse("$this->publicdb.maincubo", $mainCuboData);
+            $insertedMaincuboId = $this->db->inse("$this->publicdb.maincubo", $mainCuboData);
+            if($insertedMaincuboId){
+            echo "Inserted maincubo $insertedMaincuboId";
+            }
         }
     }
 
-    // Step 5: Insert links for admin.php if it exists
+// Step 6: Insert to admin/cubo navigation & mainplan of running in admin
     $adminFilePath = $cuboDir . 'admin.php';
     if (file_exists($adminFilePath)) {
+    // Step 5: Insert links for admin.php if it exists
         $linksData = [
-            'title' => ucfirst($cuboName),
-            'page' => "/cubos/$name/admin.php"
+            'alinksgrpid' => 5,
+            'name' => $name,
+            'title' => ucfirst($name),
+            'mainplan' => '{"1": {"include_cubofile": "'.$name.'/admin.php"}}'
         ];
-        $this->db->inse("$this->publicdb.links", $linksData);
+        $alinksId = $this->db->inse("gen_admin.alinks", $linksData);
+            if($alinksId){
+                    echo "Inserted alinks $alinksId";
+                    }
     }
 
     return true; // Return success
+}
+
+protected function totalDeleteCubo(string $name): bool {
+    // Validate input
+    if (empty($name)) {
+        echo "Error: Cubo name cannot be empty.\n";
+        return false;
+    }
+
+    // Directory paths
+    $cuboDir = CUBO_ROOT."$name/";
+
+    // Step 1: Delete files and directories
+    if (is_dir($cuboDir)) {
+        if (!delTree($cuboDir)) {
+            echo "Error: Failed to delete directory $cuboDir.\n";
+            return false;
+        }
+        echo "Directory $cuboDir deleted successfully.\n";
+    } else {
+        echo "Directory $cuboDir does not exist.\n";
+    }
+
+    // Step 2: Delete related database entries
+    try {
+        $this->db->q("DELETE FROM {$publicdb}.maingrp WHERE name = ?", [$name]);
+        $this->db->q("DELETE FROM gen_admin.cubo WHERE name = ?", [$name]);
+        $this->db->q("DELETE FROM gen_admin.alinks WHERE name = ?", [$name]);
+
+        echo "Database entries for `$name` deleted successfully.\n";
+    } catch (PDOException $e) {
+        echo "Error deleting database entries for `$name`: " . $e->getMessage() . "\n";
+        return false;
+    }
+
+    // Step 3: Drop the database (if applicable)
+    try {
+        if ($this->drop("$name", 'table')) {
+            echo "Database `$name` dropped successfully.\n";
+        } else {
+            echo "Failed to drop table `$name`.\n";
+        }
+    } catch (InvalidArgumentException $e) {
+        echo "Error: " . $e->getMessage() . "\n";
+        return false;
+    } catch (PDOException $e) {
+        echo "Database error: " . $e->getMessage() . "\n";
+        return false;
+    }
+
+    echo "Total deletion of Cubo `$cubo` completed successfully.\n";
+    return true;
 }
 
 
