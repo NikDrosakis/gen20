@@ -1,9 +1,0 @@
-test2_cubo:
-  mains:
-    - test1_main
-    - test2_main
-  sql:
-
-
-
-

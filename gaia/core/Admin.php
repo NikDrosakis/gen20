@@ -403,13 +403,10 @@ protected function mainPlanAdminEditor($name,$alinks=[]){
             $html .= '<iframe id="sandbox" src="'.$params.'" width="100%" height="1000px" sandbox="allow-scripts allow-same-origin allow-forms" style="border:1px solid black;"></iframe>';
             break;
          //fs
+        case 'include_cubo':
         case 'include_buffer':
             $params = $this->ADMIN_ROOT . $params . ".php";
-            if (file_exists($params)) {
-                $html .= $this->{$method}($params);
-            } else {
-                $html .= "File not found in $params";
-            }
+            $html .= $this->{$method}($params);
             break;
         default:
             $html .= $this->{$method}($params);
