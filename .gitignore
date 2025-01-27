@@ -15,16 +15,15 @@ log/
 media/
 template/
 backup/
-core/test/
+
 # Ignore everything in public/
-public/*
-
+gaia/public/*
 # Allow these specific folders
-!public/_phpdomain.local/
-!public/_reactdomain.local/
-
+!gaiapublic/_phpdomain.local/
+!gaia/public/_reactdomain.local/
 # Ignore node_modules inside public/_reactdomain.local
-public/_reactdomain.local/node_modules/
+gaia/public/_reactdomain.local/node_modules/
+
 setup/
 vendor/
 rus/target/

@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
          // Binlog processing
                 std::string binlogFile = "/var/log/mysql/mysql-bin.000001"; // Replace with your binlog file
                 std::function<void(const std::string&)> binlogCallback = [&](const std::string& event) {
-                    std::cout << "Binlog Event: " << event << std::endl;
+              //      std::cout << "Binlog Event: " << event << std::endl;
                     // Process the binlog event and write to the filesystem
                     // Example:
                     std::string fileContent = "Data from binlog: " + event;
@@ -140,12 +140,12 @@ int main(int argc, char* argv[]) {
            std::cout << "Extracted Event Path: " << eventPath << std::endl; // Log the extracted path
 
            // Specific setup.yaml logic
-           if (eventPath == "setup.yaml") {
+           if (eventPath == "setup.yml") {
                 Cubo cubo("gen_vivalibrocom");
-               if (!cubo.setupCubo("test2")) {
-                   std::cerr << "Failed to process setup for: test2" << std::endl;
+               if (!cubo.setupCubo("test")) {
+                   std::cerr << "Failed to process setup for: test" << std::endl;
                } else {
-                   std::cout << "Setup processed successfully for: test2" << std::endl;
+                   std::cout << "Setup processed successfully for: test" << std::endl;
                }
            }
        };
