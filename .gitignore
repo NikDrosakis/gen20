@@ -19,7 +19,7 @@ backup/
 # Ignore everything in public/
 gaia/public/*
 # Allow these specific folders
-!gaiapublic/_phpdomain.local/
+!gaia/public/_phpdomain.local/
 !gaia/public/_reactdomain.local/
 # Ignore node_modules inside public/_reactdomain.local
 gaia/public/_reactdomain.local/node_modules/
