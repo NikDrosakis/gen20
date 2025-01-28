@@ -72,7 +72,7 @@ that's the return format
          $response['success']=true;
          $response['data']= $this->db->f("SELECT * FROM $table WHERE id=?",array($this->id));
 */
- protected function runAction(array $params = []): array{
+ protected function runAction(array $params = []){
         $action = $params['key'];
         //this is one action later execute a plan (series of actions)
         try {
@@ -94,6 +94,7 @@ that's the return format
 
             $startTime = microtime(true);
             $result = $this->executeAction($record);
+
             $endTime = microtime(true);
             $exeTime = ($endTime - $startTime) * 1000; // in milliseconds
 
@@ -340,14 +341,11 @@ protected function fetchUrl(string $url, array $options = []): array{
                 'body' => $options['body'] ?? null,
             ]
         );
-
         $statusCode = $response->getStatusCode();
     //    echo "Status Code: {$statusCode}\n";
-
         if ($statusCode >= 200 && $statusCode < 300) {
             $contentType = $response->getHeaderLine('Content-Type');
          //   echo "Content-Type: {$contentType}\n";
-
             if (strpos($contentType, 'application/json') !== false) {
                 $body = json_decode($response->getBody(), true);
               //  echo "Response Body: " . json_encode($body) . "\n";
@@ -454,7 +452,7 @@ protected function getNextIntervalTime(array $actions): int
     return min($intervalTimes);
 }
 
-protected function executeAction(array $rec): ?array{
+protected function executeAction(array $rec){
     try {
         switch ($rec['type']) {
             case 'local':
@@ -572,11 +570,11 @@ protected function buildAI(array $rec): bool
         if ($method === 'POST') {
             return "--> Processing AI POST request to: {$url}\n";
             try {
-                $payload = json_decode($rec['payload'] ?? '{}', true);
+                $payload = json_decode($rec['body'] ?? '{}', true);
                 $response = $this->fetchUrl($url, [
                     'method' => 'POST',
-                    'headers' => ['Content-Type' => 'application/json'],
-                    'body' => json_encode($payload),
+                    'headers' => $this->renderHead($rec),
+                    'body' => $this->renderBody($rec),
                 ]);
                 return "{$rec['name']} AI responded with data: " . json_encode($response) . "\n";
                 return true;
@@ -593,51 +591,50 @@ protected function buildAI(array $rec): bool
         return false;
     }
 }
+
 function renderBody(array $rec): string {
-    // Check if the body params are available in the 'params' field
-    if (isset($rec['params']) && !empty($rec['params'])) {
-        // Decode the JSON body params
-        // Fix: Add double quotes to keys in the JSON string
-        $jsonString = preg_replace('/([a-zA-Z0-9_]+):/i', '"$1":', $rec['params']);
+    // Check if the 'params' field exists and is not empty
+    if (isset($rec['body']) && !empty($rec['body'])) {
+        // Decode the JSON body params after fixing unquoted keys
+        $jsonString = preg_replace('/([a-zA-Z0-9_]+):/i', '"$1":', $rec['body']);
         $bodyParams = json_decode($jsonString, true);
-        // Handle JSON decode errors
+
+        // Handle JSON decoding errors for 'params'
         if ($bodyParams === null && json_last_error() !== JSON_ERROR_NONE) {
             error_log("Error decoding JSON params: " . json_last_error_msg());
-            return ""; // or return a default value or error message
+            return ""; // Return empty string or handle error as needed
         }
-        if ($bodyParams === null) {
-            error_log("Error decoding JSON params: json_decode returned null");
-            return "";
-        }
-        // Get the keys for replacement from the 'keys' field
+
+        // Decode the 'keys' field as a JSON object
         $keyValuePairs = [];
-        if (isset($rec['keys'])) {
-            foreach (explode(',', $rec['keys']) as $pair) {
-                if (strpos($pair, '=') !== false) {
-                    [$key, $value] = explode('=', $pair, 2);
-                    $keyValuePairs[$key] = $value;
-                }
+        if (isset($rec['keys']) && !empty($rec['keys'])) {
+            $keyValuePairs = json_decode($rec['keys'], true);
+
+            // Handle JSON decoding errors for 'keys'
+            if ($keyValuePairs === null && json_last_error() !== JSON_ERROR_NONE) {
+                error_log("Error decoding JSON keys: " . json_last_error_msg());
+                return ""; // Return empty string or handle error as needed
             }
         }
-        // Iterate through the body params and replace variables with actual values
+
+        // Replace variables in the JSON body params with actual values
         array_walk_recursive($bodyParams, function (&$value) use ($keyValuePairs) {
-            if (is_string($value)) {
-                // If the value contains curly braces, replace with the actual value from $keyValuePairs
-                if (preg_match('/\{([^}]+)\}/', $value, $matches)) {
-                    $varName = $matches[1];
-                    if (isset($keyValuePairs[$varName])) {
-                        $value = $keyValuePairs[$varName];
-                    }
+            if (is_string($value) && preg_match('/\{([^}]+)\}/', $value, $matches)) {
+                $varName = $matches[1];
+                if (isset($keyValuePairs[$varName])) {
+                    $value = $keyValuePairs[$varName];
                 }
             }
         });
 
         // Return the rendered JSON body as a string
-        return json_encode($bodyParams);
+    return json_encode($bodyParams, JSON_UNESCAPED_UNICODE);
     }
 
-    return ""; // Return empty string if params is not set or empty
+    // Return an empty string if 'params' is not set or empty
+    return "";
 }
+
  protected function parseHeader(string $headerString): array {
         $headers = [];
         $headerString = trim($headerString);
@@ -727,28 +724,46 @@ function renderBody(array $rec): string {
         return []; // Return empty array if header is not set or empty
     }
 
-    protected function renderKeys(array $rec): string {
-        // Get api keys from actiongrp.keys
-        $keyValuePairs = [];
-        if (isset($rec['keys'])) {
-            $keyValuePairs = json_decode($rec['keys'], true);
-            if ($keyValuePairs === null && json_last_error() !== JSON_ERROR_NONE) {
-                error_log("Error decoding JSON keys: " . json_last_error_msg());
-                $keyValuePairs = []; // Reset to empty array on error
-            }
-        }
-
-        // Handle URL replacement
-        $rawurl = $rec['url'];
-        try {
-            $url = $this->parseUrl($rawurl);
-            $url['query'] = $this->replacePlaceholders($url['query'], $keyValuePairs);
-            return $this->buildUrl($url);
-        } catch (Exception $e) {
-            return "✗  Error in render keys: " . $e->getMessage() . " " . $rawurl . " " . json_encode($rec) . "\n";
-            return $rawurl;
+protected function renderKeys(array $rec): string {
+    // Get API keys from actiongrp.keys
+    $keyValuePairs = [];
+    if (isset($rec['keys'])) {
+        $keyValuePairs = json_decode($rec['keys'], true);
+        if ($keyValuePairs === null && json_last_error() !== JSON_ERROR_NONE) {
+            error_log("Error decoding JSON keys: " . json_last_error_msg());
+            $keyValuePairs = []; // Reset to empty array on error
         }
     }
+
+    // Handle URL, header, and body replacements
+    try {
+        // Replace in URL
+        $rawurl = $rec['url'];
+        $url = $this->parseUrl($rawurl);
+        $url['query'] = $this->replacePlaceholders($url['query'] ?? '', $keyValuePairs);
+
+        // Replace in headers
+        $rawHeaders = isset($rec['header']) ? json_decode($rec['header'], true) : [];
+        $headers = [];
+        foreach ($rawHeaders as $key => $value) {
+            $headers[$key] = $this->replacePlaceholders($value, $keyValuePairs);
+        }
+
+        // Replace in body
+        $rawBody = isset($rec['body']) ? $rec['body'] : '';
+        $body = $this->replacePlaceholders($rawBody, $keyValuePairs);
+
+        return json_encode([
+            'url' => $this->buildUrl($url),
+            'headers' => $headers,
+            'body' => $body,
+        ]);
+    } catch (Exception $e) {
+        error_log("✗ Error in renderKeys: " . $e->getMessage());
+        return "✗ Error in renderKeys: " . $e->getMessage();
+    }
+}
+
 /*
 protected function buildUrl(array $urlParts): string
 {
@@ -809,7 +824,7 @@ protected function runExternalRecource(array $rec){
         $method = $rec['method'];
 
         // when relying on other APIs than gaia calls, then internally using systems.apiprefix
-        if ($rec['apext'] || in_array($rec['systemName'], ['apiv1', 'vivalibrocom', 'admin'])) {
+        if ($rec['type']=="apext" || $rec['type']=="generate" || in_array($rec['systemName'], ['apiv1', 'vivalibrocom', 'admin'])) {
             $rawurl = $rec['url'];
             $url = $this->renderKeys($rec);
         } else {
@@ -826,13 +841,17 @@ protected function runExternalRecource(array $rec){
                 if ($method === 'POST') {
                     // Prepare the body data for POST requests
                     // $bodyData = $this->renderKeysString(json_encode($rec['body'] ?? []), $rec);
+
                     $bodyData = $this->renderBody($rec);
-                    $options['headers'] =$this->renderHead($rec);
+
+                   $options['headers'] = $this->renderHead($rec);
+
                     $options['body'] = $bodyData;
                 }
+//xecho( $rec['endpoint_rendered']);
 
                 // Perform the request
-                $response = $this->fetchUrl($url, $options);
+                $response = $this->fetchUrl($rawurl, $options);
 
                 // Return the response if successful
                 return $response;

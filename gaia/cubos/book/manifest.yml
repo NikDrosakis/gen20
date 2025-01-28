@@ -1,12 +1,13 @@
 ---
 book_cubo:
-  id: 26
-  sort: 0
+  description: "Main cubo of vivalibro"
+  mains: [book, publisher, lib, categories, writer]
+  tables: [cat, lib, libuser, publisher, rating, writer]
   img: https://vivalibro.com/cubos/book/output_book.png
   name: book
   path: cubos/book
-  pages: book,publisher,lib,categories, writer
-  description: main cubo of vivalibro
+  id: 26
+  sort: 0
   template:
     book: |-
       .card.archive-row
@@ -114,15 +115,7 @@ book_cubo:
   todo: ~
   version: "0.00"
   status: 0
-  tables:
-  - cat
-  - lib
-  - libuser
-  - publisher
-  - rating
-  - writer
   actions: ~
-  has_maria: ~
   has_admin: 0
   valuability: 0
   flag: 0
@@ -131,8 +124,6 @@ book_cubo:
   total_duration: 0
   created: "2024-12-03 01:06:46"
   modified: "2025-01-07 11:23:35"
-  hasPage: 0
-  isSub: 0
   branch: ~
   doc: ~
   meta: ~

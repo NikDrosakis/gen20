@@ -1,4 +1,6 @@
 # Ignore environment files
+#changing this file I apply git rm -r --cached /folderchanged
+#then git add . && git commit -m "changed" && git push
 .env
 .vscode
 # Python cache files

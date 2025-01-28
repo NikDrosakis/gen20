@@ -20,6 +20,7 @@ cohere==5.9.4
 dataclasses-json==0.6.7
 decorator==5.1.1
 defusedxml==0.7.1
+deepseek
 distro==1.9.0
 docopt==0.6.2
 docstring_parser==0.16

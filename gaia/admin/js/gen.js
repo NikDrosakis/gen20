@@ -834,6 +834,14 @@ SET SHORT DEFAULT
                 case "gemini": rt= "gemini/conversation"; pms={ user_input: params }; break;
                 case "cohere": rt= "cohere/chat"; pms={ user_input: params }; break;
                 case "transformers": rt= "transformers/generate"; pms={ prompt: params }; break;
+                case "deepseek":
+                    rt= "deepseek/generate-text";
+                    if (typeof params === 'string' && params.trim().length > 0) {
+                        pms = { prompt: params }; // Ensure 'prompt' is a string and not empty
+                    } else {
+                        throw new Error("Invalid or empty prompt provided for DeepSeek");
+                    }
+                    break;
                 case "gptneo": rt= "gptneo/chat"; pms={ message: params }; break;
                 case "claude": rt= "claude/conversations/4395a9f5-0f9d-4a0f-9fd9-9085bc65924d/messages"; pms={ content: params }; break;
                 default: rt= route; pms={ message: params }; break;
@@ -961,7 +969,6 @@ actions = [
                     method: 'GET',
                     headers: {'Content-Type': 'application/json',}
                 });
-
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
@@ -975,7 +982,6 @@ actions = [
                 } else {
                     result = await response.text(); // Handle HTML response
                     console.log("HTML result:", result);
-
                 }
                 return result;
             } catch (error) {
@@ -1047,7 +1053,7 @@ actions = [
         }
     },
     //TODO gen.js:977 Error updating content: SyntaxError: Unexpected token '✗', "✗  Action "... is not valid JSON
-    run:async function (name, func, appendid,params={}) {
+    run:async function (name, func, appendid, params={}) {
         try {
             const next_state = gs.local("stored_state_"+name) ?? 0;
             const requestParams = {
@@ -1067,7 +1073,6 @@ actions = [
             if (getResult) {
                 if (getResult.data) {
                     success = true;
-
                     content = `✔️ ${gs.clipboard_copy} Action "${name}" completed successfully.`;
                     if (getResult.data.message) {
                         content += ` Message: ${getResult.data.message}`;
@@ -1219,7 +1224,7 @@ actions = [
             console.log(tableName);
 
             // Get the name value from the input field dynamically (based on tableName)
-            const nameValue = document.getElementById(tableName + '_name').value;  // Assuming your input has an ID like 'domain_name'
+            const nameValue = document.getElementById(tableName + '_name').value;  // ID like 'domain_name'
             console.log(nameValue);
             console.log(G.subparent[tableName]);
 

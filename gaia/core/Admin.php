@@ -238,6 +238,11 @@ protected function produce6channel($name,$ch,$page,$type,$mainplan){
    // }else{
 
            $html .= $this->mainPlanAdminEditor($name);
+           //include subfile if exists
+           $sub=$this->ADMIN_ROOT . "main/".$this->sub . ".php";
+           if(file_exists($sub)){
+               include($sub);
+           }
    // }
 
 /*
@@ -280,7 +285,9 @@ protected function produce6channel($name,$ch,$page,$type,$mainplan){
     return $html;
  }
 
-
+/**
+TODO channel has to disconnect from G.page
+ */
 protected function channelDispatch() {
    // $channels=$this->layouts[$this->layout_selected]['channels'];
     //this is for 6 channels
@@ -320,16 +327,13 @@ if($this->sub==''){
       $name=$this->sub;
 
       $html .= $this->channelRender($name,1,$this->mainplan());
-
     //  $html .= '<script>gs.ui.sort(`UPDATE ${G.mainplan} SET sort=? WHERE id = ?`, "list", G.mainplan);</script>';
       //add notification bar
     //  $html .= $this->channelRenderFile($this->notification_file,2);
       //add doc bar if type==table select doc FROM gen_admin.table with form input
    //   $html .= $this->channelRenderFile($this->notification_file,3);
            //channel doc
-
       //$html .= $this->channelRenderDoc($name);
-
       return $html;
     }
 }
@@ -377,22 +381,22 @@ protected function navigate() {
     return $this->G['apages'];
 }
 
-    protected function alinkss() {
-        $widgets = read_folder($this->G['WIDGETURI']);
-		$subs=array();
-         foreach ($widgets as $wid) {
-            if (file_exists($this->G['WIDGETURI'] . $wid . "/admin.php")) {
-                $subs[$wid] = ["slug" => ucfirst($wid), "icon" => "time"];
-            }
+protected function alinks() {
+    $widgets = read_folder($this->G['WIDGETURI']);
+    $subs=array();
+     foreach ($widgets as $wid) {
+        if (file_exists($this->G['WIDGETURI'] . $wid . "/admin.php")) {
+            $subs[$wid] = ["slug" => ucfirst($wid), "icon" => "time"];
         }
-        return $subs;
     }
+    return $subs;
+}
 
 protected function mainPlanAdminEditor($name,$alinks=[]){
     if(empty($alinks)){
      $alinks = $this->db->f("SELECT * FROM gen_admin.alinks WHERE name=?",[$name]);
      }
-     $plan= json_decode($alinks['mainplan'],true) ?? $alinks['mainplan'];
+     $plan= $alinks['mainplan'] ? json_decode($alinks['mainplan'],true) : $alinks['mainplan'];
      $html = $this->renderFormField("mainplan",["type"=>"json","comment"=>"json","table"=>"gen_admin.alinks","id"=>$alinks['id']],$alinks['mainplan']);
      //execute the plan to be included in core.Action switch cases
      foreach($plan as $step => $action){
@@ -403,11 +407,10 @@ protected function mainPlanAdminEditor($name,$alinks=[]){
             $html .= '<iframe id="sandbox" src="'.$params.'" width="100%" height="1000px" sandbox="allow-scripts allow-same-origin allow-forms" style="border:1px solid black;"></iframe>';
             break;
          //fs
-        case 'include_cubo':
-        case 'include_buffer':
-            $params = $this->ADMIN_ROOT . $params . ".php";
-            $html .= $this->{$method}($params);
-            break;
+        //case 'include_buffer':
+          //  $params = $this->ADMIN_ROOT . $params . ".php";
+           // $html .= $this->{$method}($params);
+            //break;
         default:
             $html .= $this->{$method}($params);
             break;
