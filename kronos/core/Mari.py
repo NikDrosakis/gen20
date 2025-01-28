@@ -1,318 +1,175 @@
-import asyncio
 from typing import Union, List, Dict, Optional
 import mariadb
-from fastapi import APIRouter, HTTPException, Request
-import json
+import logging
 from config import settings
-from action import add
 
-router = APIRouter()
-actiongrp = "maria"
-a = []
+# Configure logging
+logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class Mari:
-    def __init__(self, database: str = None):
-        # Default database is None if not provided
-        self.config = {
-            "host": "localhost",
-            "user": "root",
-            "password": "n130177!",
-            "autocommit":True,
-        }
-        # If a database is provided, add it to the config
-        if database:
-            self.config["database"] = database
-
-        # Establish the connection
-        self._db = self.maria_con()
-        self.cursor = self._db.cursor(dictionary=True)
-
-    def maria_con(self):
+    def __init__(self):
         try:
-            connection = mariadb.connect(**self.config)
-            if "database" in self.config:
-                print(f"Connecting successful to database: {self.config['database']}...")
-            else:
-                print("Connecting successful without specifying a database...")
-            return connection
-        except Exception as error:
-            print(f"Error connecting to the database: {error}")
-            raise  # Re-raise the exception for FastAPI to handle
+            # Default database is None if not provided
+            self.config = mariadb.connect(
+                user=settings.DB_USER,
+                password=settings.DB_PASS,
+                host=settings.DB_HOST,
+                port=3306
+            )
+            # Establish the connection and create a cursor
+            self._db = self.config.cursor()
+            logging.info("Connection successful!")
+        except mariadb.Error as e:
+            logging.error(f"Error connecting to MariaDB: {e}")
+            self._db = None
+            self.config = None
 
     def close(self):
+        """Ensure the cursor and connection are properly closed."""
         if self._db:
             self._db.close()
-            print("Database connection closed.")
+        if self.config:
+            self.config.close()
 
-    # 1. Show Databases
-    a.append({
-        "actiongrp": actiongrp,
-        "name": "maria_show_databases",
-        "description": "Fetch all databases.",
-        "meta": "show_databases",
-        "endpoint": "/databases",
-        "method": "GET",
-        "params": json.dumps({})
-    })
-    @router.get("/databases")
-    async def show_databases_endpoint():
-        """Fetch all databases."""
-        try:
-            maria = Maria()
-            databases = maria.show_databases()
-            return {"databases": databases}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error fetching databases: {e}")
+    def __del__(self):
+        """Destructor to close connection if not already done."""
+        self.close()
 
-    def show_databases(self) -> List[str]:
-        """Fetch all databases."""
+    def audit(self, interval_minutes: int = 5) -> Optional[List[Dict]]:
         try:
-            with self._db.cursor(dictionary=True) as cursor:
-                cursor.execute("SHOW DATABASES")
-                return [db['Database'] for db in cursor.fetchall()]
-        except mariadb.Error as err:
-            print(f"Error fetching databases: {err}")
-            return []
-
-    # 2. Get Tables
-    a.append({
-        "actiongrp": actiongrp,
-        "name": "maria_get_tables",
-        "description": "Get a list of all tables and their corresponding databases.",
-        "meta": "tables",
-        "endpoint": "/tables",
-        "method": "GET",
-        "params": json.dumps({})
-    })
-    @router.get("/tables")
-    async def get_tables_endpoint():
-        """Get a list of all tables and their corresponding databases."""
-        try:
-            maria = Maria()
-            tables_with_dbs = maria.tables()
-            return {"tables_with_dbs": tables_with_dbs}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error retrieving tables with databases: {e}")
-
-    def tables(self):
-        """Get a list of all tables and their corresponding databases."""
-        try:
-            self.cursor.execute("""
-                SELECT TABLE_NAME, TABLE_SCHEMA
-                FROM information_schema.TABLES WHERE
-            """)
-            # Fetch all tables and schemas into a dictionary
-            tables_with_dbs = {}
-            for row in self.cursor.fetchall():
-                tables_with_dbs[row['TABLE_NAME']] = row['TABLE_SCHEMA']
-            return tables_with_dbs
-        except Exception as error:
-            print(f"Error retrieving tables with databases: {error}")
-            return {}
-
-    # 3. Get Audit Logs
-    a.append({
-        "actiongrp": actiongrp,
-        "name": "maria_get_audit_logs",
-        "description": "Get audit logs.",
-        "meta": "audit",
-        "endpoint": "/audit",
-        "method": "GET",
-        "params": json.dumps({})
-    })
-    @router.get("/audit")
-    async def get_audit_logs_endpoint():
-        """Get audit logs."""
-        try:
-            maria = Maria()
-            results = maria.audit()
-            return {"audit_logs": results}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error fetching audit logs: {e}")
-
-    #Function to get audit logs
-    def audit(self):
-        try:
-            query = """
+            query = f"""
                 SELECT * FROM mysql.audit_log
-                WHERE timestamp >= NOW() - INTERVAL 5 MINUTE;
+                WHERE timestamp >= NOW() - INTERVAL {interval_minutes} MINUTE;
             """
-            self.cursor.execute(query)
-            results = self.cursor.fetchall()
+            self._db.execute(query)
+            results = self._db.fetchall()
             return results
         except Exception as error:
-            print(f"Error fetching audit logs: {error}")
+            logging.error(f"Error fetching audit logs: {error}")
             return None
-        finally:
-            self.cursor.close()
-            self._db.close()
 
-    # 4. Get Table Metadata
-    a.append({
-        "actiongrp": actiongrp,
-        "name": "maria_get_table_meta",
-        "description": "Retrieves metadata information for a table.",
-        "meta": "table_meta",
-        "endpoint": "/table_meta/{table_name}",
-        "method": "GET",
-        "params": json.dumps({})
-    })
-    @router.get("/table_meta/{table_name}")
-    async def get_table_meta_endpoint(table_name: str):
-        """
-        Retrieves metadata information for a table from `information_schema`.
-        This includes column name, type, nullability, default value, key, extra info, and comments.
-        """
+    def inse(self, table: str, params: dict, id: Optional[int] = None) -> Optional[int]:
         try:
-            maria = Maria()
-            table_metadata = maria.table_meta(table_name)
-            if table_metadata is None:
-                raise HTTPException(status_code=404, detail=f"Table {table_name} not found.")
-            return {"table_metadata": table_metadata}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error retrieving table metadata: {e}")
+            columns = ', '.join(params.keys())
+            placeholders = ', '.join(['%s'] * len(params))
+            values = list(params.values())
 
-    def table_meta(self, table_name: str):
-            """
-            Retrieves metadata information for a table from `information_schema`.
-            This includes column name, type, nullability, default value, key, extra info, and comments.
-            """
-            # Split table_name into schema and table if it contains a dot
-            exp = table_name.split(".")
+            if id is not None:
+                columns = 'id, ' + columns
+                placeholders = '%s, ' + placeholders
+                values.insert(0, id)
 
-            if len(exp) == 2:
-                db, table = exp
-            else:
-                print("Invalid table name format. Expected 'database_name.table_name'")
-                return None
-
-            query = """
-                SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT,
-                       COLUMN_KEY, EXTRA, COLUMN_COMMENT
-                FROM information_schema.COLUMNS
-                WHERE TABLE_SCHEMA = %s
-                AND TABLE_NAME = %s
-            """
-
-            try:
-                self.cursor.execute(query, (db, table))
-                result = self.cursor.fetchall()
-                return result  # Returns a list of dictionaries containing metadata
-            except Exception as e:
-                print(f"Error retrieving table metadata: {e}")
-                return None
-
-    def fjsonlist(self, query: str) -> list:
-        res = self.fa(query)
-        if not res:
-            return []
-        tags = []
-        for row in res:
-            if row.get('json') != '[]':
-                jsdecod = json.loads(row['json'])
-                if jsdecod:
-                    for val in jsdecod.values():
-                        tags.append(val.strip())
-        return tags
-
-    def inse(self, table: str, params: dict, id: Optional[int] = None) -> Union[int, bool]:
-        columns = ', '.join(params.keys())
-        placeholders = ', '.join(['%s'] * len(params))
-        values = list(params.values())
-
-        if id is not None:
-            columns = 'id, ' + columns
-            placeholders = '%s, ' + placeholders
-            values.insert(0, id)
-        sql = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
-        cursor = self._db.cursor()
-        cursor.execute(sql, values)
-        self._db.commit()
-        last_id = cursor.lastrowid
-        cursor.close()
-        return last_id if last_id else True
+            sql = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
+            self._db.execute(sql, values)
+            self._db.commit()
+            last_id = self._db.lastrowid
+            return last_id
+        except Exception as error:
+            logging.error(f"Error inserting data into {table}: {error}")
+            return None
 
     def listTables(self) -> list:
-        cursor = self._db.cursor()
-        cursor.execute("SHOW TABLES")
-        return [table[0] for table in cursor.fetchall()]
+        try:
+            self._db.execute("SHOW TABLES")
+            return [table[0] for table in self._db.fetchall()]
+        except Exception as error:
+            logging.error(f"Error listing tables: {error}")
+            return []
 
     def types(self, table: str) -> dict:
-        cursor = self._db.cursor()
-        cursor.execute(f"SELECT * FROM {table} LIMIT 1")  # Fetch one row to get column types
-        result = {}
-        for desc in cursor.description:
-            result[desc[0]] = desc[1]
-        cursor.close()
-        return result
+        try:
+            self._db.execute(f"SELECT * FROM {table} LIMIT 1")
+            result = {desc[0]: desc[1] for desc in self._db.description}
+            return result
+        except Exception as error:
+            logging.error(f"Error fetching column types for {table}: {error}")
+            return {}
 
     def comments(self, table: str) -> dict:
-        cursor = self._db.cursor()
-        cursor.execute(f"SHOW FULL COLUMNS FROM {table}")
-        result = {column[0]: column[8] for column in cursor.fetchall()}
-        cursor.close()
-        return result
+        try:
+            self._db.execute(f"SHOW FULL COLUMNS FROM {table}")
+            result = {column[0]: column[8] for column in self._db.fetchall()}
+            return result
+        except Exception as error:
+            logging.error(f"Error fetching column comments for {table}: {error}")
+            return {}
 
     def char_types(self, table: str) -> list:
         types = self.types(table)
-        return [col for col, type_ in types.items() if type_ in (253, 254, 252)]  # VARCHAR, CHAR, BLOB
+        VARCHAR = 253
+        CHAR = 254
+        BLOB = 252
+        return [col for col, type_ in types.items() if type_ in (VARCHAR, CHAR, BLOB)]
 
     def fa(self, query: str, params: tuple = ()) -> list:
-        cursor = self._db.cursor(dictionary=True)
-        cursor.execute(query, params)
-        result = cursor.fetchall()
-        cursor.close()
-        return result
+        try:
+            self._db.execute(query, params)
+            return self._db.fetchall()
+        except Exception as error:
+            logging.error(f"Error fetching all data with query: {query} and params: {params}: {error}")
+            return []
 
-    def f(self, q: str, params: tuple = ()) -> Union[dict, bool]:
-        cursor = self._db.cursor(dictionary=True)  # Use dictionary cursor for easy access
-        cursor.execute(q, params)
-        result = cursor.fetchone()
-        cursor.close()
-        return result
+    def f(self, q: str, params: tuple = ()) -> Union[dict, None]:
+        try:
+            self._db.execute(q, params)
+            return self._db.fetchone()
+        except Exception as error:
+            logging.error(f"Error fetching one row with query: {q} and params: {params}: {error}")
+            return None
 
     def q(self, q: str, params: tuple = ()) -> bool:
-        cursor = self._db.cursor()
-        cursor.execute(q, params)
-        self._db.commit()
-        return bool(cursor.rowcount)
+        try:
+            self._db.execute(q, params)
+            self._db.commit()
+            return bool(self._db.rowcount)
+        except Exception as error:
+            logging.error(f"Error executing query: {q} and params: {params}: {error}")
+            return False
 
-    def counter(self, query: str, params: tuple = ()) -> int:
-        cursor = self._db.cursor()
-        cursor.execute(query, params)
-        count = cursor.fetchone()[0]  # Fetch the count
-        cursor.close()
-        return count
+    def counter(self, query: str, params: tuple = ()) -> Optional[int]:
+        try:
+            self._db.execute(query, params)
+            return self._db.fetchone()[0]
+        except Exception as error:
+            logging.error(f"Error fetching count with query: {query} and params: {params}: {error}")
+            return None
 
     def columns(self, table: str, list_: bool = False) -> Union[list, dict]:
-        cursor = self._db.cursor(dictionary=True if not list_ else False)
-        cursor.execute(f"DESCRIBE {table}")
-        result = cursor.fetchall()
-        cursor.close()
-        return result if not list_ else [column[0] for column in result]
+        try:
+            self._db.execute(f"DESCRIBE {table}")
+            result = self._db.fetchall()
+            return result if not list_ else [column[0] for column in result]
+        except Exception as error:
+            logging.error(f"Error fetching columns for {table}: {error}")
+            return [] if list_ else {}
 
-    def fGroup(self, query: str) -> dict:
-        cursor = self._db.cursor(dictionary=True)
-        cursor.execute(query)
-        result = {}
-        for row in cursor.fetchall():
-            key = row.pop(list(row.keys())[0])  # Get the first key and remove it
-            result.setdefault(key, []).append(row)
-        cursor.close()
-        return result
+    def fGroup(self, query: str, group_key: Optional[str] = None) -> dict:
+        try:
+            self._db.execute(query)
+            result = {}
+            for row in self._db.fetchall():
+                key = row.pop(group_key, None) if group_key else row.pop(list(row.keys())[0], None)
+                if key is not None:
+                    result.setdefault(key, []).append(row)
+            return result
+        except Exception as error:
+            logging.error(f"Error fetching grouped results with query: {query}: {error}")
+            return {}
 
     def fList(self, rows: Union[str, list], table: str, clause: str = '') -> list:
-        rows_str = rows if isinstance(rows, str) else ', '.join(rows)
-        cursor = self._db.cursor()
-        cursor.execute(f"SELECT {rows_str} FROM {table} {clause}")
-        result = [row[0] for row in cursor.fetchall()]  # Extract the first element from each row
-        cursor.close()
-        return result
+        try:
+            rows_str = rows if isinstance(rows, str) else ', '.join(rows)
+            self._db.execute(f"SELECT {rows_str} FROM {table} {clause}")
+            return [row[0] for row in self._db.fetchall()]
+        except Exception as error:
+            logging.error(f"Error fetching list with query: SELECT {rows_str} FROM {table} {clause}: {error}")
+            return []
 
     def trigger_list(self) -> list:
-        triggers = self.fa("SHOW TRIGGERS")
-        return [trigger['Trigger'] for trigger in triggers] if triggers else []
-
-
-add(a)
-
+        try:
+            self._db.execute("SHOW TRIGGERS")
+            triggers = self._db.fetchall()
+            return [trigger['Trigger'] for trigger in triggers] if triggers else []
+        except Exception as error:
+            logging.error(f"Error fetching trigger list: {error}")
+            return []

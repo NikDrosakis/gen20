@@ -4,8 +4,53 @@ use Exception;
 use Imagick;
 use Symfony\Component\Yaml\Yaml;
 /**
-χρειάζεται ένα έξυπνο σχήμα όλο αυτό
- from installation to public & admin Cubo
+ /cubos/[CuboName]/
+ ├── [CuboName].php            # Main class file for the Cubo
+ ├── main/                     # Directory for main PHP pages
+ │   ├── [main1].php           # Each main corresponds to a key in `manifest.yml.mains`
+ │   ├── [main2].php
+ ├── manifest.yml              # YAML file defining Cubo mains and metadata
+ ├── setup.yml                 # Optional: Predefined setup configurations
+ ├── sql/                      # Directory for SQL scripts
+ │   ├── c_[table1].sql
+ │   ├── c_[table2].sql
+ ├── output_[CuboName].png     # Optional: Related output/image assets
+ ├── tax.json                  # Optional: JSON for taxonomy or configuration
+ └── template.pug              # Optional: Templating file
+
+gen_admin.cubo:
+
+Stores high-level details about each Cubo.
+Example:
+php
+Copy
+Edit
+['name' => 'book', 'tables' => 'cat,lib,...', 'mains' => 'book,categories,...']
+publicdb.maingrp:
+
+Groups the mains of a Cubo.
+Insert with cuboid and name from manifest.yml.
+publicdb.main:
+
+Individual mains for each Cubo, linked to maingrp.
+publicdb.maincubo:
+
+Links individual mains with Cubo-level metadata.
+Example:
+php
+Copy
+Edit
+['mainid' => $mainId, 'area' => 'm', 'cuboid' => $cuboId, 'name' => 'book']
+gen_admin.alinks:
+
+Stores links to admin functionality for each Cubo.
+Ensure admin link generation aligns with:
+php
+Copy
+Edit
+['alinksgrpid' => 5, 'name' => 'book', 'title' => 'Book', 'mainplan' => '{"1":{"include_cubofile":"
+
+
  created in gen_admin.cubo where is the main mapping of the module
  passed in mains and maincubo
 to maingrp has the group of mains defaults,
@@ -24,25 +69,22 @@ gen_admin.alinks
 2) main(s) are pages by default contains cubo.mains at the m area
 3) cubo is a resource
 
-Layout has all the publicdb instances of cubos
-all the construction in the maincubo
+- admin>layout UI for building mains
+- construction in the maincubo
+- json in main.mainplan
 
+cubos with main cubo => cubo.mains if null just a module in layout construction
 
-είναι διαθέσιμο σε όλες τις σελίδες του server
-ta cubos μπορεί να χρησιμοποιούνται σαν περιφερειακά modules
-είτε να ξεκινούν να έχουν δικό τους main, αυτό δηλώνεται στο cubo.mains
-είτε να μην έχουν δικό τους main
 cubo --> maingrp --> main (instance of cubo in )--> links (menuid)-->linkgrp (menu) --> maincubo (construction)
+either have links
+required admin.php alinks alinksgrp=5
+πέρα απ'το Cubo class που έχει ολα τα διαχειριστικά, βολεύει κάθε Cubo να έχει δικό του
 
+Δημουργία -> σβήσιμο createCubo, setupCubo, totalDeleteCubo
 
-
- */
+*/
 
 trait Cubo {
-
-protected function getLinks() {
-            return $this->db->fa("SELECT * FROM {$this->publicdb}.links WHERE linksgrpid=2 ORDER BY sort");
-    }
 
 /**
 reading manifest.yaml from fs cubos/[cubo]/manifest.yaml
@@ -60,7 +102,7 @@ cubo.name > yaml.maykey split _ 0
  */
 
  /**
-  A setup.yml is started in a new folder with the basic configuration files
+  A manifest.yml is started in a new folder with the basic configuration files
   */
 protected function createCubo(string $name): bool|int {
     //Step 1 -  Create folder and files
@@ -88,7 +130,7 @@ protected function createCubo(string $name): bool|int {
     }
 
 // Step 4 - Create manifest.yaml
-$manifestFilePath = $cuboDir . 'setup.yml';
+$manifestFilePath = $cuboDir . 'manifest.yml';
 
 // Initialize YAML content
 $manifestContent = "{$name}_cubo:\n";
@@ -115,18 +157,18 @@ if (file_put_contents($manifestFilePath, $manifestContent) === false) {
 }
 
 /**
-After edited the setup.yml file & the sql files are created
+After edited the manifest.yml file & the sql files are created
  @setupCubo all db mains & sql installation
  */
 protected function setupCubo($name = '') {
     $cuboDir = CUBO_ROOT . $name . '/';
-    $setupPath = $cuboDir . 'setup.yml';
+    $setupPath = $cuboDir . 'manifest.yml';
         xecho(GLOB("$cuboDir*"));
-    // Check if setup.yml exists
+    // Check if manifest.yml exists
     if (!file_exists($setupPath)) {
         throw new Exception("Setup file not found for cubo: $name");
     }
-    // Parse setup.yml
+    // Parse manifest.yml
     $setup = yaml_parse_file($setupPath);
     $cuboName = $name; // Use the cubo name directly
 
@@ -162,7 +204,7 @@ if (!empty($setup['sql'])) {
 // Step 3: Process Main PHP files
 if (!empty($setup['main'])) {
     foreach ($setup['main'] as $mainFile) {
-        $mainFilePath = $cuboDir . $name . '/' . $mainFile . '.php';
+        $mainFilePath = $cuboDir . $name . '/main/' . $mainFile . '.php';
 
         // Create the file with an example if it doesn't already exist
         if (!file_exists($mainFilePath)) {
@@ -253,8 +295,9 @@ protected function totalDeleteCubo(string $name): bool {
 
     // Step 2: Delete related database entries
     try {
-        $this->db->q("DELETE FROM {$publicdb}.maingrp WHERE name = ?", [$name]);
         $this->db->q("DELETE FROM gen_admin.cubo WHERE name = ?", [$name]);
+        $this->db->q("DELETE FROM {$publicdb}.maingrp WHERE name = ?", [$name]);
+        $this->db->q("DELETE FROM gen_admin.maincubo WHERE name = ?", [$name]);
         $this->db->q("DELETE FROM gen_admin.alinks WHERE name = ?", [$name]);
 
         echo "Database entries for `$name` deleted successfully.\n";
@@ -282,14 +325,18 @@ protected function totalDeleteCubo(string $name): bool {
     return true;
 }
 
-
 //check if cubo has
-protected function checkandreportCubo($table = '',$name = '') {
+protected function checkUpdateCubo($table = '',$name = '') {
 //fs
 
 //sql
 
 }
+
+
+protected function getLinks() {
+            return $this->db->fa("SELECT * FROM {$this->publicdb}.links WHERE linksgrpid=2 ORDER BY sort");
+    }
 
 protected function updateCuboImg($table = '',$name = '') {
 $cubo = is_array($current_cubo) ? $current_cubo['key'] : $current_cubo;
@@ -332,19 +379,19 @@ $db=explode('.',$table)[0];
 }
 
 
-    protected function getCuboBuffer(): array {
-        $buffer = array();
-        $sel = array();
-   		$query='SELECT * FROM cubo ORDER BY valuability DESC';
-   		$sel=$this->db->fa($query);
-   		$count = count($this->db->fa($query));
-           // Create buffer for output
-   		$params['statuses']=[0=>'archived',1=>'deprecated',2=>'pending',3=>'active'];
-           $buffer['count'] = $count;
-           $buffer['list'] = $sel;
-           $buffer['html'] = $this->include_buffer(ADMIN_ROOT."main/cubos/cubos_buffer.php", $sel,$params);
-           return $buffer;
-       }
+protected function getCuboBuffer(): array {
+    $buffer = array();
+    $sel = array();
+    $query='SELECT * FROM cubo ORDER BY valuability DESC';
+    $sel=$this->db->fa($query);
+    $count = count($this->db->fa($query));
+       // Create buffer for output
+    $params['statuses']=[0=>'archived',1=>'deprecated',2=>'pending',3=>'active'];
+       $buffer['count'] = $count;
+       $buffer['list'] = $sel;
+       $buffer['html'] = $this->include_buffer(ADMIN_ROOT."main/cubos/cubos_buffer.php", $sel,$params);
+       return $buffer;
+   }
 
 
 /**

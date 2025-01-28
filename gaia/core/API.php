@@ -2,43 +2,34 @@
 namespace Core;
 use Swagger\Annotations as SWG;
 use ReflectionMethod;
-    /*
-     * API CLASS
-     * */
+use Symfony\Component\Security\Core\Security;
+/*
+ * API CLASS
+ TODO Use a library like symfony/rate-limiter or implement a simple counter in Redis.
+ * */
 
 class API extends Gaia{
 	 use Action, My, Media, Tree, Form, Domain, Cubo;
-
-protected $gpm;
+   private $security;
 
    public function __construct() {
              parent::__construct();
       }
 
- public function handleRequest() {
-if ($this->isApiRequest()) {
-   // Now calls isApiRequest() from Gaia
-      $this->startAPI();
-   //  } else
-	if ($this->isXHRRequest()) {
-               $this->handleXHRRequest();
-
-       } else if($this->isCuboRequest()){
-          $this->handleCuboRequest();
-
-        } else if($this->isWorkerRequest()){
-                $this->handleWorkerRequest();
-        }
-//		else{
-        // VL-specific normal request handling:
-  //      if ($_SERVER['SYSTEM'] == 'admin') {
-
-    //        $this->dbUI_router();
-      //  }
-	  //else{
-         //   $this->publicUI_router();
-     //      }
-        }
+ protected function handleRequest() {
+    if ($this->isApiRequest()) {
+        $this->log("Incoming API request: " . json_encode($_REQUEST), 'info');
+        $this->startAPI();
+    } elseif ($this->isXHRRequest()) {
+        $this->log("Incoming XHR request: " . json_encode($_REQUEST), 'info');
+        $this->handleXHRRequest();
+    } elseif ($this->isCuboRequest()) {
+        $this->log("Incoming Cubo request: " . json_encode($_REQUEST), 'info');
+        $this->handleCuboRequest();
+    } elseif ($this->isWorkerRequest()) {
+        $this->log("Incoming Worker request: " . json_encode($_REQUEST), 'info');
+        $this->handleWorkerRequest();
+    }
     }
 
   protected function startAPI() {
@@ -46,36 +37,95 @@ if ($this->isApiRequest()) {
         echo json_encode($response, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT);
      }
 
-protected function testapi($params=[]): array{
-    return ["status"=>200,"success"=>TRUE,"code"=>'TEST','error'=>'tESTEmpty','data'=>['data test']]; //create hook params, if needed empty for now
+
+ protected function executeActionMethod($request): array {
+   $response=[];
+   if (method_exists($this, $this->id)) {
+          // Use reflection to get method signature
+          $reflection = new ReflectionMethod($this, $this->id);
+          $parameters = $reflection->getParameters();
+
+        if($this->method=='POST'){
+          // Determine the number of parameters and their types
+          if (count($parameters) == 1 && $parameters[0]->getType() && $parameters[0]->getType()->getName() === 'array') {
+              // If method expects a single array parameter
+              $execute = $this->{$this->id}($request);
+          } else {
+              // Otherwise, spread array values as arguments
+             $execute = $this->{$this->id}($request);
+                // Otherwise, spread array values as arguments
+                       //      $execute = $this->{$this->id}(...array_values($request));
+          }
+         }else{
+      //  $execute = $this->{$this->id}(...array_values($request));
+        // Execute for non-POST requests, passing $request as a single string or array as appropriate
+          $execute = $this->{$this->id}($request); // Pass as a single string
+         }
+     //one more step to response is to return the state of plan or the whole plan 2 more levels
+     if (count($execute)==1){
+          $response['data'] = $execute;
+          $response["status"] = 200;
+          $response["success"] = true;
+          $response["code"] = 'RUN_1';
+          return $response;
+     }else{
+          $response['data'] = $execute;
+          $response["status"] = 200;
+          $response["success"] = true;
+          $response["code"] = 'RUN_MANY';
+          return $response;
+     }
+     //response
+
+      } else {
+          // Method not found
+          $response = [
+              "status" => 403,
+              "success" => false,
+              "code" => 'ACTION',
+              "error" => "Method not found"
+          ];
+      }
+      return $response;
+ }
+
+ protected function log($message, $level = 'info') {
+     error_log("[$level] $message");
+ }
+protected function sanitizeInput($input) {
+    if (is_array($input)) {
+        // Recursively sanitize arrays
+        return array_map([$this, 'sanitizeInput'], $input);
+    }
+    // Do minimal sanitization, such as trimming
+    return trim($input);
 }
+protected function parseRequest() {
+    $this->method = $_SERVER['REQUEST_METHOD'];
+    $this->resource = $_GET['resource'] ?? null;
 
+    $request = [];
+    switch ($this->method) {
+        case 'GET':
+            $request = $this->sanitizeInput($_GET);
+            break;
+        case 'POST':
+        case 'PUT':
+        case 'PATCH':
+            $rawInput = file_get_contents('php://input');
+            $request = $this->sanitizeInput(json_decode($rawInput, true) ?? []);
+            break;
+        case 'DELETE':
+            $request = $this->sanitizeInput($_GET);
+            break;
+        default:
+            $request = false;
+    }
+
+    return $request;
+}
  protected function response(){
-       $this->method = $_SERVER['REQUEST_METHOD'];
-       $this->resource = $_GET['resource'] ?? null;
-        foreach($_REQUEST as $key =>$value){
-            $this->G[$key]=$value;
-        }
-
-       $response = array();
-       $execute = array();
-       //THE REQUEST
-       if($this->method=='GET'){
-            $request = $_GET;
-
-        } elseif($this->method=='POST'){
-        // Decode the JSON data from raw input
-            $rawinput = file_get_contents('php://input');
-            if(!is_json($rawinput)){
-            $request=false;
-            }else{
-            $request = json_decode($rawinput, true);
-            }
-
-        } else {
-            $request = false;  // Unsupported HTTP method
-        }
-
+        $request = $this->parseRequest();
         //THE RESPONSE
        if (!$request){
             $execute=["status"=>418,"code"=>'M01'];
@@ -88,7 +138,6 @@ protected function testapi($params=[]): array{
             $token=base64_encode('nikos:130177'); //read token from db bXlzZWNyZXR0b2tlbjE3
             $executed= $this->executeAPI($request);
            }
-
             header("HTTP/2 $status $status_message");
             header("Content-Type: application/json; charset=UTF-8");
             $response = $executed;
@@ -117,119 +166,95 @@ LOCAL METHOD - GET THE EXPECTED TYPEOF
             $response =["status"=>403,"success"=>false,"code"=>'LOCAL','data'=>$execute,'error'=>"Method {$this->id} not found"];
             }
  */
-protected function executeLocalMethod($request): array {
+protected function executeLocalMethod(array $request): array {
+    if (method_exists($this, $this->id)) {
+        return $this->executeDynamicMethod($this->id, $request);
+    } else {
+        return [
+            "status" => 203,
+            "success" => true,
+            "code" => 'LOCAL',
+            "error" => "Index of Local Methods",
+            "data" => $this->getClassMethods()
+        ];
+    }
+}
+/**
+ * Executes a method dynamically using reflection and handles parameter passing.
+ *
+ * @param string $methodName The name of the method to execute.
+ * @param array $request The request data to pass to the method.
+ * @return array The result of the method execution.
+ */
+protected function executeDynamicMethod(string $methodName, array $request): array {
+    if (!method_exists($this, $methodName)) {
+        return [
+            "status" => 403,
+            "success" => false,
+            "code" => 'METHOD_NOT_FOUND',
+            "error" => "Method {$methodName} not found",
+            "data" => []
+        ];
+    }
 
-  if (method_exists($this, $this->id)) {
-         // Use reflection to get method signature
-         $reflection = new ReflectionMethod($this, $this->id);
-         $parameters = $reflection->getParameters();
+    // Use reflection to get method signature
+    $reflection = new ReflectionMethod($this, $methodName);
+    $parameters = $reflection->getParameters();
 
-       if($this->method=='POST'){
-         // Determine the number of parameters and their types
-         if (count($parameters) == 1 && $parameters[0]->getType() && $parameters[0]->getType()->getName() === 'array') {
-             // If method expects a single array parameter
-             $execute = $this->{$this->id}($request);
-         } else {
-             // Otherwise, spread array values as arguments
-            $execute = $this->{$this->id}($request);
-               // Otherwise, spread array values as arguments
-                      //      $execute = $this->{$this->id}(...array_values($request));
-         }
-        }else{
-     //  $execute = $this->{$this->id}(...array_values($request));
-       // Execute for non-POST requests, passing $request as a single string or array as appropriate
-         $execute = $this->{$this->id}($request); // Pass as a single string
-        }
-         $response = [
-             "status" => 200,
-             "success" => true,
-             "code" => 'LOCAL',
-             "data" => $execute,
-             "error" => $execute['error'] ?? null
-         ];
-     } else {
-         // Method not found
-         $response = [
-             "status" => 403,
-             "success" => false,
-             "code" => 'LOCAL',
-             "error" => "Method {$this->id} not found"
-         ];
-     }
-     return $response;
+    // Determine how to pass arguments based on method signature
+    if ($this->method === 'POST' && count($parameters) == 1 && $parameters[0]->getType() && $parameters[0]->getType()->getName() === 'array') {
+        // If method expects a single array parameter
+        $execute = $this->{$methodName}($request);
+    } else {
+        // Otherwise, pass the request as a single argument
+        $execute = $this->{$methodName}($request);
+    }
+
+    return [
+        "status" => 200,
+        "success" => true,
+        "code" => 'EXECUTED',
+        "data" => $execute,
+        "error" => $execute['error'] ?? null
+    ];
 }
 /**
  Plan Actionplan Action
  */
-protected function executeActionMethod($request): array {
+protected function executeBinMethod($request): array {
+  $response=[];
+        if($this->id!=''){
+      //id icludes the extension
+          if(file_exists(API_ROOT . "bin/". $this->method."/".$this->id)){
+                require_once API_ROOT. "bin/". $this->method."_".$this->id;
+            //any file icludes the extension is an action GET , ?file= param the absolute path
+             }elseif($this->id=="getfile" && $this->method=="GET" && isset($_GET["file"])){
+              $file = $this->sanitizeInput($_GET['file']);
+                $data= $this->include_buffer($file);
+                 $response= ['status' => 200,'success' => 'true','code' => 'D1','data' => $data];
+             //action is called => get a method , like maria or admin
+             }elseif($this->action!=''){
 
-  if (method_exists($this, $this->id)) {
-         // Use reflection to get method signature
-         $reflection = new ReflectionMethod($this, $this->id);
-         $parameters = $reflection->getParameters();
-
-       if($this->method=='POST'){
-         // Determine the number of parameters and their types
-         if (count($parameters) == 1 && $parameters[0]->getType() && $parameters[0]->getType()->getName() === 'array') {
-             // If method expects a single array parameter
-             $execute = $this->{$this->id}($request);
-         } else {
-             // Otherwise, spread array values as arguments
-            $execute = $this->{$this->id}($request);
-               // Otherwise, spread array values as arguments
-                      //      $execute = $this->{$this->id}(...array_values($request));
+             }else{
+                $response= ['status' => 403,'success' => 'true','code' => 'D0','data' => [],'error'=>''];
+             }
+         }else{
+            foreach(glob(API_ROOT. "bin/*") as $file){
+                $list[]= basename($file);
+            }
+            $response= ['status' => 203,'success' => 'true','code' => 'D2','data' => $list];
          }
-        }else{
-     //  $execute = $this->{$this->id}(...array_values($request));
-       // Execute for non-POST requests, passing $request as a single string or array as appropriate
-         $execute = $this->{$this->id}($request); // Pass as a single string
-        }
-    //one more step to response is to return the state of plan or the whole plan 2 more levels
-    if (count($execute)==1){
-         $response = $execute[0];
-         $response["status"] = 200;
-         $response["success"] = true;
-         $response["code"] = 'RUN';
-         return $response;
-    }else{
-         $response = $execute[0];
-         $response["status"] = 200;
-         $response["success"] = true;
-         $response["code"] = 'RUN';
-         return $response;
-   return $response;
-    }
-    //response
-
-     } else {
-         // Method not found
-         $response = [
-             "status" => 403,
-             "success" => false,
-             "code" => 'ACTION',
-             "error" => "Method {$this->id} not found"
-         ];
-     }
      return $response;
 }
-/*
-primary executes A) maria methods IN post
-    B) REST logic /resource=table/id/
-    --- extend to webhooks and clevel actiongrp for Kafka use
-    C) files if exist in apiv1/bin folder/method/
-    3rd LEVEL supported in nginx TODO...
-*/
-    protected function executeAPI($request)   {
-//A maria fast methods gs.maria.[anydatabase].fa
-//                     gs.maria.[this->id].[this->action]
-      $response=[];
-     if($this->resource=="maria"){
 
+protected function executeMariaMethod($request): array {
+  $response=[];
             if($this->method=='POST'){
                 $database = $this->db;
                 if ($database && method_exists($database,$this->id)) {  //id is the method of the class
                     //if decoding was successful
                     $execute=$database->{$this->id}(...array_values($request));
+                     $this->log("Database method executed: {$this->id}", 'info');
                     if(!$execute){
                     $response =["status"=>400,"success"=>false,"code"=>'M01','error'=>"Method not executed"];
                     }else{
@@ -255,70 +280,32 @@ primary executes A) maria methods IN post
                                 $response =["status"=>200,"success"=>true,"code"=>'M1',"data"=> $execute,'error'=>""];
                                 }
                             } else {
-                              $response =["status"=>419,"success"=>false,"code"=>'M2',"error"=>""];
-                             }
+                                $methods=[];
+                                $dbClass = get_class($this->db);
+                                foreach (get_class_methods($this->db) as $method) {
+                                    $methods[$method] = "$method ($dbClass)";
+                                }
+                              $response =["status"=>203,"data"=>$methods,"success"=>true,"code"=>'M2',"error"=>"Index of available methods"];
+                              //show the list of available methods
+
+             }
                     //$response =["status"=>204,"success"=>false,"code"=>'M02','error'=>'Empty']; //create hook params, if needed empty for now
              }
-//B CALL ANY METHOD resource/id ? params&hooks
-     }elseif($this->resource=='viewport'){
-      $methods = get_class_methods($this);
-                 $methodDetails = [];
-                 foreach ($methods as $method) {
-                     $reflection = new \ReflectionMethod($this, $method);
-                     $declaringClass = $reflection->getDeclaringClass()->getName();
-                     $methodDetails[$method] = $declaringClass;
-                 }
-             $execute=$methodDetails;
-    	//     $execute = $this->localMethod($request);
-    	//     $execute = get_class_methods($this);
-            $response =["status"=>200,"success"=>true,"code"=>'V','data'=>$execute,'error'=>$execute['error']];
-            //$response =["status"=>200,"success"=>true,"code"=>'V','data'=>["mydata"],'error'=>['noerror']];
+         return $response;
+}
+    protected function executeAPI($request) {
+        $handlers = [
+            'maria' => 'executeMariaMethod',
+            'run' => 'executeActionMethod',
+            'local' => 'executeLocalMethod',
+            'bin' => 'executeBinMethod'
+        ];
 
-//TERASTIO get the expect typeof $params
-     }elseif($this->resource =='run'){
-         $response= $this->executeActionMethod($request);
-     }elseif($this->resource =='local'){
-       $response= $this->executeLocalMethod($request);
+        if (isset($handlers[$this->resource])) {
+            return $this->{$handlers[$this->resource]}($request);
+        }
 
-//C REST TYPE resource/id ? params&hooks
-     }elseif(in_array($this->resource,$this->db->show("tables"))){
-         $table= $this->resource;
-         if($this->id==""){
-             $response['status']=200;
-             $response['code']='R1';
-             $response['error']='';
-             $response['success']=true;
-             $response['data']= $this->db->fa("SELECT * FROM $table LIMIT 20");
-         }else{
-         $response['status']=200;
-         $response['code']='R2';
-         $response['error']='';
-         $response['success']=true;
-         $response['data']= $this->db->f("SELECT * FROM $table WHERE id=?",array($this->id));
-         }
-//C FILE IN api/bin with $data variable of the the return ,gets files in bin, or any file
-      }elseif($this->resource=="bin" && $this->id!=''){
-      //id icludes the extension
-          if(file_exists(API_ROOT . "bin/". $this->method."/".$this->id)){
-                require_once API_ROOT. "bin/". $this->method."_".$this->id;
-            //any file icludes the extension is an action GET , ?file= param the absolute path
-             }elseif($this->id=="getfile" && $this->method=="GET" && isset($_GET["file"])){
-             $file=urldecode($_GET["file"]);
-                $data= $this->include_buffer($file);
-                 $response= ['status' => 200,'success' => 'true','code' => 'F1','data' => $data];
-             //action is called => get a method , like maria or admin
-             }elseif($this->action!=''){
-
-             }else{
-                $response= ['status' => 403,'success' => 'true','code' => 'F0','data' => [],'error'=>''];
-             }
-     }else{
-         $response['status']=419;
-         $response['code']='Z';
-         $response['success']=false;
-          $response['error']='';
-     }
-        return $response;
+        return $this->formatErrorResponse(404, 'Z', 'Resource not found');
     }
 
 public function start_Swagger() {
@@ -346,26 +333,23 @@ public function start_Swagger() {
     echo '<div id="swagger-ui"></div>';
 }
 
- public function getSwaggerDocs(): ?array {
-        try {
-            $swagger = \Swagger\scan('./apiv1');
-
-            // 1. Generate the swagger.json file (if it doesn't exist)
-            $swaggerFile = './apiv1/swagger.json';
-            if (!file_exists($swaggerFile)) {
-                $swagger->saveAs($swaggerFile);
-            }
-            // 2. Read the swagger.json file
-            $jsonContent = file_get_contents($swaggerFile);
-
-            // 3. Decode the JSON content into an array
-            $openapiSpec = json_decode($jsonContent, true);
-
-            return $openapiSpec;
-        } catch (Exception $e) {
-            // Handle errors (log, throw exception, etc.)
-            error_log("Error generating or reading OpenAPI spec: " . $e->getMessage());
-            return null;
-        }
+protected function getSwaggerDocs(): ?array {
+    static $cachedDocs = null;
+    if ($cachedDocs !== null) {
+        return $cachedDocs;
     }
+    try {
+        $swagger = \Swagger\scan('./apiv1');
+        $swaggerFile = './apiv1/swagger.json';
+        if (!file_exists($swaggerFile)) {
+            $swagger->saveAs($swaggerFile);
+        }
+        $jsonContent = file_get_contents($swaggerFile);
+        $cachedDocs = json_decode($jsonContent, true);
+        return $cachedDocs;
+    } catch (Exception $e) {
+        error_log("Error generating or reading OpenAPI spec: " . $e->getMessage());
+        return null;
+    }
+}
 }

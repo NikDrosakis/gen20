@@ -84,8 +84,8 @@
 						</li>
 					<?php }} ?>
 					<li>
-                        <button class="bare right" onclick="gs.ui.switcher('#new_<?=$mainpage?>_box')">
-                         <span class="glyphicon glyphicon-plus"></span></button>
+                        <button class="bare" onclick="gs.new('alinks')">
+                         <span class="glyphicon glyphicon-plus">New</span></button>
                     </li>
 <?php
 						if($mainpage=='lab'){

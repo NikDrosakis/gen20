@@ -587,12 +587,36 @@ return '<h3>
   </h3>';
 }
 
+protected function buildFormQuery(string $table, array $params = []): array
+{
+    // Default parameters for querying
+    $defaults = [
+        'db' => $this->publicdb,
+        'id' => null, // Expecting `id` for querying
+    ];
+
+    // Merge defaults with provided parameters
+    $params = array_merge($defaults, $params);
+
+    // If no ID is provided, return an empty result set for new forms
+    if (empty($params['id'])) {
+        return [];
+    }
+
+    // Perform the query and fetch the result
+    $result = $params['db']->f("SELECT * FROM $table WHERE id = ?", [$params['id']]);
+
+    return $result ?? [];
+}
+
+
 // @fm.description Generate a form for a given table, schema, columns.
-  protected function buildForm(string $table,array $params=[]): string {
+  protected function buildForm($tableName): string {
+  $table=is_array($tableName) ? $tableName['key'] : $tableName;
+  $params=is_array($tableName) ? $table['params'] : [];
          // @fm.features Default values for each parameter
          $this->table=$table;
          $defaults = [
-             'db' => $this->publicdb,
              'table' => '',
              'res' => [],
              'form' => false,
@@ -604,15 +628,14 @@ return '<h3>
          $params = array_merge($defaults, $params);
         #set db
        // @fm.features $this->db=$params['db']=="gen_".TEMPLATE ? $this->db: $this->db;
-         if(empty($params['res'])){
-         $params['res'] = $this->db->f("SELECT * from $table where id=?",[$params['id']]);
-        }
+ if ($params['form'] !== 'new' && empty($params['res'])) {
+        $params['res'] = $this->buildFormQuery($table, $params);
+    }
          // @fm.features Access parameters using $params array
-         $res = $this->res = $params['res'];
+         $res = $params['res'];
          $form = $params['form'];
          $cols = $params['cols'];
          $labeled = $params['labeled'];
-
       #instantiate those public vars
          $this->labeled=$labeled;
          $this->formid=$res['id'];
@@ -632,7 +655,7 @@ return '<h3>
 // @fm.dependent validateImg
         $img = $this->validateImg($res['img']);
         // @fm.features If we are building a form, start with form tags
-        if ($form) {
+        if ($formType === 'new') {
             $return .= "<form id='form_$table'><input type='hidden' name='a' value='new'>";
             $return .= "<input type='hidden' name='table' value='$table'>";
         }else{
@@ -651,7 +674,7 @@ return '<h3>
             $return .= $this->renderFormField($col, $tableMeta[$col], $resVal);
         }
         // @fm.features If form tags were opened, close them
-        if ($form) {
+        if ($form=='new') {
             $return .= "</form>";
         }else{
             $return .= "</section>";
@@ -841,7 +864,7 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
         case 'pug':
         case 'md':
         case 'yaml':
-            $escapedValue = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+            $escapedValue = $value ? htmlspecialchars($value, ENT_QUOTES, 'UTF-8') : $value;
             return "<div class='gs-span'>
                     <div class='gs-preview-container'>
                          <p for='$col'>$col ($comment)-id.{$id}</p>

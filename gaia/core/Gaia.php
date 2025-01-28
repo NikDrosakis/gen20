@@ -7,7 +7,7 @@ abstract class Gaia {
  use Tree;
 	 protected $db;
 	 protected $publicdb;
-     protected $mon;
+   //  protected $mon;
 	protected $redis;
 
 	 protected $gsolr;
@@ -70,7 +70,7 @@ abstract class Gaia {
           $this->G['publicdb'] = $this->publicdb = "gen_".TEMPLATE;
          $this->db = new Mari();
             //mongo db instantiate
-              $this->mon = new Mon('vox');
+           //   $this->mon = new Mon('vox');
                 //solr instantiate
                // $this->gsolr = new GSolr('solr_vivalibro');
                 //redis instantiate

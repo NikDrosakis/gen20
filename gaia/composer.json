@@ -1,14 +1,13 @@
 {
-    "name": "gen20/core",
-    "version": "0.4.5",
+    "name": "gaia/core",
+    "version": "0.5.5",
     "license": "proprietary",
     "description": "Core PHP library running in PHP8.2",
     "require": {
         "php": "^8.2.26",
         "erusev/parsedown": "^1.7",
-        "guzzlehttp/guzzle": "^7.9",
+        "guzzlehttp/guzzle": "^7.9.2",
         "ratchet/pawl": "^0.4.1",
-        "mongodb/mongodb": "^1.20",
         "solarium/solarium": "^6.3",
         "reprovinci/solr-php-client": "^1.0",
         "pug/pug": "*",
@@ -21,14 +20,16 @@
         "psr-4": {
             "Core\\": "core/",
             "Vivalibro\\": "vivalibro/",
-            "Apiv1\\": "apiv1/"
+            "Apiv1\\": "apiv1/",
+            "Cubo\\": "cubos/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Core\\Tests\\": "core/tests/",
-            "Vivalibro\\Tests\\": "vivalibro/tests/",
-            "Apiv1\\Tests\\": "apiv1/tests/"
+            "Core\\Tests\\": "tests/",
+            "Vivalibro\\Tests\\": "tests/",
+            "Apiv1\\Tests\\": "tests/",
+            "Cubo\\Tests\\": "tests/"
         }
     },
     "require-dev": {

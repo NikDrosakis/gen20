@@ -1,0 +1,41 @@
+<span style="float:left;" onclick="gs.ui.goto(['previous','lib','id',G.id,'/lib?id='])" class="next glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+<span style="float:right" onclick="gs.ui.goto(['next','lib','id',G.id,'/lib?id='])" class="next glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+<h2 style="cursor:pointer">Libraries</h2>
+<button type="button" style="border:none;background:none;" id="newlib">New Manual Entry</button>
+<?php
+if($this->G['id']!=''){
+
+include $this->G['SITE_ROOT'] . "main/lib_edit.php";
+
+}else{
+
+$params['page']=$page=$this->page;
+$sel=$this->booklists($params);
+
+?>
+<div id="libraries">
+<?php include PUBLIC_ROOT_WEB."main/{$page}/{$page}_archive.php"; ?>
+</div>
+<div id="pagination" class="paginikCon"></div>
+
+<?php } ?>
+
+
+<div class="row">
+    <?php for ($i=0;$i<count($sel);$i++) {
+        $postid = $sel[$i]['id'];
+        $img = !$sel[$i]['img'] ? "/img/empty.png" : SITE_URL.'media/'. $sel[$i]['img']; ?>
+        <div id="nodorder1_<?=$postid?>"class="card">
+            <button  type="button" class="close" aria-label="delete" id="del<?=$sel[$i]['id']?>"><span aria-hidden="true">&times;</span></button>
+            <div class="cover">
+                <img id="img<?=$postid?>" src="<?=$img?>">
+            </div>
+            <div class="description">
+                <span class="published"><a href="/mylibrary/<?=$sel[$i]['id']?>/read"><?=$sel[$i]['name'] != null ? $sel[$i]['name'] : ''?></a>, <?=$sel[$i]['created']?></span>
+                <span class="tag3"><?=$G['isread'][$sel[$i]['status']]?></span>
+            </div>
+        </div>
+    <?php } ?>
+</div>
+
+
