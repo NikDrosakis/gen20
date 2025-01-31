@@ -21,6 +21,7 @@ define('ERMIS_ROOT',GSROOT.'ermis/');
 define('KRONOS_ROOT',GSROOT.'kronos/');
 define('MARS_ROOT',GSROOT.'mars/');
 define('CUBO_ROOT',GAIAROOT.'cubos/');
+define('CUBO_ROOT_DEFAULT',GAIAROOT.'cubos/default/');
 define('SERVEROOT',dirname(SITE_ROOT).'/');
 define('SITE_URL',REFERER.HTTP_HOST.'/');
 define('PUBLIC_ROOT',GAIAROOT.TEMPLATE.'/');

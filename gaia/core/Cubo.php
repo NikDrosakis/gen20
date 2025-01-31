@@ -420,8 +420,8 @@ protected function getCubos(): array
     // Retrieve  cubos buffer
 
     // Retrieve a single cubos by ID
-    protected function getCubo(int $id): array {
-        return $this->db->f('SELECT * FROM gen_admin.cubo WHERE id = ?',[$id]);
+    protected function getCubo(int $name): array {
+        return $this->db->f('SELECT * FROM gen_admin.cubo WHERE name = ?',[$name]);
     }
 
     // Retrieve cubos logs
@@ -562,7 +562,12 @@ protected function addMetric(array $params = []): ?array {
         return $updateStatus;
     }
         protected function buildCubo(string $name){
+          $cubo= $this->getCubo($name);
+          if(!$cubo['mains']){
           include CUBO_ROOT.$name."/public.php";
+          }else{
+          include CUBO_ROOT.$name."/mains/$name.php";
+          }
         }
     // Other methods (existing)...
 

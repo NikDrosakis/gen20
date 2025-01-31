@@ -180,10 +180,12 @@ $return[]["bar"]= $this->db->flist($query);
 }
 return $return;
 }
+
 protected function renderButton($table) {
     $tableid = explode('.',$table)[1]."_table";
     return "<button onclick=\"gs.form.updateTable('$tableid', 'buildCoreTable');\" class=\"page-link\" >Render</button>";
 }
+
 /**
 @fm.description Build an HTML table based on the data provided.
  1) creates the query
@@ -577,12 +579,17 @@ return '<h3>
            <button class="bare" onclick="openPanel(\'common/doc.php\')"><span class="glyphicon glyphicon-info-sign bare"></span></button>
            <button class="bare" onclick="openPanel(\'common/guide.php\')"><span class="glyphicon glyphicon-question-sign"></span></button>
             <a href="/admin/'.$page.'/'.$subpage.'"><span class="glyphicon glyphicon-edit"></span>'.ucfirst($subpage).'</a>
-            <button class="bare right" onclick="gs.ui.switcher(\'#new_' . $subpage . '_box\')">
+            <button class="bare right"
+            onclick="gs.api.bind(this, { showLabel: false, showSwal: true })"
+            data-method="buildForm"
+            data-form="new"
+            data-key="'.$table.'"
+            >
                 <span class="glyphicon glyphicon-plus"></span></button>
                 <div style="display:none" id="new_'.$subpage.'_box">
                 <div class="gform"><div class="gs-span"><label for="name">Name</label>
                 <input class="gs-input" name="name" placeholder="Give a Name" id="' . $subpage . '_name" type="text" value=""></div>
-                    <button class="button" name="' . $table . '" onclick="gs.form.insertNewRow(event)">DO</button>
+                    <button class="button save-button" name="' . $table . '" onclick="gs.form.insertNewRow(event)">DO</button>
                 </div></div>
   </h3>';
 }
@@ -613,15 +620,17 @@ protected function buildFormQuery(string $table, array $params = []): array
 // @fm.description Generate a form for a given table, schema, columns.
   protected function buildForm($tableName): string {
   $table=is_array($tableName) ? $tableName['key'] : $tableName;
-  $params=is_array($tableName) ? $table['params'] : [];
+  $params=is_array($tableName) ? $tableName : [];
+  $justTable=explode('.',$table)[1];
+  $id= $params['id'] || $this->id;
          // @fm.features Default values for each parameter
          $this->table=$table;
          $defaults = [
              'table' => '',
              'res' => [],
-             'form' => false,
+             'form' => $id || 'new',
              'cols' => [],
-             'id' => $this->id,
+             'id' => $id,
              'labeled' => true,
          ];
          // @fm.features Merge provided params with defaults
@@ -642,6 +651,7 @@ protected function buildFormQuery(string $table, array $params = []): array
 // @fm.dependent renderFormHead
         $formHead=$this->renderFormHead($table);
 #TODO add metadata links
+if ($params['form'] !== 'new' && empty($params['res'])) {
         $return = $formHead.'<div class="pagetitle-container">
                            <span onclick="previd(this)" class="btn btn-secondary">
                                <i class="glyphicon glyphicon-chevron-left"></i> Previous
@@ -652,15 +662,16 @@ protected function buildFormQuery(string $table, array $params = []): array
                                Next <i class="glyphicon glyphicon-chevron-right"></i>
                            </span>
                    </div>';
+                   }
 // @fm.dependent validateImg
         $img = $this->validateImg($res['img']);
         // @fm.features If we are building a form, start with form tags
-        if ($formType === 'new') {
-            $return .= "<form id='form_$table'><input type='hidden' name='a' value='new'>";
-            $return .= "<input type='hidden' name='table' value='$table'>";
-        }else{
-            $return .= "<section id='form_$table'>";
-        }
+        //if ($params['form'] === 'new') {
+          //  $return .= "<form id='form_$table'><input type='hidden' name='a' value='new'>";
+//            $return .= "<input type='hidden' name='table' value='$table'>";
+  //      }else{
+            $return .= "<section id='{$justTable}_form' class='gs-span'>";
+    //    }
 // @fm.dependent getInputType
         $tableMeta = $this->getInputType($table);  // @fm.features Get column type and related info
         // @fm.features Loop through each column to build form fields
@@ -671,11 +682,15 @@ protected function buildFormQuery(string $table, array $params = []): array
              $resVal = $res[$col] ?? '';  // @fm.features Get the value from the result array or use an empty string
             // @fm.features Render form fields based on the column type
             //error_log($tableMeta[$col]);
-            $return .= $this->renderFormField($col, $tableMeta[$col], $resVal);
+        //    xecho($col);
+          //  xecho($tableMeta[$col]);
+       //     xecho($resVal);
+            $return .= $this->renderFormField($col, $tableMeta[$col], $resVal, $params);
         }
         // @fm.features If form tags were opened, close them
-        if ($form=='new') {
-            $return .= "</form>";
+        if ($params['form'] =='new') {
+            $return .= "<button name='$table' class='button' onclick='gs.form.insertNewRecord(this)'>Save</button>";
+       //     $return .= "</form>";
         }else{
             $return .= "</section>";
         }
@@ -810,7 +825,7 @@ protected function getEnumOptions($sqlType) {
 }
 
 // @fm.description renderFormField with all file types for buildForm
-protected function renderFormField(string $col, array $fieldData, $value = ''): string{
+protected function renderFormField(string $col, array $fieldData, $value = '', $params=[]){
     // @fm.features Extract the type and any additional data (e.g., comments or SQL type)
     $inputType = $fieldData['type'];
     $comment   = $fieldData['comment'] ?? '';
@@ -832,7 +847,8 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
 
     switch ($inputType) {
         case 'label':  // @fm.features Read-only field rendered as label
-            return "<div class='gs-span'><label for='$col'>$col</label><p class='static-value'>$value</p></div>";
+            return $value ? "<div class='gs-span'><label for='$col'>$col</label><p class='static-value'>$value</p></div>":"";
+
         break;
         case 'select':  // @fm.features Dropdown field
             // @fm.features Generate options from the comment or an external source
@@ -891,20 +907,27 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
                 // @fm.features Handle SQL preview (raw SQL code)
               //  $preview= xechox($this->db->fetch($value));
                 $preview= xechox($value);
-                return "<div class='gs-span'>
+        $html ="<div class='gs-span'>
     <label for='$col'>$col</label>
     <div class='gs-preview-container'>
        <textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'>$value</textarea>
        '.$preview.'
-    </div>
-    <button class='button save-button' onclick='saveContentMirror(\'' . $col . '\', \'' . $table . '\',$id)' type='button' id='save_$col'>Save Content</button>
-        </div>";
+    </div>";
+        if($params['form']!='new'){
+            $html .="<button class='button save-button' onclick='saveContentMirror(\'' . $col . '\', \'' . $table . '\',$id)' type='button' id='save_$col'>Save Content</button>";
+        }
+        $html .="</div>";
+        return $html;
          break;
         case 'json':
      // @fm.features   $value = json_decode($value,true);
-               return "<div class='gs-span'><label for='$col'>$col</label>
+               $html ="<div class='gs-span'><label for='$col'>$col</label>
                        <code><textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'><code>$value</code></textarea></code>
-                       </div><button class='button save-button' onclick='saveContent(\"$col\", \"$table\",$id)' type='button' id='save_$col'>Save Content</button>";
+                       </div>";
+                   if($params['form']!='new'){
+                   $html .="<button class='button save-button' onclick='saveContent(\"$col\", \"$table\",$id)' type='button' id='save_$col'>Save Content</button>";
+                   }
+               return $html;
         break;
         case 'cron':
         return $this->renderCronEditor($value);
@@ -915,14 +938,25 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
         $table = htmlspecialchars($this->table, ENT_QUOTES, 'UTF-8');
         $value = htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); // @fm.features Escaping the value a
                if($comment =='code'){
-               return "<div class='gs-span'><label for='$col'>$col</label>
+
+               $html = "<div class='gs-span'><label for='$col'>$col</label>
                 <button onclick='navigator.clipboard.writeText(this.nextElementSibling.innerText || this.nextElementSibling.value)' class='glyphicon glyphicon-copy'></button>
                <code><textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'>$value</textarea></code>
-               </div><button class='button save-button' onclick='saveContent(\"$col\", \"$table\",$id)' type='button' id='save_$col'>Save Content</button>";
+               </div>";
+               if($params['form']!='new'){
+                $html .= "<button class='button save-button' onclick='saveContent(\"$col\", \"$table\",$id)' type='button' id='save_$col'>Save Content</button>";
+                }
+
                }else{
-               return "<div class='gs-span'><label for='$col'>$col</label><textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'>$value</textarea>
-                 </div><button class='button save-button' onclick='saveContent(\"$col\", \"$table\",$id)' type='button' id='save_$col'>Save Content</button>";
+
+               $html = "<div class='gs-span'><label for='$col'>$col</label><textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'>$value</textarea>
+                 </div>";
+               if($params['form']!='new'){
+                $html .= "<button class='button save-button' onclick='saveContent(\"$col\", \"$table\",$id)' type='button' id='save_$col'>Save Content</button>";
+                }
+
               }
+          return $html;
         break;
         case 'button':
           return $this->renderButtonField($comment,$value);
@@ -931,22 +965,29 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
                 $col = htmlspecialchars($col, ENT_QUOTES, 'UTF-8');
                 $table = htmlspecialchars($this->table, ENT_QUOTES, 'UTF-8');
                 $value = htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); // @fm.features Escaping the value a
-        return "<div class='gs-span'>
+        $html= "<div class='gs-span'>
                     <label for='$col'>$col</label>
-                     <textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'>$value</textarea>
-                    <button class='button save-button' onclick='saveContent(\"$col\", \"$this->table\",$id)' type='save' id='save_$col'>Save Content</button>
-                </div>
+                     <textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'>$value</textarea>";
+               if($params['form']!='new'){
+               $html .="<button class='button save-button' onclick='saveContent(\"$col\", \"$this->table\",$id)' type='save' id='save_$col'>Save Content</button>";
+                }
+                $html .="</div>
                 <script>
                     if (CKEDITOR.instances['$col']) {
                         CKEDITOR.instances['$col'].destroy(true);
                     }
                     CKEDITOR.replace('$col');
                 </script>";
+                return $html;
         break;
         case 'number':  // @fm.features Numeric input (int, float, etc.)
-            return "<div class='gs-span'><label for='$col'>$col</label><input class='gs-input'  onkeyup='gs.form.updateRow(this, \"$this->table\")'  onchange='gs.form.updateRow(this, \"$this->table\")' type='number' name='$col' id='$col' value='$value'></div>";
-        break;        case 'date':  // @fm.features Date input
-        case 'datetime-local':  // @fm.features Datetime input
+            return "<div class='gs-span'><label for='$col'>$col</label>
+            <input class='gs-input'
+            ".($params['form']!='new' ? "onkeyup='gs.form.updateRow(this, \"$this->table\")'  onchange='gs.form.updateRow(this, \"$this->table\")' ":"").
+            " type='number' name='$col' id='$col' value='$value'></div>";
+        break;
+        case 'date':
+        case 'datetime-local':
               $datevalue = date('Y-m-d', strtotime($value));
               return "<div class='gs-span'><label for='$col'>$col</label>
               <input class='gs-input' name='$col' id='$col' type='date' value='$datevalue' placeholder='$col'>
@@ -954,11 +995,15 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
         break;
         case 'checkbox':  // @fm.features Boolean input (checkbox)
             $checked = ($value) ? 'checked' : '';
-            return "<div class='gs-span'><label for='$col'>$col</label><input class='gs-input' onclick='gs.form.updateRow(this, \"$this->table\")'  type='checkbox' name='$col' id='$col' $checked></div>";
+            return "<div class='gs-span'><label for='$col'>$col</label><input class='gs-input' "
+            .($params['form']!='new' ? "onclick='gs.form.updateRow(this, \"$this->table\")'  ":"").
+            " type='checkbox' name='$col' id='$col' $checked></div>";
          break;
         case 'text':  // @fm.features Default text input
         default:
-            return "<div class='gs-span'><label for='$col'>$col</label><input class='gs-input' onkeyup='gs.form.updateRow(this, \"$this->table\")'  type='text' name='$col' id='$col' value='$value'></div>";
+            return "<div class='gs-span'><label for='$col'>$col</label><input class='gs-input' "
+            .($params['form']!='new' ? "onkeyup='gs.form.updateRow(this, \"$this->table\")' ":"").
+            " type='text' name='$col' id='$col' value='$value'></div>";
         break;
     }
 }
