@@ -58,7 +58,7 @@ protected function loadDynamicActions($libraries) {
             <meta name="ROBOTS" content="NOARCHIVE">
             <meta name="google" content="notranslate">
             <link href="/admin/css/core.css" rel="stylesheet" type="text/css">
-            <link href="/css/style.css" rel="stylesheet" type="text/css">
+            <link href="/style.css" rel="stylesheet" type="text/css">
             <link href="https://unpkg.com/ionicons@4.5.10-0/dist/css/ionicons.min.css" rel="stylesheet">
             <link href="atom.xml" type="application/atom+xml" rel="alternate" title="Sitewide ATOM Feed">
             <link rel="icon" href="/img/icon.png" />';

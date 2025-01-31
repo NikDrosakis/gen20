@@ -106,7 +106,7 @@ abstract class Gaia {
 
         if ($this->G['SYSTEM']=='admin'){
         $this->G['mainplan'] = $this->mainplan($this->sub);
-        } elseif($this->G['SYSTEM']==$this->G['TEMPLATE']){
+        } elseif($this->G['SYSTEM']==TEMPLATE){
         $this->G['mainplan'] = $this->mainplan($this->page);
         }
        // Handle requests (delegated to child classes)
@@ -416,16 +416,15 @@ if
     protected function mainplan(string $name='') {
         if ($this->G['SYSTEM']=='admin'){
          $name = $name!='' ? $name : $this->sub;
-         $mainplan = $this->db->f("SELECT mainplan FROM gen_admin.alinks WHERE name=?",[$name])['mainplan'];
-        } elseif($this->G['SYSTEM']==$this->G['TEMPLATE']){
+         $mainplan = $this->db->f("SELECT * FROM gen_admin.alinks WHERE name=?",[$name]);
+        } elseif($this->G['SYSTEM']==TEMPLATE){
          $name = $name!='' ? $name : $this->page;
-         $mainplan = $this->db->f("SELECT mainplan FROM {$this->publicdb}.main WHERE name=?",[$name])['mainplan'];
+         $mainplan = $this->db->f("SELECT * FROM {$this->publicdb}.main WHERE name=?",[$name]);
         }
         if($mainplan){
            return $mainplan;
-        }else{
-        return false;
         }
+        return false;
     }
     protected function catch_errors(){
           //CATCH PHP FATAL ERROR

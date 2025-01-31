@@ -1022,24 +1022,28 @@ actions = [
                 return { error: error.message };
             }
         },
-        bind: async function (obj) {
+        bind: async function (obj, options = { showLabel: true, showSwal: false }) {
             const params = { ...obj.dataset };
             const method = params.method;
             delete params.method;
-             console.log(params);
+
             try {
                 const url = `${G.SITE_URL}api/v1/local/${method}`;
-                console.log(url);
+                console.log(`Fetching: ${url}`, params);
+
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(params)
                 });
+
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
+
                 const text = await response.text();
                 let result;
+
                 try {
                     result = JSON.parse(text); // Try parsing as JSON
                 } catch (jsonError) {
@@ -1047,20 +1051,10 @@ actions = [
                     result = { error: "JSON Parse Error", rawResponse: text };
                 }
 
-                // ✅ Append result to a label after the button
-                let labelId = `result-label-${method}`;
-                let existingLabel = document.getElementById(labelId);
+                // 🔹 Chainable handlers
+                if (options.showLabel) gs.api.handleLabel(obj, method, result);
+                if (options.showSwal) gs.api.handleSwal(result);
 
-                if (!existingLabel) {
-                    // Create new label if it doesn't exist
-                    existingLabel = document.createElement("label");
-                    existingLabel.id = labelId;
-                    existingLabel.style.marginLeft = "10px"; // Adjust spacing
-                    obj.insertAdjacentElement("afterend", existingLabel);
-                }
-
-                // ✅ Update label text with API response
-                existingLabel.innerText = result.data ? JSON.stringify(result.data) : result.rawResponse;
                 return { data: result };
 
             } catch (error) {
@@ -1069,11 +1063,44 @@ actions = [
             }
         },
 
+        /**
+         * ✅ Append result to a label after the button
+         */
+        handleLabel: function (obj, method, result) {
+    const labelId = `result-label-${method}`;
+    let existingLabel = document.getElementById(labelId);
+
+    if (!existingLabel) {
+        existingLabel = document.createElement("label");
+        existingLabel.id = labelId;
+        existingLabel.style.marginLeft = "10px"; // Adjust spacing
+        obj.insertAdjacentElement("afterend", existingLabel);
+    }
+
+    existingLabel.innerText = result.data ? JSON.stringify(result.data) : result.rawResponse;
+},
+
+/**
+ * ✅ Display result in a Swal modal
+ */
+ handleSwal: function(result) {
+    Swal.fire({
+        title: result.name,
+        html: result.data || `<pre>${result.rawResponse}</pre>`,
+        width: "60vw",
+        showCloseButton: true,
+        showConfirmButton: false,
+        didOpen: () => {
+            const scripts = Swal.getHtmlContainer().querySelectorAll("script");
+            scripts.forEach(script => eval(script.innerText));
+        }
+    });
+},
+
         binding: function(){
             let syncGroups = {};
             document.querySelectorAll("[class*='sync-']").forEach(element => {
                 let group = Array.from(element.classList).find(cls => cls.startsWith("sync-"));
-
                 if (group) {
                     if (!syncGroups[group]) {
                         syncGroups[group] = [];
@@ -1081,7 +1108,6 @@ actions = [
                     syncGroups[group].push(element);
                 }
             });
-
             Object.values(syncGroups).forEach(elements => {
                 elements.forEach(element => {
                     element.addEventListener("input", function () {
@@ -1303,25 +1329,57 @@ actions = [
             }
 
         },
+        insertNewRecord: async function (event) {
+         //   event.preventDefault();  // Prevent form submission
+            const button = event.target; // Get the clicked button element
+            const field = event.name;  // Get the name attribute (e.g., 'gen_vivalibrocom.language')
+            console.log(button);
+            console.log(field);
+            const table = field.split('.')[1];
+            console.log(table);
+            const section = document.getElementById(`${table}_form`);  // Get the section with all inputs
+            // Collect all input values in the section
+            const inputs = section.querySelectorAll('input, select');  // Select all input and select elements within the section
+
+            // Prepare params with dynamic values from inputs
+            const params = {};
+            inputs.forEach(input => {
+                if (input.name) {
+                    params[input.name] = input.value;  // Add name and value to params
+                }
+            });
+            try {
+                // Insert the new row into the database using gs.api
+                const newRow = await gs.api.maria.inse(field, params);
+                console.log(newRow);  // Log the result
+
+                if (newRow.success) {
+                    const page = G.subparent[field.split('.')[1]];  // Get the page name from the field
+                    console.log("parenting...");
+                    console.log(field);
+                    console.log(page);
+                    Swal.close();
+                    gs.form.updateTable(`${table}_table`, 'buildCoreTable');
+                }
+            } catch (error) {
+                console.error(`Error inserting new row into ${field}:`, error);
+            }
+
+            return false;  // Prevent any form submission or page reload
+        },
+
         insertNewRow : async function (event) {
             // Extract the 'name' attribute from the event target (button)
             const field = event.target.name;  // Use event.target to access the button's name attribute
-            console.log(field);
             // Split 'gen_admin.domain' into 'gen_admin' and 'domain'
             const tableName = field.split('.')[1];  // Extract the table name, e.g., 'domain'
-            console.log(tableName);
-
             // Get the name value from the input field dynamically (based on tableName)
             const nameValue = document.getElementById(tableName + '_name').value;  // ID like 'domain_name'
-            console.log(nameValue);
-            console.log(G.subparent[tableName]);
-
             // Prepare the parameters to send to the API
             const params = {
                 name: nameValue,
                 created: gs.date('Y-m-d H:i:s')  // Use gs.date() to generate a timestamp
             };
-            console.log(params);
             try {
                 // Check if the db exists and is valid
                     // Insert the new row into the database/table using gs.api

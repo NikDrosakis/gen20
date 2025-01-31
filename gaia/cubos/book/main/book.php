@@ -1,9 +1,3 @@
-<style>
-    .booktitle{
-display:grid;margin:35px 0px 35px 0px;color:#000000;font-size:15px;
-    }
-</style>
-
    <h2 style="cursor:pointer">My Library</h2>
    <button type="button" style="border:none;background:none;" id="newbks">New Entry</button>
    <div id="book">

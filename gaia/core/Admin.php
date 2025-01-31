@@ -326,7 +326,7 @@ if($this->sub==''){
 }else{
       $name=$this->sub;
 
-      $html .= $this->channelRender($name,1,$this->mainplan());
+      $html .= $this->channelRender($name,1,$this->mainplan($name));
     //  $html .= '<script>gs.ui.sort(`UPDATE ${G.mainplan} SET sort=? WHERE id = ?`, "list", G.mainplan);</script>';
       //add notification bar
     //  $html .= $this->channelRenderFile($this->notification_file,2);
@@ -394,7 +394,7 @@ protected function alinks() {
 
 protected function mainPlanAdminEditor($name,$alinks=[]){
     if(empty($alinks)){
-     $alinks = $this->db->f("SELECT * FROM gen_admin.alinks WHERE name=?",[$name]);
+     $alinks = $this->mainplan($name);
      }
      $plan= $alinks['mainplan'] ? json_decode($alinks['mainplan'],true) : $alinks['mainplan'];
      $html = $this->renderFormField("mainplan",["type"=>"json","comment"=>"json","table"=>"gen_admin.alinks","id"=>$alinks['id']],$alinks['mainplan']);

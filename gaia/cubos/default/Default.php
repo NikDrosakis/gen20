@@ -2,7 +2,7 @@
 namespace Core;
 
 
-trait CMS {
+trait Default {
 protected function getUsers() {
         return $this->db->fa("SELECT * FROM {$this->publicdb}.user");
     }

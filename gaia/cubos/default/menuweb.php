@@ -27,7 +27,14 @@
         .nav-drop {
             width: 100%;
         }
-
+.bubPr {
+    z-index:111111111111;
+    line-height: 0;
+    margin: 0;
+    width: 20px;
+    height: 20px;
+    position:absolute;
+}
         
     }
 
