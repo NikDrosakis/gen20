@@ -10663,19 +10663,7 @@ header {
     width: 26px;
 }
 .button{
-  margin: 2px;
-  background: aliceblue;
-  cursor: pointer;
-  padding: 10px;
-  /* min-width: 30%; */
-  display: block;
-  font-size: 16px;
-  border: 1px solid;
-  border-radius: 8px;
-  display: inline;
-  color: black;
-  height: 35px;
-  max-width: 200px;
+  color: darkcyan;
 }
 
 #progressBarContainer {

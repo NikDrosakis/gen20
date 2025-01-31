@@ -383,7 +383,7 @@ protected function standardNginx($domain) {
             }
 
             // Subfolders
-            $folder_list = array('compos', 'css', 'img', 'js', 'main');
+            $folder_list = array('common', 'css', 'img', 'js', 'main');
             foreach ($folder_list as $subfolder) {
                 $domain_folder_absolute = $domain_folder . "/" . $subfolder;
                 if (!file_exists($domain_folder_absolute)) {

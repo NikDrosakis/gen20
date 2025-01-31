@@ -580,6 +580,7 @@ var gs= {
             var pair = cookies[i].split("=");
             result[pair[0].trim()] = pair[1];
         }
+        
         return result;
     } else if (!value) {
         // Get a specific cookie
@@ -989,7 +990,7 @@ actions = [
             }
         },
 
-        post: async function (method, params,resource) {
+        post: async function (method, params,resource='local') {
             try {
                 const url = `${G.SITE_URL}api/v1/${resource}/${method}`;
                 console.log(url);
@@ -1021,6 +1022,90 @@ actions = [
                 return { error: error.message };
             }
         },
+        bind: async function (obj) {
+            const params = { ...obj.dataset };
+            const method = params.method;
+            delete params.method;
+             console.log(params);
+            try {
+                const url = `${G.SITE_URL}api/v1/local/${method}`;
+                console.log(url);
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const text = await response.text();
+                let result;
+                try {
+                    result = JSON.parse(text); // Try parsing as JSON
+                } catch (jsonError) {
+                    console.error("JSON Parse Error:", jsonError);
+                    result = { error: "JSON Parse Error", rawResponse: text };
+                }
+
+                // ✅ Append result to a label after the button
+                let labelId = `result-label-${method}`;
+                let existingLabel = document.getElementById(labelId);
+
+                if (!existingLabel) {
+                    // Create new label if it doesn't exist
+                    existingLabel = document.createElement("label");
+                    existingLabel.id = labelId;
+                    existingLabel.style.marginLeft = "10px"; // Adjust spacing
+                    obj.insertAdjacentElement("afterend", existingLabel);
+                }
+
+                // ✅ Update label text with API response
+                existingLabel.innerText = result.data ? JSON.stringify(result.data) : result.rawResponse;
+                return { data: result };
+
+            } catch (error) {
+                console.error("Error updating content:", error);
+                return { error: error.message };
+            }
+        },
+
+        binding: function(){
+            let syncGroups = {};
+            document.querySelectorAll("[class*='sync-']").forEach(element => {
+                let group = Array.from(element.classList).find(cls => cls.startsWith("sync-"));
+
+                if (group) {
+                    if (!syncGroups[group]) {
+                        syncGroups[group] = [];
+                    }
+                    syncGroups[group].push(element);
+                }
+            });
+
+            Object.values(syncGroups).forEach(elements => {
+                elements.forEach(element => {
+                    element.addEventListener("input", function () {
+                        elements.forEach(target => {
+                            if (target !== this) {
+                                if (this.tagName === "SELECT" && (target.tagName === "SPAN" || target.tagName === "LABEL")) {
+                                    // Select -> Label/Span: Pass the selected option's TEXT
+                                    target.innerText = this.options[this.selectedIndex].text;
+                                } else if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+                                    // Input/Textarea: Sync value
+                                    target.value = this.value;
+                                } else if (target.tagName === "BUTTON") {
+                                    // Button: Set data-value instead of changing text
+                                    target.setAttribute("data-value", this.value);
+                                } else {
+                                    // Default case (e.g., span updates dynamically)
+                                    target.innerText = this.value;
+                                }
+                            }
+                        });
+                    });
+                });
+            });
+    },
     /***
      loadfile
      get BUFFERS from core API api/bin
@@ -1052,8 +1137,11 @@ actions = [
             console.error("Error updating content:", error);
         }
     },
-    //TODO gen.js:977 Error updating content: SyntaxError: Unexpected token '✗', "✗  Action "... is not valid JSON
+    /*
+    * calling named action to run
+    * */
     run:async function (name, func, appendid, params={}) {
+
         try {
             const next_state = gs.local("stored_state_"+name) ?? 0;
             const requestParams = {

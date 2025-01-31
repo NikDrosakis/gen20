@@ -58,7 +58,7 @@ abstract class Gaia {
     public $aconf;
     public $layout_array;
     public $notification_file= "/var/www/gs/cubos/notificationweb/public.php";
-    public $chat_file= "/var/www/gs/admin/compos/chat_panel.php";
+    public $chat_file= "/var/www/gs/admin/common/chat_panel.php";
 
     public function __construct() {
 	include "_config.php";
