@@ -580,7 +580,7 @@ var gs= {
             var pair = cookies[i].split("=");
             result[pair[0].trim()] = pair[1];
         }
-        
+
         return result;
     } else if (!value) {
         // Get a specific cookie

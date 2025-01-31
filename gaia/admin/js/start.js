@@ -173,6 +173,10 @@ document.addEventListener('DOMContentLoaded', initializeSidebarDragAndDrop);
 document.addEventListener('DOMContentLoaded', () => {
 
 /**
+* binding for global internal connecting methods in async method (with php api)
+*/
+gs.api.binding();
+/**
 * TABLE pages with id set
 */
     if (G.has_maria && G.id=='') {

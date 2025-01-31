@@ -661,13 +661,13 @@ public function getColumnsWithComment(string $db,string $var) {
         $sql = "
             SELECT TABLE_NAME, COLUMN_NAME,COLUMN_TYPE, COLUMN_COMMENT
             FROM INFORMATION_SCHEMA.COLUMNS
-            WHERE TABLE_SCHEMA = ? AND COLUMN_COMMENT LIKE ?
+            WHERE TABLE_SCHEMA = ? AND COLUMN_COMMENT = ?
         ";
         // Prepare the SQL statement
         $stmt = $this->_db->prepare($sql);
 
         // Execute the statement with parameters (use ? for positional binding)
-        $stmt->execute([$db, "%$var"]);
+        $stmt->execute([$db, $var]);
 
         // Fetch all results
         $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
