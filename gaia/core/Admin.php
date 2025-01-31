@@ -109,7 +109,7 @@ protected function adminDomWrap() {
         $this->renderAdminHead();
 
         //navigation
-        include $this->ADMIN_ROOT . "compos/dshbar.php";
+        include $this->ADMIN_ROOT . "common/dshbar.php";
 
         //body
         echo '<div id="container">';
@@ -144,7 +144,7 @@ protected function adminDomWrap() {
 protected function produceSubchannel($channel){
                 //INCLUDE embedded to iframes
                 if($content['type']=='iframe'){
-                return $this->ADMIN_ROOT . "compos/iframe.php";
+                return $this->ADMIN_ROOT . "common/iframe.php";
                  }else  if (file_exists($this->ADMIN_ROOT . "main/" . $this->page . "/" .$this->sub . ".php")) {
                 return $this->ADMIN_ROOT . "main/" . $this->page . "/" .$this->sub . ".php";
                 }
@@ -186,7 +186,7 @@ protected function produce6channel($name,$ch,$page,$type,$mainplan){
         $html .= '<script>gs.ui.sort(`UPDATE '.$table.' SET sort=? WHERE id = ?`, "list", "'.$table.'");</script>';
    }else{
     switch($type){
-            case "compos" : $chanfile = ADMIN_ROOT."compos/".$name.".php" ; break;
+            case "common" : $chanfile = ADMIN_ROOT."common/".$name.".php" ; break;
             case "cubos" : $chanfile = CUBO_ROOT.$name."/public.php" ; break;
             default:   $chanfile = ADMIN_ROOT."main/".$page."/".$name.".php" ; break;
     }

@@ -196,7 +196,7 @@ const displayDiaryDates = async () => {
 
     try {
         // Fetch distinct dates
-        const dateResults = await ga.api.maria.fa("SELECT DISTINCT DATE(created) as entry_date FROM gen_admin.diary ORDER BY created DESC");
+        const dateResults = await ga.api.maria.fa("SELECT DISTINCT DATE(created) as entry_date FROM {$publicdb}.c_diary ORDER BY created DESC");
 
         dateResults.data.forEach(entry => {
             const entryDate = entry.entry_date;

@@ -1,6 +1,6 @@
 <?php
 $steps=10;
-include ADMIN_ROOT."compos/steps.php";
+include ADMIN_ROOT."common/steps.php";
 ?>
 <script>
 /*

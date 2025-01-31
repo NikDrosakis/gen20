@@ -574,8 +574,8 @@ if (strpos($table, "/") !== false) {
  #gs.form.handleNewRow(event, \'' . $table . '\', {0: {row: \'name\', placeholder: \'Give a Name\'}, 1: {row: \'created\', type: \'hidden\', value: gs.date(\'Y-m-d H:i:s\')}})
 return '<h3>
             <input id="cms_panel" class="red indicator">
-           <button class="bare" onclick="openPanel(\'compos/doc.php\')"><span class="glyphicon glyphicon-info-sign bare"></span></button>
-           <button class="bare" onclick="openPanel(\'compos/guide.php\')"><span class="glyphicon glyphicon-question-sign"></span></button>
+           <button class="bare" onclick="openPanel(\'common/doc.php\')"><span class="glyphicon glyphicon-info-sign bare"></span></button>
+           <button class="bare" onclick="openPanel(\'common/guide.php\')"><span class="glyphicon glyphicon-question-sign"></span></button>
             <a href="/admin/'.$page.'/'.$subpage.'"><span class="glyphicon glyphicon-edit"></span>'.ucfirst($subpage).'</a>
             <button class="bare right" onclick="gs.ui.switcher(\'#new_' . $subpage . '_box\')">
                 <span class="glyphicon glyphicon-plus"></span></button>
@@ -735,14 +735,14 @@ protected function renderFileFormList(array $list, string $title = "File List"):
 #$this->drop($this->listMariaTables($domain),'','listMariaTables',"buildTable")
 protected function renderSelectField($fieldName, $selectedValue, array $options=[], string $func=''): string {
         if($func=='formFilters'){
-        $select = "<select class='gs-select' data-table='{$this->table}' onchange=\"this.dataset.filter = this.value; gs.form.updateTable(this, 'buildCoreTable')\" name='$fieldName' id='{$fieldName}{$this->formid}'><option value=''>Select</option>";
+        $select = "<select class='gs-select sync-$fieldName' data-table='{$this->table}' onchange=\"this.dataset.filter = this.value; gs.form.updateTable(this, 'buildCoreTable')\" name='$fieldName' id='{$fieldName}{$this->formid}'><option value=''>Select</option>";
                   foreach ($options as $key => $label) {
                      $selected = ($key == $selectedValue) ? 'selected="selected"' : '';
                       $select .= "<option value='$key' $selected>$label</option>";
                      }
                      $select .= "</select>";
         }else{
-        $select= "<select class='gs-select' onchange='gs.form.updateRow(this, \"$this->table\")' name='$fieldName' id='$fieldName$this->formid'><option value=0>Select</option>";
+        $select= "<select class='gs-select sync-$fieldName' onchange='gs.form.updateRow(this, \"$this->table\")' name='$fieldName' id='$fieldName$this->formid'><option value=0>Select</option>";
                           foreach ($options as $key => $label) {
                              $selected = ($key == $selectedValue) ? 'selected="selected"' : '';
                               $select .= "<option value='$key' $selected>$label</option>";
@@ -855,7 +855,7 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
         case 'img':
         // @fm.features File upload field
           $imgPath = $this->validateImg($value);
-            return "<label for='$col'>$col</label><button ondblclick='openPanel(`compos/mediac.php`)' class='gs-span' id='drop-zone' ondrop='handleDrop(event)' ondragover='handleDragOver(event)'>
+            return "<label for='$col'>$col</label><button ondblclick='openPanel(`common/mediac.php`)' class='gs-span' id='drop-zone' ondrop='handleDrop(event)' ondragover='handleDragOver(event)'>
                 <img src='$imgPath' style='height: 100%;width:100%;' draggable='false'></button>";
         break;
         case 'sql':
@@ -871,6 +871,7 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
                         <textarea name='$col' id='$col' placeholder='$col'>$escapedValue</textarea>
                         <div class='code-editor' id='editor-$col'></div>
                     </div>
+                <button class='button save-button' onclick='gs.form.saveContentMirror(\"$col\", \"$table\",$id)' type='button' id='save_$col'>Save Content</button>
                 </div>
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
@@ -885,7 +886,6 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
                         CodeMirror.instances['$col'] = editor;
                     });
                 </script>
-                <button class='button save-button' onclick='gs.form.saveContentMirror(\"$col\", \"$table\",$id)' type='button' id='save_$col'>Save Content</button>
             ";
         case 'sql':
                 // @fm.features Handle SQL preview (raw SQL code)
@@ -934,7 +934,7 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
         return "<div class='gs-span'>
                     <label for='$col'>$col</label>
                      <textarea class='gs-textarea' name='$col' id='$col' placeholder='$col'>$value</textarea>
-                    <button class='bare save-button' onclick='saveContent(\"$col\", \"$this->table\",$id)' type='save' id='save_$col'>Save Content</button>
+                    <button class='button save-button' onclick='saveContent(\"$col\", \"$this->table\",$id)' type='save' id='save_$col'>Save Content</button>
                 </div>
                 <script>
                     if (CKEDITOR.instances['$col']) {

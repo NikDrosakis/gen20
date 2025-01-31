@@ -16,44 +16,28 @@ body.grid-enabled {
 }
 </style>
 
-
-
+<p class="sync-theme"></p>
 <?php
-$current_code="en";
-//$current_code=$this->G['is']['lang_primary'];
+/**
+the routine is build in method buildNewLang
+ */
+//echo $this->buildNewLang();
 
-//get all loc fields of database
-$langList=$this->db->flist("select code,name from {$this->publicdb}.language");
-xecho($langList);
-
-//provide the dropdown
-$dropNewLangs=$this->renderSelectField("language",$current_code,$langList);
 ?>
-<!--default-->
-<h2>Default Language: <?=$current_code?></h2>
-<!--change-->
-<h2>Add new language: <?php echo $dropNewLangs?></h2>
-<!--colFormat-->
-<?php
-$allcolumnskeyword= $this->db->getColumnsWithComment($this->publicdb,'loc-default');
-echo count($allcolumnskeyword)." in $this->publicdb";
-//foreach($allcolumnskeyword as $columnDetails){
-  //  $columnDetails['COLUMN_COMMENT'] = 'loc-default';
-//$this->db->alter("$this->publicdb.{$columnDetails['TABLE_NAME']}", 'modify', $columnDetails);
-//}
-?>
-<!--modify comments to loc-default -->
-
-<!--table-->
-<h2>Language Selected : </h2>
-<!--activate-->
-<button id="activationButton" onclick="runAction('buildNewLang','')" data-lang="" class="button">Activate New Language</button>
-
-
+<!--sync loading-->
 <?php //echo $this->buildTable($this->publicdb.".language");?>
 <div id="justrun"></div>
+
+<!--async loading-->
 <script>
-document.addEventListener('DOMContentLoaded', async function() {
-await gs.api.run("runActionplan","buildTable",{key:"gen_admin.systems",state:0},"justrun");
-  })
+//document.addEventListener('DOMContentLoaded', async function() {
+//await gs.api.run("runActionplan","buildTable",{key:"gen_admin.systems",state:0},"justrun");
+//  })
+document.addEventListener("DOMContentLoaded", function () {
+
+gs.api.binding();
+
+});
+
+
   </script>

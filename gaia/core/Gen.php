@@ -110,7 +110,7 @@ protected function getBody() {
 
     if ($this->page != 'home') {
         try {
-            include PUBLIC_ROOT_WEB . "compos/searchbox.php";
+            include PUBLIC_ROOT_WEB . "common/searchbox.php";
         } catch (\Throwable $e) {
             echo "<!-- Error loading searchbox.php: " . $e->getMessage() . " -->";
         }
