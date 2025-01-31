@@ -21,43 +21,50 @@ protected $localized;
 
 
 protected function buildNewLangUI() {
-    $current_code = "en";
-    $default_lang = $this->G['is']['lang_primary'];
+    $default_lang = $this->G['setup']['lang_default'];
+
     // Provide the dropdown
     $dropNewLangs = $this->renderSelectField(
-    "language",
-    $current_code,
-    $this->db->flist("SELECT code, name FROM {$this->publicdb}.language")
+        "language",
+        $default_lang,
+        $this->db->flist("SELECT code, name FROM {$this->publicdb}.language WHERE status=0")
     );
 
-    //-- Default -->
-    $html = "<label>Default Language: {$current_code}</label>";
+    // Default Language Label
+    $html = "<label>Default Language: {$default_lang}</label>\n";
 
-    //-- Change -->
-    $html .= "<label>Add new language: {$dropNewLangs}</label>";
-
-    //-- Column Format -->
+    // Column Format
     $allDefaultColumns = $this->db->getColumnsWithComment($this->publicdb, 'loc-default');
-    $allDeColumns = $this->db->getColumnsWithComment($this->publicdb, 'loc-de');
+    $html .= count($allDefaultColumns) . " columns in {$this->publicdb}\n<br/>";
 
-    $html .= count($allDefaultColumns) . " columns in {$this->publicdb}";
-    $html .= count($allDeColumns) . " columns in {$this->publicdb}";
-    //-- Table -->
-    $html .= "<br/><label>Language Selected: <span class='sync-language'></span></label>";
-    //-- Activate -->
-    $html .= "<br/><button id='activationButton' data-method='addLanguageColumn' class='button sync-language' onclick=\"gs.api.bind(this)\">Activate New Language</button>";
-    $html .= "<br/>";
+    // Change Language
+    $html .= "<label>Add new language: {$dropNewLangs}</label>\n<br/>";
+
+    $installed_langs = $this->db->flist("SELECT code FROM {$this->publicdb}.language WHERE status=2 AND code!=?", ['en']);
+
+    foreach ($installed_langs as $lang) {
+        $allcols = $this->db->getColumnsWithComment($this->publicdb, "loc-$lang");
+        $html .= count($allcols) . " columns in $lang\n<br/>";
+        $html .= "<button id='activationButton' data-method='dropLang' data-value='$lang' class='button sync-language' onclick=\"gs.api.bind(this)\">Remove $lang Language</button>\n<br/>";
+    }
+
+    // Selected Language Label
+    $html .= "<label>Language Selected: <span class='sync-language'></span></label>\n<br/>";
+
+    // Activate New Language Button
+    $html .= "<button id='activationButton' data-method='buildNewLang' class='button sync-language' onclick=\"gs.api.bind(this)\">Activate New Language</button>\n<br/>";
+
     return $html;
 }
 
-public function addLanguageColumn($value = '') {
+
+protected function buildNewLang($value = '') {
 $value=is_array($value) ? $value['value'] : $value;
     if (!$value) {
         throw new InvalidArgumentException("New language code is required.");
     }
 
     $allDefaultColumns = $this->db->getColumnsWithComment($this->publicdb, 'loc-default');
-
     // Add the new column after the original column
     foreach ($allDefaultColumns as $col) {
         // Construct new column name: columnname_langcode
@@ -70,86 +77,26 @@ $value=is_array($value) ? $value['value'] : $value;
 
         // Perform the database alteration
         $this->db->alter("{$this->publicdb}.{$col['TABLE_NAME']}", "add", $newColumnDetails, $col['COLUMN_NAME']);
+        //update status
+        $this->db->q("UPDATE {$this->publicdb}.language SET status=2 where code=?",[$value]);
     }
 
     return true;
 }
-
-/**
- * @filemeta.description Adds new language columns to the public database
- * @filemeta.features Alters public database, adding new language columns to all "loc" comment columns
- */
-protected function addLangColumn($newlang_prefix = '') {
-    // Get all tables
-    foreach ($this->db->show("tables") as $table) {
-        // Fetch table metadata
-        $columns = $this->db->tableMeta($table);
-
-        // Loop through columns
-        foreach ($columns as $column) {
-            $oldColumn = $column['COLUMN_NAME'];
-            $columnComment = trim($column['COLUMN_COMMENT']);
-
-            // Check if the column has a "loc" comment
-            if ($columnComment === 'loc') {
-                // Construct new column name
-                $newColumn = $oldColumn . "_" . $newlang_prefix;
-
-                // Check if the new column already exists
-                if (!array_key_exists($newColumn, array_column($columns, 'COLUMN_NAME'))) {
-                    // Prepare SQL to add the new column
-                    $sql = sprintf(
-                        "ALTER TABLE `%s` ADD COLUMN `%s` TEXT DEFAULT NULL COMMENT 'loc' AFTER `%s`",
-                        $table,
-                        $newColumn,
-                        $oldColumn
-                    );
-                    // Execute SQL
-                    $this->db->exec($sql);
-                }
-            }
-        }
+protected function dropLang($prefix) {
+    $prefix = is_array($prefix) ? $prefix['value'] : $prefix;
+    if (!$prefix) {
+        throw new InvalidArgumentException("Language prefix is required.");
     }
-}
-/**
- * @filemeta.description Drops language columns to the public database
- * @filemeta.features Alters public database, droping language columns to all "loc" comment columns
- */
-/**
- * @filemeta.description Drops language columns from the public database
- * @filemeta.features Alters public database, dropping language columns for all "loc" comment columns
- */
-protected function dropLangColumn($newlang_prefix = '') {
-    // Get all tables
-    foreach ($this->db->show("tables",$this->publicdb) as $table) {
-        // Fetch table metadata
-        $columns = $this->db->tableMeta($table);
-
-        // Loop through columns
-        foreach ($columns as $column) {
-            $oldColumn = $column['COLUMN_NAME'];
-            $columnComment = trim($column['COLUMN_COMMENT']);
-
-            // Check if the column has a "loc" comment
-            if ($columnComment === 'loc') {
-                // Construct new column name
-                $newColumn = $oldColumn . "_" . $newlang_prefix;
-
-                // Check if the new column exists
-                if (in_array($newColumn, array_column($columns, 'COLUMN_NAME'))) {
-                    // Prepare SQL to drop the new column
-                    $sql = sprintf(
-                        "ALTER TABLE `%s` DROP COLUMN `%s`",
-                        $table,
-                        $newColumn
-                    );
-                    // Execute SQL
-                    $this->db->exec($sql);
-                }
-            }
-        }
+    // Get all columns that have "loc-$prefix" in their comment
+    $allColumns = $this->db->getColumnsWithComment($this->publicdb, "loc-$prefix");
+    // Iterate over the columns and drop each one
+    foreach ($allColumns as $col) {
+        $this->db->alter("{$this->publicdb}.{$col['TABLE_NAME']}", "drop", ['COLUMN_NAME' => $col['COLUMN_NAME']]);
     }
+//update status
+        $this->db->q("UPDATE {$this->publicdb}.language SET status=0 where code=?",[$prefix]);
+    return true;
 }
-
 
 }

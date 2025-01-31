@@ -9,7 +9,7 @@ use Symfony\Component\Security\Core\Security;
  * */
 
 class API extends Gaia{
-	 use Action, My, Media, Tree, Form, Domain, Cubo;
+	 use Action, My, Media, Tree, Form, Domain, Cubo, Lang;
    private $security;
 
    public function __construct() {
@@ -166,58 +166,29 @@ LOCAL METHOD - GET THE EXPECTED TYPEOF
             $response =["status"=>403,"success"=>false,"code"=>'LOCAL','data'=>$execute,'error'=>"Method {$this->id} not found"];
             }
  */
-protected function executeLocalMethod(array $request): array {
-    if (method_exists($this, $this->id)) {
-        return $this->executeDynamicMethod($this->id, $request);
-    } else {
+protected function executeLocalMethod($request): array {
+        // Use reflection to get method signature
+        $reflection = new ReflectionMethod($this, $this->id);
+        $parameters = $reflection->getParameters();
+
+        // Determine how to pass arguments based on method signature
+        if ($this->method === 'POST' && count($parameters) == 1 && $parameters[0]->getType() && $parameters[0]->getType()->getName() === 'array') {
+            // If method expects a single array parameter
+            $execute = $this->{$this->id}($request);
+        } else {
+            // Otherwise, pass the request as a single argument
+            $execute = $this->{$this->id}($request);
+        }
+
         return [
-            "status" => 203,
+            "status" => 200,
             "success" => true,
-            "code" => 'LOCAL',
-            "error" => "Index of Local Methods",
-            "data" => $this->getClassMethods()
+            "code" => 'EXECUTED',
+            "data" => $execute,
+            "error" => $execute['error'] ?? null
         ];
-    }
 }
-/**
- * Executes a method dynamically using reflection and handles parameter passing.
- *
- * @param string $methodName The name of the method to execute.
- * @param array $request The request data to pass to the method.
- * @return array The result of the method execution.
- */
-protected function executeDynamicMethod(string $methodName, array $request): array {
-    if (!method_exists($this, $methodName)) {
-        return [
-            "status" => 403,
-            "success" => false,
-            "code" => 'METHOD_NOT_FOUND',
-            "error" => "Method {$methodName} not found",
-            "data" => []
-        ];
-    }
 
-    // Use reflection to get method signature
-    $reflection = new ReflectionMethod($this, $methodName);
-    $parameters = $reflection->getParameters();
-
-    // Determine how to pass arguments based on method signature
-    if ($this->method === 'POST' && count($parameters) == 1 && $parameters[0]->getType() && $parameters[0]->getType()->getName() === 'array') {
-        // If method expects a single array parameter
-        $execute = $this->{$methodName}($request);
-    } else {
-        // Otherwise, pass the request as a single argument
-        $execute = $this->{$methodName}($request);
-    }
-
-    return [
-        "status" => 200,
-        "success" => true,
-        "code" => 'EXECUTED',
-        "data" => $execute,
-        "error" => $execute['error'] ?? null
-    ];
-}
 /**
  Plan Actionplan Action
  */
