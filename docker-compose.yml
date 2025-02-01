@@ -9,7 +9,6 @@ services:
       - ./setup/php.ini:/usr/local/etc/php/php.ini
     networks:
       - gen-network
-
   # 0 Nginx Service to Proxy Requests
   webserver:
     image: nginx:1.26
