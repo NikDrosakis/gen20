@@ -30,7 +30,6 @@
     .stars label:hover ~ label {
         color: #ffcc00; /* Hover color */
     }
-
     /* Ensure checked stars stay highlighted when hovering over lower stars */
     .stars input:checked ~ label:hover,
     .stars input:checked ~ label:hover ~ label,
@@ -50,12 +49,12 @@
     $(document)
         .on("click",'input[name="rating"]',async function() {
           const stars=this.id.replace('star','');
-          const getuserid=await gs.api.maria.f(`SELECT userid FROM ${G.publicdb}.c_book_rating WHERE bookid=? AND userid=?`,[G.id,coo('GSID')]);
+          const getuserid=await gs.api.maria.f(`SELECT userid FROM {$this->publicdb}.c_book_rating WHERE bookid=? AND userid=?`,[G.id,coo('GSID')]);
           if(getuserid && getuserid.success){
           if(!!getuserid.data){
-          const updaterating=await gs.api.maria.q(`UPDATE ${G.publicdb}.c_book_rating SET stars=? WHERE bookid=? and userid=?`,[stars,G.id,getuserid.data]);
+          const updaterating=await gs.api.maria.q(`UPDATE {$this->publicdb}.c_book_rating SET stars=? WHERE bookid=? and userid=?`,[stars,G.id,getuserid.data]);
           }else{
-          const updaterating=await gs.api.maria.inse(`${G.publicdb}.c_book_rating`,{'userid':coo('GSID'),'bookid':G.id,'stars':stars,'created':time()});
+          const updaterating=await gs.api.maria.inse("{$this->publicdb}.c_book_rating",{'userid':coo('GSID'),'bookid':G.id,'stars':stars,'created':time()});
           }
       if(updaterating && updaterating.success){
            $(this).prop("checked", true);

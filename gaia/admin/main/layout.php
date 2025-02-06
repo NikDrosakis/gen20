@@ -108,7 +108,7 @@ $cubos= $this->db->fa("SELECT * from gen_admin.cubo order by name ASC");
 <div style="display:flex;flex-wrap: nowrap;">
 <div style="min-width: 50%;">
 <div style="font-strength:700">Main Pages of <?=TEMPLATE?>  (<?=count($pages)?>)         <span class="glyphicon glyphicon-plus"></span></div>
-<?php $pc = $this->getMaincuboBypage($selectedPageName); //pagecubo ?>
+<?php $pc = $this->getMaincubo($selectedPageName); //pagecubo ?>
 
 <div style="display:flex;flex-wrap: wrap;">
 

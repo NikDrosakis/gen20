@@ -1,0 +1,74 @@
+<?php
+
+if($this->G['id']!=''){
+
+include $this->G['SITE_ROOT'] . "main/publisher_edit.php";
+
+}else{
+
+$params['page']=$page=$this->page;
+$sel=$this->booklists($params);
+?>
+
+<div id="publisher">
+<?php
+//xecho($sel);
+include PUBLIC_ROOT_WEB."main/{$page}/{$page}_archive.php";
+?>
+</div>
+
+<div id="pagination" class="paginikCon"></div>
+
+<?php } ?>
+
+<div class="row">
+        <?php
+        for ($i=0;$i<count($sel);$i++) {
+           $postid = $sel[$i]['id'];
+            $img = !$sel[$i]['img'] ? $this->G['writerdefaultimg'] : SITE_URL.'media/'. $sel[$i]['img'];
+        ?>
+        <div class="card">
+            <div class="author"><?=$sel[$i]['name'] != null ? $sel[$i]['name'] : ''?></div>
+            <div class="cover">
+                <img id="img<?=$postid?>" src="<?=$img?>">
+            </div>
+            <div class="description">
+                <!---list of books--->
+                <?php if(!empty($sel[$i]['books'])){ ?>
+                    <p class="title"><?php if(!empty($sel[$i]['title'])){implode('</p><p class="title">',$sel[$i]['title']);}?></p>
+                    <div class="published"><?=$sel[$i]['publisher']?>, <?=$sel[$i]['published']?></div>
+                <?php }else{ ?>
+                    <div>No books listed</div>
+                <?php } ?>
+            </div>
+        </div>
+        <?php if($sel[$i]['summary']!=null){ ?>
+            <div class="card-summary"><?=implode(',',$sel[$i]['summary'])?></div>
+        <?php } ?>
+<?php } ?>
+</div>
+
+<!--writers edit--->
+<?php
+$sel= $bot->f("SELECT * FROM publisher WHERE id=?",array($this->G['id']));
+$img = !$sel[$i]['img'] ? "/img/empty_publisher.png" : '/media/'. $sel[$i]['img'];
+?>
+	<!-- EDIT / SHOW-->
+<a href="/publisher">Back to publishers</a>
+<span style="float:left;" onclick="gs.ui..goto(['previous','writer','id',g.get.id,'/publisher?id='])" class="next glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+<span style="float:right" onclick="gs.ui..goto(['next','writer','id',g.get.id,'/publisher?id='])" class="next glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+
+<h2 id="titlebig"><?=$sel['name']?></h2>
+<?php include 'public.php'; ?>
+    <div style="width:30%;float:left;margin:15px 15px 15px 15px;">
+        <img id="bookimg" src="<?=$img?>" style="max-height:350px;">
+    </div>
+
+<div style="display:inline-block; width:56%;margin:2%">
+<label>Name:</label><input class="input" id="name" value="<?=$sel['name']?>">
+
+<div>
+<label>Summary: </label><textarea class="input" id="summary"><?=$sel['summary']?></textarea>
+<button class="btn btn-primary" id="update">Save Writer</button>
+</div>
+</div>
