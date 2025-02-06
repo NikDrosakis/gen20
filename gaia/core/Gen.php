@@ -1,11 +1,11 @@
 <?php
 namespace Core;
-
 class Gen extends Gaia {
-use Head, Form, Media, My, WS, Template, Cubo;
+use Head, Form, Media, My, WS, Template, Cubo, Book;
 
    public function __construct() {
            parent::__construct();
+
    }
 
 /**
@@ -138,10 +138,14 @@ protected function renderCubos($pc, $keys, $wrapperId)
 {
     echo "<div id=\"$wrapperId\">";
     foreach ($keys as $key) {
-        if (!empty($pc[$key])) {
+        if (!empty($pc[$key]) && is_array($pc[$key])) {  // 🔹 Ensure it's an array
             foreach ($pc[$key] as $cubo) {
                 echo "<div id=\"$cubo\" class=\"cubo\">";
-                $this->safeInclude(CUBO_ROOT . $cubo . "/public.php", "Error loading $cubo");
+                try {
+                    $this->safeInclude(CUBO_ROOT . $cubo . "/public.php", "Error loading $cubo");
+                } catch (\Throwable $e) {
+                    echo "<!-- Error: " . $e->getMessage() . " -->";
+                }
                 echo "</div>";
             }
         }
@@ -149,31 +153,37 @@ protected function renderCubos($pc, $keys, $wrapperId)
     echo "</div>";
 }
 
+
 /**
  * Renders the main content area.
  */
-protected function renderMainContent($pc)
-{
+protected function renderMainContent($pc) {
     if (!empty($pc['m'])) {
         foreach ($pc['m'] as $cubo) {
             echo "<div id=\"$cubo\" class=\"row archive-content\">";
             try {
-            $this->safeInclude(CUBO_ROOT . $cubo . "/main/$cubo.php", "Error loading $cubo");
-                // Placeholder for potential database queries
-                // $main = $this->db->f("SELECT * FROM {$this->publicdb}.main WHERE name=?", [$this->page]);
-                // if ($main && $main['query_archive']) {
-                //     echo $this->buildTemplateArchive($main);
-                // }
+                // Check if the corresponding Router method exists dynamically
+                $routerMethod = $cubo . 'Router';
+
+                if (method_exists($this, $routerMethod)) {
+                    echo $this->{$routerMethod}($this->page);
+                } else {
+                    // Fallback: Load the file from CUBO_ROOT
+                    $file = CUBO_ROOT . $cubo . "/main/{$this->page}.php";
+                    if (!file_exists($file)) {
+                        throw new \Exception("File not found: $file");
+                    }
+                    include $file;
+                }
+
             } catch (\Throwable $e) {
-                echo "<!-- Error loading main content: " . $e->getMessage() . " -->";
+                echo "<!-- Error loading main content for $cubo: " . $e->getMessage() . " -->";
             }
             echo "</div>";
         }
     } else {
         try {
-            // Placeholder for 404 handling
-            // $template = $this->db->f("SELECT template_read FROM {$this->publicdb}.main WHERE name=?", ['404'])['template_read'];
-            // echo $this->renderTemplatePug($template);
+            // Handle 404 template logic
         } catch (\Throwable $e) {
             echo "<!-- Error loading 404 template: " . $e->getMessage() . " -->";
         }
@@ -203,9 +213,6 @@ protected function safeCall($method, $errorMessage = "")
         return "<!-- $errorMessage: " . $e->getMessage() . " -->";
     }
 }
-
-
-
 
 protected function getBody() {
     // Check if there are cubos for the current page

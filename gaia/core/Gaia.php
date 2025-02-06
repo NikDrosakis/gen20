@@ -319,52 +319,44 @@ protected function parse_systems_md($systems_content) {
 add switch-on param
 */
 protected function include_buffer(string $file, array $sel = [], array $params = []) {
-    $file = is_array($file) ? $file['key'] : $file;
-    if (file_exists($file)) {
-    // Get the file extension
-    $extension = pathinfo($file, PATHINFO_EXTENSION);
-    // Handle PHP files with output buffering
-    if ($extension === 'php') {
-        if (ob_get_level()) {
-            ob_end_clean(); // Clears existing buffer
+    try {
+        $file = is_array($file) ? ($file['key'] ?? '') : $file;
+
+        if (!file_exists($file)) {
+            throw new Exception("File not found: $file");
         }
-        ob_start();
-        // Include the file
 
+        // Get the file extension
+        $extension = pathinfo($file, PATHINFO_EXTENSION);
+
+        switch ($extension) {
+            case 'php':
+                if (ob_get_level()) {
+                    ob_end_clean(); // Clears existing buffer
+                }
+                ob_start();
                 include $file;
+                $output = ob_get_clean(); // Capture the output
+                flush(); // Ensure all output is flushed
+                return $output;
 
-        $output = ob_get_clean(); // Capture the output
-        flush(); // Ensure all output is flushed
-        return $output;
-    }
+            case 'md':
+                $buffer = file_get_contents($file);
+                $parsedown = new Parsedown();
+                return $parsedown->text($buffer);
 
-    // Handle Markdown files
-    elseif ($extension === 'md') {
-        $buffer = file_get_contents($file);
-        $parsedown = new Parsedown();
-        return $parsedown->text($buffer);
-    }
+            case 'html':
+            case 'json':
+                return file_get_contents($file);
 
-    // Handle HTML files
-    elseif ($extension === 'html') {
-        $buffer = file_get_contents($file);
-        return $buffer;
-    }
-
-    // Handle JSON files
-    elseif ($extension === 'json') {
-        $buffer = file_get_contents($file);
-        return $buffer;
-    }
-
-    // Default: return raw content for unsupported formats
-    else {
-        return file_get_contents($file);
-    }
-    } else {
-                return "File $file not found";
+            default:
+                return file_get_contents($file);
+        }
+    } catch (Exception $e) {
+        return "Error: " . $e->getMessage();
     }
 }
+
 protected function include_cubofile(string $file){
 $file = is_array($file) ? $file['key'] : $file;
     $extension = pathinfo(CUBO_ROOT.$file, PATHINFO_EXTENSION);
