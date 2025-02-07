@@ -884,25 +884,7 @@ SET SHORT DEFAULT
             }
         }
     },
-
-/**
- prepare the baby
- connect with services & mongodb
- */
-ermis:{
-
-
-    },
-/**
-prepare the baby
-*/
-    go : {},
-/**
- prepare the baby
- */
-
-    rus : {},
-/*    const
+    /*    const
 actions = [
         { method: 'buildTable', params: { table: 'gen_vivalibro.tasks' } },
         { method: 'updateUI', params: { section: 'taskList' } },

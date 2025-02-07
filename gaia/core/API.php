@@ -9,7 +9,7 @@ use Symfony\Component\Security\Core\Security;
  * */
 
 class API extends Gaia{
-	 use Action, My, Media, Tree, Form, Domain, Cubo, Lang;
+	 use Action, My, Media, Tree, Form, Domain, Cubo, Lang, Manifest;
    private $security;
 
    public function __construct() {

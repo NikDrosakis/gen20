@@ -1,6 +1,9 @@
 <?php
 namespace Core;
 use Exception;
+use DateTime;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 trait Domain {
 /**
 DOC
@@ -21,16 +24,121 @@ protected $os;
   protected $vhostfile;
   protected $hostfile;
 
-    protected function getPublicFilesystem(): array {
-                 $localDir = GAIAROOT.'public/'.$_SERVER['SERVER_NAME'];
-             // Use glob to get an array of all files in the specified directory
-                 $nginxSites = glob($localDir . '*');
+/**
+     * Synchronizes the domain records in the database with the actual system state and generates a detailed report.
+     *
+     * @return array An array of messages indicating the synchronization results and discrepancies.
+     */
+protected function synchronizeDomains(): array
+{
+    $report = [];
 
-                 return $nginxSites; // Return the list of zones
+    // 1. Get lists of domains from various sources
+    $fileSystemDomains = $this->getPublicFilesystem();
+    $activeNginxDomains = array_flip($this->getPublicNginx()); // Flip for faster lookups
+    $dnsZones = $this->getZones();
+    $sslCertificates = $this->getSSLs();
+
+    // 2. Get all domains from the database and reformat as an associative array
+    $dbDomains = $this->db->fa("SELECT * FROM gen_admin.domain");
+    $dbDomainMap = [];
+    foreach ($dbDomains as $dbDomain) {
+        $dbDomainMap[$dbDomain['name']] = $dbDomain;
+    }
+
+    // 3. Collect all domains from system sources
+    $allDomains = array_unique(array_merge(
+        array_keys($fileSystemDomains),
+        array_keys($activeNginxDomains),
+        array_keys($dnsZones),
+        array_keys($sslCertificates)
+    ));
+
+    $insertValues = [];
+    $updateValues = [];
+
+    foreach ($allDomains as $domainName) {
+        $fsysExists = isset($fileSystemDomains[$domainName]);
+        $nginxExists = isset($activeNginxDomains[$domainName]);
+        $dnsExists = isset($dnsZones[$domainName]);
+        $sslExists = isset($sslCertificates[$domainName]);
+
+        $domainReport = [
+            'name' => $domainName,
+            'discrepancies' => [],
+        ];
+
+        if (!$fsysExists) $domainReport['discrepancies'][] = 'File system directory is missing.';
+        if (!$nginxExists) $domainReport['discrepancies'][] = 'Nginx configuration is missing.';
+        if (!$dnsExists) $domainReport['discrepancies'][] = 'DNS zone file is missing.';
+        if (!$sslExists) {
+            $domainReport['discrepancies'][] = 'SSL certificate is missing.';
+        } elseif ($sslCertificates[$domainName]['expires'] !== null) {
+            $domainReport['ssl_expires'] = $sslCertificates[$domainName]['expires'];
+        }
+
+        if (!empty($domainReport['discrepancies'])) {
+            $report[] = $domainReport;
+        }
+
+        // If domain is not in DB, prepare insert
+        if (!isset($dbDomainMap[$domainName])) {
+            $insertValues[] = "('" . $this->db->escape($domainName) . "')";
+        } else {
+            // If it exists, prepare update
+            $updateValues[] = [
+                'fsys_check' => (int)$fsysExists,
+                'nginx_check' => (int)$nginxExists,
+                'zone_check' => (int)$dnsExists,
+                'ssl_check' => (int)$sslExists,
+                'name' => $domainName,
+            ];
+        }
+    }
+
+    // 4. Insert missing domains in bulk
+    if (!empty($insertValues)) {
+        $this->db->q("INSERT INTO gen_admin.domain (name) VALUES " . implode(',', $insertValues));
+    }
+
+    // 5. Bulk update existing domains
+    if (!empty($updateValues)) {
+        foreach ($updateValues as $values) {
+            $this->db->q(
+                "UPDATE gen_admin.domain SET fsys_check = ?, nginx_check = ?, zone_check = ?, ssl_check = ? WHERE name = ?",
+                [$values['fsys_check'], $values['nginx_check'], $values['zone_check'], $values['ssl_check'], $values['name']]
+            );
+        }
+    }
+
+    return $report;
+}
+
+   /**
+       * Gets a list of domains based on the file system directories.
+       *
+       * @return array An associative array of domain names and their corresponding paths.
+       */
+  protected function getPublicFilesystem(): array
+    {
+        $baseDir = GAIAROOT . 'public/';
+        $domains = [];
+
+        if (is_dir($baseDir)) {
+            $directories = array_filter(glob($baseDir . '*', GLOB_ONLYDIR), 'is_dir');
+            foreach ($directories as $directory) {
+                $domainName = basename($directory);
+                $domains[$domainName] = $directory;
+            }
+        } else {
+            error_log("Base directory does not exist: $baseDir");
+        }
+
+        return $domains;
     }
 
     protected function getPublicNginx(): array {
-        $nginxSitesAvailablePath = '/etc/nginx/sites-available'; // Path to Nginx sites-available directory
+        $nginxSitesAvailablePath = '/etc/nginx/conf.d'; // Path to Nginx sites-available directory
         $domains = [];
         // Check if the directory exists
         if (is_dir($nginxSitesAvailablePath)) {
@@ -48,62 +156,12 @@ protected $os;
     }
 
     protected function getActiveNginx(): array{
-             $directory = '/etc/nginx/sites-enabled/';
-             $localDir = '//var/www/gs/setup/domain/';
+             $directory = '/etc/nginx/conf.d/';
+             $localDir = GSROOT.'setup/domain/';
          // Use glob to get an array of all files in the specified directory
              $nginxSites = glob($localDir . '*');
              return $nginxSites; // Return the list of zones
     }
-
-// Helper function to convert the 'notAfter' string into a DateTime object
-protected function convertToDateTime($notAfter) {
-    // Trim and ensure the string format is correct
-    $notAfter = trim($notAfter);
-
-    // Create a DateTime object from the format provided by openssl
-    $dateTime = DateTime::createFromFormat('M j H:i:s Y T', $notAfter);
-
-    if ($dateTime === false) {
-        // If it fails, log the error and return false
-        error_log("Failed to parse date: " . $notAfter);
-    }
-    return $dateTime;
-}
-
-/**
-SSL
- */
-protected function createMaria($domainame) {
-$domain = is_array($domainame) ? $domainame['key'] : $domainame;
-    $dbfileName = str_replace('.', '', $domain);  // Remove dots from the domain name
-    $dbname = "gen_" . $dbfileName;
-    $domain_maria_sqlfile = GSROOT . "setup/maria/gen_template_043.sql";
-
-    // Create the MariaDB database
-    $createDbCommand = "mysql -uroot -pn130177! -e 'CREATE DATABASE IF NOT EXISTS " . escapeshellarg($dbname) . ";'";
-    $createDbResult = shell_exec($createDbCommand);
-
-    // Import the template SQL file into the new database
-    $importCommand = "mysql -uroot -pn130177! $dbname  < $domain_maria_sqlfile";
-    $output = shell_exec($importCommand . " 2>&1");  // Capture standard and error output
-    if ($output === null) {
-        throw new Exception("SQL import failed: " . $output);
-    }
-
-    // Update the MariaDB record in the domain table with SSL info
-    if($output){
-    $maria_file = $this->db->q(
-        "UPDATE gen_admin.domain SET maria_file = ?, maria_check = 1 WHERE name = ?",
-        [$maria_file, $domain]
-    );
-    }
-    // Check if the database update was successful
-    if ($output && $maria_file) {
-        echo "MariaDB database '$dbname' successfully created and updated for $domain!";
-    } else {
-        throw new Exception("Failed to import $maria_file the database for $domain.");
-    }
-}
 
 protected function createSSL($domainame) {
 $domain = is_array($domainame) ? $domainame['key'] : $domainame;
@@ -144,53 +202,50 @@ $domain = is_array($domainame) ? $domainame['key'] : $domainame;
 
 
 
-protected function getSSLs() {
-    $directory = '/etc/letsencrypt/live/';
-    $output = shell_exec('sudo ls ' . escapeshellarg($directory));
-    // Ensure output exists
-    if (empty($output)) {
-        return ['error' => 'Unable to access certificate directory or insufficient permissions.'];
-    }
+protected function getSSLs(): array
+{
+    $sslInfo = [];
+    $api_url = SITE_URL."apy/v1/gaia/certificates"; // Adjust the URL if necessary
 
-    $certDirs = explode("\n", trim($output));
-    $expirations = [];
+    $client = new Client();
 
-    foreach ($certDirs as $certDir) {
-        if (!empty($certDir)) {
-            $certDirPath = $directory . $certDir;
-            $certFile = $certDirPath . '/fullchain.pem';
+    try {
+        $response = $client->request('GET', $api_url);
+        $statusCode = $response->getStatusCode();
 
-            if (file_exists($certFile)) {
-                $command = "sudo openssl x509 -enddate -noout -in " . escapeshellarg($certFile);
-                $output = shell_exec($command);
-                xecho($output);
+        if ($statusCode == 200) {
+            $json_data = $response->getBody()->getContents();
+            $data = json_decode($json_data, true);
 
-                if ($output && preg_match('/notAfter=(.*)/', $output, $matches)) {
-                    $dateTime = $this->convertToDateTime($matches[1]);
-                    $expirations[$certDir] = $dateTime ? $dateTime->format('Y-m-d H:i:s') : 'Invalid date';
-                } else {
-                    $expirations[$certDir] = 'Unknown expiration';
+            if (is_array($data) && isset($data['certificates'])) {
+                foreach ($data['certificates'] as $cert) {
+                    $domainName = $cert['domains'][0]; // Assuming the first domain is the primary
+                    $sslInfo[$domainName] = [
+                        'exists' => true,
+                        'expires' => $cert['expiry_date'],  // Corrected key
+                        'serial_number' => $cert['serial'], // Corrected key
+                        'key_type' => $cert['key_type'],
+                        'certificate_path' => $cert['cert_path'], // Corrected key
+                        'private_key_path' => $cert['key_path'], // Corrected key
+                    ];
                 }
             }
+        } else {
+            error_log("FastAPI endpoint returned status code: " . $statusCode);
+            return ['error' => "FastAPI response error"];
         }
+    } catch (\Exception $e) {
+        error_log("Error fetching SSL certificates: " . $e->getMessage());
+        return ['error' => "Exception occurred"];
     }
-    return $expirations;
+
+    return $sslInfo;
 }
 
 
-
-
-
-
-
-
-
-
-
-
-    protected function getZones(): array {
+protected function getZones(): array {
         $directory = '/etc/bind/zones/';
-        $localDir = '/var/www/gs/setup/zone/zones/';
+        $localDir = GSROOT.'setup/zone/zones/';
     // Use glob to get an array of all files in the specified directory
         $zones = glob($localDir . '*');
         return $zones; // Return the list of zones

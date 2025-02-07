@@ -201,7 +201,7 @@
             </div>
         </div>
     <?php } ?>
-<?php include "compos/searchbox" ?>
+<?php include CUBO_ROOT_DEFAULT."search" ?>
 <!---apps-->
             <div class="profile-container" style="float: left;margin: 9px 16px 0 33px;">
                 <!-- Profile Image -->
@@ -240,5 +240,8 @@
             </div>
     <div id="indicator" class="red indicator"></div>
     <div id="indicator2" class="red indicator"></div>
+    <button class="bare right" onclick="gs.api.bind(this, { showLabel: false, showSwal: true })" data-name="<?=$this->page?>" data-method="mainplanPublicEditor">
+    <span class="glyphicon glyphicon-sign"></span>Editor</button>
+
     <div id="c_active_users"></div>
 </div>

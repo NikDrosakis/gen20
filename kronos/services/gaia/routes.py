@@ -1,6 +1,9 @@
 from fastapi import FastAPI, Body, Request, HTTPException, APIRouter,Depends
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Union
+import subprocess
+import json
+import re
 
 router = APIRouter()
 
@@ -14,6 +17,37 @@ class QueryRequest(BaseModel):
 @router.get("/")
 def read_root():
     return {"message": "Welcome to the Gaia API"}
+
+def parse_certbot_output():
+    result = subprocess.run(["certbot", "certificates"], capture_output=True, text=True)
+    output = result.stdout
+
+    certs = []
+    cert_pattern = re.compile(r"Certificate Name:\s+(?P<name>[\S]+).*?"
+                              r"Serial Number:\s+(?P<serial>[\S]+).*?"
+                              r"Key Type:\s+(?P<key_type>[\S]+).*?"
+                              r"Domains:\s+(?P<domains>[\S\s]+?)\n.*?"
+                              r"Expiry Date:\s+(?P<expiry_date>[\S\s]+?)\s+\(.*?\).*?"
+                              r"Certificate Path:\s+(?P<cert_path>[\S]+).*?"
+                              r"Private Key Path:\s+(?P<key_path>[\S]+)",
+                              re.DOTALL)
+
+    for match in cert_pattern.finditer(output):
+        certs.append({
+            "name": match.group("name"),
+            "serial": match.group("serial"),
+            "key_type": match.group("key_type"),
+            "domains": match.group("domains").split(),
+            "expiry_date": match.group("expiry_date").strip(),
+            "cert_path": match.group("cert_path"),
+            "key_path": match.group("key_path"),
+        })
+
+    return certs
+
+@router.get("/certificates")
+def get_certificates():
+    return {"certificates": parse_certbot_output()}
 
 @router.post("/maria")
 async def some_endpoint(request: Request,query_data: QueryRequest):

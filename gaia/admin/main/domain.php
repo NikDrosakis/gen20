@@ -69,15 +69,21 @@
 <h3>Domains installed on this system</h3>
 
 
-<?php echo $this->renderFileFormList($this->getPublicFilesystem(),"File System"); ?>
+<?php //echo $this->renderFileFormList($this->getPublicFilesystem(),"File System"); ?>
 
-<?php echo $this->renderFileFormList($this->getActiveNginx(),"Nginx"); ?>
+<?php //echo $this->renderFileFormList($this->getActiveNginx(),"Nginx"); ?>
 
 
-<?php echo $this->renderFileFormList($this->getZones(),"Get Zones")?>
+<?php //xecho($this->getSSLs())?>
+<?php
+echo "Current User: " . get_current_user() . "\n";
+echo "User ID: " . posix_getuid() . "\n";
+//echo $this->renderFileFormList($this->getZones(),"Get Zones")
+?>
 
-<?php echo $this->renderFileFormList($this->getSSLs(),"GET SSLS")?>
 
+<?php echo $this->synchronizeDomains(); ?>
+<?php //echo $this->renderFileFormList($this->getSSLs(),"GET SSLS")?>
 
 <h3>Integrate existing domain</h3>
 <h3>Create new </h3>

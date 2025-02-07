@@ -842,6 +842,7 @@ protected function renderFormField(string $col, array $fieldData, $value = '', $
         'yaml' => 'text/x-yaml',
         'javascript' => 'text/javascript'
     ];
+
 $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
     // @fm.features Generate the appropriate HTML field based on the type
 
@@ -880,29 +881,35 @@ $codeMirrorMode = $supportedCodeMirrorModes[$comment] ?? null;
         case 'pug':
         case 'md':
         case 'yaml':
-            $escapedValue = $value ? htmlspecialchars($value, ENT_QUOTES, 'UTF-8') : $value;
-            return "<div class='gs-span'>
-                    <div class='gs-preview-container'>
-                         <p for='$col'>$col ($comment)-id.{$id}</p>
-                        <textarea name='$col' id='$col' placeholder='$col'>$escapedValue</textarea>
-                        <div class='code-editor' id='editor-$col'></div>
-                    </div>
-                <button class='button save-button' onclick='gs.form.saveContentMirror(\"$col\", \"$table\",$id)' type='button' id='save_$col'>Save Content</button>
-                </div>
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        var editor = CodeMirror.fromTextArea(document.getElementById('$col'), {
-                            mode: '$codeMirrorMode',
-                            lineNumbers: true,
-                            matchBrackets: true,
-                            autoCloseBrackets: true,
-                            theme: 'default'
-                        });
-                        CodeMirror.instances = CodeMirror.instances || {};
-                        CodeMirror.instances['$col'] = editor;
+$escapedValue = $value ? htmlspecialchars($value, ENT_QUOTES, 'UTF-8') : ''; // Ensure default empty value
+return "<div class='gs-span'>
+            <div class='gs-preview-container'>
+                <p for='$col'>$col ($comment)-id.{$id}</p>
+                <textarea name='$col' id='$col' placeholder='$col'>$escapedValue</textarea>
+                <div class='code-editor' id='editor-$col'></div>
+            </div>
+            <button class='button save-button' onclick='gs.form.saveContentMirror(\"$col\", \"$table\", \"$id\")' type='button' id='save_$col'>Save Content</button>
+        </div>
+        <script>
+            function initializeCodeMirror(col, codeMirrorMode) {
+                if (!CodeMirror.instances) {
+                    CodeMirror.instances = {};
+                }
+                if (!CodeMirror.instances[col]) {
+                    var editor = CodeMirror.fromTextArea(document.getElementById(col), {
+                        mode: codeMirrorMode,
+                        lineNumbers: true,
+                        matchBrackets: true,
+                        autoCloseBrackets: true,
+                        theme: 'default'
                     });
-                </script>
-            ";
+                    CodeMirror.instances[col] = editor;
+                }
+            }
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeCodeMirror('$col', '$codeMirrorMode');
+            });
+        </script>";
         case 'sql':
                 // @fm.features Handle SQL preview (raw SQL code)
               //  $preview= xechox($this->db->fetch($value));
