@@ -338,4 +338,40 @@ protected function buildSchema($table): string {
         }
 }
 
+/**
+SSL
+ */
+protected function createMaria($domainame) {
+$domain = is_array($domainame) ? $domainame['key'] : $domainame;
+    $dbfileName = str_replace('.', '', $domain);  // Remove dots from the domain name
+    $dbname = "gen_" . $dbfileName;
+    $domain_maria_sqlfile = GSROOT . "setup/maria/gen_template_043.sql";
+
+    // Create the MariaDB database
+    $createDbCommand = "mysql -uroot -pn130177! -e 'CREATE DATABASE IF NOT EXISTS " . escapeshellarg($dbname) . ";'";
+    $createDbResult = shell_exec($createDbCommand);
+
+    // Import the template SQL file into the new database
+    $importCommand = "mysql -uroot -pn130177! $dbname  < $domain_maria_sqlfile";
+    $output = shell_exec($importCommand . " 2>&1");  // Capture standard and error output
+    if ($output === null) {
+        throw new Exception("SQL import failed: " . $output);
+    }
+
+    // Update the MariaDB record in the domain table with SSL info
+    if($output){
+    $maria_file = $this->db->q(
+        "UPDATE gen_admin.domain SET maria_file = ?, maria_check = 1 WHERE name = ?",
+        [$maria_file, $domain]
+    );
+    }
+    // Check if the database update was successful
+    if ($output && $maria_file) {
+        echo "MariaDB database '$dbname' successfully created and updated for $domain!";
+    } else {
+        throw new Exception("Failed to import $maria_file the database for $domain.");
+    }
+}
+
+
 }

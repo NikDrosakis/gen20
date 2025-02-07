@@ -1,3 +1,9 @@
+.cubo{
+    width:100%;
+    float:left;
+    padding: 7px;
+     box-shadow:0 0 10px #dcd2c2;
+}
 /*
 buildArchive
 */

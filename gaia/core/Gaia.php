@@ -1,6 +1,7 @@
 <?php
 namespace Core;
 use Parsedown;
+use Exception;
 use DOMDocument;
 
 abstract class Gaia {
@@ -405,11 +406,11 @@ db-centric
 checks db gen_admin.alinks for details of admin page
 if
  */
-    protected function mainplan(string $name='') {
+    protected function mainplan($name='') {
         if ($this->G['SYSTEM']=='admin'){
          $name = $name!='' ? $name : $this->sub;
          $mainplan = $this->db->f("SELECT * FROM gen_admin.alinks WHERE name=?",[$name]);
-        } elseif($this->G['SYSTEM']==TEMPLATE){
+        } elseif($this->G['SYSTEM']==TEMPLATE || $this->G['SYSTEM']=="api"){
          $name = $name!='' ? $name : $this->page;
          $mainplan = $this->db->f("SELECT * FROM {$this->publicdb}.main WHERE name=?",[$name]);
         }
