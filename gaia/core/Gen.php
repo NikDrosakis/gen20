@@ -46,11 +46,8 @@ protected $db_page;
 protected $default_admin_manifest='h:
   - renderCubo: "default.menuadmin"
 sl:
-  - manifestEditor: ""
   - renderCubo: "default.mediac"
   - renderCubo: "slideshow"
-  - renderCubo: "chat.venus"
-  - renderCubo: "chat.desk"
 sr:
   - renderCubo: "default.nbar"
   - renderCubo: "default.notificationweb"
@@ -115,7 +112,12 @@ protected function router() {
 $this->renderAdminHead();
 
 //BODY
-echo $this->buildManifest($this->sub);
+if($_SERVER['SYSTEM']=='admin'){
+
+echo $this->buildManifest($this->page);
+}else{
+echo $this->buildManifest($this->page);
+}
 
 //FOOTER
 //     include_once CUBO_ROOT."venus/public.php";

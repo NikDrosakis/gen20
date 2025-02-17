@@ -77,7 +77,7 @@ if($_SERVER['SYSTEM']=='cubos'){
 
         // Unsupported file type
         http_response_code(415);
-        echo "Unsupported file type: .$extension";
+
     } else {
             echo "url not exists";
     }
