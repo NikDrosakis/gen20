@@ -33,7 +33,7 @@ rus/target/
 kronos/__pycache__/
 kronos/genenv/
 ermis/node_modules/
-cubos/node_modules/
+gaia/cubos/node_modules/
 venus/node_modules/
 ermis/services/aistudio/.env
 ermis/services/botpress/.env
