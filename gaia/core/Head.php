@@ -49,7 +49,6 @@ protected function loadDynamicActions($libraries) {
             <meta charset="UTF-8">
             <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
             <meta http-equiv="X-UA-Compatible" content="IE=edge">
             <meta name="robots" content="selection">
             <meta name="copyright" content="' . $copyright . '">
@@ -93,7 +92,6 @@ protected function renderAdminHead() {
         <link rel="icon" href="/img/icon.png">
         <title>Admin GEN20</title>
         <!-- Main Styles -->
-        <link rel="stylesheet" href="/admin/css/dashboard.css">
         <link rel="stylesheet" href="/admin/css/core.css">
       <!---loadHeadSetup-->
         <?php
@@ -126,6 +124,7 @@ protected function renderAdminHead() {
     <script type="text/javascript">var G=<?=json_encode($this->G, JSON_UNESCAPED_UNICODE)?>;</script>
     <script src="/admin/js/gen.js"></script>
     <script src="/admin/js/admin.js"></script>
+    <script src="/js/index.js"></script>
     <?php
 }
 

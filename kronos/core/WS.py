@@ -12,21 +12,9 @@ class WSClient:
         try:
             self.websocket = await websockets.connect(self.uri)
             print(f"Connected to {self.uri}")
+            print(f"WebSocket state: {self.websocket.state}")  # Check connection state
         except Exception as e:
             print(f"Error connecting to WebSocket server: {e}")
-
-    async def send_message(self, message: dict):
-        """Send a message to the WebSocket server."""
-        if self.websocket is None:
-            print("WebSocket is not connected.")
-            return
-
-        try:
-            await self.websocket.send(json.dumps(message))
-            print(f"Message sent: {message}")
-        except Exception as e:
-            print(f"Error sending message: {e}")
-
 
     async def receive_message(self):
         """Receive a message from the WebSocket server."""
@@ -49,17 +37,19 @@ class WSClient:
         else:
             print("No WebSocket connection to close.")
 
-async def wsinit():
-    ws_client = WSClient(uri="wss://vivalibro.com:3010/?userid=kronos")  # Replace with actual WebSocket URI
-    await ws_client.connect()
+    async def send_message(self, message: dict):
+        """Send a message to the WebSocket server."""
+        if self.websocket is None or self.websocket.state != 1:  # Ensure connection is open
+            print("WebSocket is not connected or already closed.")
+            return
 
-    # Send a message to the server
-    message = {"system":"kronos","type": "chat","cast": "one", "data": "Hello, Ermis!","to":"Ermis"}
-    await ws_client.send_message(message)
+        try:
+            json_message = json.dumps(message, ensure_ascii=False)
+            await self.websocket.send(json_message)
+            print(f"✅ Sent message: {json_message}")
 
-    # Receive a response
-    response = await ws_client.receive_message()
-    print(f"Received response: {response}")
+            # Wait a short time to ensure the message is processed
+            await asyncio.sleep(1)
 
-    # Close the WebSocket connection
-    await ws_client.close()
+        except Exception as e:
+            print(f"Error sending message: {e}")

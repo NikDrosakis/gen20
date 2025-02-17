@@ -69,15 +69,13 @@ if [[ -z "$PHP_VER" || $(echo "$PHP_VER < 8.0" | bc) -eq 1 ]]; then
  php$PHP_VER-bz2 php$PHP_VER-calendar php$PHP_VER-core php$PHP_VER-ctype php$PHP_VER-curl php$PHP_VER-date \
             php$PHP_VER-dom php$PHP_VER-exif php$PHP_VER-ffi php$PHP_VER-fileinfo php$PHP_VER-filter php$PHP_VER-ftp \
             php$PHP_VER-gd php$PHP_VER-gettext php$PHP_VER-hash php$PHP_VER-iconv php$PHP_VER-igbinary php$PHP_VER-imagick \
-            php$PHP_VER-intl php$PHP_VER-json php$PHP_VER-libxml php$PHP_VER-mbstring php$PHP_VER-mcrypt php$PHP_VER-mongodb \
-            php$PHP_VER-mysqli php$PHP_VER-mysqlnd php$PHP_VER-openssl php$PHP_VER-pcntl php$PHP_VER-pcre php$PHP_VER-pdo \
+            php$PHP_VER-intl php$PHP_VER-json php$PHP_VER-libxml php$PHP_VER-mbstring php$PHP_VER-mcrypt php$PHP_VER-mysqli php$PHP_VER-mysqlnd php$PHP_VER-openssl php$PHP_VER-pcntl php$PHP_VER-pcre php$PHP_VER-pdo \
             php$PHP_VER-pdo-mysql php$PHP_VER-pdo-sqlite php$PHP_VER-phar php$PHP_VER-posix php$PHP_VER-random \
             php$PHP_VER-readline php$PHP_VER-redis php$PHP_VER-reflection php$PHP_VER-session php$PHP_VER-shmop \
             php$PHP_VER-simplexml php$PHP_VER-sockets php$PHP_VER-sodium php$PHP_VER-spl php$PHP_VER-sqlite3 php$PHP_VER-standard \
             php$PHP_VER-sysvmsg php8.2-redis php$PHP_VER-sysvsem php$PHP_VER-sysvshm php$PHP_VER-tokenizer php$PHP_VER-xml php$PHP_VER-xmlreader \
             php$PHP_VER-xmlwriter php$PHP_VER-xsl php$PHP_VER-opcache php$PHP_VER-zip php$PHP_VER-zlib php$PHP_VER-dev
       sudo apt install -y php-pear php-dev build-essential
-      sudo pecl install mongodb
       sudo pecl install igbinary
       sudo pecl install redis
       sudo systemctl enable php$PHP_VER-fpm
@@ -159,7 +157,7 @@ else
 fi
 
 #3A REDIS
-#3B MONGO
+#3B rethink db
 sudo apt install redis-server redis-tools
 
 #4 Nginx - Ask for the domain
@@ -328,8 +326,12 @@ echo "Presetup finished successfully"
 #6B
   apt install redis-server && pecl install redis
 
-#6C
- apt install mongodb
+#6C RETHINKNDB
+export CODENAME=`lsb_release -cs`
+echo "deb https://download.rethinkdb.com/repository/debian-$CODENAME $CODENAME main" | sudo tee /etc/apt/sources.list.d/rethinkdb.list
+wget -qO- https://download.rethinkdb.com/repository/raw/pubkey.gpg | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install rethinkdb
 
 #7: ERMIS Install Ermis Node.js dependencies if node_modules doesn't exist
 if [ ! -d "ermis/node_modules" ]; then

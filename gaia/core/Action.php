@@ -1,8 +1,7 @@
 <?php
 namespace Core;
 use Exception;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
+
 /**
  Action Gaia is the beginning of Action
  Basic Difference with nodejs ermis.core.Action is that php gaia.core.Action calling endpoints
@@ -55,7 +54,7 @@ use WS, Manifest;
         'STABLE' => 9,
         'STABLE_DEPENDS_OTHERS' => 10,
     ];
-    protected Client $httpClient;
+
 
 /**
  Filesystem action to upsert action table
@@ -327,39 +326,6 @@ protected function createWSPayload(array $rec, array $res): array{
             'domaffects' => $res['domaffects']??'*',                // Default empty; can be updated dynamically if needed
             'domappend' => $res['domappend'] ?? '' // DOM class to append
         ];
-}
-
-
-protected function fetchUrl(string $url, array $options = []): array{
-    $this->httpClient = new Client();
-    try {
-        $response = $this->httpClient->request(
-            $options['method'] ?? 'GET',
-            $url,
-            [
-                'headers' => $options['headers'] ?? [],
-                'body' => $options['body'] ?? null,
-            ]
-        );
-        $statusCode = $response->getStatusCode();
-    //    echo "Status Code: {$statusCode}\n";
-        if ($statusCode >= 200 && $statusCode < 300) {
-            $contentType = $response->getHeaderLine('Content-Type');
-         //   echo "Content-Type: {$contentType}\n";
-            if (strpos($contentType, 'application/json') !== false) {
-                $body = json_decode($response->getBody(), true);
-              //  echo "Response Body: " . json_encode($body) . "\n";
-                return $body;
-            }
-
-            // Handle non-JSON responses
-            return ['body' => $response->getBody()->getContents()];
-        } else {
-            throw new Exception("HTTP error! Status: " . $statusCode . " " . $response->getBody()->getContents());
-        }
-    } catch (GuzzleException $e) {
-        throw new Exception("Fetch error: " . $e->getMessage());
-    }
 }
 
 

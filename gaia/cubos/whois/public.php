@@ -1,6 +1,5 @@
 <style>
   .cubo img {
-            width: 100%;
             height: auto;
         }
 

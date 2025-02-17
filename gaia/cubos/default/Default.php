@@ -3,6 +3,7 @@ namespace Core;
 
 
 trait Default {
+
 protected function getUsers() {
         return $this->db->fa("SELECT * FROM {$this->publicdb}.user");
     }
@@ -57,10 +58,6 @@ protected function getUsers() {
 
             return $sel;
         }
-
-    protected function getLinks() {
-            return $this->db->fa("SELECT * FROM {$this->publicdb}.links WHERE linksgrpid=2 ORDER BY sort");
-    }
 
 
 }

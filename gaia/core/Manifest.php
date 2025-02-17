@@ -17,7 +17,18 @@ maria.prepareColumnFormat
 */
 trait  Manifest {
 
-
+protected function manifestEditor($name=''){
+    $mainame = $name=='' ? $this->sub : (is_array($name) ? $name['name'] : $name);
+     $main = $this->mainplan($mainame);
+     $table = $this->G['SYSTEM']=='admin' ? "gen_admin.links" : $this->publicdb.".main";
+    $html='';
+    $html .= '<button class="bare right" onclick="gs.api.bind(this, { showLabel: false, showSwal: true })" data-name="'.$name.'" data-method="manifestEditor">
+                            <span class="glyphicon glyphicon-sign"></span>Editor</button>';
+    $html .= $this->renderFormField("manifest",["type"=>"yaml","comment"=>"json","table"=>$table,"id"=>$main['id']],$main['manifest']);
+    //   $html = json_encode($this->G['PAGECUBO']);
+    //execute the plan to be included in core.Action switch cases
+    return $html;
+}
 protected function mainplanPublicEditor($name=''){
     $mainame = is_array($name) ? $name['name'] : $name;
      $main = $this->mainplan($mainame);

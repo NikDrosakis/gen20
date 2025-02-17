@@ -14,7 +14,8 @@
         "pug-php/pug": "^3.5",
         "symfony/flex": "*",
         "twig/twig": "^2.16",
-        "symfony/yaml": "^5.4"
+        "symfony/yaml": "^5.4",
+        "duxet/laravel-rethinkdb": "^3.0"
     },
     "autoload": {
         "psr-4": {

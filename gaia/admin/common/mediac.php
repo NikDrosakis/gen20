@@ -94,7 +94,7 @@ v3 updated to filemeta
     </div>
 
 <script>
-      //document.addEventListener('DOMContentLoaded', async function () {
+      document.addEventListener('DOMContentLoaded', async function () {
       console.log("loading...",gs)
              // Initialize with the first page of the root folder
            const folder=!!gs.coo('current_folder') ? gs.coo('current_folder'): G.MEDIA_ROOT;
@@ -107,7 +107,7 @@ v3 updated to filemeta
                 const formData = new FormData(this);
                 await uploadFile(formData);
             })
-      //})
+      })
 /** @filemeta.features MEDIA COMMON FUNCTIONS */
 
 async function uploadFile(formData) {
@@ -200,9 +200,10 @@ function appendMediaToPlace(slide) {
 // @filemeta.features Populate the media select dropdown with images from the media/slideshow folder
 async function loadMedia(folder = '', pag = 1, limit = 8) {
     const params = {folder: folder, pag: pag, limit: limit};
+    console.log(params)
     const getMedia = await gs.api.get("loadMedia", params);
-    console.log(getMedia)
-    if (getMedia.success) {
+
+     try {
 
         const files = getMedia.data.files;
         const parentFolder = getMedia.data.parentFolder;
@@ -268,6 +269,8 @@ async function loadMedia(folder = '', pag = 1, limit = 8) {
         // Generate pagination controls
         const totalPages = Math.ceil(total / limit);
         createPagination(totalPages, pag, folder, limit);
-    }
+            } catch (error) {
+                console.error('Error fetching chat response:', error);
+            }
 }
 </script>

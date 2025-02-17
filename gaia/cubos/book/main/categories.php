@@ -1,4 +1,4 @@
-<?php $sel= $vl->get_categories(); ?>
+<?php $sel= $this->get_categories(); ?>
 <div class="post-section">
 <button onclick="location.href='/cat?id=new'" class='btn btn-default'>New</button>
 <!-- CAT NEW -->

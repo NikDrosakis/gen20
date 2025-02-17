@@ -36,9 +36,9 @@ define('SERVERBASE',TEMPLATE.'.com');
 define('LOC','en');
 define('LANG','en');
 define('AJAXREQUEST',$_SERVER['HTTP_X_REQUESTED_WITH']=="XMLHttpRequest");
-define('MEDIA_ROOT', GSROOT.'media/');
+define('MEDIA_ROOT', GSROOT.'media/'.DOMAIN.'/');
 define('MEDIA_URL',SITE_URL.'media/');
-define('MEDIA_ROOT_ICON', MEDIA_ROOT."thumbs/");
+define('MEDIA_ROOT_ICON', MEDIA_ROOT.DOMAIN.'/thumbs/');
 define('PUBLIC_IMG_ROOT', PUBLIC_ROOT_WEB.'img/');
 define('PUBLIC_IMG',SITE_URL.'img/');
 define('ADMIN_IMG_ROOT', ADMIN_ROOT.'img/');
@@ -46,6 +46,7 @@ define('ADMIN_IMG',ADMIN_URL.'img/');
 define('URL_FILE',basename($_SERVER['PHP_SELF']));
 define('IMG',"/media/");
 define ('TEMPLATESURI',PUBLIC_ROOT_WEB."templates/");
+
 $this->G= array(
     'LIB'=> SITE_URL."/lib/",
     'IMG'=> SITE_URL."img/",
@@ -54,7 +55,6 @@ $this->G= array(
     'GSROOT'=> GSROOT,
     'GAIAROOT'=> GAIAROOT,
     'API_ROOT'=> API_ROOT,
-
     'SITE_URL'=>SITE_URL,
     'SITE_ROOT'=> SITE_ROOT,
     'BUILD_ROOT'=> BUILD_ROOT,

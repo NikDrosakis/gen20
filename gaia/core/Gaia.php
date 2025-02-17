@@ -133,24 +133,6 @@ abstract class Gaia {
             return strpos($_SERVER['REQUEST_URI'], '/api') === 0;
     }
 
-//https://vivalibro.com/cubos/index.php?cubo=menuweb&file=public.php
-protected function handleCuboRequest(): void {
-    // Define the root directory for cubos
-    $cubosRoot = CUBO_ROOT;
-    // Retrieve and sanitize the file path parameters
-    $cubo = basename($_GET['cubo'] ?? '');
-    $file = basename($_GET['file'] ?? '');
-    // Construct the full file path
-    $filePath = $cubosRoot . '/' . $cubo . '/' . $file;
-    // Check if the file exists and is within the expected directory
-    if (file_exists($filePath) && strpos(realpath($filePath), realpath($cubosRoot)) === 0) {
-        include $filePath;
-    } else {
-        // Handle the error if the file is not found or is not valid
-        http_response_code(404);
-        echo '<div class="error">File not found or access denied.</div>';
-    }
-}
 /*
 Using non blocking features of web worker
 to be updated to $_post AND json content
@@ -184,100 +166,6 @@ to be updated to $_post AND json content
     header('Content-Type: text/html');
     echo $buffer;
     }
-
-protected function renderCubo(string $name): string {
-         $cubo = $this->db->fa('SELECT * FROM gen_admin.cubo WHERE name=?',[$name]);
-         $uri=CUBO_ROOT.$name."/public.php";
-         return $this->include_buffer($uri);
-}
-/**
-page & subpage metadata
-create list of metadata to Action
-*/
-protected function getPageMetatags(): array {
-    // Initialize an empty string for concatenation
-    $metaString = $this->page;
-
-    // Check if the system is 'admin'
-    if ($this->SYSTEM == 'admin') {
-        // ADMIN SYSTEM
-        if (!empty($this->sub)) {
-            // ADMIN SUBPAGE
-            $metaString .= ',' . $this->sub;
-
-            // Add metadata based on the type of admin subpage
-            if ($this->db_sub['type'] == 'table') {
-                $db = $_SERVER['SYSTEM']=='admin' ? "gen_admin" : $this->publicdb;
-                $meta = $this->db->f("SELECT meta FROM {$db}.metadata WHERE name = ?", [$this->sub]);
-            } else {
-                $meta = $this->db->f("SELECT meta FROM gen_admin.alinks WHERE name = ?", [$this->sub]);
-            }
-
-            // Append comma-separated meta if found
-            if ($meta) {
-                $metaString .= ',' . $meta['meta'];
-            }
-        } else {
-            // MAIN ADMIN PAGE
-            $meta = $this->db->f("SELECT meta FROM gen_admin.alinksgrp WHERE name = ?", [$this->page]);
-            if ($meta) {
-                $metaString .= ',' . $meta['meta'];
-            }
-        }
-    } else {
-        // PUBLIC SYSTEM
-             $db = $_SERVER['SYSTEM']=='admin' ? "gen_admin" : $this->publicdb;
-        if (!empty($this->page)) {
-            // PUBLIC PAGE
-            $meta = $this->db->f("SELECT meta FROM {$this->publicdb}.main WHERE name = ?", [$this->page]);
-        } else {
-            // PUBLIC MAIN PAGE
-            $meta = $this->db->f("SELECT meta FROM {$db}.metadata WHERE name = ?", [$this->page]);
-        }
-
-        // Append comma-separated meta if found
-        if ($meta) {
-            $metaString .= ',' . $meta['meta'];
-        }
-    }
-
-    // Explode by commas, trim each tag, filter out empty elements, and wrap in HTML
-    $tags = array_filter(array_map('trim', explode(',', $metaString)));
-    return $tags;
-}
-
-
-
-/**
-Render metadata of all levels
- */
-protected function renderMetadata(): array {
-    // 1st level metadata
-    $firstLevel = $this->G['is']['meta_title_en'] ?? null;
-
-    // 2nd level metadata
-    $secondLevel = $this->getPageMetadata();
-
-    // 3rd level metadata
-    $thirdLevel = $this->metadata;
-
-    // Collect all metadata into a single array
-    $res = [];
-
-    // Add each level of metadata if it exists
-    if ($firstLevel) {
-        $res[] = $firstLevel;
-    }
-    if (!empty($secondLevel)) {
-        $res = array_merge($res, (array) $secondLevel); // Ensure it's an array and merge
-    }
-    if (!empty($thirdLevel)) {
-        $res = array_merge($res, (array) $thirdLevel);
-    }
-
-    // Return comma-separated metadata or a default message
-    return $res;
-}
 
 protected function md_decode(string $markdownContent): string{
     $parsedown = new Parsedown();
@@ -358,8 +246,10 @@ protected function include_buffer(string $file, array $sel = [], array $params =
     }
 }
 
+
 protected function include_cubofile(string $file){
 $file = is_array($file) ? $file['key'] : $file;
+
     $extension = pathinfo(CUBO_ROOT.$file, PATHINFO_EXTENSION);
     // Handle PHP files with output buffering
     if ($extension === 'php') {
@@ -491,6 +381,7 @@ protected function getClassMethods() {
 
     return $methods;
 }
+
 	protected function delRecordFile(string $query, array $params, string $path): void{
 	$this->db->q($query,$params);
 	unlink($path);
@@ -531,6 +422,50 @@ protected function setup($name = '', $value = ''){
         return $fetch; // Return empty string if no result
     }
 
+}
+
+
+/**
+navigation
+*/
+protected function navigate() {
+    // Fetch data from the database
+    $pages = $this->db->fa("SELECT * FROM gen_admin.alinksgrp ORDER BY sort");
+
+    // Initialize the navigation structure
+    $this->G['apages'] = [];
+
+    // Populate the navigation structure
+    foreach ($pages as $page) {
+        // Extract relevant details
+        $slug = $page['name']; // Assuming 'name' corresponds to the desired slug
+        $title = $page['title'];
+        $icon = $page['img']; // Assuming 'img' corresponds to the icon
+
+        // Check if the parent key (like "manage") exists, otherwise create it
+        if (!isset($this->G['apages'][$slug])) {
+            $this->G['apages'][$slug] = [
+                "title" => $title,
+                "subs" => [],
+                "icon" => $icon
+            ];
+        }
+
+        // Add sub-navigation if applicable
+         $subs = $this->db->fa("SELECT * FROM gen_admin.alinks order by sort");
+         if(!empty($subs)){
+         foreach ($subs as $sub) {
+         if($sub['alinksgrpid']==$page['id']){
+            $this->G['apages'][$slug]['subs'][$sub['name']] = [
+                "slug" => $sub['title'],
+                "icon" => $sub['img'],
+                "mode" => $sub['type']
+            ];
+         }
+         }
+        }
+}
+    return $this->G['apages'];
 }
 
 

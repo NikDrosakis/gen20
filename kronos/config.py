@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     CLAUDE_ADMINKEY: str
     GOOGLEAI_APIKEY: str
     DEEPSEEK_API_KEY: str
+    WEBSOCKET_URL: str
 
     class Config:
         env_file = ".env"

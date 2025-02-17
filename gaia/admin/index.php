@@ -12,8 +12,8 @@ define('ROOT', dirname(__DIR__).'/');
 define('ADMIN_ROOT', ROOT.'admin/');
 require ROOT.'vendor/autoload.php';
 //require_once __DIR__ . '/../autoload.php'; // Adjust the path based on your structure
-use Core\Admin;
-$gaia = new Admin();
+use Core\Gen;
+$gaia = new Gen();
 ?>
 
 
