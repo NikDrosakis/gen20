@@ -28,18 +28,18 @@ const userid=G.my.id ?? 0;
 
 
 // Function to update UI indicators based on WebSocket status
-function updateConnectionIndicator(connection, isConnected) {
+function updateConnectionIndicator(isConnected) {
     if (isConnected) {
         const notificationweb_panel = document.getElementById('notificationweb_panel');
-        if (connection === 'ermis' && notificationweb_panel) {
+        if (notificationweb_panel) {
             notificationweb_panel.className = 'green indicator';
         }
         const wsy_panel = document.getElementById('wsy_panel');
-        if (connection === 'ermis' && wsy_panel) {
+        if (wsy_panel) {
             wsy_panel.className = 'green indicator';
         }
         const venus_panel = document.getElementById('venus_panel');
-        if (connection === 'venus' && venus_panel) {
+        if (venus_panel) {
             venus_panel.className = 'green indicator';
         }
     } else {
@@ -53,14 +53,18 @@ function updateConnectionIndicator(connection, isConnected) {
 }
 
 // WebSocket instance creation
-const ws = gs.soc.init('ermis', `vivalibro.com:3010/?user=${G.my.userid}`);
-window[`wsermis`] = ws;  // Store WebSocket instance in window for global access if needed
+//document.addEventListener('DOMContentLoaded', function() {
+    const ws = gs.soc.init(`${location.host}:3010/?user=${G.my.id}`);
+   // window[`wsermis`] = ws;  // Store WebSocket instance in window for global access if needed
+    gs.activity.init();
+//})
+
 setTimeout(() => {
     checkWebSocketStatus();
 }, 15000);
 // Define a function to check the status of each WebSocket connection
 function checkWebSocketStatus() {
-        const ermisnstance = window[`wsermis`];
+        const ermisnstance = ws;
         if (ermisnstance) {
             switch (ermisnstance.readyState) {
                 case WebSocket.CONNECTING:
@@ -164,10 +168,9 @@ const layoutSchemas = {
 };
 
 
-// Call initLayout() on page load or when a user changes the layout
 // INITIALIZE DRAG AND DROP
-var activeSortableInstances = [];  // Store active sortable instances to unbind later
-document.addEventListener('DOMContentLoaded', initializeSidebarDragAndDrop);
+//var activeSortableInstances = [];  // Store active sortable instances to unbind later
+//document.addEventListener('DOMContentLoaded', initializeSidebarDragAndDrop);
 
 //FORM + TABLE COMMON FUNCTIONS
 document.addEventListener('DOMContentLoaded', () => {

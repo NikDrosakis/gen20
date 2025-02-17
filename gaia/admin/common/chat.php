@@ -13,11 +13,13 @@ color:black;
 .message_lines{   font-size:14px;font-family: Verdana;  }
 
 #chatresponse{
-overflow-y: auto;
-width:98%;
-margin:1%;
-background: aliceblue;
-font-size:18px;
+    width: 97%;
+    max-height: 600px;
+    margin: 8px;
+    padding: 8px;
+    /* font-size: 18px; */
+    background: white;
+    overflow-y: scroll;
 }
 #chatForm{
 width: 100%;
@@ -56,10 +58,10 @@ display: table;
        }
 
     #chatMessage {
-    width: 78%;
+    width: 67%;
     float: left;
     border: none;
-    border-radius: 5px;
+    /* border-radius: 5px; */
     padding: 8px;
     font-size: 16px;
     height: 40px;
@@ -85,8 +87,11 @@ display: table;
     }
 </style>
 <!-- <html/> -->
+<h3>
+    <input id="media_panel" class="red indicator">
+    <a href="/media/media"><span class="glyphicon glyphicon-edit"></span>Generative</a>
+</h3>
 <div id="chatbox">
-      <button onclick="gs.scrollToBottom('chatresponse')">Scroll to Bottom</button>
     <div id="chatresponse">
     <?php
     $dialogue=$this->db->fa("

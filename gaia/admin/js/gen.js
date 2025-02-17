@@ -392,8 +392,8 @@ var gs= {
         return Array.from(new FormData(form)).map(([name, value]) => ({name, value}));
     },
     scrollToBottom : function (id) {
-        const element = document.getElementById(id);
-        window.scrollTo({top: element.scrollHeight, behavior: 'smooth'});
+        const dialogueBox = document.getElementById(id);
+        dialogueBox.scrollTop = dialogueBox.scrollHeight;
     },
     login: async function () {
         var email = document.getElementById('email').value.trim();
@@ -507,7 +507,7 @@ var gs= {
         },
         logout: function () {
             gs.sesClear();
-            gs.coo.delAll(['LANG']);
+            gs.cooDelAll(['LANG']);
             location.href = '/';
         },
 
@@ -670,40 +670,49 @@ cooDelAll: function (except) {
 * ${G.TEMPLATE}.com:${port}/${user}
 * */
     soc:{
+        protocol: {
+            "system": "ermis",
+            "domaffect": "*",
+            "type": "open",
+            "verba": "ermis pings",
+            "userid": "1",
+            "to": "1",
+            "cast": "one"
+        },
         wsConnections: {},
         // Initialize WebSocket connection dynamically for each URI
-        init: (connectionName, uri) => {
+        init: (uri) => {
             const ws = new WebSocket(`wss://${uri}`);
             ws.onopen =  function(){
                 const user = !!G.my.userid ? G.my.userid : '1';
-                console.info(`${G.SYSTEM}:${G.page} Connection, ${connectionName} established with user:`, user);
-                const mes = { system:G.SYSTEM,domaffect:"*",type: "open", verba: "PING", userid: user, to:user,cast: "one" };
+                console.info(`${G.SYSTEM}:${G.page} Connectionestablished with user:`, user);
+                const mes = { system:G.SYSTEM,domaffect:"*",type: "open", verba: `${G.SYSTEM} pings`, userid: user, to:user,cast: "one" };
                 ws.send(JSON.stringify(mes));
             };
-            ws.onmessage = gs.soc.get(connectionName);
-            ws.onerror = gs.soc.error(connectionName);
-            ws.onclose = gs.soc.close(connectionName, uri);
+            ws.onmessage = gs.soc.get();
+            ws.onerror = gs.soc.error();
+            ws.onclose = gs.soc.close(uri);
             // Store WebSocket instance in wsConnections object
-            gs.soc.wsConnections[connectionName] = ws;
+            gs.soc.wsConnections = ws;
             return ws;
         },
-        close: (connectionName, uri) => (e) => {
+        close: (uri) => (e) => {
             if (e.wasClean) {
-                console.log(`Connection ${connectionName} closed cleanly, code=${e.code}, reason=${e.reason}`);
+                console.log(`Connection closed cleanly, code=${e.code}, reason=${e.reason}`);
             } else {
-                console.error(`Connection ${connectionName} died unexpectedly`);
+                console.error(`Connection died unexpectedly`);
             }
             // Attempt reconnection after 10 seconds
             setTimeout(() => {
-             console.log(`Reconnecting ${connectionName}...`);
-              gs.soc.init(connectionName, uri);
+             console.log(`Reconnecting ${uri}...`);
+              gs.soc.init(uri);
             }, 10000);
         },
-        error: (connectionName) => (e) => {
-            console.error(`WebSocket ${connectionName} error occurred:`, e);
+        error: () => (e) => {
+            console.error(`WebSocket error occurred:`, e);
         },
         send: (connectionName, mes) => {
-            const ws = gs.soc.wsConnections[connectionName];
+            const ws = gs.soc.wsConnections;
             /* @userid:"sudo", @type:com[mand],notify,chat,html@cast:all,one @rule:js condition @fun: function | s object	 @text: message
                 @to: client receiver @time: @img: */
                 console.log(mes);
@@ -712,13 +721,23 @@ cooDelAll: function (except) {
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify(mes));
             } else {
-                console.error(`${mes.system}:${mes.page} WebSocket ${connectionName} is not open. Unable to send message:`, mes);
+                console.error(`${mes.system}:${mes.page} WebSocket is not open. Unable to send message:`, mes);
             }
         },
         // Updated async get method for handling WebSocket messages
-        get: (connectionName) => async (e) => {
+        get: () => async (e) => {
             //const data = gs.isjson(e.data) || e.data;
             const message = JSON.parse(e.data);
+            console.log(message)
+            // Add message to activity widget
+            if(gs.activity.nbar) {
+                // Initialize activity widget
+                gs.activity.init();
+                console.log("Activity widget initialized");
+                gs.activity.add(message);
+                console.log("Message added to activity widget");
+            }
+            //
             if (G.SYSTEM == message.system) {  //read only by the system
                     switch (message.type) {
                         case 'watch':
@@ -746,8 +765,8 @@ cooDelAll: function (except) {
                                 existingid.innerHTML += message.html;
                             }
                         break;
-                        case "chat": venus.start(message); break;
-                        default:console.log(`${message.system} Received at ${message.page} from ${connectionName}:`, message);
+                        case "chat": gs.venus.start(message); break;
+                        default:console.log(`${message.system} Received at ${message.page} :`, message);
                         break;
                 }
                 // Implement your async logic here to process incoming data
@@ -763,6 +782,12 @@ cooDelAll: function (except) {
             }
         }
     },
+// Example usage
+// chat.start({ cid: 'exampleCid', uid: 'userId' }, 'uiMode');
+
+    // EVENTS
+    // Add event listener to buttons with IDs starting with 'chat_'
+
     cubos: async function(area, html) {
         if (!!area && !!html) {
             // Create a new div for the cubo area
@@ -943,10 +968,10 @@ actions = [
      executes and gets data any core method
      */
     api : {
-        get: async function (method, params, resource='local') {
+        get: async function (method, params, resource='api/v1/local') {
             try {
                 const queryParams = new URLSearchParams(params).toString();
-                const url = `${G.SITE_URL}api/v1/${resource}/${method}?${queryParams}`;
+                const url = `${G.SITE_URL}${resource}/${method}?${queryParams}`;
                 console.log(url);
                 const response = await fetch(url, {
                     method: 'GET',
@@ -972,9 +997,9 @@ actions = [
             }
         },
 
-        post: async function (method, params,resource='local') {
+        post: async function (method, params,resource='api/v1/local') {
             try {
-                const url = `${G.SITE_URL}api/v1/${resource}/${method}`;
+                const url = `${G.SITE_URL}${resource}/${method}`;
                 console.log(url);
                 const response = await fetch(url, {
                     method: 'POST',
@@ -1222,9 +1247,100 @@ actions = [
         }
     }
 },
-        /*
-    const newpage = form.generate(params,callback).attach(id);
-    * */
+   dd : {
+        isDragDropEnabled: false,
+        activeInstances: [],
+
+        init: function () {
+            document.addEventListener('DOMContentLoaded', function () {
+                document.getElementById('toggleDragDrop').addEventListener('click', gs.dd.toggle);
+            });
+        },
+
+        toggle: function () {
+            if (!gs.dd.isDragDropEnabled) {
+                gs.dd.enable();
+                document.getElementById('toggleDragDrop').textContent = '❌ Disable Drag & Drop';
+            } else {
+                gs.dd.disable();
+                document.getElementById('toggleDragDrop').textContent = '🖱️ Enable Drag & Drop';
+            }
+            gs.dd.isDragDropEnabled = !gs.dd.isDragDropEnabled;
+        },
+
+        enable: function () {
+            gs.dd.initMainMenuDraggables();
+            gs.dd.initDroppableChannels();
+        },
+
+        disable: function () {
+            gs.dd.activeInstances.forEach(instance => instance.destroy());
+            gs.dd.activeInstances = [];
+        },
+
+        dragChangeChannel: async function (targetContainerId, draggedItem) {
+            var draggedItemHref = draggedItem.querySelector('a').href;
+            var page = draggedItemHref.replace(G.ADMIN_URL, '');
+            var file = `${G.ADMIN_ROOT}main/${page}/${page}.php`;
+
+            console.log('📌 Dragged:', page, '➡️ to', targetContainerId);
+
+            const fileloading = await gs.api.loadfile(encodeURIComponent(file), targetContainerId);
+            if (fileloading && fileloading.success) {
+                gs.coo(targetContainerId, file);
+            }
+        },
+
+        initMainMenuDraggables: function () {
+            const menuContainer = document.getElementById('mainmenu');
+            const menuItems = document.querySelectorAll('cubo');
+
+            menuItems.forEach(item => {
+                item.classList.add('draggablemenu');
+                item.setAttribute('draggable', 'true');
+                item.style.cursor = 'move';
+            });
+
+            Sortable.create(menuContainer, {
+                group: {
+                    name: 'sharedchannels',
+                    pull: 'clone',
+                    put: false
+                },
+                sort: false,
+                animation: 150,
+                handle: '.draggablemenu'
+            });
+        },
+
+        initDroppableChannels: function () {
+            let droppableMenuAreas = document.querySelectorAll('.channel');
+
+            droppableMenuAreas.forEach(function (area) {
+                let sortableInstance = Sortable.create(area, {
+                    group: 'sharedchannels',
+                    animation: 150,
+                    sort: false,
+                    onAdd: function (evt) {
+                        if (!evt.to.contains(evt.item)) {
+                            evt.to.appendChild(evt.item);
+                        }
+                        gs.dd.dragChangeChannel(evt.to.id, evt.item);
+                    },
+                    onUpdate: function (evt) {
+                        gs.dd.dragChangeChannel(evt.to.id, evt.item);
+                    }
+                });
+
+                gs.dd.activeInstances.push(sortableInstance);
+            });
+        }
+    },
+
+
+    /*
+const newpage = form.generate(params,callback).attach(id);
+* */
     form :{
         /**
          * Core form update
@@ -1429,7 +1545,8 @@ actions = [
             const datasetFilter=dataset.filter;
 
             const filter= name=='status' ? `status=${datasetFilter}`: `${filterid}=${datasetFilter}`;
-            const pagenum = dataset.pagenum || 1;  // Use pagination number if available
+           // const pagenum = dataset.pagenum || 1;  // Use pagination number if available
+            const pagenum = tableElement.dataset.pagenum || 1;
             const orderby =dataset.orderby || '';
 
             // Create the params object dynamically with table name, search query, and page number
@@ -1478,7 +1595,8 @@ actions = [
             const buttons = document.querySelectorAll('#pagination .page-link');
             buttons.forEach(button => button.classList.remove('active'));
             console.log(page);
-            const activeButton = document.querySelector(`#page_${page}`);
+          //  const activeButton = document.querySelector(`#page_${page}`);
+            const activeButton = document.querySelector(`button.page-link[id="page_${page}"]`);
             if (activeButton) {
                 activeButton.classList.add('active');
             }
@@ -1499,7 +1617,9 @@ actions = [
             }
             //update dataset in the <table> used for renderTable
             const tableid = table + "_table";
-            document.getElementById(tableid).setAttribute('data-pagenum', page.replace(table,''));
+            //document.getElementById(tableid).setAttribute('data-pagenum', page.replace(table,''));
+            document.getElementById(tableid).dataset.pagenum = page; // Ensure dataset is properly updated
+
 
         },
             generate: async function (params) {
@@ -2550,6 +2670,7 @@ table: {
      USAGE: gs.activity.init();
      */
     activity :{
+        nbar : document.getElementById('activity'),
         maxVisibleActivities: 5,
         totalActivitiesToShow: 10,
         activities: [],
@@ -2557,32 +2678,63 @@ table: {
         currentIndex: 0,
 
         init() {
-            document.getElementById('show-more-btn').addEventListener('click', () => {
-                this.toggleActivityVisibility();
-            });
+            if(this.nbar) {
+                nbar.addEventListener('click', () => {
+                    this.toggleActivityVisibility();
+                });
+            }
         },
 
-        add(text) {
-            if (this.activitySet.has(text)) {
-                console.log('Activity already exists, skipping:', text);
+        add(data) {
+            // Check if the activity already exists
+            if (this.activitySet.has(data.verba)) {
+                console.log('Activity already exists, skipping:', data.verba);
                 return;
             }
-
+            // Get the activity list container
             const activityList = document.getElementById('activity-list');
+
+            // Create a new activity element
             const newActivity = document.createElement('div');
             newActivity.classList.add('activity');
-            newActivity.textContent = text;
 
-            // Prepend new activity to the start of the list
+            // Create an image element
+            const img = document.createElement('img');
+            img.src = `/admin/img/${data.system}.jpg`; // Use the system field to load the image
+            img.alt = data.system;
+            img.classList.add('activity-img');
+
+            // Create a text container
+            const textContainer = document.createElement('div');
+            textContainer.classList.add('activity-text');
+
+            // Add the verba (message) and system (source) to the text container
+            const verba = document.createElement('p');
+            verba.textContent = data.verba;
+            verba.classList.add('activity-verba');
+
+            const system = document.createElement('p');
+            system.textContent = `From: ${data.system}`;
+            system.classList.add('activity-system');
+
+            // Append the text elements to the text container
+            textContainer.appendChild(verba);
+            textContainer.appendChild(system);
+
+            // Append the image and text container to the activity element
+            newActivity.appendChild(img);
+            newActivity.appendChild(textContainer);
+
+            // Prepend the new activity to the start of the list
             activityList.insertBefore(newActivity, activityList.firstChild);
-
-            this.activities.unshift(newActivity); // Add to the start of the array
-            this.activitySet.add(text);
+            // Add the new activity to the activities array and set
+            this.activities.unshift(newActivity);
+            this.activitySet.add(data.verba);
 
             // Remove the oldest activity if the total number exceeds the limit
             if (this.activities.length > this.totalActivitiesToShow) {
                 const removed = this.activities.pop(); // Remove from the end of the array
-                this.activitySet.delete(removed.textContent);
+                this.activitySet.delete(removed.querySelector('.activity-verba').textContent);
                 removed.remove();
             }
 
@@ -2593,7 +2745,7 @@ table: {
             const visibleActivities = this.activities.slice(this.currentIndex, this.currentIndex + this.maxVisibleActivities);
             const hiddenActivities = this.activities.slice(this.currentIndex + this.maxVisibleActivities);
 
-            visibleActivities.forEach(activity => activity.style.display = 'block');
+            visibleActivities.forEach(activity => activity.style.display = 'flex');
             hiddenActivities.forEach(activity => activity.style.display = 'none');
 
             // Adjust button text based on visibility
@@ -2691,8 +2843,8 @@ methods.forEach((method) => {
         const pms = { query, params: params || [] };
         const url = `${G.SITE_URL}api/v1/maria/${method}`;
 
-        console.log('Parameters:', pms);
-        console.log('Request URL:', url);
+  //      console.log('Parameters:', pms);
+    //    console.log('Request URL:', url);
 
         try {
             const response = await fetch(url, {

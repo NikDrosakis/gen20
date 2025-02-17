@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/url"
 	"os"
-
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 )
@@ -21,11 +20,6 @@ type WebSocketClient struct {
 func NewWebSocketClient() (*WebSocketClient, error) {
 	godotenv.Load()
 	serverURL := os.Getenv("WEBSOCKET_URL")
-	if serverURL == "" {
-		log.Println("WEBSOCKET_URL environment variable not set, using default")
-		serverURL = "wss://vivalibro.com:3010/?userid=god"
-	}
-
 	u, err := url.Parse(serverURL)
 	if err != nil {
 		return nil, err
@@ -48,7 +42,7 @@ func (ws *WebSocketClient) SendMessage() error {
 		"system":    "god",
 		"domaffect": "*",
 		"type":      "open",
-		"verba":     "PING",
+		"verba":     "god pings",
 		"userid":    "1",
 		"to":        "1",
 		"cast":      "one",

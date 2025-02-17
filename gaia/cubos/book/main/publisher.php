@@ -1,2 +1,2 @@
 <?php
-//xecho($_COOKIE);
+xecho($_COOKIE);

@@ -36,7 +36,6 @@ how to create and IPFS subsystem for getting and sharing knowledge 2) how Blockc
 - Layout & cubos
 - Use flexibility with drag & drop in admin
 - Generative AIs
-- solr 
 - Ta kronos, ermis rising service modularity
 - Go 
 - The admin as it progresses

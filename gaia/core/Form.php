@@ -146,7 +146,7 @@ bases on selectjoin/status/ENUM aka on children not on parents
 protected function buildChart(string $table, $joinedKeys){
    // Unset the table itself from $joinedKeys if it exists
    // xecho($table);
-        unset($joinedKeys[$key]);
+       // unset($joinedKeys[$key]);
   // xecho($joinedKeys);
 $types=['line','pie','bar'];
 //xecho($joinedKeys);
@@ -510,7 +510,9 @@ protected function formPagination(int $totalRes,int $cur=1): string {
     // @fm.features Use the pagination details from the buildForm call
     $current = $this->currentPage ??  $cur;
     $this->resultsPerPage= $this->resultsPerPage ?? 10;
-    $table= explode('.',$this->table)[1];
+    $table = (is_string($this->table) && str_contains($this->table, '.'))
+        ? explode('.', $this->table)[1]
+        : '';
     $totalPages = ceil($totalRes / 9);
     if ($totalRes <= $this->resultsPerPage) {
         return '';
@@ -606,13 +608,16 @@ protected function buildFormQuery(string $table, array $params = []): array
     $params = array_merge($defaults, $params);
 
     // If no ID is provided, return an empty result set for new forms
-    if (empty($params['id'])) {
-        return [];
-    }
+    //if (empty($params['id'])) {
+      //  return [];
+    //}
 
     // Perform the query and fetch the result
-    $result = $params['db']->f("SELECT * FROM $table WHERE id = ?", [$params['id']]);
-
+    if($params['name']){
+    $result = $this->db->f("SELECT * FROM $table WHERE name = ?", [$params['name']]);
+    }elseif($params['id']){
+    $result = $this->db->f("SELECT * FROM $table WHERE id = ?", [$params['id']]);
+    }
     return $result ?? [];
 }
 
@@ -623,6 +628,7 @@ protected function buildFormQuery(string $table, array $params = []): array
   $params=is_array($tableName) ? $tableName : [];
   $justTable=explode('.',$table)[1];
   $id= $params['id'] || $this->id;
+  $name= $params['name'] || "";
          // @fm.features Default values for each parameter
          $this->table=$table;
          $defaults = [
@@ -631,13 +637,14 @@ protected function buildFormQuery(string $table, array $params = []): array
              'form' => $id || 'new',
              'cols' => [],
              'id' => $id,
+             'name' => $name,
              'labeled' => true,
          ];
          // @fm.features Merge provided params with defaults
          $params = array_merge($defaults, $params);
         #set db
        // @fm.features $this->db=$params['db']=="gen_".TEMPLATE ? $this->db: $this->db;
- if ($params['form'] !== 'new' && empty($params['res'])) {
+  if ($params['form'] !== 'new' && empty($params['res'])) {
         $params['res'] = $this->buildFormQuery($table, $params);
     }
          // @fm.features Access parameters using $params array

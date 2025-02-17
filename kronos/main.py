@@ -11,7 +11,7 @@ from core.Mari import Mari
 #from connection import get_db_connection
 from action import action_loop, add
 from datetime import datetime  # Import datetime module
-from core.WS import WSClient, wsinit
+from core.WS import WSClient
 from core.Watch import Watch
 from core.Yaml import Yaml
 
@@ -67,6 +67,41 @@ app.include_router(gaia_route, prefix="/apy/v1/gaia")
 
 # WSManager Initialize
 # ws_manager = WSManager(settings.REDIS_URL)
+async def wsinit():
+    ws_client = None  # Initialize ws_client to handle cleanup in finally block
+    try:
+        print("Initializing WebSocket connection...")
+        ws_client = WSClient(uri=settings.WEBSOCKET_URL)
+        await ws_client.connect()
+        print("Connected to WebSocket server!")
+
+        # Define the message to send
+        message = {
+            "system": "kronos",
+            "domaffect": "*",
+            "type": "open",
+            "verba": "kronos pings",
+            "userid": "1",
+            "to": "1",
+            "cast": "one",
+        }
+
+        # Send the message
+        await ws_client.send_message(message)
+
+        # Wait for a response
+        response = await ws_client.receive_message()
+        print(f"Received response: {response}")
+
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+
+    finally:
+        # Ensure the WebSocket connection is closed
+        if ws_client:
+            print("Closing WebSocket connection...")
+            await ws_client.close()
+
 
 @app.on_event("startup")
 async def startup():
@@ -87,7 +122,7 @@ async def startup():
     #asyncio.create_task(periodic_ping())
     print("\n".join([str(route) for route in app.routes]))
    # You can import additional modules here, but no need to instantiate `Mari` again
-    #await wsinit()
+    await wsinit()
     logging.info("Startup completed")
 
 if __name__ == '__main__':

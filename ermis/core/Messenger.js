@@ -23,7 +23,7 @@ class Messenger {
             }
     //
             return {
-                systems: results.system || '*',  // The target system for the message
+                system: results.system || '*',  // The target system for the message
                 execute: results.execute, // JavaScript command to be executed in the browser
                 cast: results.cast,      // Target audience: 'one', 'many', or 'all'
                 type: results.type,      // 'N' for notification or other types

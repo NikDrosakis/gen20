@@ -5,9 +5,10 @@ trait Media {
 //actiongrp unsplash
 protected $UNSPLASH_URL='https://api.unsplash.com/search/photos/';
 
-protected function validateImg($img){
-return !$img ? "/admin/img/myface.jpg" : (strpos($img, 'https://') === false ? MEDIA_URL . $img: $img);
+protected function validateImg($img) {
+    return !$img ? "/admin/img/myface.jpg" : (strpos($img, '/') === 0 ? $img : MEDIA_URL . $img);
 }
+
 
  /**
       that's the plan resource_img_columns: combines actiongrp unsplash, action unsplash, executing
@@ -269,8 +270,6 @@ protected function generateImg($prompt){
       if (empty($files)) {
           return ['error' => 'No files found'];
       }
-
-
       // Prepare the response with files, directories, and pagination details
       $response = [
           'files' => [],

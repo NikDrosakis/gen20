@@ -4,59 +4,31 @@ const Rethink = require("../core/Rethink");
 const EventEmitter = require('events');
 const { stats } = require('./stats');
 const Messenger = require('../core/Messenger');
-const emitter = new EventEmitter();
-emitter.setMaxListeners(1000);
+//const emitter = new EventEmitter();
+//emitter.setMaxListeners(1000);
 let wss;
 
 
-// Usage example:
-(async () => {
+async function initializeRethink() {
     const rethink = new Rethink();
     await rethink.connect();
 
-    // Insert a test message in the specified structure
-    const message = {
-        cid: 1,
-        fn: {
-            name: "cia",
-            fname: "Central Intelligence Agency Lt",
-            img: "/uploads/7da2f9c4f064fc722e146073fa05cf65.png"
-        },
-        fn0: {
-            name: "megas",
-            fname: "Megas",
-            img: "/uploads/c5e80b56ea12f376b08a9818c68ba778.jpg"
-        },
-        modified: 1736872571,
-        privacy: 1,
-        uid: 61,
-        unread: 1,
-        chat: [
-            {
-                u: 1,
-                c: "Hello 6",
-                t: 1736872571
-            },
-            {
-                u: 2,
-                c: "Hello 7",
-                t: 1736872581
-            }
-        ]
-    };
-    // await rethink.insertMessage(message);
-    // Call upsert to insert or update chat for the cid
+    // Example: Insert a test message (remove in production or make configurable)
+    const message = { /* ... */ };
     await rethink.upsertChat(message);
 
-    // Get all messages
+    // Get all messages (for debugging)
     const allmes = await rethink.getMessages();
-    console.table(allmes)
-    // Close the connection
-    await rethink.close();
-})();
+    console.table(allmes);
+
+    // Don't close the connection here if you need it for the server lifecycle
+    // await rethink.close();
+    return rethink; // Return the rethink instance for later use
+}
 
 function WServer(server) {
     wss = new WebSocket.Server({ server });
+    wss.setMaxListeners(1000);
 /*
     // Redis subscription
     subscribe(process.env.REDIS_CHANNEL, (message) => {
@@ -80,11 +52,9 @@ function WServer(server) {
         ws.isAlive = true;
         ws.on('pong', () => (ws.isAlive = true));
 
-        stats(wss, ws, req); // Track stats
+        const statistics = stats(wss, ws, req); // Track stats
         //Instantiate Actions
-
        // const finalized_action_message = Messenger.buildMessage(executed_actions);
-
         //broadcast message event.
         /*
         if(finalized_action_message) {
@@ -105,21 +75,24 @@ function WServer(server) {
                     return;
                 }
                // chat.handleMessage(message, ws); // Use the Chat class to handle messages
-
-
-
                 const finalized_messsage = await Messenger.buildMessage(message);
-
                 switch (message.cast) {
                     case "one":
                         if (message.to) {
-                            console.log("peertopeer", message.to,message);
+                           // console.log("peertopeer", message.to,message);
                             // let to = `user${to}`;
                             const recipientWs = Array.from(wss.clients).find(client => client.userid === message.to);
                             if (recipientWs) {
-                                console.log("found recipient and sending to", message.to)
                                 try {
-                                    recipientWs.send( JSON.stringify(finalized_messsage));
+                                    console.log("sending reply to", finalized_messsage.system);
+                                    //send reply to user
+                                    recipientWs.send(JSON.stringify(finalized_messsage));
+
+                                    //send message to admin
+                                    finalized_messsage.system='admin';
+                                    console.log("publishing event", finalized_messsage.system);
+                                    recipientWs.send(JSON.stringify(finalized_messsage));
+
                                 } catch (sendError) {
                                     console.error("Failed to send message to recipient:", sendError);
                                 }
@@ -131,7 +104,7 @@ function WServer(server) {
                             wss.clients.forEach(function each(client) {
                             if (client !== ws && client.readyState === WebSocket.OPEN) {
                                 console.log("broadcast", finalized_messsage);
-                                client.send(finalized_messsage);
+                                client.send(JSON.stringify(finalized_messsage));
                             }})
                         break;
                 }

@@ -16,8 +16,11 @@
 #include <chrono>
 #include <functional>
 #include <boost/asio/io_context.hpp>
+#include "core/server.h"
 
 int main(int argc, char* argv[]) {
+
+  RunServer();
     // Commented out the arguments section for now
     // if (argc < 3) {
     //     std::cerr << "Usage: " << argv[0] << " <manifest_file> <table>" << std::endl;

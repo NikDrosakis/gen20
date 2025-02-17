@@ -1,38 +1,42 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -Wall -std=c++17  # Added -v for verbose output
+CXXFLAGS = -Wall -std=c++17 -pthread # Added -pthread for gRPC
 
 # Define paths
 INC_DIR = /usr/include
 LIB_DIR = /usr/lib/x86_64-linux-gnu
 
 # Explicit include paths
-INC =  -I./core  # Core includes
-
-WS_INCLUDE = -I/usr/include # Simplified include path
-
-# Compiler flags MUST be after include paths
-CXXFLAGS += $(WS_INCLUDE)
-INC += $(WS_INCLUDE)
+INC = -I./core -I/usr/include -I/usr/include/grpcpp
 
 # Get the correct lib path from mariadb_config
 MYSQL_LIB_DIR := $(shell mariadb_config --libs)
 
 # Library directories and dependencies for linking
-LIB = -lyaml-cpp \
-      $(MYSQL_LIB_DIR) \
-      -lmariadbcpp \
-      -pthread -lssl -lcrypto -L/usr/lib/x86_64-linux-gnu # Manual linker specification
+LIB = -lyaml-cpp -L/usr/lib/x86_64-linux-gnu/ -L/usr/local/lib \
+      -lmariadb -lmariadbcpp \
+      -lgrpc++ -lgrpc -lgrpc++_reflection -lprotobuf -lprotoc \
+      -lgpr \
+      -labsl_log_internal -labsl_log_severity -labsl_log_message \
+      -labsl_strings -labsl_base -labsl_raw_logging_internal \
+      -pthread -lssl -lcrypto
 
 # Source and object files
-SOURCES = core/Maria.cpp core/Yaml.cpp core/FS.cpp core/Cubo.cpp core/Ws.cpp main.cpp
-OBJECTS = core/build/Maria.o core/build/Yaml.o core/build/FS.o core/build/Ws.o core/build/Cubo.o
+VPATH = core core/build
 
+SOURCES = core/Maria.cpp core/Yaml.cpp core/FS.cpp core/Cubo.cpp core/Ws.cpp core/server.cpp \
+          core/build/service.pb.cc core/build/service.grpc.pb.cc
+
+OBJECTS = core/build/Maria.o core/build/Yaml.o core/build/FS.o core/build/Ws.o core/build/Cubo.o core/build/server.o \
+          core/build/service.pb.o core/build/service.grpc.pb.o
 # Executable name
 TARGET = main
 
-# Ensure build directories exist and compile all sources
-all: $(TARGET)
+# Ensure build directory exists and compile all sources
+all: create_build_dir $(TARGET)
+
+create_build_dir:
+	mkdir -p core/build
 
 # Link object files into the final executable
 $(TARGET): main.o $(OBJECTS)
@@ -43,22 +47,11 @@ main.o: main.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INC)
 
 # Specific rules to compile .cpp files to object files in the core/build directory
-core/build/Gredis.o: core/Gredis.cpp
+core/build/%.o: core/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INC)
-
-core/build/Maria.o: core/Maria.cpp
+core/build/service.pb.o: core/build/service.pb.cc
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INC)
-
-core/build/Yaml.o: core/Yaml.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INC)
-
-core/build/Ws.o: core/Ws.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INC)
-
-core/build/Cubo.o: core/Cubo.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INC)
-
-core/build/FS.o: core/FS.cpp
+core/build/service.grpc.pb.o: core/build/service.grpc.pb.cc
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INC)
 
 clean:

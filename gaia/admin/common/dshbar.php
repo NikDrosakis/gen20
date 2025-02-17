@@ -16,6 +16,7 @@
     <a href="/admin/user/user?id=<?=$this->me?>" class="logo_image_id">
         <img src="<?=isset($_COOKIE['GSIMG']) ? MEDIA_URL.$_COOKIE['GSIMG'] : '/admin/img/user.png'?>" width="48" height="48" style="margin-top: 3px;border-radius:50px">
     </a>
+
 <!------------- @filemeta.features HORIZONTAL_MENU ------------------------------------>
     <li class="menu-item">
          <a class="menu-text">View</a>
@@ -34,6 +35,18 @@
         					<li>Dark<input type="checkbox" style="float:left" switch="" class="switcher"></li>
         					</ul>
             </li>
+                    <li class="menu-item">
+           <!---BUTTON-TO FIRE CHAT--->
+                      <a class="menu-text" data-uid="1" data-cid="3701232" data-uid0="2" data-mode="1" id="chat_3701232" onclick="gs.venus.fire(this,1)" title="Chat"><div class="totalChatNum chatc_3701232"></div>Chat</a>
+                					<ul class="submenu">
+                					<li>Short Sidebar<input style="float:left" type="checkbox" switch="" class="switcher"></li>
+                					<li>Wide Sidebar<input style="float:left" type="checkbox" switch="" class="switcher"></li>
+                					<li>Short Navigation<input style="float:left" type="checkbox" switch="" class="switcher"></li>
+                					<li>Dark<input type="checkbox" style="float:left" switch="" class="switcher"></li>
+                					</ul>
+                    </li>
+
+
         </ul>
 
         <div id="indicator" class="red indicator"></div>
@@ -51,7 +64,7 @@
     <button data-layout="6" class="buttonChannel" onclick="switchChannels(this.dataset.layout)" title="Six Channels"><span>Ⅵ</span></button>
 </div>
 -->
-<div style="position:absolute;left:0"><?php echo $this->renderCubo("metatags"); ?></div>
+<div><?php echo $this->renderCubo("metatags"); ?></div>
     </nav>
 
 

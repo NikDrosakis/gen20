@@ -29,6 +29,64 @@ protected $os;
      *
      * @return array An array of messages indicating the synchronization results and discrepancies.
      */
+     protected function syncDom(string $domainName): array
+     {
+         $report = [];
+
+         // 1. Get the current state of the domain from various sources
+         $fileSystemDomains = $this->getPublicFilesystem();
+         $activeNginxDomains = array_flip($this->getPublicNginx()); // Flip for faster lookups
+         $dnsZones = $this->getZones();
+         $sslCertificates = $this->getSSLs();
+
+         // 2. Check if domain exists in the file system, Nginx, DNS, and SSL
+         $fsysExists = isset($fileSystemDomains[$domainName]);
+         $nginxExists = isset($activeNginxDomains[$domainName]);
+         $dnsExists = isset($dnsZones[$domainName]);
+         $sslExists = isset($sslCertificates[$domainName]);
+
+         $domainReport = [
+             'name' => $domainName,
+             'discrepancies' => [],
+         ];
+
+         if (!$fsysExists) $domainReport['discrepancies'][] = 'File system directory is missing.';
+         if (!$nginxExists) $domainReport['discrepancies'][] = 'Nginx configuration is missing.';
+         if (!$dnsExists) $domainReport['discrepancies'][] = 'DNS zone file is missing.';
+         if (!$sslExists) {
+             $domainReport['discrepancies'][] = 'SSL certificate is missing.';
+         } elseif ($sslCertificates[$domainName]['expires'] !== null) {
+             $domainReport['ssl_expires'] = $sslCertificates[$domainName]['expires'];
+         }
+
+         // If there are discrepancies, add to the report
+         if (!empty($domainReport['discrepancies'])) {
+             $report[] = $domainReport;
+         }
+
+         // 3. Check if domain is in DB
+         $dbDomains = $this->db->fa("SELECT * FROM gen_admin.domain WHERE name = ?", [$domainName]);
+
+         // If domain doesn't exist in DB, prepare for insert
+         if (empty($dbDomains)) {
+             $this->db->q("INSERT INTO gen_admin.domain (name) VALUES (?)", [$domainName]);
+         } else {
+             // If domain exists in DB, prepare update
+             $this->db->q(
+                 "UPDATE gen_admin.domain SET fsys_check = ?, nginx_check = ?, zone_check = ?, ssl_check = ? WHERE name = ?",
+                 [
+                     (int)$fsysExists,
+                     (int)$nginxExists,
+                     (int)$dnsExists,
+                     (int)$sslExists,
+                     $domainName
+                 ]
+             );
+         }
+
+         return $report;
+     }
+
 protected function synchronizeDomains(): array
 {
     $report = [];
@@ -119,7 +177,7 @@ protected function synchronizeDomains(): array
        *
        * @return array An associative array of domain names and their corresponding paths.
        */
-  protected function getPublicFilesystem(): array
+  protected function getPublicFilesystem(string $domain=''): array
     {
         $baseDir = GAIAROOT . 'public/';
         $domains = [];

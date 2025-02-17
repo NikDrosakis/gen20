@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	//"time"
 	"net/http"
 	"os"
 	"github.com/gin-gonic/gin"
@@ -70,7 +71,13 @@ func main() {
 		})
 
 		// Define the /rethink route under /god/v1
-		 v1.GET("/rethink/:table/:row", rethink.GetRethinkRow)
+	// Define routes
+		// Define the /rethink route under /god/v1
+    	v1.GET("/rethink/:table", rethink.GetRethinkRow)
+    	v1.GET("/rethink/:table/:row", rethink.GetRethinkRow)
+    	v1.POST("/rethink/:table", rethink.InsertRethink)
+  //  	v1.POST("/rethink/:table/:row", rethink.UpdateRethink)
+    //	v1.POST("/rethink/:table/:row/delete", rethink.DeleteRethink)
 
 		// WebSocket route inside the /god/v1 group
 		v1.GET("/ws", func(c *gin.Context) {
@@ -81,7 +88,6 @@ func main() {
 				return
 			}
 			defer conn.Close()
-
 			for {
 				messageType, p, err := conn.ReadMessage()
 				if err != nil {
@@ -98,18 +104,35 @@ func main() {
 		})
 
 		// Initialize WebSocket client
-		wsClient, err := core.NewWebSocketClient()
-		if err != nil {
-			log.Fatalf("Failed to create WebSocket client: %v", err)
-		}
-		defer wsClient.Close()
+        wsClient, err := core.NewWebSocketClient()
+        if err != nil {
+            log.Println("WebSocket connection failed, continuing without it...")
+        } else {
+            defer wsClient.Close() // Close only if wsClient is not nil
+        }
 
-		// Send the structured message (if needed)
-		err = wsClient.SendMessage()
-		if err != nil {
-			log.Fatalf("Failed to send message: %v", err)
-		}
-		log.Println("Message sent successfully.")
+//ticker every one minute
+	// Create a ticker that fires every minute
+	//ticker := time.NewTicker(1 * time.Minute)
+	//defer ticker.Stop() // Stop the ticker when the function exits
+
+	// Run the ticker continuously
+	//for range ticker.C {
+
+        // Send the structured message (only if wsClient is initialized)
+        if wsClient != nil {
+            err = wsClient.SendMessage()
+            if err != nil {
+               log.Printf("WebSocket failed to send message: %v", err)
+            } else {
+                log.Println("Message sent successfully.")
+            }
+        } else {
+            log.Println("Skipping WebSocket message send since connection is unavailable.")
+        }
+
+	//}
+
 	}
 
 	// Start the server

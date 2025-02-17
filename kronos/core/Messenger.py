@@ -40,9 +40,9 @@ class Messenger:
         text = ''
         try:
             if 'statement' in results:
-                text = await Messenger.build_statement(results['statement'], results.get('domappend', ''))
+                verba = await Messenger.build_statement(results['statement'], results.get('domappend', ''))
             else:
-                text = results.get('text', '')
+                verba = results.get('text', '')
 
             return {
                 "system": results.get('system', 'vivalibrocom'),
@@ -50,7 +50,9 @@ class Messenger:
                 "execute": results.get('execute', ''),
                 "cast": results.get('cast', ''),
                 "type": results.get('type', ''),
-                "text": text,
+                "verba": verba,
+                "userid": 1,
+                "to": 1,
                 "class": results.get('domappend', '')
             }
         except Exception as e:

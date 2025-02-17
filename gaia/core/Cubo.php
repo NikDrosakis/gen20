@@ -417,12 +417,6 @@ protected function getCubos(): array
     }
     return $cubos;
 }
-    // Retrieve  cubos buffer
-
-    // Retrieve a single cubos by ID
-    protected function getCubo(int $name): array {
-        return $this->db->f('SELECT * FROM gen_admin.cubo WHERE name = ?',[$name]);
-    }
 
     // Retrieve cubos logs
     protected function getCuboLogs(int $widgetId): array {
@@ -561,14 +555,53 @@ protected function addMetric(array $params = []): ?array {
 
         return $updateStatus;
     }
-        protected function buildCubo(string $name){
-          $cubo= $this->getCubo($name);
-          if(!$cubo['mains']){
-          include CUBO_ROOT.$name."/public.php";
-          }else{
-          include CUBO_ROOT.$name."/mains/$name.php";
-          }
+
+protected function renderCubo($cubo){
+    // Check if the $cubo contains a slash
+    if (strpos($cubo, '.') !== false) {
+        $file = explode('.', $cubo)[1];
+        $c = explode('.', $cubo)[0];
+        $url = SITE_URL . "cubos/index.php?cubo=$c&file=$file.php";
+    }else{
+
+        $url = SITE_URL . "cubos/index.php?cubo=$cubo&file=public.php";
+    }
+
+    // Fetch the URL with the correct cubo and file (public.php by default)
+    return $this->fetchUrl($url);
+}
+
+
+/**
+ * Renders a section containing multiple cubos.
+ */
+protected function renderCubos($pc, $area){
+    echo "<div id=\"$area\">";
+        if (!empty($pc[$area]) && is_array($pc[$area])) {  // 🔹 Ensure it's an array
+            foreach ($pc[$area] as $cubo) {
+                echo "<div class=\"cubo\">";
+                try {
+                    //$this->safeInclude(CUBO_ROOT . $cubo . "/public.php", "Error loading $cubo");
+                    //$this->safeInclude(CUBO_ROOT . $cubo . "/public.php", "Error loading $cubo");
+                    $this->renderCubo($cubo);
+                } catch (\Throwable $e) {
+                    echo "<!-- Error: " . $e->getMessage() . " -->";
+                }
+                echo "</div>";
+            }
         }
+    echo "</div>";
+}
+
+
+    protected function buildCubo(string $name){
+      $cubo= $this->getCubo($name);
+      if(!$cubo['mains']){
+      include CUBO_ROOT.$name."/public.php";
+      }else{
+      include CUBO_ROOT.$name."/mains/$name.php";
+      }
+    }
     // Other methods (existing)...
 
 protected function getUsers() {
