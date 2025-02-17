@@ -1,0 +1,19 @@
+cmake_minimum_required(VERSION 3.5)
+project(MyGrpcApp)
+
+# Specify gRPC and Protobuf locations
+find_package(Protobuf REQUIRED)
+find_package(gRPC REQUIRED)
+
+# Specify the proto file
+protobuf_generate_cpp(PROTO_SRC PROTO_HEADER service.proto)
+
+# Add your gRPC C++ sources
+add_executable(my_grpc_app main.cpp ${PROTO_SRC} ${PROTO_HEADER})
+
+# Link necessary libraries
+target_link_libraries(my_grpc_app
+  gRPC::grpc++  # gRPC C++ library
+  protobuf::libprotobuf  # Protobuf C++ library
+  pthread  # Threading library
+)

@@ -28,7 +28,7 @@ private:
     void readMessage();
 
 public:
-    Ws(net::io_context& io_context, const std::string& url = "wss://vivalibro.com:3010/?userid=mars");
+    Ws(net::io_context& io_context, const std::string& url = "wss://vivalibro.com:3010/?userid=1");
     ~Ws();
 
     void connect(std::function<void(bool)> callback);

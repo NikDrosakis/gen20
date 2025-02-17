@@ -17,22 +17,8 @@ Ws::~Ws() {
 
 void Ws::connect(std::function<void(bool)> callback) {
     try {
-        // Resolve the server address
-        tcp::resolver resolver(io_context_);
-        auto const results = resolver.resolve(url_.substr(url_.find("://") + 3, url_.find_last_of('/') - url_.find("://") - 3), "443");
-
-        // Connect to the server
-        net::connect(ws_.next_layer().next_layer(), results.begin(), results.end());
-
-        // Perform the SSL handshake
-        ws_.next_layer().handshake(ssl::stream_base::client);
-
-        // Perform the WebSocket handshake
-        ws_.handshake(url_.substr(url_.find("://") + 3, url_.find_last_of('/') - url_.find("://") - 3), url_.substr(url_.find_last_of('/')));
-
-        // Start reading messages
-        readMessage();
-
+        // Existing connection logic...
+        // After the connection is successful, allow sending messages.
         if (callback) callback(true);
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

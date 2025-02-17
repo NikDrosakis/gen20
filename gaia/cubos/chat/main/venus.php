@@ -1088,29 +1088,28 @@ $cid=1;
 <!---CHATBOX---->
 <div id="wrapperchat" class="chatBottomAll">
 
-<div id="chatDial<?= $mode . $cid ?>" class="venusBox" placeholder="Reason of changing time">
+  <div id="chatDial<?= $mode . $cid ?>" class="venusBox" placeholder="Reason of changing time">
     <div class="chatBoard_top">
-        <input id="venus_panel" class="red indicator">
-        <span style="cursor:pointer" class="chatBoard_title">
-            <div id="messi<?= $mode . $cid ?>"></div>
-            <a class="fn" id="chatitle<?= $mode . $cid ?>"></a>
-        </span>
-        <button id="closechat<?= $mode . $cid ?>" onclick="gs.venus.closeVenusBox(this)" 
-            class="bare glyphicon glyphicon-remove" style="float:right"></button>
-        <button id="minchat<?= $mode . $cid ?>" onclick="gs.venus.minmaxVenusBox(this)" 
-            class="bare glyphicon glyphicon-minus" style="float:right"></button>
-        <div class="chatcam">
-            <button id="chatcamera<?= $mode . $cid ?>" class="bare glyphicon glyphicon-camera" style="float:right"></button>
-        </div>
+      <input id="venus_panel" class="red indicator">
+      <span style="cursor:pointer" class="chatBoard_title">
+        <div id="messi<?= $mode . $cid ?>"></div>
+        <a class="fn" id="chatitle<?= $mode . $cid ?>"></a>
+      </span>
+      <button id="closechat<?= $mode . $cid ?>" onclick="gs.venus.closeVenusBox(this)"
+        class="bare glyphicon glyphicon-remove" style="float:right"></button>
+      <button id="minchat<?= $mode . $cid ?>" onclick="gs.venus.minmaxVenusBox(this)"
+        class="bare glyphicon glyphicon-minus" style="float:right"></button>
+      <div class="chatcam">
+        <button id="chatcamera<?= $mode . $cid ?>" class="bare glyphicon glyphicon-camera" style="float:right"></button>
+      </div>
     </div>
     <div id="chato<?= $mode . $cid ?>" class="venus-dialogueBox"></div>
     <div class="answerOfferEoi">
-        <div id="chatinput<?= $mode . $cid ?>" contenteditable="true" 
-            style="white-space: pre-wrap; overflow-y: scroll;" class="chatextarea"></div>
-        <button id="chatsend<?= $mode . $cid ?>" onclick="gs.venus.send(this,1)" 
-            class="bare glyphicon glyphicon-envelope"></button>
+      <div id="chatinput<?= $mode . $cid ?>" contenteditable="true"
+        style="white-space: pre-wrap; overflow-y: scroll;" class="chatextarea"></div>
+      <button id="chatsend<?= $mode . $cid ?>" onclick="gs.venus.send(this,1)"
+        class="bare glyphicon glyphicon-envelope"></button>
     </div>
-</div>
-
+  </div>
 
 </div>

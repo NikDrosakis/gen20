@@ -16,11 +16,11 @@
 #include <chrono>
 #include <functional>
 #include <boost/asio/io_context.hpp>
-#include "core/server.h"
+//#include "core/server.h"
 
 int main(int argc, char* argv[]) {
 
-  RunServer();
+  //RunServer();
     // Commented out the arguments section for now
     // if (argc < 3) {
     //     std::cerr << "Usage: " << argv[0] << " <manifest_file> <table>" << std::endl;
@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
         });
 
         // Send a message
-        ws.sendMessage("PING");
+        ws.sendMessage("Mars pings");
 
         // Run the io_context in a separate thread
         std::thread ioc_thread([&ioc]() {
