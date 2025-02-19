@@ -711,7 +711,7 @@ cooDelAll: function (except) {
         error: () => (e) => {
             console.error(`WebSocket error occurred:`, e);
         },
-        send: (connectionName, mes) => {
+        send: (mes) => {
             const ws = gs.soc.wsConnections;
             /* @userid:"sudo", @type:com[mand],notify,chat,html@cast:all,one @rule:js condition @fun: function | s object	 @text: message
                 @to: client receiver @time: @img: */

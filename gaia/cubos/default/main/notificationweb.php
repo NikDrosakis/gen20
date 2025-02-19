@@ -1,10 +1,4 @@
 <style>
-    header {
-        font-size: 1.5em;
-        margin-bottom: 20px;
-        text-align: center;
-    }
-
     .form-section {
         margin-bottom: 15px;
     }
@@ -152,23 +146,22 @@
     document.getElementById('system').addEventListener('change', updatePreview);
     document.getElementById('verba').addEventListener('input', updatePreview);
 
-    document.getElementById('execute').addEventListener('click', () => {
-        const data = {
-            userid: userid || 0,
-            type: document.getElementById('type').value,
-            cast: document.getElementById('cast').value,
-            rule: document.getElementById('rule').value,
-            system: document.getElementById('system').value,
-            verba: document.getElementById('verba').value,
-            time: date('Y-m-d H:i:s')
-        };
+document.getElementById('execute').addEventListener('click', () => {
+    const data = {
+        userid: userid || 0,
+        type: document.getElementById('type').value,
+        cast: document.getElementById('cast').value,
+        rule: document.getElementById('rule').value,
+        system: document.getElementById('system').value,
+        verba: document.getElementById('verba').value,
+        time: new Date().toISOString() // Use a proper date format
+    };
 
-        if (data.cast === 'one' && !document.getElementById('userid').disabled) {
-            data.userid = document.getElementById('userid').value;
-        }
-        console.log(data);
-        ws.send("ermis",JSON.stringify(data));
-    });
+    if (data.cast === 'one' && !document.getElementById('userid').disabled) {
+        data.userid = document.getElementById('userid').value;
+    }
+    gs.soc.send(data);
+});
 
     // Initialize preview
     updatePreview();

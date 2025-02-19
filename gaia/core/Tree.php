@@ -30,7 +30,7 @@ child: subscribe
 
 TODO
 ====
-doc standard to alinks alinksgrp and visible only to TEMPLATE.?grp tables
+doc standard to main maingrp and visible only to TEMPLATE.?grp tables
  */
 
 trait Tree {

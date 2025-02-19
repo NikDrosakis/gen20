@@ -72,7 +72,6 @@
     <?php
     $sys= $this->db->fa("select * from gen_admin.systems");
     //xecho($sys);
-    //$subdoc= $this->db->f("select doc from alinks where name=?",[$sub]);
  //   $systms= file_get_contents(GSROOT."SYSTEMS.md");
    // $mdsystems= $this->md_decode($systms);
 //    $lines = explode(PHP_EOL, $mdsystems);
@@ -89,7 +88,7 @@ foreach($sys as $sysdat){
 <main>
         <section id="content">
             <?php
-            $sub=$this->sub;
+            $sub=$this->page;
                $subdoc= $this->db->f("select * from gen_admin.systems where name=?",[$sub]);
             ?>
             <!-- Page content goes here -->

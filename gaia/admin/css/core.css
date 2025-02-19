@@ -357,7 +357,7 @@ buildArchive
     margin-top: 10px;       /* Space above the container */
     display: flex;          /* Flex layout */
     flex-direction: column; /* Stack items vertically */
-    max-height:150px;
+    max-height:300px;
 }
 
 .gs-preview-container textarea.gs-textarea {
@@ -11205,6 +11205,8 @@ input:checked + .slider:before {
 header {
     background: #333;
     color: #fff;
+    font-size: 1.5em;
+    text-align: center;
 }
 
 .cred {
@@ -11770,7 +11772,8 @@ ul.tabs li.current {
     padding: 20px;
     border: 1px solid #ddd;
     border-radius: 0 3px 3px 3px;
-    background: white;
+    background: white;    max-height: 400px;
+    overflow-y: auto;
 }
 
 .tab-content.current {
@@ -11963,7 +11966,7 @@ ul.tabs li.current {
 #mainpage2{
     float:left;
     width: 60%;
-    min-height: 100%;
+    min-height: 70%;
 }
 /* GRID CHANNELS */
 #mainpage {
@@ -12840,7 +12843,7 @@ body {
 /* Footer styles */
 #f {
     width: 100%;
-    padding: 20px 0;
+    padding: 0px 0;
     display: flex;
     justify-content: space-around;
     text-align: left;

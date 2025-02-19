@@ -84,14 +84,16 @@ function WServer(server) {
                             const recipientWs = Array.from(wss.clients).find(client => client.userid === message.to);
                             if (recipientWs) {
                                 try {
-                                    console.log("sending reply to", finalized_messsage.system);
+                                    console.log("received message from", finalized_messsage.system, finalized_messsage.verba);
                                     //send reply to user
                                     recipientWs.send(JSON.stringify(finalized_messsage));
 
                                     //send message to admin
-                                    finalized_messsage.system='admin';
-                                    console.log("publishing event", finalized_messsage.system);
-                                    recipientWs.send(JSON.stringify(finalized_messsage));
+                                    if(finalized_messsage.system!='admin') {
+                                        finalized_messsage.system = 'admin';
+                                        console.log("publishing event", finalized_messsage.system, finalized_messsage.verba);
+                                        recipientWs.send(JSON.stringify(finalized_messsage));
+                                    }
 
                                 } catch (sendError) {
                                     console.error("Failed to send message to recipient:", sendError);
