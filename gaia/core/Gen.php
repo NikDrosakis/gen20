@@ -46,24 +46,19 @@ protected $db_page;
 protected $default_admin_manifest='h:
   - renderCubo: "default.menuadmin"
 sl:
-  - buildTable: "gen_admin.systems"
   - renderCubo: "default.mediac"
   - renderCubo: "slideshow"
 sr:
-  - renderCubo: "default.nbar"
   - renderCubo: "default.notificationweb"
 f:
  - renderCubo: "chat.desk"
- - renderCubo: "default.menu"
 ';
 protected $default_public_manifest='h:
   - renderCubo: "default.menuweb"
 sl:
   - renderCubo: "default.mediac"
   - renderCubo: "slideshow"
-  - renderCubo: "chat.venus"
 sr:
-  - renderCubo: "default.nbar"
   - renderCubo: "default.notification"
 f:
  - renderCubo: "chat.desk"
@@ -196,17 +191,25 @@ protected function defaultPublicManifest($name,$type='file') {
 }
 
 protected function executeMethod($method, $param) {
+        // Admin case: ["renderCubo" => "default.nbar"]
     try {
         switch ($method) {
             case 'iframe':
                 return '<iframe id="sandbox" src="' . htmlspecialchars($param) . '" width="100%" height="1000px" sandbox="allow-scripts allow-same-origin allow-forms" style="border:1px solid black;"></iframe>';
 
-            case 'include_buffer':
-                $filePath = ADMIN_ROOT . $param;
-                return file_exists($filePath) ? $this->{$method}($filePath) : "<p>File not found: $filePath</p>";
+            case 'renderCubo':
+               $response = $this->renderCubo($param);
+                if (is_array($response)) {
+                    return $response['data'];
+                }
 
             default:
-                return method_exists($this, $method) ? $this->{$method}($param) : "<p>Unknown method: $method</p>";
+            $url = SITE_URL."api/v1/local/$method?key=$param";
+             // Ensure response is properly formatted
+                $response = $this->fetchUrl($url);
+                if (is_array($response)) {
+                    return $response['data'];
+                }
         }
     } catch (Exception $e) {
         return "<p>Error: " . $e->getMessage() . "</p>";
@@ -224,6 +227,9 @@ protected function buildManifest($name) {
     $default_public = yaml_parse($this->default_public_manifest) ?: [];  // Ensure it always returns an array
     $system=$_SERVER['SYSTEM']!='admin' ? $default_public : $default_admin;
 
+    if($_SERVER['SYSTEM']!='admin'){
+    $this->G['PAGECUBO'] = $plan = $this->getMaincubo($this->page);
+    }
     // If a custom manifest exists, parse it; otherwise, use defaults
     $plan = $main['manifest'] ? yaml_parse($main['manifest']) :$this->defaultAdminManifest($name,$main['type']);
 
@@ -233,50 +239,28 @@ protected function buildManifest($name) {
             $plan[$section] = $this->defaultAdminManifest($name)[$section] ?? []; // Use default if missing
         }
     }
-    if($_SERVER['SYSTEM']!='admin'){
-    $this->G['PAGECUBO'] = $plan = $this->getMaincubo($this->page);
-    }
+//xecho($plan);
 
     $html = '<div id="container">';
     $html .= '<header>';
     $planH =empty($plan['h']) ? $system['h'] : $plan['h'];
-foreach ($planH as $cubo) {
-    if (is_array($cubo) && isset($cubo['renderCubo'])) {
-        // Admin case: ["renderCubo" => "default.menuadmin"]
-        $method = 'renderCubo';
-        $param = $cubo['renderCubo'];
-    } elseif (is_string($cubo)) {
-        // Public case: "default.menuweb"
-        $method = 'renderCubo';
-        $param = $cubo;
-    } else {
-        continue; // Skip invalid formats
-    }
-
+foreach ($planH as $methods){
+foreach ($methods as $method => $param) {
     $result = $this->executeMethod($method, $param);
     if (!empty($result)) {
         $html .= "<div class='cubo'>";
         $html .= $result;
         $html .= "</div>";
-    }
+    }}
 }
     $html .= '</header>';
 
     // Left Sidebar
     $html .= '<div id="sidebar-left">';
         $html .= $this->manifestEditor();
-foreach ($plan['sl'] as $cubo) {
-    if (is_array($cubo) && isset($cubo['renderCubo'])) {
-        // Admin case: ["renderCubo" => "default.menuadmin"]
-        $param = $cubo['renderCubo'];
-    } elseif (is_string($cubo)) {
-        // Public case: "default.menuweb"
-        $param = $cubo;
-    } else {
-        continue; // Skip invalid formats
-    }
-
-    $result = $this->renderCubo($param);
+       foreach ($plan['sl'] as $methods){
+       foreach ($methods as $method => $param) {
+        $result = $this->executeMethod($method,$param);
     if (!empty($result)) {
         $html .= "<div class='cubo'>";
                     $html .= "<h3>
@@ -286,7 +270,7 @@ foreach ($plan['sl'] as $cubo) {
                               </h3>";
         $html .= $result;
         $html .= "</div>";
-    }
+    }}
 }
 
     $html .= '</div>'; // Close left sidebar
@@ -294,18 +278,9 @@ foreach ($plan['sl'] as $cubo) {
     // Main Page
      $mainWidth = $hasLeftSidebar && $hasRightSidebar ? '60' : ($hasLeftSidebar || $hasRightSidebar ? '80' : '100');
     $html .= '<div id="mainpage2">';
-foreach ($plan['m'] as $cubo) {
-    if (is_array($cubo) && isset($cubo['renderCubo'])) {
-        // Admin case: ["renderCubo" => "default.nbar"]
-        $method = 'renderCubo';
-        $param = $cubo['renderCubo'];
-    } elseif (is_string($cubo)) {
-        // Public case: "default.nbar"
-        $method = 'renderCubo';
-        $param = $cubo;
-    } else {
-        continue; // Skip invalid formats
-    }
+foreach ($plan['m'] as $methods){
+foreach ($methods as $method => $param) {
+
     $result = $this->executeMethod($method, $param);
     if (!empty($result)) {
         $html .= "<div class='cubo'>";
@@ -315,24 +290,14 @@ foreach ($plan['m'] as $cubo) {
                               </h3>";
         $html .= $result;
         $html .= "</div>";
-    }
+    }}
 }
    $html .= '</div>'; // Close right sidebar
 
     // Right Sidebar
     $html .= '<div id="sidebar-right">';
-foreach ($plan['sr'] as $cubo) {
-    if (is_array($cubo) && isset($cubo['renderCubo'])) {
-        // Admin case: ["renderCubo" => "default.nbar"]
-        $method = 'renderCubo';
-        $param = $cubo['renderCubo'];
-    } elseif (is_string($cubo)) {
-        // Public case: "default.nbar"
-        $method = 'renderCubo';
-        $param = $cubo;
-    } else {
-        continue; // Skip invalid formats
-    }
+foreach ($plan['sr'] as $methods){
+foreach ($methods as $method => $param) {
     $result = $this->executeMethod($method, $param);
     if (!empty($result)) {
         $html .= "<div class='cubo'>";
@@ -342,26 +307,15 @@ foreach ($plan['sr'] as $cubo) {
                               </h3>";
         $html .= $result;
         $html .= "</div>";
-    }
+    }}
 }
     $html .= '</div>'; // Close right sidebar
 
     //Footer
     $html .= '<div id="f">';
-foreach ($plan['f'] as $cubo) {
-    if (is_array($cubo) && isset($cubo['renderCubo'])) {
-        // Admin case: ["renderCubo" => "default.nbar"]
-        $method = 'renderCubo';
-        $param = $cubo['renderCubo'];
-    } elseif (is_string($cubo)) {
-        // Public case: "default.nbar"
-        $method = 'renderCubo';
-        $param = $cubo;
-    } else {
-        continue; // Skip invalid formats
-    }
-
-    $result = $this->executeMethod($method, $param);
+foreach ($plan['f'] as $methods){
+foreach ($methods as $method => $param) {
+   $result = $this->executeMethod($method, $param);
     if (!empty($result)) {
         $html .= "<div class='cubo'>";
                     $html .= "<h3>
@@ -373,11 +327,9 @@ foreach ($plan['f'] as $cubo) {
     }
 }
     $html .= '</div>'; // Close right sidebar
-
     $html .= '</div>'; // Close container
-
     return $html;
-}
+}}
 
 protected function main() {
     $widgets = read_folder($this->G['WIDGETURI']);

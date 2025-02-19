@@ -87,15 +87,6 @@ protected function manifestEditor($name=''){
     //execute the plan to be included in core.Action switch cases
 }
 
-
-protected function mainplanPublicEditor($name=''){
-    $mainame = is_array($name) ? $name['name'] : $name;
-     $main = $this->mainplan($mainame);
-     $html = $this->renderFormField("mainplan",["type"=>"json","comment"=>"json","table"=>"{$this->publicdb}.main","id"=>$main['id']],$main['mainplan']);
-      //   $html = json_encode($this->G['PAGECUBO']);
-         //execute the plan to be included in core.Action switch cases
-    return $html;
-}
 /**
 BATCH created manifests and updated DB
  */

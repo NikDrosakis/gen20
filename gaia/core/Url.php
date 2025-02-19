@@ -18,11 +18,11 @@ protected function fetchUrl(string $url, array $options = [], int $depth = 0): s
     }
 
     // Detect self-referencing URLs
-    $currentUrl = $_SERVER['REQUEST_URI'];
-    if (strpos($url, $currentUrl) !== false) {
-        echo "Warning: Self-referencing URL detected! Skipping fetch.<br>";
-        return "";
-    }
+    //$currentUrl = $_SERVER['REQUEST_URI'];
+    //if (strpos($url, $currentUrl) !== false) {
+      //  echo "Warning: Self-referencing URL detected! Skipping fetch.<br>";
+        //return "";
+    //}
 
   //  echo "Debug: Fetching URL - " . htmlspecialchars($url) . " (Depth: $depth)<br>";
 

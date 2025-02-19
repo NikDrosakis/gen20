@@ -104,8 +104,10 @@ display: flex;
                 if ($i == 0 || ($i > 0 && $groupKey !== $prevGroupKey)) { ?>
                     <div class="message_title"><?= $groupKey ?></div>
                 <?php } ?>
+                <?php if($text!=null){ ?>
                 <span class="message_id">#id:<?= $id ?>-<?= $created ?>-conversation_id:<?= $conversation_id ?></span>
-                <div class="message_lines"><?= $this->md_decode($text) ?></div>
+                <div class="message_lines"><?= $this->md_decode($text)?></div>
+                <?php } ?>
             <?php }} ?>
     </div>
 
