@@ -192,7 +192,7 @@ protected function renderButton($table) {
  2) switch cases of column format returning html
  */
 protected function buildTable($tableName,array $params=[]): string {
-$table = is_array($tableName) ? $tableName['table'] : $tableName;
+$table = is_array($tableName) ? $tableName['key'] : $tableName;
 //error_log(print_r($table));
 #instantiate those public vars
 $cols = $params['cols'] ?? [];
@@ -273,7 +273,7 @@ $tableHtml .= $this->buildCoreTable($tableName,$cols=[]);
  */
 
 protected function tableBody($tableName,$cols=[],$data=[]) {
-    $table = is_array($tableName) ? $tableName['table'] : $tableName;
+    $table = is_array($tableName) ? $tableName['key'] : $tableName;
     $subpage=explode('.',$table)[1];
 
    // @fm.features Build table body
@@ -285,7 +285,7 @@ protected function tableBody($tableName,$cols=[],$data=[]) {
     #add sortable <tr "
      $tableHtml .= '<tr id="'.$table.'_'.$row['id'].'" class="menuBox">';
        #loop of data
-        foreach ($cols as $colName => $colData) {
+       foreach ($cols as $colName => $colData) {
         $value=$row[$colName];
             // @fm.features Skip 'textarea', 'MEDIUMTEXT', and 'LONGTEXT' fields entirely
             if (in_array($colData['type'], ['textarea', 'editor'])) {
@@ -414,7 +414,7 @@ protected function tableHead($table,$cols=[]) {
 }
 
 protected function buildTableQuery($tableName, $cols) {
-    $table = is_array($tableName) ? $tableName['table'] : $tableName;
+    $table = is_array($tableName) ? $tableName['key'] : $tableName;
     $searchTerm = is_array($tableName) ? $tableName['q'] : null;
    $filterTerm = is_array($tableName) ? $tableName['filter'] : null;
     $orderbyTerm = $tableName['orderby'] ?? false;
@@ -443,7 +443,7 @@ protected function buildTableQuery($tableName, $cols) {
 }
 
 protected function buildCoreTable($tableName, $cols = []) {
-    $table = is_array($tableName) ? $tableName['table'] : $tableName;
+    $table = is_array($tableName) ? $tableName['key'] : $tableName;
     $subpage = explode('.', $table)[1];
     $this->currentPage = is_array($tableName) && $tableName['pagenum'] ? str_replace($subpage, '', $tableName['pagenum']) : 1;
     $this->table = $table;
@@ -838,7 +838,7 @@ protected function renderFormField(string $col, array $fieldData, $value = '', $
     $comment   = $fieldData['comment'] ?? '';
     $sqlType   = $fieldData['sql_type'] ?? '';
     $list   = $fieldData['list'] ?? [];
-    $table   = $this->table ?? $fieldData['table'];
+    $table   = $this->table ?? $fieldData['key'];
     $id =     $this->G['id']!='' ?  $this->G['id']: $fieldData['id'];
   $supportedCodeMirrorModes = [
         'json' => 'application/json',

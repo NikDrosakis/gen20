@@ -240,7 +240,7 @@
             </div>
     <div id="indicator" class="red indicator"></div>
     <div id="indicator2" class="red indicator"></div>
-    <button class="bare right" onclick="gs.api.bind(this, { showLabel: false, showSwal: true })" data-name="<?=$this->page?>" data-method="mainplanPublicEditor">
+    <button class="bare right" onclick="gs.api.bind(this, { showLabel: false, showSwal: true })" data-name="<?=$this->page?>" data-method="manifestEditor">
     <span class="glyphicon glyphicon-sign"></span>Editor</button>
 
     <div id="c_active_users"></div>

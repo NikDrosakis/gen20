@@ -48,7 +48,6 @@ Ensure admin link generation aligns with:
 php
 Copy
 Edit
-['maingrpid' => 5, 'name' => 'book', 'title' => 'Book', 'mainplan' => '{"1":{"include_cubofile":"
 
 
  created in gen_admin.cubo where is the main mapping of the module
@@ -252,7 +251,7 @@ if (!empty($setup['main'])) {
         foreach ($setup['mains'] as $main) {
             $mainData = [
                 'maingrpid' => $maingrpGrpId,
-                'mainplan' => '{"m":"'.$main.'"}',
+             'manifest' => "m:\\n -\"$main\"",
                 'name' => $main
             ];
             $insertedMainId = $this->db->inse("$this->publicdb.main", $mainData);
@@ -279,7 +278,7 @@ if (!empty($setup['main'])) {
             'maingrpid' => 5,
             'name' => $name,
             'title' => ucfirst($name),
-            'mainplan' => '{"1": {"include_cubofile": "'.$name.'/admin.php"}}'
+            'manifest' => "m:\\n -renderCubo:\"$name./admin.php\"",
         ];
         $mainId = $this->db->inse("{$this->publicdb}.main", $linksData);
             if($mainId){
@@ -654,14 +653,14 @@ protected function getMaincubo($pageName = '') {
     $list = [];
 
     // Ensure we fetch multiple rows
-    $fetch = $this->db->fa("SELECT maincubo.area, maincubo.name as cubo
+    $fetch = $this->db->fa("SELECT maincubo.area,maincubo.method, maincubo.name as cubo
         FROM {$this->publicdb}.maincubo
         LEFT JOIN {$this->publicdb}.main ON main.id = maincubo.mainid
         WHERE main.name = ?", [$page]);
 
     if (!empty($fetch) && is_array($fetch)) {
         foreach ($fetch as $row) {
-            $list[$row['area']][] = $row['cubo'];
+            $list[$row['area']][$row['method']] = $this->publicdb.".".$row['cubo'];
         }
     }
     return $list;
