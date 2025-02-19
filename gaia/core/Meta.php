@@ -13,16 +13,16 @@ protected function getPageMetatags(): array {
     // Check if the system is 'admin'
     if ($this->SYSTEM == 'admin') {
         // ADMIN SYSTEM
-        if (!empty($this->sub)) {
+        if (!empty($this->page)) {
             // ADMIN SUBPAGE
-            $metaString .= ',' . $this->sub;
+            $metaString .= ',' . $this->page;
 
             // Add metadata based on the type of admin subpage
             if ($this->db_sub['type'] == 'table') {
                 $db = $_SERVER['SYSTEM']=='admin' ? "gen_admin" : $this->publicdb;
-                $meta = $this->db->f("SELECT meta FROM {$db}.metadata WHERE name = ?", [$this->sub]);
+                $meta = $this->db->f("SELECT meta FROM {$db}.metadata WHERE name = ?", [$this->page]);
             } else {
-                $meta = $this->db->f("SELECT meta FROM gen_admin.alinks WHERE name = ?", [$this->sub]);
+                $meta = $this->db->f("SELECT meta FROM {$this->publicdb}.main WHERE name = ?", [$this->page]);
             }
 
             // Append comma-separated meta if found
@@ -31,7 +31,7 @@ protected function getPageMetatags(): array {
             }
         } else {
             // MAIN ADMIN PAGE
-            $meta = $this->db->f("SELECT meta FROM gen_admin.alinksgrp WHERE name = ?", [$this->page]);
+            $meta = $this->db->f("SELECT meta FROM {$this->publicdb}.maingrp WHERE name = ?", [$this->page]);
             if ($meta) {
                 $metaString .= ',' . $meta['meta'];
             }

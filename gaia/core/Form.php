@@ -192,14 +192,14 @@ protected function renderButton($table) {
  2) switch cases of column format returning html
  */
 protected function buildTable($tableName,array $params=[]): string {
-$table = is_array($tableName) ? $tableName['key'] : $tableName;
+$table = is_array($tableName) ? $tableName['table'] : $tableName;
 //error_log(print_r($table));
 #instantiate those public vars
 $cols = $params['cols'] ?? [];
 $this->table=$table;
 $subpage=explode('.',$table)[1];
 $searchTerm=$params['q'] ?? null;
-$style = $this->sub!=''
+$style = $this->page!=''
         ? "margin:0;" #in subpage large
         : "zoom:0.8;";  #in 6channel small
 // @fm.features Fetch column types and definitions via getInputType
@@ -555,7 +555,7 @@ HTML;
 // @fm.description render doc
 protected function renderDoc(string $table){
 $html = "<h3>Documentation $table</h3>";
-$doc= $this->db->f("select doc from gen_admin.alinks where name=?",[$table])['doc'];
+$doc= $this->db->f("select doc from {$this->publicdb}.main where name=?",[$table])['doc'];
 $html .="<p>$doc</p>";
 return $html;
 }

@@ -41,14 +41,14 @@ php
 Copy
 Edit
 ['mainid' => $mainId, 'area' => 'm', 'cuboid' => $cuboId, 'name' => 'book']
-gen_admin.alinks:
+{$this->publicdb}.main:
 
 Stores links to admin functionality for each Cubo.
 Ensure admin link generation aligns with:
 php
 Copy
 Edit
-['alinksgrpid' => 5, 'name' => 'book', 'title' => 'Book', 'mainplan' => '{"1":{"include_cubofile":"
+['maingrpid' => 5, 'name' => 'book', 'title' => 'Book', 'mainplan' => '{"1":{"include_cubofile":"
 
 
  created in gen_admin.cubo where is the main mapping of the module
@@ -62,8 +62,8 @@ publicdb.main: a cubo may have one or multiple mains (linked with maingrp, links
 publicdb.links the menu links  (linked with linkgrp, parent)
 publicdb.linksgrp just a new menu
 publicdb.maincubo: THE CONSTRUCTION layout with all the cubos build in each page
-gen_admin.alinksgrp
-gen_admin.alinks
+{$this->publicdb}.maingrp
+{$this->publicdb}.main
 ------------
 1) default is a cubo with login, 404 etc
 2) main(s) are pages by default contains cubo.mains at the m area
@@ -77,7 +77,7 @@ cubos with main cubo => cubo.mains if null just a module in layout construction
 
 cubo --> maingrp --> main (instance of cubo in )--> links (menuid)-->linkgrp (menu) --> maincubo (construction)
 either have links
-required admin.php alinks alinksgrp=5
+required admin.php main maingrp=5
 πέρα απ'το Cubo class που έχει ολα τα διαχειριστικά, βολεύει κάθε Cubo να έχει δικό του
 
 Δημουργία -> σβήσιμο createCubo, setupCubo, totalDeleteCubo
@@ -101,6 +101,24 @@ cubo.name > yaml.maykey split _ 0
   4) foreach yaml.mains  $this->db->inse($this->publicdb.".maincubo",array); array=maincubo.mainid=[insertedmainid],maincubo.area='m', maincubo.cuboid=yaml.id, maincubo.name=cubo.name
  */
 
+protected function include_cubofile(string $file){
+$file = is_array($file) ? $file['key'] : $file;
+
+    $extension = pathinfo(CUBO_ROOT.$file, PATHINFO_EXTENSION);
+    // Handle PHP files with output buffering
+    if ($extension === 'php') {
+        if (ob_get_level()) {
+            ob_end_clean(); // Clears existing buffer
+        }
+        ob_start();
+        // Include the file
+        include CUBO_ROOT.$file;
+
+        $output = ob_get_clean(); // Capture the output
+        flush(); // Ensure all output is flushed
+        return $output;
+    }
+}
  /**
   A manifest.yml is started in a new folder with the basic configuration files
   */
@@ -258,14 +276,14 @@ if (!empty($setup['main'])) {
     if (file_exists($adminFilePath)) {
     // Step 5: Insert links for admin.php if it exists
         $linksData = [
-            'alinksgrpid' => 5,
+            'maingrpid' => 5,
             'name' => $name,
             'title' => ucfirst($name),
             'mainplan' => '{"1": {"include_cubofile": "'.$name.'/admin.php"}}'
         ];
-        $alinksId = $this->db->inse("gen_admin.alinks", $linksData);
-            if($alinksId){
-                    echo "Inserted alinks $alinksId";
+        $mainId = $this->db->inse("{$this->publicdb}.main", $linksData);
+            if($mainId){
+                    echo "Inserted main $mainId";
                     }
     }
 
@@ -298,7 +316,7 @@ protected function totalDeleteCubo(string $name): bool {
         $this->db->q("DELETE FROM gen_admin.cubo WHERE name = ?", [$name]);
         $this->db->q("DELETE FROM {$publicdb}.maingrp WHERE name = ?", [$name]);
         $this->db->q("DELETE FROM gen_admin.maincubo WHERE name = ?", [$name]);
-        $this->db->q("DELETE FROM gen_admin.alinks WHERE name = ?", [$name]);
+        $this->db->q("DELETE FROM {$this->publicdb}.main WHERE name = ?", [$name]);
 
         echo "Database entries for `$name` deleted successfully.\n";
     } catch (PDOException $e) {
@@ -458,33 +476,6 @@ protected function getCubos(): array
         $sql = "INSERT INTO cubos ($columns) VALUES ($placeholders)";
         return $this->db->q($sql);
     }
-// metric.php sub
-protected function addMetric(array $params = []): ?array {
-    // SQL query to fetch the required data
-    $sql = "SELECT s.name, DATE_FORMAT(tr.created, '%Y-%m-%d') AS week, tr.progress_level
-            FROM gen_admin.action_task_report tr
-            JOIN gen_admin.systems s ON tr.systemsid = s.id
-            WHERE tr.created BETWEEN '2024-07-05' AND '2024-09-08'
-            ORDER BY tr.created";
-
-    // Execute the query
-    $res = $this->db->fa($sql);
-    $data = ['res' => []]; // Initialize with 'res' key
-
-    // Check if there are results and structure them accordingly
-    if (count($res) > 0) {
-        foreach ($res as $row) {
-            // Append the week's progress level under a single 'res' key
-            $data['res'][] = [
-                "name" => $row["name"], // Include the name for context
-                "week" => $row["week"],
-                "progress" => $row["progress_level"]
-            ];
-        }
-    }
-
-    return $data; // Return the structured data with a single key
-}
 
     // Delete a widget
     protected function deleteCubo(string $name): bool {
@@ -655,38 +646,33 @@ protected function getUsers() {
                                                          ORDER BY comment.created DESC", [$comment['id']]);
                 }
             }
-
             return $sel;
         }
 
+protected function getMaincubo($pageName = '') {
+    $page = is_array($pageName) ? $pageName['key'] : ($pageName !== '' ? $pageName : $this->page);
+    $list = [];
 
-    protected function getMaincubo(string $page): bool|array {
-
-      $list=[];
-        $fetch = $this->db->fa("SELECT maincubo.area, maincubo.name as cubo
+    // Ensure we fetch multiple rows
+    $fetch = $this->db->fa("SELECT maincubo.area, maincubo.name as cubo
         FROM {$this->publicdb}.maincubo
-        left join {$this->publicdb}.main on main.id=maincubo.mainid
-        where main.name=?",[$page]);
-            if (!empty($fetch)) {
-                    foreach ($fetch as $row) {
-                        $list[$row['area']][] = $row['cubo'];
-                    }
-                    return $list;
-                } else {
-                    return false;
-                }
+        LEFT JOIN {$this->publicdb}.main ON main.id = maincubo.mainid
+        WHERE main.name = ?", [$page]);
+
+    if (!empty($fetch) && is_array($fetch)) {
+        foreach ($fetch as $row) {
+            $list[$row['area']][] = $row['cubo'];
+        }
     }
+    return $list;
+}
+
 
 
 //yaml methods
 
 protected function loadConfig($filePath) {
     return Yaml::parseFile($filePath);
-}
-
-protected function executeSQL($query) {
-    $pdo = new PDO("mysql:host=localhost;dbname=yourdb", "root", "password");
-    $pdo->exec($query);
 }
 
 protected function sendWsNotification($message) {
@@ -704,17 +690,17 @@ protected function executeCuboAction($action) {
 
     switch ($action) {
         case 'setup':
-            executeSQL($config['setup']['sql']);
+            $this->db->exec($config['setup']['sql']);
             echo "Setup Complete: " . $config['description'];
             sendWsNotification($config['notifications']['ws']);
             break;
         case 'update':
-            executeSQL($config['update']['sql']);
+            $this->db->exec($config['update']['sql']);
             echo $config['update']['message'];
             sendWsNotification($config['notifications']['ws']);
             break;
         case 'uninstall':
-            executeSQL($config['uninstall']['sql']);
+            $this->db->exec($config['uninstall']['sql']);
             echo $config['uninstall']['message'];
             break;
         default:

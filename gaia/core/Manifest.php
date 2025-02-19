@@ -18,17 +18,76 @@ maria.prepareColumnFormat
 trait  Manifest {
 
 protected function manifestEditor($name=''){
-    $mainame = $name=='' ? $this->sub : (is_array($name) ? $name['name'] : $name);
+    $mainame = $name=='' ? $this->page : (is_array($name) ? $name['name'] : $name);
      $main = $this->mainplan($mainame);
      $table = $this->G['SYSTEM']=='admin' ? "gen_admin.links" : $this->publicdb.".main";
     $html='';
     $html .= '<button class="bare right" onclick="gs.api.bind(this, { showLabel: false, showSwal: true })" data-name="'.$name.'" data-method="manifestEditor">
                             <span class="glyphicon glyphicon-sign"></span>Editor</button>';
-    $html .= $this->renderFormField("manifest",["type"=>"yaml","comment"=>"json","table"=>$table,"id"=>$main['id']],$main['manifest']);
+
+
+//DYnamic Create list of cubos
+     // Get list of cubos with their main -  data options (should be fetched dynamically)
+    $renderCuboOptions = [
+        "default.layout" => "Main Layout",
+        "default.dashboard" => "Admin Dashboard",
+        "default.profile" => "User Profile"
+    ];
+
+        // Initial YAML content
+       // $escapedValue = htmlspecialchars($main['manifest'], ENT_QUOTES, 'UTF-8');
+
+        // Generate the select dropdown
+        $selectHtml = '<select id="manifest-selector" class="editor-select" onchange="updateRenderCubo(this.value)">';
+        foreach ($renderCuboOptions as $key => $label) {
+            $selectHtml .= "<option value='$key'>$label</option>";
+        }
+        $selectHtml .= '</select>';
+
+    // Initial YAML content
+    $escapedValue = htmlspecialchars($main['manifest'], ENT_QUOTES, 'UTF-8');
+  //  $html .= $this->renderFormField("manifest",["type"=>"yaml","comment"=>"yaml","table"=>$table,"id"=>$main['id']],$main['manifest']);
+      return "
+          <div class='gs-span'>
+              <div class='gs-preview-container'>
+                  <label for='editor-content'>Manifest Editor</label>
+                  $selectHtml
+                  <textarea name='manifest' id='editor-content' placeholder='Edit manifest here'>$escapedValue</textarea>
+                  <div class='code-editor' id='editor-manifest'></div>
+              </div>
+              <button class='button save-button' onclick='gs.form.saveContentMirror(\"manifest\", \"$table\", \"{$main['id']}\")' type='button'>Save Content</button>
+          </div>
+          <script>
+              var codeMirrorEditor;
+
+              function initializeCodeMirror() {
+                  codeMirrorEditor = CodeMirror.fromTextArea(document.getElementById('editor-content'), {
+                      mode: 'yaml',
+                      lineNumbers: true,
+                      matchBrackets: true,
+                      autoCloseBrackets: true,
+                      theme: 'default'
+                  });
+              }
+
+ function updateRenderCubo(newValue) {
+                if (codeMirrorEditor) {
+                    var currentYaml = codeMirrorEditor.getValue();
+                    var updatedYaml = currentYaml.replace(/renderCubo: \\\".*?\\\"/, 'renderCubo: \"' + newValue + '\"');
+                    codeMirrorEditor.setValue(updatedYaml);
+                }
+            }
+
+
+              document.addEventListener('DOMContentLoaded', function() {
+                  initializeCodeMirror();
+              });
+          </script>";
     //   $html = json_encode($this->G['PAGECUBO']);
     //execute the plan to be included in core.Action switch cases
-    return $html;
 }
+
+
 protected function mainplanPublicEditor($name=''){
     $mainame = is_array($name) ? $name['name'] : $name;
      $main = $this->mainplan($mainame);

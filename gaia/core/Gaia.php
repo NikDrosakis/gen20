@@ -58,8 +58,6 @@ abstract class Gaia {
     public $is;	
     public $aconf;
     public $layout_array;
-    public $notification_file= "/var/www/gs/cubos/notificationweb/public.php";
-    public $chat_file= "/var/www/gs/admin/common/chat_panel.php";
 
     public function __construct() {
 	include "_config.php";
@@ -100,16 +98,12 @@ abstract class Gaia {
 		}
         }
 
-        $this->G['pagelist'] = $this->db->flist("SELECT id, name FROM gen_admin.alinksgrp");
-        $this->G['subparent'] = $this->db->flist("SELECT alinks.name, alinksgrp.name as parent
-        FROM gen_admin.alinks
-        LEFT JOIN gen_admin.alinksgrp on alinks.alinksgrpid=alinksgrp.id");
+        $this->G['pagelist'] = $this->db->flist("SELECT id, name FROM {$this->publicdb}.maingrp");
+        $this->G['subparent'] = $this->db->flist("SELECT main.name, maingrp.name as parent
+        FROM {$this->publicdb}.main
+        LEFT JOIN {$this->publicdb}.maingrp on main.maingrpid=maingrp.id");
 
-        if ($this->G['SYSTEM']=='admin'){
-        $this->G['mainplan'] = $this->mainplan($this->sub);
-        } elseif($this->G['SYSTEM']==TEMPLATE){
         $this->G['mainplan'] = $this->mainplan($this->page);
-        }
        // Handle requests (delegated to child classes)
         $this->handleRequest();
     }
@@ -247,24 +241,6 @@ protected function include_buffer(string $file, array $sel = [], array $params =
 }
 
 
-protected function include_cubofile(string $file){
-$file = is_array($file) ? $file['key'] : $file;
-
-    $extension = pathinfo(CUBO_ROOT.$file, PATHINFO_EXTENSION);
-    // Handle PHP files with output buffering
-    if ($extension === 'php') {
-        if (ob_get_level()) {
-            ob_end_clean(); // Clears existing buffer
-        }
-        ob_start();
-        // Include the file
-        include CUBO_ROOT.$file;
-
-        $output = ob_get_clean(); // Capture the output
-        flush(); // Ensure all output is flushed
-        return $output;
-    }
-}
 /**
 Handle XHR request.
 */
@@ -293,13 +269,14 @@ Handle XHR request.
 
 /**
 db-centric
-checks db gen_admin.alinks for details of admin page
+checks db {$this->publicdb}.main for details of admin page
 if
  */
     protected function mainplan($name='') {
+       $name = is_array($name) ? $name['key'] : ($name !== '' ? $name : $this->page);
         if ($this->G['SYSTEM']=='admin'){
-         $name = $name!='' ? $name : $this->sub;
-         $mainplan = $this->db->f("SELECT * FROM gen_admin.alinks WHERE name=?",[$name]);
+         $name = $name!='' ? $name : $this->page;
+         $mainplan = $this->db->f("SELECT * FROM {$this->publicdb}.main WHERE name=?",[$name]);
         } elseif($this->G['SYSTEM']==TEMPLATE || $this->G['SYSTEM']=="api"){
          $name = $name!='' ? $name : $this->page;
          $mainplan = $this->db->f("SELECT * FROM {$this->publicdb}.main WHERE name=?",[$name]);
@@ -430,7 +407,7 @@ navigation
 */
 protected function navigate() {
     // Fetch data from the database
-    $pages = $this->db->fa("SELECT * FROM gen_admin.alinksgrp ORDER BY sort");
+    $pages = $this->db->fa("SELECT * FROM {$this->publicdb}.maingrp ORDER BY sort");
 
     // Initialize the navigation structure
     $this->G['apages'] = [];
@@ -439,7 +416,7 @@ protected function navigate() {
     foreach ($pages as $page) {
         // Extract relevant details
         $slug = $page['name']; // Assuming 'name' corresponds to the desired slug
-        $title = $page['title'];
+        $title = ucfirst($page['name']);
         $icon = $page['img']; // Assuming 'img' corresponds to the icon
 
         // Check if the parent key (like "manage") exists, otherwise create it
@@ -452,12 +429,12 @@ protected function navigate() {
         }
 
         // Add sub-navigation if applicable
-         $subs = $this->db->fa("SELECT * FROM gen_admin.alinks order by sort");
+         $subs = $this->db->fa("SELECT * FROM {$this->publicdb}.main order by sort");
          if(!empty($subs)){
          foreach ($subs as $sub) {
-         if($sub['alinksgrpid']==$page['id']){
+         if($sub['maingrpid']==$page['id']){
             $this->G['apages'][$slug]['subs'][$sub['name']] = [
-                "slug" => $sub['title'],
+                "slug" => $sub['name'],
                 "icon" => $sub['img'],
                 "mode" => $sub['type']
             ];

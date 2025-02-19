@@ -53,13 +53,13 @@
         							$sublinkhref= $subvals['mode']=="iframe" ? "/admin/$mainpage?mode=iframe&sub=$sublink&slug={$subvals['slug']}" : "/admin/$sublink";
         						?>
         					    <li>
-                                    <a href="<?=$sublinkhref?>" id="<?=$sublink?>_sub" class="<?=$sublink==$this->sub ? 'active':''?>">
+                                    <a href="<?=$sublinkhref?>" id="<?=$sublink?>_sub" class="<?=$sublink==$this->page ? 'active':''?>">
         						<span style="margin:0 4px 0 0" class="glyphicon glyphicon-<?=$subvals['icon']?>" aria-hidden="true"></span>
         						<?=$subvals['slug']?></a>
         						</li>
         					<?php } ?>
         					<li>
-                                <button class="bare" onclick="gs.new('alinks')">
+                                <button class="bare" onclick="gs.new('main')">
                                  <span class="glyphicon glyphicon-plus">New</span></button>
                             </li>
         					</ul>

@@ -6,7 +6,7 @@
 
 <?php
 // Fetch existing menu list from the database
-$menulist = $this->db->flist("SELECT id,title FROM {$this->publicdb}.linksgrp");
+$menulist = $this->db->flist("SELECT id,name as title FROM {$this->publicdb}.linksgrp");
 ?>
 
 <!-- INSERT AND CREATE MENU -->

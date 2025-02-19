@@ -87,29 +87,6 @@
     }
 </style>
 
-<div class="slideshow-container">
-    <?php
-    // Fetch slides from the database
-    $slides = $this->db->fa("SELECT * FROM {$this->publicdb}.c_slideshow ORDER BY sort DESC");
-    //this in the V1 SCHEMA taken from the endpoint /widget/slideshow/fetch_slides
-    ?>
-<?php for($i=0;$i<count($slides);$i++){ ?>
-    <div class="mySlides fade">
-        <div class="numbertext"><?=$i+1?> / <?=count($slides)?></div>
-        <img src="/media/slideshow/<?=$slides[$i]['name']?>" style="width:100%">
-        <div class="text"><?=$slides[$i]['caption']?></div>
-    </div> <!-- ✅ Properly closing this div -->
-<?php } ?>
-    <a class="prev" onclick="plusSlides(-1)">❮</a>
-    <a class="next" onclick="plusSlides(1)">❯</a>
-</div>
-<br/>
-
-<div style="text-align:center">
-    <?php for($i=0;$i<count($slides);$i++){ ?>
-    <span class="dot" onclick="currentSlide(<?=$i+1?>)"></span>
-    <?php } ?>
-</div>
 
 <script>
     var slideIndex = 1;
@@ -146,3 +123,27 @@ setInterval(() => {
     plusSlides(1);
 }, 10000);
 </script>
+
+<div class="slideshow-container">
+    <?php
+    // Fetch slides from the database
+    $slides = $this->db->fa("SELECT * FROM {$this->publicdb}.c_slideshow ORDER BY sort DESC");
+    //this in the V1 SCHEMA taken from the endpoint /widget/slideshow/fetch_slides
+    ?>
+<?php for($i=0;$i<count($slides);$i++){ ?>
+    <div class="mySlides fade">
+        <div class="numbertext"><?=$i+1?> / <?=count($slides)?></div>
+        <img src="/media/slideshow/<?=$slides[$i]['name']?>" style="width:100%">
+        <div class="text"><?=$slides[$i]['caption']?></div>
+    </div> <!-- ✅ Properly closing this div -->
+<?php } ?>
+    <a class="prev" onclick="plusSlides(-1)">❮</a>
+    <a class="next" onclick="plusSlides(1)">❯</a>
+</div>
+<br/>
+
+<div style="text-align:center">
+    <?php for($i=0;$i<count($slides);$i++){ ?>
+    <span class="dot" onclick="currentSlide(<?=$i+1?>)"></span>
+    <?php } ?>
+</div>

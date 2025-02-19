@@ -2,7 +2,7 @@
 #include <fstream>
 #include "core/Maria.h"
 #include "core/Cubo.h"
-#include "core/FS.h"
+//#include "core/FS.h"
 #include <yaml-cpp/yaml.h>
 #include <nlohmann/json.hpp>
 #include "core/Yaml.h"
@@ -19,7 +19,6 @@
 //#include "core/server.h"
 
 int main(int argc, char* argv[]) {
-
   //RunServer();
     // Commented out the arguments section for now
     // if (argc < 3) {
@@ -59,16 +58,16 @@ int main(int argc, char* argv[]) {
         });
 
         // Connect to the server
-        ws.connect([](bool success) {
+        ws.connect([&ws](bool success) {
             if (success) {
                 std::cout << "Connected to the server!" << std::endl;
+
+                // Send a message after successful connection
+                ws.sendMessage("Mars pings");
             } else {
                 std::cerr << "Failed to connect to the server!" << std::endl;
             }
         });
-
-        // Send a message
-        ws.sendMessage("Mars pings");
 
         // Run the io_context in a separate thread
         std::thread ioc_thread([&ioc]() {
@@ -80,6 +79,18 @@ int main(int argc, char* argv[]) {
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
+
+
+        // Run the io_context in a separate thread
+    //    std::thread ioc_thread([&ioc]() {
+      //      ioc.run();
+        //});
+
+        // Keep the main thread alive
+        //ioc_thread.join();
+  //  } catch (const std::exception& e) {
+    //    std::cerr << "Error: " << e.what() << std::endl;
+    //}
     // Commented out YAML handling code
     // std::string filename = argv[1];
     // std::string table = argv[2];
@@ -89,17 +100,17 @@ int main(int argc, char* argv[]) {
 
     // Use MariaDB (example query)
     Maria maria("gen_admin");
-    mars::FS fs; // Declare fs using the namespace
+   // mars::FS fs; // Declare fs using the namespace
     if (maria.connect()) {
         std::map<int, std::string> params_fa;
         auto results = maria.fa("SELECT * FROM systems", params_fa);
 
-        for (const auto &row : results) {
-            for (const auto &pair : row) {
-                std::cout << pair.first << ": " << pair.second << " ";
-            }
-            std::cout << std::endl;
-        }
+     //   for (const auto &row : results) {
+      //      for (const auto &pair : row) {
+      //          std::cout << pair.first << ": " << pair.second << " ";
+      //      }
+ //           std::cout << std::endl;
+    //    }
 
         // Binlog processing
         /*
@@ -121,14 +132,16 @@ int main(int argc, char* argv[]) {
               //      std::cout << "Binlog Event: " << event << std::endl;
                     // Process the binlog event and write to the filesystem
                     // Example:
-                    std::string fileContent = "Data from binlog: " + event;
-                    fs.writeFile("/var/www/gs/manifest/first_binlog_output.txt", fileContent);
+//     std::string fileContent = "Data from binlog: " + event;
+         //           fs.writeFile("/var/www/gs/manifest/first_binlog_output.txt", fileContent);
                 };
-                std::thread binlogThread([&]() { // Capture all by reference
-                    maria.consumeBinlog(binlogFile, binlogCallback);
-                });
+
+//                std::thread binlogThread([&]() { // Capture all by reference
+  //                  maria.consumeBinlog(binlogFile, binlogCallback);
+    //            });
 
         // Filesystem monitoring
+        /*
         std::string watchDirectory = "/var/www/gs/gaia/cubos/test2/"; // Replace with your watch directory
        std::function<void(const std::string&)> fsCallback = [&](const std::string& event) {
            std::cout << "Filesystem Event: " << event << std::endl;
@@ -152,13 +165,16 @@ int main(int argc, char* argv[]) {
                }
            }
        };
-        fs.monitorChanges(watchDirectory, fsCallback);
+       */
+        //fs.monitorChanges(watchDirectory, fsCallback);
 
         // Keep main thread alive
+        /*
         while (true) {
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
-        binlogThread.join();
+        */
+ //       binlogThread.join();
     }
 
     return 0;
