@@ -15,7 +15,8 @@
         "symfony/flex": "*",
         "twig/twig": "^2.16",
         "symfony/yaml": "^5.4",
-        "duxet/laravel-rethinkdb": "^3.0"
+        "duxet/laravel-rethinkdb": "^3.0",
+        "johnpbloch/wordpress": "^6.7"
     },
     "autoload": {
         "psr-4": {
@@ -39,7 +40,8 @@
     "config": {
         "allow-plugins": {
             "symfony/flex": true,
-            "nodejs-php-fallback/nodejs-php-fallback": true
+            "nodejs-php-fallback/nodejs-php-fallback": true,
+            "johnpbloch/wordpress-core-installer": true
         }
     },
     "scripts": {

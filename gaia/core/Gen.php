@@ -1,39 +1,11 @@
 <?php
 namespace Core;
 use Exception;
+use Wordpress;
 /*
 ADMIN Core Class ROUTING
 layout with channels and drag and drop
 abstract database access for use in traits
-TO HEAD CSS
- Get layout preference from cookies, default to 3-column layout
-        if ($layout === '50-50') {
-            $columns = "1fr 1fr"; // 2 columns
-            $rows = "1fr";       // 1 row
-        } elseif ($layout === '70-30') {
-            $columns = "2fr 1fr"; // 2 columns (70% - 30%)
-            $rows = "1fr";       // 1 row
-        } else { // Default: 3-column layout
-            $columns = "1fr 1fr 1fr"; // 3 columns
-            $rows = "1fr 1fr";       // 2 rows
-        }
-//schema 1, 2 '50-50','70-30', 3
-    6: {
-        columns: '1fr 1fr 1fr', // 3 columns
-        rows: '1fr 1fr',        // 2 rows
-    },
-    4: {
-        columns: '1fr 1fr',   // 2 columns
-        rows: '1fr 1fr',
-    },
-    2: {
-        columns: '1fr',       // 1 column
-        rows: '1fr 1fr',      // 2 rows
-    },
-    1: {
-        columns: '1fr',
-        rows: '1fr'
-    }
 */
 class Gen extends Gaia {
 
@@ -49,6 +21,7 @@ sl:
   - renderCubo: "default.mediac"
   - renderCubo: "slideshow"
 sr:
+  - renderCubo: "default.nbar"
   - renderCubo: "default.notificationweb"
 f:
  - renderCubo: "chat.desk"
@@ -59,7 +32,7 @@ sl:
   - renderCubo: "default.mediac"
   - renderCubo: "slideshow"
 sr:
-  - renderCubo: "default.notification"
+  - renderCubo: "default.nbar"
 f:
  - renderCubo: "chat.desk"
 ';
@@ -80,7 +53,7 @@ protected $emptyChannelImg='<img src="https://scontent.fath6-1.fna.fbcdn.net/v/t
 
    public function __construct() {
            parent::__construct();
-
+        $this->G['PAGECUBO'] = $this->getMaincubo($this->page);
    }
 
 /**
@@ -101,10 +74,26 @@ protected $emptyChannelImg='<img src="https://scontent.fath6-1.fna.fbcdn.net/v/t
 
         }elseif ($_SERVER['SYSTEM'] == 'vivalibrocom') {
 				$this->router();
+
+        }elseif ($_SERVER['SYSTEM'] == 'nomadpoetrycom') {
+				$this->wpRouter();
+        }
     }
+/**
+WORDPRESS ROUTER
+ */
+protected function wpRouter() {
+    define('WP_USE_THEMES', true);
+
+    //$wpPath = GAIAROOT . 'vendor/johnpbloch/wordpress'; // Adjust if needed
+    $wpPath = GAIAROOT . 'public/'.DOMAIN; // Adjust if needed
+    if (!file_exists($wpPath . '/wp-blog-header.php')) {
+        throw new Exception("WordPress not found at: $wpPath");
     }
 
-
+    require_once $wpPath . '/wp-blog-header.php';
+    exit; // Ensure Gen20 does not continue processing
+}
 
 
 protected function router() {
@@ -113,7 +102,6 @@ $this->renderAdminHead();
 
 //BODY
 if($_SERVER['SYSTEM']=='admin'){
-
 echo $this->buildManifest($this->page);
 }else{
 echo $this->buildManifest($this->page);
@@ -132,17 +120,6 @@ protected function produceCuboadmin($channel){
         return $this->WIDGETURI .$channel . "/admin.php";
     }
 }
-
-protected function channelCheck($chanfile) {
-        if (file_exists($chanfile)){
-                    $buffer = $this->include_buffer($chanfile);
-                if($buffer!=''){
-                    return $buffer;
-                }else{
-                return $this->emptyChannelImg;
-                }
-            }
-    }
 
 /**
      DO channels producing from home to global Admin
@@ -167,7 +144,7 @@ protected function defaultAdminManifest($name,$type='file') {
     if($this->id !='' && $this->mode ==''){
     $manifest['m'][0]= ["buildForm"=> $name];
     }elseif(file_exists($sub)){
-    $manifest['m'][0]= ["include_buffer"=>"main/".$name . ".php"];
+    $manifest['m'][0]= ["renderCubo"=>"default.$name"];
     //if table exists insert table
     }elseif($type=='table'){
     $manifest['m'][0]= ["buildTable"=>"gen_admin.$name"];
@@ -228,15 +205,20 @@ protected function buildManifest($name) {
     $system=$_SERVER['SYSTEM']!='admin' ? $default_public : $default_admin;
 
     if($_SERVER['SYSTEM']!='admin'){
-    $this->G['PAGECUBO'] = $plan = $this->getMaincubo($this->page);
-    }
+    /**
+    $plan = $this->G['PAGECUBO'];
+     */
+    //MAIN MANIFEST & PAGECUBO IS THE SAME $main['manifest']===$this->G['PAGECUBO']
     // If a custom manifest exists, parse it; otherwise, use defaults
+    $plan = $main['manifest'] ? yaml_parse($main['manifest']) :$this->defaultPublicManifest($name,$main['type']);
+    }else{
     $plan = $main['manifest'] ? yaml_parse($main['manifest']) :$this->defaultAdminManifest($name,$main['type']);
+    }
 
     // Ensure primary keys exist, fallback to default if missing
     foreach (['h','m', 'sl', 'sr','f'] as $section) {
         if (!isset($plan[$section]) || !is_array($plan[$section])) {
-            $plan[$section] = $this->defaultAdminManifest($name)[$section] ?? []; // Use default if missing
+            $plan[$section] = $_SERVER['SYSTEM']=='admin' ? $this->defaultAdminManifest($name)[$section] : $this->defaultPublicManifest($name)[$section]; // Use default if missing
         }
     }
 //xecho($plan);
@@ -263,11 +245,7 @@ foreach ($methods as $method => $param) {
         $result = $this->executeMethod($method,$param);
     if (!empty($result)) {
         $html .= "<div class='cubo'>";
-                    $html .= "<h3>
-                                  <input id='{$param}_panel' class='red indicator'>
-                                  <a href='/$param'><span class='glyphicon glyphicon-edit'></span>$param</a>
-                                  <button onclick='gs.dd.init()' class='toggle-button'>🖱️</button>
-                              </h3>";
+        $html .= $this->addHeaderCubo($param);
         $html .= $result;
         $html .= "</div>";
     }}
@@ -280,14 +258,10 @@ foreach ($methods as $method => $param) {
     $html .= '<div id="mainpage2">';
 foreach ($plan['m'] as $methods){
 foreach ($methods as $method => $param) {
-
     $result = $this->executeMethod($method, $param);
     if (!empty($result)) {
         $html .= "<div class='cubo'>";
-                    $html .= "<h3>
-                                  <input id='{$param}_panel' class='red indicator'>
-                                  <a href='/$param'><span class='glyphicon glyphicon-edit'></span>$param</a>
-                              </h3>";
+        $html .= $this->addHeaderCubo($param);
         $html .= $result;
         $html .= "</div>";
     }}
@@ -301,10 +275,7 @@ foreach ($methods as $method => $param) {
     $result = $this->executeMethod($method, $param);
     if (!empty($result)) {
         $html .= "<div class='cubo'>";
-                    $html .= "<h3>
-                                  <input id='{$param}_panel' class='red indicator'>
-                                  <a href='/$param'><span class='glyphicon glyphicon-edit'></span>$param</a>
-                              </h3>";
+        $html .= $this->addHeaderCubo($param);
         $html .= $result;
         $html .= "</div>";
     }}
@@ -312,21 +283,18 @@ foreach ($methods as $method => $param) {
     $html .= '</div>'; // Close right sidebar
 
     //Footer
-    $html .= '<div id="f">';
+    $html .= '<footer>';
 foreach ($plan['f'] as $methods){
 foreach ($methods as $method => $param) {
+   $html .= "<div class='cubo'>";
    $result = $this->executeMethod($method, $param);
     if (!empty($result)) {
-        $html .= "<div class='cubo'>";
-                    $html .= "<h3>
-                                  <input id='{$param}_panel' class='red indicator'>
-                                  <a href='/$param'><span class='glyphicon glyphicon-edit'></span>$param</a>
-                              </h3>";
+        $html .= $this->addHeaderCubo($param);
         $html .= $result;
-        $html .= "</div>";
     }
+        $html .= "</div>";
 }
-    $html .= '</div>'; // Close right sidebar
+    $html .= '</footer>'; // Close right sidebar
     $html .= '</div>'; // Close container
     return $html;
 }}

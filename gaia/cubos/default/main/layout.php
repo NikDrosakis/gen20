@@ -123,10 +123,9 @@ $cubos= $this->db->fa("SELECT * from gen_admin.cubo order by name ASC");
 $name=$pages[$i]['name'];
 $id=$pages[$i]['id'];
 ?>
-
 <div class="mainbox">
 <div style="background: antiquewhite;">
-    <span style="margin-left:33%;"><?=$name?></span>
+    <a href="/<?=$name?>" style="margin-left:33%;"><?=$name?></a>
 <button style="float:right" data-mainid="<?=$id?>" class="clear-cubos bare button">clear</button>
 <button style="float:left" data-mainid="<?=$id?>" class="bare button">autoset</button>
 </div>

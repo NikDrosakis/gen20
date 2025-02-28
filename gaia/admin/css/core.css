@@ -1,3 +1,11 @@
+/* Style for the header and navbar */
+header {
+    background: #333;
+    color: #fff;
+    font-size: 1.5em;
+    text-align: center;
+}
+
 h3, .h3 {
     font-size: 15px;
     display: inline-flex;
@@ -6,7 +14,7 @@ h3, .h3 {
     font-weight: 700;
     margin: 3px;
     gap: 8px;
-    background: lightgray;
+    border: 1px solid darkcyan;
     width: 98%;
     margin: 1%;
     padding: 1%;
@@ -52,7 +60,6 @@ h3, .h3 {
 .menu-item > a {
     display: block;
     text-decoration: none;
-    color: #fff;
     transition: background 0.3s;
     margin:10px 10px 0 10px;
 }
@@ -78,10 +85,10 @@ h3, .h3 {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 .cubo{
-    width: 98%;
+    width: 99%;
     float: left;
-    padding: 1%;
-    margin: 1%;
+    padding: 0.5%;
+    margin: 0.5%;
     box-shadow: 0 0 10px #dcd2c2;
 }
 #nbar{
@@ -349,15 +356,13 @@ buildArchive
     /* gs form */
     /* Flexbox container to hold the preview and textarea side by side */
 .gs-preview-container {
-    border: 1px solid #ddd; /* Light gray border */
-    padding: 10px;          /* Padding for content inside the container */
-    background-color: #f9f9f9; /* Light background color */
-    border-radius: 5px;     /* Rounded corners */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-    margin-top: 10px;       /* Space above the container */
-    display: flex;          /* Flex layout */
-    flex-direction: column; /* Stack items vertically */
-    max-height:300px;
+    padding: 8px;
+    margin-top: 10px;
+    display: flex
+;
+    flex-direction: column;
+    max-height: 300px;
+    border: 1px solid darkcyan;
 }
 
 .gs-preview-container textarea.gs-textarea {
@@ -5287,12 +5292,6 @@ h6 .small,
     font-weight: normal;
     line-height: 1;
     color: #777;
-}
-h1,
-h2,
-h3{
-    margin-top: 14px;
-    margin-bottom: 8px;
 }
 h1 small,
 .h1 small,
@@ -11201,13 +11200,6 @@ input:checked + .slider:before {
     box-sizing: border-box;
 }
 
-/* Style for the header and navbar */
-header {
-    background: #333;
-    color: #fff;
-    font-size: 1.5em;
-    text-align: center;
-}
 
 .cred {
     color: #f1f6fb !important;
@@ -12312,7 +12304,7 @@ a,select{cursor:pointer;}
     padding: 40px 40px 40px 40px;
     margin-top: 120px;
 }
-#f{
+footer, #f{
     text-align: center;
     font-size: 0.9em;
     width: 100%;
@@ -12326,13 +12318,10 @@ a,select{cursor:pointer;}
     margin: 2px;
     cursor: pointer;
     background: none;
-    padding: 10px;
-    min-width:30%;
+    min-width: 30%;
     display: block;
-    width: 100%;
     font-size: 11px;
     border: 1px solid;
-    border-radius: 8px;
 }
 a{text-decoration:none;}
 label {
@@ -12340,11 +12329,6 @@ label {
     float: initial;
 }
 
-h1,h2,h3 {
-    clear:both;
-    margin: 10px;
-    padding: 10px 0 0 10px;
-}
 .input{
     padding: 8px;
     margin: 8px;

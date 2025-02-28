@@ -29,21 +29,6 @@
         margin-top: 5px;
     }
 
-    button#execute {
-        width: 100%;
-        padding: 10px;
-        font-size: 1em;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-    button#execute:hover {
-        background-color: #0056b3;
-    }
-
 </style>
     <div class="form-section">
         <label for="type">Message Type</label>
@@ -95,7 +80,7 @@
         <div id="preview"></div>
     </div>
 
-    <button id="execute">Send Message</button>
+    <button class="button save-button" id="execute">Send Message</button>
 <script>
     function date(n,t){
         var e,r,o=["Sun","Mon","Tues","Wednes","Thurs","Fri","Satur","January","February","March","April","May","June","July","August","September","October","November","December"],

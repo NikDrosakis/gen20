@@ -1,4 +1,3 @@
-<header>
     <nav id="mainmenu" class="navbar">
         <div id="progressBarContainer">
             <div id="progressBar">
@@ -72,7 +71,6 @@
                 <div id="c_active_users"></div>
                 <div id="signInDiv"></div>
     </nav>
-</header>
 
 
 <script>
