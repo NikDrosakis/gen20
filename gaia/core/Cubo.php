@@ -100,6 +100,15 @@ cubo.name > yaml.maykey split _ 0
   4) foreach yaml.mains  $this->db->inse($this->publicdb.".maincubo",array); array=maincubo.mainid=[insertedmainid],maincubo.area='m', maincubo.cuboid=yaml.id, maincubo.name=cubo.name
  */
 
+protected function addHeaderCubo(string $cubo){
+        $title = implode(' ', array_map('ucfirst', explode('.', $cubo)));
+return "<h3>
+                                         <input id='{$cubo}_panel' class='red indicator'>
+                                         <a href='/$cubo'><span class='glyphicon glyphicon-edit'></span>$title</a>
+                                         <button onclick='gs.dd.init()' class='bare toggle-button'>🖱️</button>
+                                     </h3>";
+}
+
 protected function include_cubofile(string $file){
 $file = is_array($file) ? $file['key'] : $file;
 
@@ -660,7 +669,7 @@ protected function getMaincubo($pageName = '') {
 
     if (!empty($fetch) && is_array($fetch)) {
         foreach ($fetch as $row) {
-            $list[$row['area']][$row['method']] = $this->publicdb.".".$row['cubo'];
+            $list[$row['area']][$row['method']] = $row['cubo'];
         }
     }
     return $list;

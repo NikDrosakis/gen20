@@ -1,29 +1,6 @@
-import React from 'react';
-import './App.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import { ThemeProvider } from 'styled-components';
-import useDarkMode from 'use-dark-mode';
-import AppContext from './AppContext';
-import Main from './Main';
-import GlobalStyles from './theme/GlobalStyles';
-import { lightTheme, darkTheme } from './theme/themes';
-import Rain from "./components/Rain";
+import React from "react";
+import View1 from "./components/View1";
 
-function App() {
-  const darkMode = useDarkMode(true);
-
-  return (
-    <AppContext.Provider value={{ darkMode }}>
-      <ThemeProvider theme={darkMode.value ? darkTheme : lightTheme}>
-        <GlobalStyles />
-        <div className="App">
-            <Main />
-        </div>
-          <Rain/>
-      </ThemeProvider>
-    </AppContext.Provider>
-  );
-}
-
+const App = () => <View1 />;
 
 export default App;
