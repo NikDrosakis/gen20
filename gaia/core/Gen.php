@@ -2,14 +2,15 @@
 namespace Core;
 use Exception;
 use Wordpress;
+
 /*
 ADMIN Core Class ROUTING
 layout with channels and drag and drop
 abstract database access for use in traits
 */
 class Gen extends Gaia {
+use  System, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Media, Filemeta, My, Cubo, Template,Book;
 
-use System, Url, Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Bundle, Media, Filemeta, My, Cubo, Rethink, Template,Book;
 protected $database;
 protected $layout_selected;
 protected $layout;
@@ -18,23 +19,21 @@ protected $db_page;
 protected $default_admin_manifest='h:
   - renderCubo: "default.menuadmin"
 sl:
-  - renderCubo: "default.mediac"
   - renderCubo: "slideshow"
+  - renderCubo: "default.mediac"
 sr:
-  - renderCubo: "default.nbar"
   - renderCubo: "default.notificationweb"
+  - renderCubo: "default.nbar"
 f:
- - renderCubo: "chat.desk"
 ';
 protected $default_public_manifest='h:
   - renderCubo: "default.menuweb"
 sl:
-  - renderCubo: "default.mediac"
   - renderCubo: "slideshow"
 sr:
+  - renderCubo: "default.notificationweb"
   - renderCubo: "default.nbar"
 f:
- - renderCubo: "chat.desk"
 ';
 
 protected $layouts=[
@@ -53,7 +52,8 @@ protected $emptyChannelImg='<img src="https://scontent.fath6-1.fna.fbcdn.net/v/t
 
    public function __construct() {
            parent::__construct();
-        $this->G['PAGECUBO'] = $this->getMaincubo($this->page);
+
+        $this->PAGECUBO = $this->getMaincubo($this->page);
    }
 
 /**
@@ -100,6 +100,7 @@ protected function router() {
 //HEAD
 $this->renderAdminHead();
 
+
 //BODY
 if($_SERVER['SYSTEM']=='admin'){
 echo $this->buildManifest($this->page);
@@ -140,17 +141,17 @@ protected function defaultAdminManifest($name,$type='file') {
     //include subfile if exists
     $manifest = yaml_parse($this->default_admin_manifest);
     $sub=CUBO_ROOT."default/main/".$name . ".php";
-    //if file exists insert file
-    if($this->id !='' && $this->mode ==''){
-    $manifest['m'][0]= ["buildForm"=> $name];
-    }elseif(file_exists($sub)){
+
+    if(file_exists($sub)){
     $manifest['m'][0]= ["renderCubo"=>"default.$name"];
     //if table exists insert table
+
     }elseif($type=='table'){
     $manifest['m'][0]= ["buildTable"=>"gen_admin.$name"];
     }
     return $manifest;
 }
+
 protected function defaultPublicManifest($name,$type='file') {
     //include subfile if exists
     $manifest = yaml_parse($this->default_public_manifest);
@@ -158,9 +159,11 @@ protected function defaultPublicManifest($name,$type='file') {
     //if file exists insert file
     if($this->id !='' && $this->mode ==''){
     $manifest['m'][0]= ["buildForm"=> $name];
+
     }elseif(file_exists($sub)){
     $manifest['m'][0]= ["renderCubo"=>"default.$name"];
     //if table exists insert table
+
     }elseif($type=='table'){
     $manifest['m'][0]= ["buildTable"=>"gen_admin.$name"];
     }
@@ -168,31 +171,32 @@ protected function defaultPublicManifest($name,$type='file') {
 }
 
 protected function executeMethod($method, $param) {
-        // Admin case: ["renderCubo" => "default.nbar"]
     try {
         switch ($method) {
             case 'iframe':
                 return '<iframe id="sandbox" src="' . htmlspecialchars($param) . '" width="100%" height="1000px" sandbox="allow-scripts allow-same-origin allow-forms" style="border:1px solid black;"></iframe>';
 
             case 'renderCubo':
-               $response = $this->renderCubo($param);
+                $response = $this->renderCubo($param);
                 if (is_array($response)) {
                     return $response['data'];
                 }
+                return $response;
 
             default:
-            $url = SITE_URL."api/v1/local/$method?key=$param";
-             // Ensure response is properly formatted
+                $url = SITE_URL . "api/v1/local/$method?key=$param";
                 $response = $this->fetchUrl($url);
                 if (is_array($response)) {
                     return $response['data'];
                 }
+                return $response;
         }
     } catch (Exception $e) {
-        return "<p>Error: " . $e->getMessage() . "</p>";
+        // Log the error and return a fallback
+        error_log("Error executing method '$method': " . $e->getMessage());
+        return "<p>Error executing method '$method'.</p>";
     }
 }
-
 /**
 $url = SITE_URL.'api/v1/local/buildTable?table=gen_vivalibrocom.main'
 $this->fetchUrl($url)
@@ -200,110 +204,108 @@ $this->fetchUrl($url)
 protected function buildManifest($name) {
     $main = $this->mainplan($name);
 
-    $default_admin = yaml_parse($this->default_admin_manifest) ?: [];  // Ensure it always returns an array
-    $default_public = yaml_parse($this->default_public_manifest) ?: [];  // Ensure it always returns an array
-    $system=$_SERVER['SYSTEM']!='admin' ? $default_public : $default_admin;
+    $default_admin = yaml_parse($this->default_admin_manifest) ?: [];
+    $default_public = yaml_parse($this->default_public_manifest) ?: [];
+    $system = $this->SYSTEM != 'admin' ? $default_public : $default_admin;
 
-    if($_SERVER['SYSTEM']!='admin'){
-    /**
-    $plan = $this->G['PAGECUBO'];
-     */
-    //MAIN MANIFEST & PAGECUBO IS THE SAME $main['manifest']===$this->G['PAGECUBO']
-    // If a custom manifest exists, parse it; otherwise, use defaults
-    $plan = $main['manifest'] ? yaml_parse($main['manifest']) :$this->defaultPublicManifest($name,$main['type']);
-    }else{
-    $plan = $main['manifest'] ? yaml_parse($main['manifest']) :$this->defaultAdminManifest($name,$main['type']);
+    if ($this->SYSTEM != 'admin'){
+        $plan = $main['manifest'] ? yaml_parse($main['manifest']) : $this->defaultPublicManifest($name, $main['type']);
+    } else {
+        $plan = $main['manifest'] ? yaml_parse($main['manifest']) : $this->defaultAdminManifest($name, $main['type']);
     }
 
     // Ensure primary keys exist, fallback to default if missing
-    foreach (['h','m', 'sl', 'sr','f'] as $section) {
+    foreach (['h', 'm', 'sl', 'sr', 'f'] as $section) {
         if (!isset($plan[$section]) || !is_array($plan[$section])) {
-            $plan[$section] = $_SERVER['SYSTEM']=='admin' ? $this->defaultAdminManifest($name)[$section] : $this->defaultPublicManifest($name)[$section]; // Use default if missing
+            $plan[$section] = $this->SYSTEM == 'admin' ? $this->defaultAdminManifest($name)[$section] : $this->defaultPublicManifest($name)[$section];
         }
     }
-//xecho($plan);
 
     $html = '<div id="container">';
     $html .= '<header>';
-    $planH =empty($plan['h']) ? $system['h'] : $plan['h'];
-foreach ($planH as $methods){
-foreach ($methods as $method => $param) {
-    $result = $this->executeMethod($method, $param);
-    if (!empty($result)) {
-        $html .= "<div class='cubo'>";
-        $html .= $result;
-        $html .= "</div>";
-    }}
-}
+    $planH = empty($plan['h']) ? $system['h'] : $plan['h'];
+    foreach ($planH as $methods) {
+        foreach ($methods as $method => $param) {
+            $result = $this->executeMethod($method, $param);
+            if (!empty($result)) {
+                $html .= "<div class='cubo'>";
+                $html .= $result;
+                $html .= "</div>";
+            }
+        }
+    }
     $html .= '</header>';
 
     // Left Sidebar
     $html .= '<div id="sidebar-left">';
-        $html .= $this->manifestEditor();
-       foreach ($plan['sl'] as $methods){
-       foreach ($methods as $method => $param) {
-        $result = $this->executeMethod($method,$param);
-    if (!empty($result)) {
-        $html .= "<div class='cubo'>";
-        $html .= $this->addHeaderCubo($param);
-        $html .= $result;
-        $html .= "</div>";
-    }}
-}
-
-    $html .= '</div>'; // Close left sidebar
+    $html .= $this->manifestEditor();
+    foreach ($plan['sl'] as $methods) {
+        foreach ($methods as $method => $param) {
+            $result = $this->executeMethod($method, $param);
+            if (!empty($result)) {
+                $html .= "<div class='cubo'>";
+                $html .= $this->addHeaderCubo($param);
+                $html .= $result;
+                $html .= "</div>";
+            }
+        }
+    }
+    $html .= '</div>';
 
     // Main Page
-     $mainWidth = $hasLeftSidebar && $hasRightSidebar ? '60' : ($hasLeftSidebar || $hasRightSidebar ? '80' : '100');
     $html .= '<div id="mainpage2">';
-foreach ($plan['m'] as $methods){
-foreach ($methods as $method => $param) {
-    $result = $this->executeMethod($method, $param);
-    if (!empty($result)) {
-        $html .= "<div class='cubo'>";
-        $html .= $this->addHeaderCubo($param);
-        $html .= $result;
-        $html .= "</div>";
-    }}
-}
-   $html .= '</div>'; // Close right sidebar
+    foreach ($plan['m'] as $methods) {
+        foreach ($methods as $method => $param) {
+            $result = $this->executeMethod($method, $param);
+            if (!empty($result)) {
+                $html .= "<div class='cubo'>";
+                $html .= $this->addHeaderCubo($param);
+                $html .= $result;
+                $html .= "</div>";
+            }
+        }
+    }
+    $html .= '</div>';
 
     // Right Sidebar
     $html .= '<div id="sidebar-right">';
-foreach ($plan['sr'] as $methods){
-foreach ($methods as $method => $param) {
-    $result = $this->executeMethod($method, $param);
-    if (!empty($result)) {
-        $html .= "<div class='cubo'>";
-        $html .= $this->addHeaderCubo($param);
-        $html .= $result;
-        $html .= "</div>";
-    }}
-}
-    $html .= '</div>'; // Close right sidebar
-
-    //Footer
-    $html .= '<footer>';
-foreach ($plan['f'] as $methods){
-foreach ($methods as $method => $param) {
-   $html .= "<div class='cubo'>";
-   $result = $this->executeMethod($method, $param);
-    if (!empty($result)) {
-        $html .= $this->addHeaderCubo($param);
-        $html .= $result;
+    foreach ($plan['sr'] as $methods) {
+        foreach ($methods as $method => $param) {
+            $result = $this->executeMethod($method, $param);
+            if (!empty($result)) {
+                $html .= "<div class='cubo'>";
+                $html .= $this->addHeaderCubo($param);
+                $html .= $result;
+                $html .= "</div>";
+            }
+        }
     }
-        $html .= "</div>";
-}
-    $html .= '</footer>'; // Close right sidebar
-    $html .= '</div>'; // Close container
+    $html .= '</div>';
+
+    // Footer
+    $html .= '<footer>';
+    foreach ($plan['f'] as $methods) {
+        foreach ($methods as $method => $param) {
+            $html .= "<div class='cubo'>";
+            $result = $this->executeMethod($method, $param);
+            if (!empty($result)) {
+                $html .= $this->addHeaderCubo($param);
+                $html .= $result;
+            }
+            $html .= "</div>";
+        }
+    }
+    $html .= '</footer>';
+    $html .= '</div>';
+
     return $html;
-}}
+}
 
 protected function main() {
-    $widgets = read_folder($this->G['WIDGETURI']);
+    $widgets = read_folder($this->WIDGETURI);
     $subs=array();
      foreach ($widgets as $wid) {
-        if (file_exists($this->G['WIDGETURI'] . $wid . "/admin.php")) {
+        if (file_exists($this->WIDGETURI . $wid . "/admin.php")) {
             $subs[$wid] = ["slug" => ucfirst($wid), "icon" => "time"];
         }
     }

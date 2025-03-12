@@ -1,39 +1,32 @@
 <?php
 namespace Core;
-use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+//use Exception;
 
 trait Url {
-public Client $httpClient;
+public $httpClient;
 
-/**
- /cubos/index.php?cubo=slideshow&file=public.php
- */
-
-protected function fetchUrl(string $url, array $options = [], int $depth = 0): string|array {
-    // Prevent infinite loops
-    if ($depth > 3) {
-        throw new Exception("Fetch error: Too many recursive fetch calls! URL: " . $url);
-    }
-
-    // Detect self-referencing URLs
-    //$currentUrl = $_SERVER['REQUEST_URI'];
-    //if (strpos($url, $currentUrl) !== false) {
-      //  echo "Warning: Self-referencing URL detected! Skipping fetch.<br>";
-        //return "";
-    //}
-
-  //  echo "Debug: Fetching URL - " . htmlspecialchars($url) . " (Depth: $depth)<br>";
-
+protected function fetchUrl(string $url, array $options = []) {
     $this->httpClient = new Client();
+
     try {
+        // Διατήρησε τα $_GET στο URL και μην τα βάζεις στο body
+        if (!empty($_GET)) {
+            $queryString = http_build_query($_GET);
+            $url .= (strpos($url, '?') === false ? '?' : '&') . $queryString;
+        }
+
+        // Αν το method είναι GET, αφαιρούμε το body
+        if (($options['method'] ?? 'GET') === 'GET') {
+            unset($options['body']);
+        }
+
         $response = $this->httpClient->request(
             $options['method'] ?? 'GET',
             $url,
             [
                 'headers' => $options['headers'] ?? [],
-                'body' => $options['body'] ?? null,
             ]
         );
 
@@ -47,10 +40,10 @@ protected function fetchUrl(string $url, array $options = [], int $depth = 0): s
 
             return $response->getBody()->getContents();
         } else {
-            throw new Exception("HTTP error! Status: " . $statusCode);
+            return ["error" => "HTTP error! Status: $statusCode"];
         }
     } catch (GuzzleException $e) {
-        throw new Exception("Fetch error: " . $e->getMessage());
+        return ["error" => "Fetch error: " . $e->getMessage()];
     }
 }
 
@@ -118,7 +111,7 @@ protected function updateUrl(string $url, array $data, array $options = []): arr
 
 protected function deleteUrl(string $url, array $options = []): array
 {
-    $this->httpClient = new Client();
+   // $this->httpClient = new Client();
     try {
         $response = $this->httpClient->request(
             'DELETE',

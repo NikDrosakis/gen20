@@ -1,6 +1,6 @@
 <?php
 
-if($this->G['id']!=''){
+if($this->id!=''){
 
 include $this->G['SITE_ROOT'] . "main/publisher_edit.php";
 
@@ -50,7 +50,7 @@ include PUBLIC_ROOT_WEB."main/{$page}/{$page}_archive.php";
 
 <!--writers edit--->
 <?php
-$sel= $bot->f("SELECT * FROM publisher WHERE id=?",array($this->G['id']));
+$sel= $bot->f("SELECT * FROM publisher WHERE id=?",array($this->id));
 $img = !$sel[$i]['img'] ? "/img/empty_publisher.png" : '/media/'. $sel[$i]['img'];
 ?>
 	<!-- EDIT / SHOW-->

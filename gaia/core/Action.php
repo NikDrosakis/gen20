@@ -794,7 +794,7 @@ protected function runExternalRecource(array $rec){
             $rawurl = $rec['url'];
             $url = $this->renderKeys($rec);
         } else {
-            $url = $this->G['SITE_URL'].$rec['apiprefix'] . $rec['grpName'] . $rec['endpoint'];
+            $url = $this->SITE_URL.$rec['apiprefix'] . $rec['grpName'] . $rec['endpoint'];
         }
         // renders URL with API keys
         $rec['endpoint_rendered'] = $url;

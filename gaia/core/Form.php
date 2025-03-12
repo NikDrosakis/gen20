@@ -52,13 +52,15 @@ protected $res;             #results
 //todo instead of table, insert sql query for more complex inputs
 protected function getInputType($tableName): ?array {
 $table = is_array($tableName) ? $tableName['key'] : $tableName;
+$cols = is_string($tableName['cols']) ? explode(',', $tableName['cols']) : (is_array($tableName['cols']) ? $tableName['cols'] : []);
     // @fm.features Fetch metadata for the table columns (including comments)
-    $columns = $this->db->tableMeta($table);
+$columns = $this->db->tableMeta($table,$cols);
+
     // @fm.features Define a mapping of SQL data types to HTML input types
     $typeMapping = [
         'varchar'    => 'text',
         'char'       => 'text',
-        'text'       => 'textarea',
+        'text'       => 'text',
         'longtext'   => 'editor',
         'mediumtext' => 'editor',
         'int'        => 'number',
@@ -191,21 +193,18 @@ protected function renderButton($table) {
  1) creates the query
  2) switch cases of column format returning html
  */
-protected function buildTable($tableName,array $params=[]): string {
+protected function buildTable($tableName): string {
 $table = is_array($tableName) ? $tableName['key'] : $tableName;
 //error_log(print_r($table));
 #instantiate those public vars
-$cols = $params['cols'] ?? [];
 $this->table=$table;
 $subpage=explode('.',$table)[1];
-$searchTerm=$params['q'] ?? null;
+$searchTerm=$tableName['q'] ?? null;
 $style = $this->page!=''
         ? "margin:0;" #in subpage large
         : "zoom:0.8;";  #in 6channel small
 // @fm.features Fetch column types and definitions via getInputType
-if (empty($cols)) {
-$cols = $this->getInputType($table); // @fm.features Get column metadata
-}
+$cols = $this->getInputType($tableName); // @fm.features Get column metadata
 
 $tableHtml='';
 $custom_tools_beforetable = ADMIN_ROOT."main/".$this->page."/".$subpage.".php";
@@ -217,10 +216,9 @@ $tableHtml .=  $this->renderFormHead($table);
 $tableHtml .= '<div class="table-container" style="'.$style.'">';
 
 //if($this->totalRes > 10){
-$tableHtml .= $this->formSearch($table);
+$tableHtml .= $this->formSearch($tableName);
 
 $tableHtml .= $this->renderButton($table);
-
 
 $joinedKeys=[];
 foreach($cols as $colName => $colData){
@@ -235,18 +233,16 @@ if(strpos($colData['comment'],'selectjoin')!==false || strpos($colData['comment'
 }
  //  $tableHtml .= $this->buildChart($table,$joinedKeys);
 //}
-
 try {
-$tableHtml .= $this->buildCoreTable($tableName,$cols=[]);
+$tableHtml .= $this->buildCoreTable($tableName);
 } catch (Exception $e) {
             $tableHtml .= "<div class='error'>Error loading $tableName. Please check table and db name.</div>";
-  }
+}
 
-   if($this->totalRes > 0){
-        $tableHtml .= $this->formPagination($this->totalRes, $this->currentPage);
-    }
-    $tableHtml .= '</div>';
-
+if($this->totalRes > 0){
+    $tableHtml .= $this->formPagination($tableName, $this->totalRes, $this->currentPage);
+}
+$tableHtml .= '</div>';
     return $tableHtml;
 }
 
@@ -272,7 +268,7 @@ $tableHtml .= $this->buildCoreTable($tableName,$cols=[]);
 }
  */
 
-protected function tableBody($tableName,$cols=[],$data=[]) {
+protected function tableBody($tableName,$colArray=[],$data=[]) {
     $table = is_array($tableName) ? $tableName['key'] : $tableName;
     $subpage=explode('.',$table)[1];
 
@@ -285,10 +281,10 @@ protected function tableBody($tableName,$cols=[],$data=[]) {
     #add sortable <tr "
      $tableHtml .= '<tr id="'.$table.'_'.$row['id'].'" class="menuBox">';
        #loop of data
-       foreach ($cols as $colName => $colData) {
+       foreach ($colArray as $colName => $colData) {
         $value=$row[$colName];
             // @fm.features Skip 'textarea', 'MEDIUMTEXT', and 'LONGTEXT' fields entirely
-            if (in_array($colData['type'], ['textarea', 'editor'])) {
+            if (in_array($colData['type'], ['hidden','textarea', 'editor'])) {
                 continue;
             }
             $tableHtml .= '<td>';
@@ -296,7 +292,7 @@ protected function tableBody($tableName,$cols=[],$data=[]) {
 
             // @fm.features Auto ID column
             if ($colName === 'id') {
-                 $tableHtml .= '<a href="/admin/'.$this->page.'/'.$subpage.'?id='.$row['id'].'"><span class="glyphicon glyphicon-edit"></span></a>';
+                 $tableHtml .= '<a href="/admin/'.$subpage.'?id='.$row['id'].'"><span class="glyphicon glyphicon-edit"></span></a>';
                  $tableHtml .= htmlspecialchars($row['id']);
 
             }elseif ($colName === 'sort') {
@@ -400,7 +396,7 @@ protected function tableHead($table,$cols=[]) {
      $tableHtml .= '<tr>';
     foreach ($cols as $colName => $colData) {
         // @fm.features Skip 'textarea', 'MEDIUMTEXT', and 'LONGTEXT' columns entirely
-        if (in_array($colData['type'], ['textarea', 'editor'])) {
+        if (in_array($colData['type'], ['hidden','textarea', 'editor', 'yaml'])) {
             continue;
         }
         $label = ucfirst($colName); // @fm.features Use comment or column name as label
@@ -413,14 +409,16 @@ protected function tableHead($table,$cols=[]) {
     return $tableHtml;
 }
 
-protected function buildTableQuery($tableName, $cols) {
+protected function buildTableQuery($tableName) {
     $table = is_array($tableName) ? $tableName['key'] : $tableName;
+$cols = is_string($tableName['cols']) ? explode(',', $tableName['cols']) : (is_array($tableName['cols']) ? $tableName['cols'] : []);
     $searchTerm = is_array($tableName) ? $tableName['q'] : null;
    $filterTerm = is_array($tableName) ? $tableName['filter'] : null;
     $orderbyTerm = $tableName['orderby'] ?? false;
 
     // Base query
-    $query = "SELECT * FROM $table";
+    $select = !empty($cols) ? implode(',',$cols) : "*";
+    $query = "SELECT $select FROM $table";
 
     // Add search functionality
     if ($searchTerm) {
@@ -442,23 +440,22 @@ protected function buildTableQuery($tableName, $cols) {
     return $query;
 }
 
-protected function buildCoreTable($tableName, $cols = []) {
+//{key: 'gen_admin.cubo', q: 'A', pagenum: 1, orderby: ''}
+protected function buildCoreTable($tableName) {
     $table = is_array($tableName) ? $tableName['key'] : $tableName;
+    $cols = is_array($tableName) ? $tableName['cols'] : [];
     $subpage = explode('.', $table)[1];
-    $this->currentPage = is_array($tableName) && $tableName['pagenum'] ? str_replace($subpage, '', $tableName['pagenum']) : 1;
+    $this->currentPage = is_array($tableName) && $tableName['pagenum'] ? (int)str_replace($table, '', $tableName['pagenum']) : 1;
     $this->table = $table;
-
     // Fetch column metadata if not provided
-    if (empty($cols)) {
-        $cols = $this->getInputType($table);
-    }
+    $cols = $this->getInputType($tableName);
     // Build the query using the extracted method
-    $query = $this->buildTableQuery($tableName, $cols);
+    $query = $this->buildTableQuery($tableName);
     // Fetch data from the database
-    $rows = $this->db->fetch($query, [], $this->resultsPerPage, $this->currentPage);
+    $resultsPerPage=(int)$this->resultsPerPage;
+    $rows = $this->db->fetch($query, $tableName, $resultsPerPage, $this->currentPage);
     $this->totalRes = $rows['total'];
     $data = $rows['data'];
-
     // Build HTML table
     $tableHtml = '<table class="styled-table" data-table="' . $table . '" data-pagenum="1" id="' . $subpage . '_table">';
     //the head
@@ -493,20 +490,27 @@ protected function formFilters($colData,$row=[],$table='') {
 }
 
 // @fm.description form search bar
-protected function formSearch($table,$return='buildCoreTable'): string {
+protected function formSearch($tableName, $return = 'buildCoreTable'): string {
     $params = [];
-    $params['q'] = htmlspecialchars($this->searchTerm ?? ''); // @fm.features Keep the previous search term
-    // @fm.features Use json_encode to safely embed PHP variables into JavaScript as a string
+    $params['q'] = htmlspecialchars($this->searchTerm ?? ''); // Preserve previous search term
+    // Handle table name and columns dynamically
+    $table = is_array($tableName) ? $tableName['key'] : $tableName;
+    $cols = is_array($tableName) ? $tableName['cols'] : [];
+    // Set data-cols only if columns exist
+    $dataCols = !empty($cols) ? ' data-cols=\''.json_encode($cols, JSON_HEX_APOS | JSON_HEX_QUOT).'\'' : '';
+
     return <<<HTML
     <div class="search-container">
-        <input type="text" data-table='$table' onkeyup="this.dataset.q = this.value; gs.form.updateTable(this, '$return')" placeholder="Search..." class="search-input">
+        <input type="text" data-table='$table' $dataCols
+        onkeyup="this.dataset.q = this.value; gs.form.updateTable(this, '$return')"
+        placeholder="Search..." class="search-input">
         <button class="icon-button"><i class="icon">🔍</i></button>
     </div>
 HTML;
 }
 
 // @fm.description form pagination bar
-protected function formPagination(int $totalRes,int $cur=1): string {
+protected function formPagination(array $tableName, int $totalRes,int $cur=1): string {
     // @fm.features Use the pagination details from the buildForm call
     $current = $this->currentPage ??  $cur;
     $this->resultsPerPage= $this->resultsPerPage ?? 10;
@@ -517,9 +521,14 @@ protected function formPagination(int $totalRes,int $cur=1): string {
     if ($totalRes <= $this->resultsPerPage) {
         return '';
     }
+    // Handle table name and columns dynamically
+    $table = is_array($tableName) ? $tableName['key'] : $tableName;
+    $cols = is_array($tableName) ? $tableName['cols'] : [];
+    // Set data-cols only if columns exist
+    $dataCols = !empty($cols) ? ' data-cols=\''.json_encode($cols, JSON_HEX_APOS | JSON_HEX_QUOT).'\'' : '';
 
     // @fm.features Fix the onclick syntax here
-$onclick = 'data-table="' . $this->table . '" onclick="this.dataset.pagenum = this.id.replace(\'page_\',\'\'); gs.form.updateTable(this, \'buildCoreTable\');gs.form.go2page(this)"';
+$onclick = 'data-table="' . $this->table . '" ' . $dataCols . ' onclick="this.dataset.pagenum = this.id.replace(\'page_\',\'\'); gs.form.updateTable(this, \'buildCoreTable\');gs.form.go2page(this)"';
     $previous = $current > 1 ? '<button class="page-link" ' . $onclick . ' id="page_' . ($current - 1) . '">Previous</button>' : '';
     $firstb = '<button ' . $onclick . ' id="page_1" ' . ($current == 1 ? ' class="page-link active"' : '') . '>1</button>';
 
@@ -573,14 +582,14 @@ if (strpos($table, "/") !== false) {
 } elseif (strpos($table, ".") !== false) {
     $parts = explode('.', $table);
     $subpage = $parts[1];
-    $page =$this->G['subparent'][$subpage];
+    $page =$this->subparent[$subpage];
 }
  #gs.form.handleNewRow(event, \'' . $table . '\', {0: {row: \'name\', placeholder: \'Give a Name\'}, 1: {row: \'created\', type: \'hidden\', value: gs.date(\'Y-m-d H:i:s\')}})
 return '<h3>
             <input id="cms_panel" class="red indicator">
            <button class="bare" onclick="openPanel(\'common/doc.php\')"><span class="glyphicon glyphicon-info-sign bare"></span></button>
            <button class="bare" onclick="openPanel(\'common/guide.php\')"><span class="glyphicon glyphicon-question-sign"></span></button>
-            <a href="/admin/'.$page.'/'.$subpage.'"><span class="glyphicon glyphicon-edit"></span>'.ucfirst($subpage).'</a>
+            <a href="/admin/'.$subpage.'"><span class="glyphicon glyphicon-edit"></span>'.ucfirst($subpage).'</a>
             <button class="bare right"
             onclick="gs.api.bind(this, { showLabel: false, showSwal: true })"
             data-method="buildForm"
@@ -596,22 +605,14 @@ return '<h3>
   </h3>';
 }
 
-protected function buildFormQuery(string $table, array $params = []): array
-{
-    // Default parameters for querying
-    $defaults = [
-        'db' => $this->publicdb,
-        'id' => null, // Expecting `id` for querying
-    ];
-
-    // Merge defaults with provided parameters
-    $params = array_merge($defaults, $params);
+protected function buildFormQuery($tableName): array{
+  $table=is_array($tableName) ? $tableName['key'] : $tableName;
+  $params=is_array($tableName) ? $tableName : [];
 
     // If no ID is provided, return an empty result set for new forms
     //if (empty($params['id'])) {
       //  return [];
     //}
-
     // Perform the query and fetch the result
     if($params['name']){
     $result = $this->db->f("SELECT * FROM $table WHERE name = ?", [$params['name']]);
@@ -621,32 +622,28 @@ protected function buildFormQuery(string $table, array $params = []): array
     return $result ?? [];
 }
 
-
 // @fm.description Generate a form for a given table, schema, columns.
   protected function buildForm($tableName): string {
   $table=is_array($tableName) ? $tableName['key'] : $tableName;
   $params=is_array($tableName) ? $tableName : [];
   $justTable=explode('.',$table)[1];
-  $id= $params['id'] || $this->id;
-  $name= $params['name'] || "";
+  $this->table=$table;
          // @fm.features Default values for each parameter
-         $this->table=$table;
-         $defaults = [
+      /*   $defaults = [
              'table' => '',
              'res' => [],
-             'form' => $id || 'new',
+             'form' => $tableName['id'] ?? 'new',
              'cols' => [],
-             'id' => $id,
-             'name' => $name,
              'labeled' => true,
          ];
+         */
          // @fm.features Merge provided params with defaults
-         $params = array_merge($defaults, $params);
-        #set db
+       //  $params = array_merge($defaults, $params);
+
        // @fm.features $this->db=$params['db']=="gen_".TEMPLATE ? $this->db: $this->db;
-  if ($params['form'] !== 'new' && empty($params['res'])) {
-        $params['res'] = $this->buildFormQuery($table, $params);
-    }
+ // if ($params['form'] !== 'new' && empty($params['res'])) {
+        $params['res'] = $this->buildFormQuery($tableName);
+  //  }
          // @fm.features Access parameters using $params array
          $res = $params['res'];
          $form = $params['form'];
@@ -680,7 +677,7 @@ if ($params['form'] !== 'new' && empty($params['res'])) {
             $return .= "<section id='{$justTable}_form' class='gs-span'>";
     //    }
 // @fm.dependent getInputType
-        $tableMeta = $this->getInputType($table);  // @fm.features Get column type and related info
+       $tableMeta = $this->getInputType($tableName) ?? [];// @fm.features Get column type and related info
         // @fm.features Loop through each column to build form fields
        if(empty($cols)){
         $cols=array_keys($tableMeta);
@@ -839,7 +836,7 @@ protected function renderFormField(string $col, array $fieldData, $value = '', $
     $sqlType   = $fieldData['sql_type'] ?? '';
     $list   = $fieldData['list'] ?? [];
     $table   = $this->table ?? $fieldData['key'];
-    $id =     $this->G['id']!='' ?  $this->G['id']: $fieldData['id'];
+    $id =     $this->id!='' ?  $this->id: $fieldData['id'];
   $supportedCodeMirrorModes = [
         'json' => 'application/json',
         'pug' => 'text/x-pug',

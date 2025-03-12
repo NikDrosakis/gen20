@@ -1065,14 +1065,7 @@ function get_image_location($image = ''){
         return false;
     }
 }
-// @filemeta.features include_buffer
-function include_buffer($file,$sel=array(),$params=array()){
-    ob_start();
-    include $file;
-    return ob_get_clean();
-    flush();
-    ob_end_clean();
-}
+
 // @filemeta.features coo
 	function coo($con,$row,$domain=SERVERNAME){
 		//if(!isset($_COOKIE[$con])){

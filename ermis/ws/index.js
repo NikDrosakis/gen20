@@ -1,6 +1,5 @@
 const WebSocket = require('ws');
 //const chat = require('../core/Chat');
-const Rethink = require("../core/Rethink");
 const EventEmitter = require('events');
 const { stats } = require('./stats');
 const Messenger = require('../core/Messenger');
@@ -9,22 +8,6 @@ const Messenger = require('../core/Messenger');
 let wss;
 
 
-async function initializeRethink() {
-    const rethink = new Rethink();
-    await rethink.connect();
-
-    // Example: Insert a test message (remove in production or make configurable)
-    const message = { /* ... */ };
-    await rethink.upsertChat(message);
-
-    // Get all messages (for debugging)
-    const allmes = await rethink.getMessages();
-    console.table(allmes);
-
-    // Don't close the connection here if you need it for the server lifecycle
-    // await rethink.close();
-    return rethink; // Return the rethink instance for later use
-}
 
 function WServer(server) {
     wss = new WebSocket.Server({ server });

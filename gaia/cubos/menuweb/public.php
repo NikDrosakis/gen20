@@ -161,15 +161,15 @@
 </style>
     <!---main navigation-->
 <div class="main-nav">
-    <a href="/" class="<?=$this->G['page']=='' || $this->G['page']=='books' ?'active':''?>">
-        <img class="logo" src="<?=$this->G['logo']?>" />
+    <a href="/" class="<?=$this->page=='' || $this->page=='books' ?'active':''?>">
+        <img class="logo" src="<?=$this->logo?>" />
     </a>
     <?php
         $menu=$this->getLinks();
         for($i=0;$i<count($menu);$i++){
             $icon=$menu[$i]['icon'];
             ?>
-       <a href="/<?=$menu[$i]['uri']?>" class="<?=$this->G['page']==$menu[$i]['uri'] ?'active':''?>" >
+       <a href="/<?=$menu[$i]['uri']?>" class="<?=$this->page==$menu[$i]['uri'] ?'active':''?>" >
        <?php if($icon!=null){ ?>
        <ion-icon style="vertical-align: middle;" alt="<?=$menu[$i]['title']?>" name="<?=$icon?>" size="medium"></ion-icon>
        <?php }else{ ?>
@@ -184,18 +184,18 @@
 </div>
 <!---profile navigation-->
 <div class="profile-nav">
-    <?php if($this->G['loggedin']){ ?>
+    <?php if($this->loggedin){ ?>
         <div class="profile-menu">
             <div class="profile-container">
                 <!-- Profile Image -->
-                <img src="/media/<?=$this->G['my']['img']?>" alt="Profile" class="profile-image">
+                <img src="/media/<?=$this->my['img']?>" alt="Profile" class="profile-image">
                 <!-- Dropdown Menu -->
                 <div class="dropdown-menu">
-                    <a href="/book" class="<?=$this->G['page']==$menu[$i]['uri'] ?'active':''?>" >
+                    <a href="/book" class="<?=$this->page==$menu[$i]['uri'] ?'active':''?>" >
                         <span>My library</span>
                         <span class="c_book bubPr"></span>
                     </a>
-                    <a href="/profile" class="<?=$this->G['page']==$menu[$i]['uri'] ?'active':''?>">
+                    <a href="/profile" class="<?=$this->page==$menu[$i]['uri'] ?'active':''?>">
                         <span>Profile</span>
                         <span class="c_profile bubPr"></span>
                     </a>
@@ -207,7 +207,7 @@
     <!---search box--->
     <div id="searchbox">
         <div style="display:flex">
-            <input onkeyup="$('#reset_book').css('display','block');$('#search_book').css('display','block');" id="search_book" autocomplete="on" onkeydown="if (event.keyCode === 13){var q= $('#search_book').val().trim();coo('page',1);if(!!q){coo('q',q)}booklist(q);}" placeholder="search <?=$this->G['mode']?>">
+            <input onkeyup="$('#reset_book').css('display','block');$('#search_book').css('display','block');" id="search_book" autocomplete="on" onkeydown="if (event.keyCode === 13){var q= $('#search_book').val().trim();coo('page',1);if(!!q){coo('q',q)}booklist(q);}" placeholder="search <?=$this->mode?>">
             <ion-icon style="display:none" id="reset_book" alt="Search" alt="Reset" name="return-up-back" size="large"></ion-icon>
             <ion-icon style="display:none" id="ssearch_book" alt="Search" alt="Searcg" name="search" size="large"></ion-icon>
         </div>
@@ -218,10 +218,10 @@
                 <ion-icon style="vertical-align: middle;" alt="Apps" name="apps" size="medium"></ion-icon>
                 <!-- Dropdown Menu -->
                 <div class="dropdown-menu">
-                    <a href="/profile" class="<?=$this->G['page']==$menu[$i]['uri'] ?'active':''?>">
+                    <a href="/profile" class="<?=$this->page==$menu[$i]['uri'] ?'active':''?>">
                         <span>Profile</span>
                     </a>
-                    <a href="/book" class="<?=$this->G['page']==$menu[$i]['uri'] ?'active':''?>" >
+                    <a href="/book" class="<?=$this->page==$menu[$i]['uri'] ?'active':''?>" >
                         <span>My library</span>
                     </a>
                     <a onclick="s.init.logout()">

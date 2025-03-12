@@ -141,7 +141,7 @@ protected function parseRequest() {
             header("HTTP/2 $status $status_message");
             header("Content-Type: application/json; charset=UTF-8");
             $response = $executed;
-            $response['status_message'] = $this->G['status_message'][$response['status']];
+            $response['status_message'] = $this->status_message[$response['status']];
             $response['method'] = $this->method;
             $response['code'] =$executed['code'];
             $response['resource'] =$this->resource;

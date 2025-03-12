@@ -126,7 +126,7 @@ $id=$pages[$i]['id'];
 <div class="mainbox">
 <div style="background: antiquewhite;">
     <a href="/<?=$name?>" style="margin-left:33%;"><?=$name?></a>
-<button style="float:right" data-mainid="<?=$id?>" class="clear-cubos bare button">clear</button>
+<button style="float:right" data-mainid="<?=$id?>" onclick="handleClear(this)" class="clear-cubos bare button">clear</button>
 <button style="float:left" data-mainid="<?=$id?>" class="bare button">autoset</button>
 </div>
 <div id="<?=$name?>-wid" mainid="<?=$id?>" class="wid list-group-item nested-1">
@@ -245,25 +245,23 @@ droppableAreas.forEach(function (area) {
     });
 });
 
-    document.querySelectorAll(".clear-cubos").forEach((btn) => {
-        btn.addEventListener("click", async (event) => {
-            const mainid = event.target.getAttribute("data-mainid");
-            if (!mainid) return;
+    // Function handling the delete action
+    async function handleClear(event) {
+        const mainid = event.target.getAttribute("data-mainid");
+        if (!mainid) return;
+        try {
+            // Delete from the database
+            await gs.api.maria.q(`DELETE FROM ${G.publicdb}.maincubo WHERE mainid=? and area!=?`, [mainid, 'm']);
 
-            try {
-                // Delete from the database
-                await gs.api.maria.q(`DELETE FROM ${G.publicdb}.maincubo WHERE mainid=? and area!=?`, [mainid,'m']);
+            // Remove all associated cubobox elements
+            document.querySelectorAll(`.cubobox[data-mainid='${mainid}']`).forEach((cubo) => cubo.remove());
 
-                // Remove all associated cubobox elements
-                document.querySelectorAll(`.cubobox[data-mainid='${mainid}']`).forEach((cubo) => cubo.remove());
-
-                // Remove the main section from the UI
-                document.getElementById(`main-${mainid}`).remove();
-            } catch (error) {
-                console.error("Error deleting main section:", error);
-            }
-        });
-    });
+            // Remove the main section from the UI
+            document.getElementById(`main-${mainid}`).remove();
+        } catch (error) {
+            console.error("Error deleting main section:", error);
+        }
+    }
 
     // Restore state on page load
  //(async function () {
