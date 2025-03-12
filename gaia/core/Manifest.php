@@ -20,7 +20,7 @@ trait  Manifest {
 protected function manifestEditor($name=''){
     $mainame = $name=='' ? $this->page : (is_array($name) ? $name['name'] : $name);
      $main = $this->mainplan($mainame);
-     $table = $this->G['SYSTEM']=='admin' ? "gen_admin.links" : $this->publicdb.".main";
+     $table = $this->SYSTEM=='admin' ? "gen_admin.links" : $this->publicdb.".main";
     $html='';
     $html .= '<button class="bare right" onclick="gs.api.bind(this, { showLabel: false, showSwal: true })" data-name="'.$name.'" data-method="manifestEditor">
                             <span class="glyphicon glyphicon-sign"></span>Editor</button>';
@@ -45,7 +45,7 @@ protected function manifestEditor($name=''){
         $selectHtml .= '</select>';
 
     // Initial YAML content
-    $escapedValue = htmlspecialchars($main['manifest'], ENT_QUOTES, 'UTF-8');
+    $escapedValue = htmlspecialchars($main['manifest'] ?? '', ENT_QUOTES, 'UTF-8');
   //  $html .= $this->renderFormField("manifest",["type"=>"yaml","comment"=>"yaml","table"=>$table,"id"=>$main['id']],$main['manifest']);
       return "
           <div class='gs-span'>
@@ -83,7 +83,6 @@ protected function manifestEditor($name=''){
                   initializeCodeMirror();
               });
           </script>";
-    //   $html = json_encode($this->G['PAGECUBO']);
     //execute the plan to be included in core.Action switch cases
 }
 

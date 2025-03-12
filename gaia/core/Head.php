@@ -41,7 +41,7 @@ protected function loadDynamicActions($libraries) {
 }
 
 	protected function renderPublicHead() {
-	   $copyright = html_entity_decode($this->G['is']['copyright'] ?? '', ENT_QUOTES);
+	   $copyright = html_entity_decode($this->is['copyright'] ?? '', ENT_QUOTES);
 
         $html = '<!DOCTYPE html>
         <html>
@@ -121,10 +121,9 @@ protected function renderAdminHead() {
                             };
                         })();
                 </script>
-    <script type="text/javascript">var G=<?=json_encode($this->G, JSON_UNESCAPED_UNICODE)?>;</script>
+    <script type="text/javascript">var G=<?=json_encode($this, JSON_UNESCAPED_UNICODE)?>;</script>
     <script src="/admin/js/gen.js"></script>
     <script src="/admin/js/admin.js"></script>
-    <script src="/js/index.js"></script>
     <?php
 }
 

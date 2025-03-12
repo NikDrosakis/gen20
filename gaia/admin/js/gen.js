@@ -1523,6 +1523,8 @@ const newpage = form.generate(params,callback).attach(id);
             }
         },
         updateTable: async function(selectElement, method) {
+            console.log(selectElement);
+            console.log(method);
             // Extract 'table' and other necessary data attributes dynamically
             // If selectElement is a string (e.g., table ID), find the element
             if (typeof(selectElement) === 'string') {
@@ -1542,15 +1544,22 @@ const newpage = form.generate(params,callback).attach(id);
             const q = dataset.q || '';  // Use search query if available
             const name=tableElement.name;
             const filterid=`${name.split('.')[1]}id`;
-            const datasetFilter=dataset.filter;
+            const datasetFilter = dataset.filter ?? ''; // Default to an empty string
 
-            const filter= name=='status' ? `status=${datasetFilter}`: `${filterid}=${datasetFilter}`;
+            const filter = name === 'status' ? `status=${datasetFilter}` : (datasetFilter ? `${filterid}=${datasetFilter}` : '');
+//            const filter= name=='status' ? `status=${datasetFilter}`: `${filterid}=${datasetFilter}`;
            // const pagenum = dataset.pagenum || 1;  // Use pagination number if available
             const pagenum = tableElement.dataset.pagenum || 1;
             const orderby =dataset.orderby || '';
 
             // Create the params object dynamically with table name, search query, and page number
-            const params = { table: tableName, q: q, pagenum: pagenum, orderby: orderby };
+            const params = {
+                key: tableName,
+                q: q,
+                pagenum: pagenum,
+                orderby: orderby,
+                cols: tableElement.dataset.cols ? JSON.parse(tableElement.dataset.cols.replace(/&quot;/g, '"')) : []
+            };
             if(datasetFilter!=''){
                 params['filter'] = filter;
             }

@@ -463,58 +463,80 @@ public function inse(string $table, array $params = []) {
 /**
 Used only for form records
 */
-public function fetch(string $q, array $params = [], int $limit = 10, int $currentPage = 1,
-    $orderBy="" , // Default order column
-    $orderDir="" // Default order direction
-): bool|array
+public function fetch(string $q, array $params = [], int $limit = 10, int $currentPage = 1, $orderBy = "", $orderDir = ""): bool|array
 {
-//    $queryType = strtoupper(strtok(trim($q), ' ')); // Validate the query type
-  //  if ($queryType !== 'SELECT' && $queryType !== 'DESCRIBE') {
-    //    return false;
-    //}
+    // Handle case where $q is empty
+    if (empty($q)) {
+        error_log("SQL Query is empty, returning no results.");
+        return false;
+    }
+
+    // Ensure $params['cols'] exists and is an array
+    $cols = (!empty($params['cols']) && is_array($params['cols'])) ? implode(',', $params['cols']) : '*';
+
     // Calculate the offset for pagination
     $offset = ($currentPage - 1) * $limit;
-    $order ="";
-    if ($orderBy!="") {
-            $order = " ORDER BY $orderBy $orderDir";
-        }
-    // Modify the query to include the window function for total count
-    $q = "SELECT *, COUNT(*) OVER () AS total FROM ($q) AS subquery $order LIMIT :limit OFFSET :offset";
 
-    // Add `limit` and `offset` to the params array
-    $params[':limit'] = $limit;
-    $params[':offset'] = $offset;
-
-    // Prepare and execute the statement
-    $stmt = $this->_db->prepare($q);
-    $stmt->execute($params);
-
-    if (!$stmt) {
-        return false;
+    // Add ordering if needed
+    $order = "";
+    if (!empty($orderBy)) {
+        $order = " ORDER BY $orderBy $orderDir";
     }
 
-    // Fetch results
-    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // Construct the final query
+    $qData = "SELECT $cols, COUNT(*) OVER () AS total FROM ($q) AS subquery $order LIMIT :limit OFFSET :offset";
 
-    if (empty($results)) {
-        return false;
-    }
+    // Debugging logs
+    error_log("Generated SQL Query: " . $qData);
+    error_log("Pagination parameters - Limit: $limit, Offset: $offset");
 
-    // Extract total count from the first row
-    $totalCount = $results[0]['total'];
-    foreach ($results as &$row) {
-       unset($row['total']);
-    }
-    // Return paginated data with metadata
-    return [
-        'query' => $q,
-        'params' => $params,
-        'total' => $totalCount,
-        'data' => $results,
-        'currentPage' => $currentPage,
-        'totalPages' => ceil($totalCount / $limit),
+    // Prepare query parameters separately to avoid modifying $params directly
+    $queryParams = [
+        ':limit' => $limit,
+        ':offset' => $offset,
     ];
+
+    try {
+        // Prepare the statement
+        $stmt = $this->_db->prepare($qData);
+
+        // Execute the statement with the parameters
+        $stmt->execute($queryParams);
+
+        // Fetch results
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // If no results, return false
+        if (empty($results)) {
+            error_log("No results found for the query.");
+            return false;
+        }
+
+        // Extract total count from the first row
+        $totalCount = $results[0]['total'];
+
+        // Clean up the result rows (remove 'total' field)
+        foreach ($results as &$row) {
+            unset($row['total']);
+        }
+
+        // Return the paginated data with metadata
+        return [
+            'query' => $qData,
+            'params' => $queryParams,
+            'total' => $totalCount,
+            'data' => $results,
+            'currentPage' => $currentPage,
+            'totalPages' => ceil($totalCount / $limit),
+        ];
+
+    } catch (PDOException $e) {
+        error_log("Error executing query: " . $e->getMessage());
+        return false;
+    }
 }
+
+
  //update of fetchRowList and fetchCoupleList
 public function flist(string $query, array $params = []): bool|array {
     $list = [];
@@ -776,17 +798,31 @@ public function upsert(string $table, array $record): int|bool {
         return $sel;
     }
 
-public function tableMeta(string $tableName): ?array {
-$exp=explode('.',$tableName);
-if(!empty($exp)){
-$db = $exp[0];
-$table = $exp[1];
+public function tableMeta(string $tableName, array $cols = []): ?array {
+    $exp = explode('.', $tableName);
+    if (!empty($exp)) {
+        $db = $exp[0];
+        $table = $exp[1];
+
         $query = "SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_KEY, EXTRA, COLUMN_COMMENT
-              FROM information_schema.COLUMNS
-              WHERE TABLE_SCHEMA = ?
-              AND TABLE_NAME = ?";
-    return $this->fa($query, [$db,$table]);
-}}
+                  FROM information_schema.COLUMNS
+                  WHERE TABLE_SCHEMA = ?
+                  AND TABLE_NAME = ?";
+        $params = [$db, $table];
+
+        // Ensure $cols is an array
+        if (!empty($cols) && is_array($cols)) {
+            $placeholders = implode(',', array_fill(0, count($cols), '?'));
+            $query .= " AND COLUMN_NAME IN ($placeholders)";
+            $params = array_merge($params, $cols);
+        }
+
+        return $this->fa($query, $params);
+    }
+
+    return null;
+}
+
 
 public function getSchemaTable($tableName): ?array {
     try {

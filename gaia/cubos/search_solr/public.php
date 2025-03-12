@@ -58,7 +58,7 @@
     <div id="suggestions" class="dropdown-content">
         <!-- Dropdown suggestions will be populated here -->
     </div>
-        <input value="<?=$_COOKIE['q']?>" id="search_book" autocomplete="on" placeholder="Search <?=$this->G['page']?>" type="text" onkeyup="handleInput(this)">
+        <input value="<?=$_COOKIE['q']?>" id="search_book" autocomplete="on" placeholder="Search <?=$this->page?>" type="text" onkeyup="handleInput(this)">
         <ion-icon id="reset_book" name="return-up-back" size="large" onclick="resetSearch()" aria-label="Reset Search"></ion-icon>
         <ion-icon id="ssearch_book" name="search" size="large" aria-label="Search"></ion-icon>
     </div>

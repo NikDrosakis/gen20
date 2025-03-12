@@ -82,7 +82,7 @@ protected function getSEOData($contentType, $contentId) {
     protected function atom(): string {
         $atom = '<?xml version="1.0" encoding="UTF-8"?>';
         $atom .= '<feed xmlns="http://www.w3.org/2005/Atom">';
-        $atom .= '<title>' . htmlspecialchars($this->G['is']["title"], ENT_XML1, 'UTF-8') . ' Feed</title>';
+        $atom .= '<title>' . htmlspecialchars($this->is["title"], ENT_XML1, 'UTF-8') . ' Feed</title>';
         $atom .= '<subtitle>This is subtitle Feed</subtitle>';
         $atom .= '<link href="' . htmlspecialchars(SITE_URL . '/feed/', ENT_XML1, 'UTF-8') . '" rel="self" />';
         $atom .= '<link href="' . htmlspecialchars(SITE_URL, ENT_XML1, 'UTF-8') . '" />';
@@ -122,9 +122,9 @@ protected function getSEOData($contentType, $contentId) {
         $rss = '<?xml version="1.0" encoding="UTF-8"?>';
         $rss .= '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">';
         $rss .= '<channel>';
-        $rss .= '<title>' . htmlspecialchars($this->G['is']["title"], ENT_XML1, 'UTF-8') . '</title>';
+        $rss .= '<title>' . htmlspecialchars($this->is["title"], ENT_XML1, 'UTF-8') . '</title>';
         $rss .= '<link>' . htmlspecialchars(SITE_URL, ENT_XML1, 'UTF-8') . '</link>';
-        $rss .= '<description>' . htmlspecialchars($this->G['is']["description"], ENT_XML1, 'UTF-8') . '</description>';
+        $rss .= '<description>' . htmlspecialchars($this->is["description"], ENT_XML1, 'UTF-8') . '</description>';
 
         // Posts
         foreach ($this->seoPosts() as $post) {

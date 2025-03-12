@@ -36,7 +36,7 @@
 
 <?php if($_SERVER['SYSTEM']=='admin'){ ?>
     <div class="metadata-content">
-    <span class="meta-tag"><a style="color:darkred" href="<?=$this->G['SITE_URL']?>">Public</a></span>
+    <span class="meta-tag"><a style="color:darkred" href="<?=$this->SITE_URL?>">Public</a></span>
         <?php $tags = $this->getPageMetatags();
         echo !empty($tags) ? implode('', array_map(fn($tag) => "<span class='meta-tag'>$tag</span>", $tags)) : "No metadata";
         ?>

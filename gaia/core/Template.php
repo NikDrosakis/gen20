@@ -35,7 +35,7 @@ protected $pug;
         $params=[];
         if(!empty($query['params'])){
         foreach($query['params'] as $param){
-        $params[] = $this->G[$param];
+        $params[] = $this->$param;
         }}
         $totalRes = $this->db->fa($query['query'],$params);
 
@@ -77,7 +77,7 @@ protected function buildTemplateRead(array $fetch): ?string {
     $params=[];
     if(!empty($query['params'])){
     foreach($query['params'] as $param){
-    $params[]=$this->G[$param];
+    $params[]=$this->$param;
     }}
 //xecho($params);
 //xecho($this->templateData);

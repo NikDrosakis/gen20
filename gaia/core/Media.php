@@ -66,7 +66,7 @@ if($imageUrl!=null){
        $query = implode(',', $tags);
 
        // action.endpoint
-       $url = "{$this->UNSPLASH_URL}?query=" . urlencode($query) . "&page={$page}&per_page={$perPage}&client_id={$this->G['is']['UNSPLASH_API_KEY']}";
+       $url = "{$this->UNSPLASH_URL}?query=" . urlencode($query) . "&page={$page}&per_page={$perPage}&client_id={$this->is['UNSPLASH_API_KEY']}";
 
 //curl routine to get
        $ch = curl_init($url);
@@ -243,7 +243,7 @@ protected function generateImg($prompt){
           echo '<img src="' . $filePath . '" data-filename="' . htmlspecialchars($file) . '" alt="' . htmlspecialchars($file) . '" class="thumbnail" draggable="true">';
       }
 
-      echo $this->formPagination($totalPages,$page);
+   //   echo $this->formPagination($totalPages,$page);
   }
 
   // The function that retrieves the media files and directories

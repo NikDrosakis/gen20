@@ -17,7 +17,7 @@ v3 updated to filemeta
  $currentFolder = !empty($_COOKIE['current_folder']) ? $_COOKIE['current_folder'] : MEDIA_ROOT;
     // Get a list of the folders inside the current folder
    $folders = glob(MEDIA_ROOT.'*',GLOB_ONLYDIR);
-   $folder= $this->G['MEDIA_ROOT'];
+   $folder= $this->MEDIA_ROOT;
 ?>
 
 <!---------@filemeta.features TABS MENU ------------>

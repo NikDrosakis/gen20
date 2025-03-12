@@ -7,7 +7,7 @@ let table=G.sub;
                 user EDIT
 ------------------------------------------------------>
 <?php
-$user=$this->gpm->f("SELECT * from systems where id=?",[$this->id]);
+$user=$this->db->f("SELECT * from gen_admin.systems where id=?",[$this->id]);
 ?>
     <!-- Page Title and Navigation Buttons -->
     <div class="pagetitle-container">

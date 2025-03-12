@@ -157,7 +157,7 @@
 </style>
     <!---main navigation-->
 <div class="main-nav">
-    <a href="/" class="<?=$this->G['page']=='' || $this->G['page']=='books' ?'active':''?>">
+    <a href="/" class="<?=$this->page=='' || $this->page=='books' ?'active':''?>">
         <img class="logo" src="<?=$this->G['logo']?>" />
     </a>
     <?php
@@ -166,7 +166,7 @@
         for($i=0;$i<count($menu);$i++){
             $icon=$menu[$i]['icon'];
             ?>
-       <a href="/<?=$menu[$i]['uri']?>" class="<?=$this->G['page']==$menu[$i]['uri'] ?'active':''?>" >
+       <a href="/<?=$menu[$i]['uri']?>" class="<?=$this->page==$menu[$i]['uri'] ?'active':''?>" >
        <?php if($icon!=null){ ?>
        <ion-icon style="vertical-align: middle;" alt="<?=$menu[$i]['title']?>" name="<?=$icon?>" size="medium"></ion-icon>
        <?php }else{ ?>
@@ -185,14 +185,14 @@
         <div class="profile-menu">
             <div class="profile-container">
                 <!-- Profile Image -->
-                <img src="/media/<?=$this->G['my']['img']?>" alt="Profile" class="profile-image">
+                <img src="/media/<?=$this->my['img']?>" alt="Profile" class="profile-image">
                 <!-- Dropdown Menu -->
                 <div class="dropdown-menu">
-                    <a href="/book" class="<?=$this->G['page']==$menu[$i]['uri'] ?'active':''?>" >
+                    <a href="/book" class="<?=$this->page==$menu[$i]['uri'] ?'active':''?>" >
                         <span>My library</span>
                         <span class="c_book bubPr"></span>
                     </a>
-                    <a href="/profile" class="<?=$this->G['page']==$menu[$i]['uri'] ?'active':''?>">
+                    <a href="/profile" class="<?=$this->page==$menu[$i]['uri'] ?'active':''?>">
                         <span>Profile</span>
                         <span class="c_profile bubPr"></span>
                     </a>
@@ -208,10 +208,10 @@
                 <ion-icon style="vertical-align: middle;" alt="Apps" name="apps" size="medium"></ion-icon>
                 <!-- Dropdown Menu -->
                 <div class="dropdown-menu">
-                    <a href="/profile" class="<?=$this->G['page']==$menu[$i]['uri'] ?'active':''?>">
+                    <a href="/profile" class="<?=$this->page==$menu[$i]['uri'] ?'active':''?>">
                         <span>Profile</span>
                     </a>
-                    <a href="/book" class="<?=$this->G['page']==$menu[$i]['uri'] ?'active':''?>" >
+                    <a href="/book" class="<?=$this->page==$menu[$i]['uri'] ?'active':''?>" >
                         <span>My library</span>
                     </a>
                     <a onclick="gs.logout()">

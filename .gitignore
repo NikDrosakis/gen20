@@ -19,6 +19,7 @@ backup/
 
 # Ignore everything in public/
 gaia/public/*
+gaia/wordpress
 # Allow these specific folders
 !gaia/public/_phpdomain.local/
 !gaia/public/_reactdomain.local/
@@ -39,6 +40,8 @@ ermis/services/botpress/.env
 ermis/services/huggingface/.env
 ermis/services/openai/.env
 venus/services/openai/.env
+mars/grpc_isolated
+mars/tmp2
 /.env
 ###> symfony/framework-bundle ###
 /.env.local

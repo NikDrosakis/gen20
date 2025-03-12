@@ -21,7 +21,7 @@ protected $localized;
 
 
 protected function buildNewLangUI() {
-    $default_lang = $this->G['setup']['lang_default'];
+    $default_lang = $this->setup['lang_default'];
 
     // Provide the dropdown
     $dropNewLangs = $this->renderSelectField(

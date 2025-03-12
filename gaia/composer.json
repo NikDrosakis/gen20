@@ -6,7 +6,6 @@
     "require": {
         "php": "^8.2.26",
         "erusev/parsedown": "^1.7",
-        "guzzlehttp/guzzle": "^7.9.2",
         "ratchet/pawl": "^0.4.1",
         "solarium/solarium": "^6.3",
         "reprovinci/solr-php-client": "^1.0",
@@ -15,8 +14,8 @@
         "symfony/flex": "*",
         "twig/twig": "^2.16",
         "symfony/yaml": "^5.4",
-        "duxet/laravel-rethinkdb": "^3.0",
-        "johnpbloch/wordpress": "^6.7"
+        "johnpbloch/wordpress": "^6.7",
+        "guzzlehttp/guzzle": "^7.9"
     },
     "autoload": {
         "psr-4": {

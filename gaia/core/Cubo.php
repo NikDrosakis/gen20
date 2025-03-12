@@ -368,7 +368,7 @@ protected function updateCuboImg($table = '',$name = '') {
 $cubo = is_array($current_cubo) ? $current_cubo['key'] : $current_cubo;
 $db=explode('.',$table)[0];
 
-    $cuboFolder = $db=='gen_admin' ? ADMIN_IMG_ROOT . $cubo . "/" : $this->G['CUBO_ROOT'] . $cubo . "/";
+    $cuboFolder = $db=='gen_admin' ? ADMIN_IMG_ROOT . $cubo . "/" : $this->CUBO_ROOT . $cubo . "/";
     $publicFilePath = $cuboFolder . "public.php";
 
     // Validate Cubo folder and file
@@ -430,7 +430,7 @@ protected function getCubos(): array
         return [];
     }
     foreach ($cubos as &$cubo) {
-        $cubo_path = $this->G['CUBO_ROOT'] . $cubo['name'];
+        $cubo_path = $this->CUBO_ROOT . $cubo['name'];
         $file_list = glob($cubo_path . '/*');
         if ($file_list === false) {
            $file_list = [];
@@ -555,21 +555,37 @@ protected function getCubos(): array
         return $updateStatus;
     }
 
-protected function renderCubo($cubo){
-    // Check if the $cubo contains a slash
-    if (strpos($cubo, '.') !== false) {
-        $file = explode('.', $cubo)[1];
-        $c = explode('.', $cubo)[0];
-        $url = SITE_URL . "cubos/index.php?cubo=$c&file=$file.php";
-    }else{
+protected function renderCubo($cubo) {
+    try {
+        // Check if the $cubo contains a dot
+        if (strpos($cubo, '.') !== false) {
+            list($c, $file) = explode('.', $cubo);
+            $url = SITE_URL . "cubos/index.php?cubo=$c&file=$file.php";
+        } else {
+            $url = SITE_URL . "cubos/index.php?cubo=$cubo&file=public.php";
+        }
 
-        $url = SITE_URL . "cubos/index.php?cubo=$cubo&file=public.php";
+        // Fetch the URL with the correct cubo and file
+        $response = $this->fetchUrl($url);
+
+        // If the response is an array, return the 'data' key
+        if (is_array($response) && isset($response['data'])) {
+            return $response['data'];
+        }
+
+        // If the response is a string, return it directly
+        if (is_string($response)) {
+            return $response;
+        }
+
+        // Fallback if the response is invalid
+        return "<p>Error: Invalid cubo response for '$cubo'.</p>";
+    } catch (Exception $e) {
+        // Log the error and return a fallback message
+        error_log("Error rendering cubo '$cubo': " . $e->getMessage());
+        return "<p>Error loading cubo '$cubo'.</p>";
     }
-
-    // Fetch the URL with the correct cubo and file (public.php by default)
-    return $this->fetchUrl($url);
 }
-
 
 /**
  * Renders a section containing multiple cubos.
@@ -629,9 +645,9 @@ protected function getUsers() {
         $sel= $db->fa("$query $limit");
         $buffer['count']= count($db->fa($query));
         if(empty($_COOKIE['list_style']) || $_COOKIE['list_style']=='table'){
-            $buffer['html']=include_buffer($this->G['SITE_ROOT']."post_loop_table.php",$sel);
+            $buffer['html']=include_buffer($this->SITE_ROOT."post_loop_table.php",$sel);
         }elseif($_COOKIE['list_style']=='archieve'){
-            $buffer['html']=include_buffer($this->G['SITE_ROOT']."post_loop_archive.php",$sel);
+            $buffer['html']=include_buffer($this->SITE_ROOT."post_loop_archive.php",$sel);
         }
         return json_encode($buffer);
 

@@ -65,7 +65,7 @@ Render metadata of all levels
  */
 protected function renderMetadata(): array {
     // 1st level metadata
-    $firstLevel = $this->G['is']['meta_title_en'] ?? null;
+    $firstLevel = $this->is['meta_title_en'] ?? null;
 
     // 2nd level metadata
     $secondLevel = $this->getPageMetadata();

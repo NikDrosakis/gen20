@@ -50,7 +50,6 @@
     "node-fetch": "^3.3.2",
     "nodemon": "^3.1.9",
     "openai": "^4.57.0",
-    "rethinkdb": "^2.4.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "ua-parser-js": "^1.0.38",

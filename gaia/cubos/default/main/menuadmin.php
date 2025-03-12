@@ -36,12 +36,13 @@
             </ul>
         </li>
                     <?php
-                    foreach($this->navigate() as $vals){
+                    $pages= $this->navigate();
+                    foreach($pages as $page => $vals){
 
-                    $targ= $mainpage == $this->page ? 'style="color:darkred;"' : '';
+                    $targ= $page == $this->page ? 'style="color:darkred;"' : '';
                     ?>
                     <li  class="menu-item" <?=$mainpage==$this->page ? $targ : ''?>>
-                        <a class="menu-text" style="border:none;background:transparent;" ondblclick="location.href='/admin/<?=$mainpage?>'" id="<?=$mainpage?>_page" >
+                        <a class="menu-text" style="border:none;background:transparent;" onclick="location.href='/admin/<?=$page?>'" id="<?=$mainpage?>_page" >
                         <span style="margin:0 4px 0 0" class="glyphicon glyphicon-<?=$vals['icon']?>" aria-hidden="true"></span>
                         <?=$vals['title']?>
                         </a>
@@ -71,7 +72,6 @@
                 <div id="c_active_users"></div>
                 <div id="signInDiv"></div>
     </nav>
-
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {

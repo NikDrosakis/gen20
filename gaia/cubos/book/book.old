@@ -27,8 +27,8 @@ $sel= $this->get_book();
 
 $img=$sel['img']==null ? $this->G['bookdefaultimg']: (strpos($sel['img'], 'http') === 0 ? $sel['img']: "/media/".$sel['img']);
     ?>
-<h2 id="titlebig"><?=$sel['title']?><a href="/<?=$this->G['page']?>/<?=$this->G['id']?>/read">
-        <ion-icon class="<?=$this->G['page']=='login'?'active':''?>"  style="vertical-align: middle;color:#71400c;"  alt="Edit" name="book" size="medium"></ion-icon>
+<h2 id="titlebig"><?=$sel['title']?><a href="/<?=$this->page?>/<?=$this->id?>/read">
+        <ion-icon class="<?=$this->page=='login'?'active':''?>"  style="vertical-align: middle;color:#71400c;"  alt="Edit" name="book" size="medium"></ion-icon>
     </a></h2>
 <?php include 'main_buffers/public.php'; ?>
         <div style="width:30%;float:left;margin:15px 15px 15px 15px;">
@@ -107,8 +107,8 @@ $sel= $this->get_book();
 $img=$sel['img']==null ? $this->bookdefaultimg: (strpos($sel['img'], 'http') === 0 ? $sel['img']: "/media/".$sel['img']);
 ?>
 <h2 id="titlebig"><?=$sel['title']?>
-<a href="/<?=$this->G['page']?>/<?=$this->G['id']?>/edit">
-    <ion-icon class="<?=$this->G['page']=='login'?'active':''?>"  style="vertical-align: middle;color:#71400c;"  alt="Edit" name="create" size="medium"></ion-icon>
+<a href="/<?=$this->page?>/<?=$this->id?>/edit">
+    <ion-icon class="<?=$this->page=='login'?'active':''?>"  style="vertical-align: middle;color:#71400c;"  alt="Edit" name="create" size="medium"></ion-icon>
 </a>
 </h2>
 

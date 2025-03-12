@@ -3,7 +3,7 @@
 <h2 style="cursor:pointer">Libraries</h2>
 <button type="button" style="border:none;background:none;" id="newlib">New Manual Entry</button>
 <?php
-if($this->G['id']!=''){
+if($this->id!=''){
 
 include $this->G['SITE_ROOT'] . "main/lib_edit.php";
 

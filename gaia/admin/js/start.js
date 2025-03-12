@@ -56,7 +56,7 @@ function updateConnectionIndicator(isConnected) {
 //document.addEventListener('DOMContentLoaded', function() {
     const ws = gs.soc.init(`${location.host}:3010/?user=${G.my.id}`);
    // window[`wsermis`] = ws;  // Store WebSocket instance in window for global access if needed
-    gs.activity.init();
+  //  gs.activity.init();
 //})
 
 setTimeout(() => {

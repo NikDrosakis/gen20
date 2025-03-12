@@ -84,8 +84,20 @@ display: flex;
 <div id="chatbox" style="display: block;"> <!-- Default to visible -->
     <div id="chatresponse">
         <?php
-        $rethinkGet = $this->fetchUrl(SITE_URL . "god/v1/rethink/actiongrp_chat");
-        $dialogue = $rethinkGet['data'];
+       $arangoGet = $this->fetchUrl(SITE_URL . "_api/cursor", [
+           'method' => 'POST',
+           'headers' => [
+               'Authorization' => 'Basic ' . base64_encode('root:n130177!'),
+               'Content-Type' => 'application/json'
+           ],
+           'body' => json_encode([
+               'query' => 'FOR doc IN curriculum FILTER doc.name == @name RETURN doc',
+               'bindVars' => [
+                   'name' => 'routes'
+               ]
+           ])
+       ]);
+        $dialogue = $arangoGet['data'];
         if (!empty($dialogue)) {
             for ($i = 0; $i < count($dialogue); $i++) {
                 $previousGroup = null;

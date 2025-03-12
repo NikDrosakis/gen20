@@ -33,7 +33,7 @@ protected function buildWriterLoop($page) {
 <?php
 for ($i=0;$i<count($sel);$i++) {
    $postid = $sel[$i]['id'];
-    $img = !$sel[$i]['img'] ? $this->G['writerdefaultimg'] : SITE_URL.'media/'. $sel[$i]['img'];
+    $img = !$sel[$i]['img'] ? $this->writerdefaultimg : SITE_URL.'media/'. $sel[$i]['img'];
         ?>
        <div id="nodorder1_<?=$postid?>"class="card">
             <div class="author"><?=$sel[$i]['name'] != null ? $sel[$i]['name'] : ''?></div>
@@ -65,7 +65,7 @@ protected function buildPublisherLoop($page) {
         <?php
            foreach ($loop as $sel) {
            $postid = $sel['id'];
-            $img = !$sel['img'] ? $this->G['writerdefaultimg'] : MEDIA_ROOT.$sel['img'];
+            $img = !$sel['img'] ? $this->writerdefaultimg : MEDIA_ROOT.$sel['img'];
         ?>
         <div class="card">
             <div class="author"><?=$sel['name'] != null ? $sel['name'] : ''?></div>
@@ -151,7 +151,7 @@ $sel =  $this->db->f(
                     WHERE c_book.id = ?",
                    [$this->me, $this->id]
                );
-$img = $sel['img'] == null ? $this->G['bookdefaultimg'] : (strpos($sel['img'], 'http') === 0 ? $sel['img'] : "/media/".$sel['img']);
+$img = $sel['img'] == null ? $this->bookdefaultimg : (strpos($sel['img'], 'http') === 0 ? $sel['img'] : "/media/".$sel['img']);
 ?>
 
 <!-- Back, Previous, and Next Buttons -->
@@ -161,8 +161,8 @@ $img = $sel['img'] == null ? $this->G['bookdefaultimg'] : (strpos($sel['img'], '
 
 <!-- Book Title with Edit Link -->
 <h2 id="titlebig"><?=$sel['title']?>
-    <a href="/<?=$this->G['page']?>/<?=$this->G['id']?>/<?=($mode == 'edit' ? 'edit' : 'read')?>">
-        <ion-icon class="<?=($this->G['page'] == 'login' ? 'active' : '')?>" style="vertical-align: middle; color:#71400c;" alt="Edit" name="<?=($mode == 'edit' ? 'create' : 'book')?>" size="medium"></ion-icon>
+    <a href="/<?=$this->page?>/<?=$this->id?>/<?=($mode == 'edit' ? 'edit' : 'read')?>">
+        <ion-icon class="<?=($this->page == 'login' ? 'active' : '')?>" style="vertical-align: middle; color:#71400c;" alt="Edit" name="<?=($mode == 'edit' ? 'create' : 'book')?>" size="medium"></ion-icon>
     </a>
 </h2>
 
@@ -257,7 +257,7 @@ $img = $sel['img'] == null ? $this->G['bookdefaultimg'] : (strpos($sel['img'], '
     <!-- Is Read -->
     <label>Status:</label>
     <select class="input" id="status">
-        <?php foreach ($this->G['book_status'] as $statusid => $statusval): ?>
+        <?php foreach ($this->book_status as $statusid => $statusval): ?>
             <option value="<?=$statusid?>" <?=$sel['status'] == $statusid ? "selected=selected" : ""?>><?=$statusval?></option>
         <?php endforeach; ?>
     </select>
@@ -274,7 +274,7 @@ $img = $sel['img'] == null ? $this->G['bookdefaultimg'] : (strpos($sel['img'], '
 
 <?php
 // Include additional components based on login status
-if ($this->G['loggedin']) {
+if ($this->loggedin) {
     include CUBO_ROOT."rating/rating.php";
     include CUBO_ROOT."default/comment.php";
 }
@@ -282,7 +282,7 @@ if ($this->G['loggedin']) {
 
 protected function buildWriter($mode='read') {
     $sel = $this->db->f("SELECT * FROM {$this->publicdb}.c_book_writer WHERE id=?", array($this->id));
-    $img = $sel['img'] == '' ? $this->G['writerdefaultimg'] : '/media/' . $sel['img'];
+    $img = $sel['img'] == '' ? $this->writerdefaultimg : '/media/' . $sel['img'];
 ?>
 <!-- EDIT / SHOW -->
 <a href="/writer">Back to Writers</a>
@@ -326,7 +326,7 @@ protected function buildWriter($mode='read') {
 
 protected function buildPublisher($mode='read') {
     $publisher = $this->db->f("SELECT * FROM {$this->publicdb}.c_book_publisher WHERE id=?", array($this->id));
-    $img = !$publisher['img'] ? $this->G['writerdefaultimg'] : SITE_URL . 'media/' . $publisher['img'];
+    $img = !$publisher['img'] ? $this->writerdefaultimg : SITE_URL . 'media/' . $publisher['img'];
 ?>
 <div class="card">
     <div class="author"><?= $publisher['name'] != null ? $publisher['name'] : '' ?></div>

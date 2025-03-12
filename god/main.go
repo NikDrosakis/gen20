@@ -71,13 +71,6 @@ func main() {
 
 		// Define the /rethink route under /god/v1
 	// Define routes
-		// Define the /rethink route under /god/v1
-    	v1.GET("/rethink/:table", core.GetRethinkRow)
-    	v1.GET("/rethink/:table/:name", core.GetRethinkRow)
-    	v1.POST("/rethink/:table", core.InsertRethink)
-   	    v1.PATCH("/rethink/:table/:name", core.UpdateRethink)
-    	v1.DELETE("/rethink/:table/:name/delete", core.DeleteRethink)
-
 		// WebSocket route inside the /god/v1 group
 		v1.GET("/ws", func(c *gin.Context) {
 			upgrader := websocket.Upgrader{}

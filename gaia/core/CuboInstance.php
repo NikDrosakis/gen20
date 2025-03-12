@@ -2,12 +2,11 @@
 namespace Core;
 
 class CuboInstance extends Gaia {
-    use System, Url, Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Bundle, Media, Filemeta, My, Cubo, Rethink, Template, Book;
+    use System, Url, Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Bundle, Media, Filemeta, My, Cubo, Template, Book;
 
     public function __construct() {
         parent::__construct();
     }
-
     public function handleRequest() {
         if ($this->isXHRRequest()) {
             $this->handleXHRRequest();
@@ -35,7 +34,6 @@ class CuboInstance extends Gaia {
             $this->sendResponse(400, 'INVALID_REQUEST', null, 'Missing file parameter');
             return;
         }
-
         // Construct the full file path
         if ($file === 'public.php') {
             $filePath = CUBO_ROOT . $cubo . '/' . $file;
