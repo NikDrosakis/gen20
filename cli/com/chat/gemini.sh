@@ -5,8 +5,8 @@ API_URL="https://vivalibro.com/apy/v1/gemini/conversation" # Replace with your a
 
 # Function to send a message and get the response
 send_message() {
-  local message="$1"
-  local conversation_id="$2"
+  local message="$3"
+  local conversation_id="$4"
 
   # Construct the JSON payload (using jq)
   payload=$(jq -n --arg msg "$message" --arg conv_id "$conversation_id" '{message: $msg, conversation_id: $conv_id}')
@@ -33,6 +33,6 @@ if [ -z "$2" ]; then
 fi
 
 
-message="$1"
-conversation_id="$2"
+message="$3"
+conversation_id="$3"
 send_message "$message" "$conversation_id"

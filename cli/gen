@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# Define root and base directories
+CLI_ROOT="/var/www/gs/cli"
+BASE_DIR="$CLI_ROOT/com"
+LOG_FILE="/var/www/gs/log/gen20.log"
+
+# Ensure utils.sh is properly sourced and export its functions
+UTILS_FILE="$CLI_ROOT/lib/utils.sh"
+if [ -f "$UTILS_FILE" ]; then
+    source "$UTILS_FILE"
+    # Export functions from utils.sh
+    export -f log error check_service
+else
+    echo "❌ Error: Missing utils.sh in $CLI_ROOT/lib/"
+    exit 1
+fi
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+run_command() {
+    SYSTEM=$1    # Example: gaia, ermis, kronos
+    COMMAND=$2   # Example: start, deploy, generate
+    shift 2
+    SCRIPT_PATH="$BASE_DIR/$SYSTEM/$COMMAND.sh"
+
+    if [ ! -f "$SCRIPT_PATH" ]; then
+        log "❌ Error: Command script '$SCRIPT_PATH' not found!"
+
+        # Suggest available commands
+        if [ -d "$BASE_DIR/$SYSTEM" ]; then
+            log "🛠 Available commands for $SYSTEM:"
+            ls "$BASE_DIR/$SYSTEM" | grep '.sh$' | sed 's/.sh//g'
+        else
+            log "⚠️ No such system: $SYSTEM"
+        fi
+        exit 2
+    fi
+
+    log "🚀 Running: $SYSTEM/$COMMAND $@"
+    bash "$SCRIPT_PATH" "$@" 2>&1 | tee -a "$LOG_FILE"
+
+    # Capture exit code and handle failures
+    EXIT_CODE=${PIPESTATUS[0]}
+    if [ $EXIT_CODE -ne 0 ]; then
+        log "❌ Error: Command '$SYSTEM/$COMMAND' failed with exit code $EXIT_CODE"
+        exit $EXIT_CODE
+    fi
+}
+
+# Check if enough arguments are provided
+if [ -z "$1" ] || [ -z "$2" ]; then
+    log "⚠️ Usage: $0 <system> <command> [args...]"
+    exit 1
+fi
+
+run_command "$@"

@@ -1,5 +1,5 @@
 #!/bin/bash
-
+description="back gen20 fs, upload zip to google drive"
 # Load environment variables from .env file
 source /var/www/gs/cli/configs/.env
 
@@ -20,8 +20,8 @@ mariadb-dump -u $DB_USER -p$DB_PASS --triggers --routines --databases vivalibro 
 echo "Backing up Solr..."
 mariadb-dump -u $DB_USER -p$DB_PASS solr_vivalibro > $BACKUP_DIR/solr_vivalibro.sql
 
-echo "Backing up MongoDB..."
-mongodump --db dros --out $BACKUP_DIR/dros
+echo "Backing up ArangoDB..."
+#mongodump --db dros --out $BACKUP_DIR/dros
 
 # Step b) Backup filesystem
 echo "Backing up filesystem..."

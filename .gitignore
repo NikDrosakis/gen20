@@ -2,9 +2,6 @@
 #changing this file I apply git rm -r --cached /folderchanged
 #then git add . && git commit -m "changed" && git push
 .env
-.env.*
-.env.local
-.env.local.*
 .vscode
 # Python cache files
 */__pycache__/
@@ -30,10 +27,8 @@ gaia/wordpress
 gaia/public/_reactdomain.local/node_modules/
 
 setup/
-log/
 vendor/
 rus/target/
-
 # Specific directories and files
 kronos/__pycache__/
 kronos/genenv/
@@ -45,35 +40,9 @@ ermis/services/botpress/.env
 ermis/services/huggingface/.env
 ermis/services/openai/.env
 venus/services/openai/.env
-mars/grpc_isolated
+mars/server
 mars/tmp2
 /.env
-
-# Editor backups
-*~
-*.swp
-
-# OS generated files
-.DS_Store
-
-# Dependencies
-/node_modules
-/vendor
-/target
-/build
-# Logs
-/log
-
-# Test results
-/test-results
-
-# Specific files
-*.sql
-*.bak
-*.sqlite*
-*.dump
-
-# Symfony
 ###> symfony/framework-bundle ###
 /.env.local
 /.env.local.php
@@ -86,6 +55,3 @@ mars/tmp2
 /phpunit.xml
 .phpunit.result.cache
 ###< phpunit/phpunit ###
-
-#Coverage
-/coverage
