@@ -12,5 +12,5 @@
 ## v.2 November 2024
 - No changes, core Domain took over the file system, instead of Cli.
 
-## v.2 December 2024
-- No plans
+## v.3 March 2024
+- Organize everything in the cuboed environment

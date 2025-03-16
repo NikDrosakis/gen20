@@ -1,5 +1,5 @@
 #!/bin/bash
-
+description="system status"
 # Define the endpoints and expected responses
 declare -A endpoints
 endpoints["vivalibro"]="https://vivalibro.com"
