@@ -13,4 +13,4 @@
 - No changes, core Domain took over the file system, instead of Cli.
 
 ## v.3 March 2024
-- Organize everything in the cuboed environment
+- Organize everything in the modular environment

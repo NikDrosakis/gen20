@@ -85,3 +85,35 @@ run_all_status() {
         fi
     done
 }
+
+
+run_command() {
+    SYSTEM=$1    # Example: gaia, ermis, kronos
+    COMMAND=$2   # Example: start, deploy, generate
+    shift 2
+    SCRIPT_PATH="$BASE_DIR/$SYSTEM/$COMMAND.sh"
+
+    if [ ! -f "$SCRIPT_PATH" ]; then
+        log "❌ Error: Command script '$SCRIPT_PATH' not found!"
+
+        # Suggest available commands
+        if [ -d "$BASE_DIR/$SYSTEM" ]; then
+            log "🛠 Available commands for $SYSTEM:"
+            ls "$BASE_DIR/$SYSTEM" | grep '.sh$' | sed 's/.sh//g'
+        else
+            log "⚠️ No such system: $SYSTEM"
+        fi
+        exit 2
+    fi
+
+    log "🚀 Running: $SYSTEM/$COMMAND $@"
+    bash "$SCRIPT_PATH" "$@" 2>&1 | tee -a "$LOG_FILE"
+
+    # Capture exit code and handle failures
+    EXIT_CODE=${PIPESTATUS[0]}
+    if [ $EXIT_CODE -ne 0 ]; then
+        log "❌ Error: Command '$SYSTEM/$COMMAND' failed with exit code $EXIT_CODE"
+        exit $EXIT_CODE
+    fi
+}
+
