@@ -1,27 +1,22 @@
 #!/bin/bash
-
-# Define root directory
-ROOT="/var/www/gs"
-
+CLI_ROOT="/var/www/gs/cli"
+CLI_UTILS="$CLI_ROOT/lib/utils.sh"
+BG_DIR="$CLI_ROOT/bg"
+PID_FILE="/tmp/gen-daemon.pid"
+LOG_FILE="/var/www/gs/log/gen20.log"
+DAEMON="$BG_DIR/daemon-update.sh"
+BASE_DIR="$CLI_ROOT/com"
 
 # Standardized log function
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [LOG] $1"
+    echo "[${BASH_SOURCE[0]}:${LINENO}] [LOG] $1"
 }
 
 # Standardized error function
 error() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] $1" >&2
+    echo "[${BASH_SOURCE[0]}:${LINENO}] [ERROR] $1" >&2
     exit 1
 }
-
-# Load environment variables from .env
-ENV_FILE="$ROOT/.env"
-if [ -f "$ENV_FILE" ]; then
-    export $(grep -v '^#' "$ENV_FILE" | xargs)
-else
-    log "⚠️ No .env file found at $ENV_FILE"
-fi
 
 # MariaDB Execution Helper
 mariadb_exec() {
@@ -46,13 +41,14 @@ check_dir_exists() {
 # Function to check if a service is active
 check_service() {
     local service_name="$1"
-    systemctl is-active --quiet "$service_name"
-    if [ $? -eq 0 ]; then
+    log "Checking service: $service_name"
+    if systemctl is-active --quiet "$service_name"; then
         log "✅ $service_name is running"
     else
         error "❌ $service_name is NOT running"
     fi
 }
+
 # Function to check if a specific port is listening
 check_port_listening() {
     local port="$1"
@@ -67,6 +63,7 @@ check_port_listening() {
     fi
 }
 
+# Run status checks for all systems
 run_all_status() {
     for SYSTEM_DIR in "$BASE_DIR"/*; do
         SYSTEM=$(basename "$SYSTEM_DIR")
@@ -86,7 +83,7 @@ run_all_status() {
     done
 }
 
-
+# Run a specific system command
 run_command() {
     SYSTEM=$1    # Example: gaia, ermis, kronos
     COMMAND=$2   # Example: start, deploy, generate
@@ -117,3 +114,35 @@ run_command() {
     fi
 }
 
+# Start Daemon
+start_daemon() {
+    if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+        log "⚠️ Gen daemon is already running (PID: $(cat "$PID_FILE"))"
+    else
+        nohup "$CLI_ROOT/bg/daemon-update.sh" &>> "$LOG_FILE" &
+        echo $! > "$PID_FILE"
+        log "✅ Gen daemon started (PID: $(cat "$PID_FILE"))"
+    fi
+}
+
+# Stop Daemon
+stop_daemon() {
+    if [ -f "$PID_FILE" ]; then
+        PID=$(cat "$PID_FILE")
+        if kill "$PID" 2>/dev/null; then
+            log "🛑 Gen daemon stopped (PID: $PID)"
+        else
+            log "⚠️ Failed to stop daemon (PID: $PID)"
+        fi
+        rm -f "$PID_FILE"
+    else
+        log "⚠️ No running daemon found."
+    fi
+}
+
+# Restart Daemon
+restart_daemon() {
+    stop_daemon
+    sleep 1
+    start_daemon
+}

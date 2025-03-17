@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Name of your Uvicorn process (adjust if needed)
-PROCESS_NAME="uvicorn main:app"
+PROCESS_NAME="/var/www/gs/kronos/uvicorn main:app"
 
 # Get the PID (process ID) of the Uvicorn process if it's running
 PID=$(pgrep -f "$PROCESS_NAME")
