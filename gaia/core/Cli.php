@@ -15,64 +15,172 @@ protected function handleRequest() {
     global $argv, $argc;
 
     if ($this->isCliRequest()) {
-        // Debugging: Print arguments
-        print_r($argv);
 
-        // Ensure we have enough arguments (at least 2: command and method)
-        if ($argc < 3) {
-            echo "Usage: php cli/index.php <command> <method> [params...]\n";
-            exit(1);
-        }
-
-        // Extract method from arguments
-        $method = $argv[2]; // The method (e.g., 'buildTable')
-
-        // Extract parameters (everything after the method)
-        $params = array_slice($argv, 3);
-
-        // Parse parameters into an associative array
-        $parsedParams = [];
-        foreach ($params as $param) {
-            if (strpos($param, '=') !== false) {
-                list($key, $value) = explode('=', $param, 2);
-                $parsedParams[$key] = $value;
-            }
-        }
-
-        // Debugging: Show extracted method and parameters
-    //    echo "Method: $method\n";
-//        echo "Params: " . print_r($parsedParams, true) . "\n";
-
-        // Call the run method with the method and parsed params
-        $this->runCli($method, $parsedParams);
+        $this->router();
     } else {
         echo "THIS IS NOT CLI\n";
     }
 }
 
-protected function runCli($method, $params)
-{
-    // Ensure $params is always an array
-    if (!is_array($params)) {
-        // If $params is a string, treat it as an array with one element
-        if (is_string($params)) {
-            $params = [$params];
-        } elseif (is_object($params) && method_exists($params, '__toString')) {
-            // Handle object-to-string conversion
-            $params = [(string) $params];
+
+  protected function router() {
+     global $argv, $argc;
+     // Debugging: Print arguments
+     $this->arrowCli($argv);
+     // Extract method from arguments
+     $method = $argv[2];
+
+      if ($method == 'this') {
+          $this->thisCli($argv);
+          exit;
+      }
+
+      // Extract parameters (everything after the method)
+      $params = array_slice($argv, 3);
+
+      // Parse parameters into an associative array
+// Parse parameters into an associative array
+$parsedParams = [];
+foreach ($params as $param) {
+    // Handle comma-separated key-value pairs (e.g., key=gen_admin.systems,cols=cols,key2=value2)
+    if (strpos($param, ',') !== false) {
+        // Split the string by commas
+        $pairs = explode(',', $param);
+        foreach ($pairs as $pair) {
+            // Handle key-value pairs separated by '='
+            if (strpos($pair, '=') !== false) {
+                list($key, $value) = explode('=', $pair, 2);
+                $parsedParams[$key] = $value;
+            }
+            // Handle standalone parameters (e.g., param4)
+            else {
+                $parsedParams[] = $pair;
+            }
+        }
+    }
+    // Handle key-value pairs separated by '=' (no commas)
+    elseif (strpos($param, '=') !== false) {
+        list($key, $value) = explode('=', $param, 2);
+        $parsedParams[$key] = $value;
+    }
+    // Handle standalone parameters (e.g., param4)
+    else {
+        $parsedParams[] = $param;
+    }
+}
+
+      // Call the run method with the method and parsed params
+      $this->methodCli($method, $parsedParams);
+
+  }
+
+
+  protected function shell($method) {
+        // Run the shell command using shell_exec
+
+        $command = "bash /var/www/gs/cli/com/gaia/$method.sh";
+        $output = shell_exec($command);
+
+        // If there's an issue executing the command, handle the error
+        if ($output === null) {
+          //  echo json_encode(['error' => 'Command execution failed']);
+            return;
+        }
+
+        // Prepare the output as an array (you can modify this depending on the output format)
+        $result = [
+            'status' => 'success',
+            'data' => $output
+        ];
+
+        // Encode the result into JSON and return it
+        echo json_encode($result);
+    }
+
+
+protected function thisCli($argv){
+    $target = $this;
+    $params = [];
+
+    // Traverse through arguments
+    for ($i = 3; $i < count($argv); $i++) {
+        $key = $argv[$i];
+
+        if (is_object($target) && property_exists($target, $key)) {
+            $target = $target->{$key};  // Access property
+        } elseif (is_array($target) && array_key_exists($key, $target)) {
+            $target = $target[$key];  // Access array value
+        } elseif (is_object($target) && method_exists($target, $key)) {
+            // Next argument is a method, remaining args are parameters
+            $method = $key;
+            $params = array_slice($argv, $i + 1);
+            break;
         } else {
-            // For other types, we might need to wrap them in an array or throw an error
-            $params = (array) $params;
+            echo "❌ No such property or method: '{$key}'\n";
+            exit(1);
         }
     }
 
-    // Check if the method exists and is callable
-    if (!method_exists($this, $method)) {
-        throw new \BadMethodCallException("Method '$method' does not exist in " . get_class($this));
+    // If it's a method, execute it
+    if (isset($method) && method_exists($target, $method)) {
+        $result = call_user_func_array([$target, $method], $params);
+
+        if (is_array($result) || is_object($result)) {
+            $this->arrayCli($result);  // Format structured output
+        } else {
+            echo $result . "\n";
+        }
+    } else {
+        // Otherwise, just output the final value
+        if (is_array($target) || is_object($target)) {
+            $this->arrayCli($target);
+        } else {
+            echo $target . "\n";
+        }
+    }
+}
+
+protected function methodCli($method, $params) {
+    //var_dump($params);
+
+    // Ensure $params is always an array
+    if (!is_array($params)) {
+        if (is_string($params)) {
+            $params = [$params]; // Convert string to array
+        } elseif (is_object($params) && method_exists($params, '__toString')) {
+            $params = [(string) $params]; // Convert object to string and then to array
+        } else {
+            $params = (array) $params; // Force other types into an array
+        }
     }
 
-    // Call the method with the parameters as a single array argument
-    return $this->{$method}($params);
+    // Parse key-value pairs in $params
+    $parsedParams = [];
+    foreach ($params as $param) {
+        if (strpos($param, '=') !== false) {
+            list($key, $value) = explode('=', $param, 2);
+            $parsedParams[$key] = $value;
+        } else {
+            $parsedParams[] = $param;
+        }
+    }
+
+    // Check if the method exists and call it with parsed parameters
+    if (method_exists($this, $method)) {
+        $result = call_user_func_array([$this, $method], $parsedParams);
+
+        // If the result is an array or object, use arrayCli to format output
+        if (is_array($result) || is_object($result)) {
+            $this->arrayCli($result);
+        } else {
+            echo $result . "\n";
+        }
+    } else {
+        echo "❌ Method not found: '{$method}'\n";
+        exit(1);
+    }
+
+    return $result;
 }
 
     protected function execute(string $filePath, string $method, string $param): void {
@@ -93,7 +201,8 @@ protected function runCli($method, $params)
         }
     }
 
-protected function buildTableCli($data) {
+
+protected function tableCli($data) {
     if (empty($data)) {
         echo "⚠️ No data to display.\n";
         return;
@@ -132,6 +241,15 @@ protected function buildTableCli($data) {
 
 protected function testCli() {
     echo "test gaia cli";
+}
+
+protected function arrayCli($data) {
+        echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL;
+    }
+
+protected function arrowCli($data) {
+    // Join array elements with ' > ' and display as a breadcrumb-like path
+    echo implode(' > ', $data) . PHP_EOL;
 }
 
 protected function chartCli($label, $value, $max = 100) {

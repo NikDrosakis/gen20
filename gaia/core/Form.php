@@ -51,8 +51,15 @@ protected $res;             #results
 //doc use anywhere as a root function of dbcentrism
 //todo instead of table, insert sql query for more complex inputs
 protected function getInputType($tableName): ?array {
-$table = is_array($tableName) ? $tableName['key'] : $tableName;
-$cols = is_string($tableName['cols']) ? explode(',', $tableName['cols']) : (is_array($tableName['cols']) ? $tableName['cols'] : []);
+    // Ensure $tableName is an array
+    if (!is_array($tableName)) {
+        $tableName = ['key' => $tableName, 'cols' => []];
+    }
+    // Extract table and columns
+    $table = $tableName['key'];
+    $cols = is_string($tableName['cols'])
+        ? explode(',', $tableName['cols'])
+        : (is_array($tableName['cols']) ? $tableName['cols'] : []);
     // @fm.features Fetch metadata for the table columns (including comments)
 $columns = $this->db->tableMeta($table,$cols);
 
@@ -195,6 +202,11 @@ protected function renderButton($table) {
  */
 protected function buildTable($tableName): string {
 $table = is_array($tableName) ? $tableName['key'] : $tableName;
+    if (!is_array($tableName)) {
+        $tableName = ['key' => $table, 'cols' => []];
+    }
+ $tableName['cols'] = isset($tableName['cols']) ? $tableName['cols'] : [];
+
 //error_log(print_r($table));
 #instantiate those public vars
 $this->table=$table;
@@ -243,6 +255,12 @@ if($this->totalRes > 0){
     $tableHtml .= $this->formPagination($tableName, $this->totalRes, $this->currentPage);
 }
 $tableHtml .= '</div>';
+
+   if($_SERVER['SYSTEM']=='cli'){
+     echo shell_exec('echo ' . escapeshellarg($tableHtml) . ' | lynx -stdin');
+    exit;
+    }
+
     return $tableHtml;
 }
 
@@ -351,7 +369,7 @@ protected function tableBody($tableName,$colArray=[],$data=[]) {
             //       ['method' => 'buildTable', 'params' => ['table' => 'gen_vivalibro.action_task']],
             //instead of gs.form.loadButton(\'updateCuboImg\', \'' . $row['name'] . '\')
      //   $tableHtml .= '<button onclick="gs.form.loadButton(\'updateCuboImg\', \'' . $table . '\', \'' . $row['name'] . '\')"><span style="position:absolute" class="bare glyphicon glyphicon-refresh"></span></button>';
-          }elseif ($col['type'] == 'int') {
+          }elseif ($inputType == 'int') {
                            $tableHtml .= '<input type="number"
                                                    onchange="gs.form.updateRow(this, \'' . $table . '\')"
                                                    name="' . $colName . '"
@@ -582,7 +600,7 @@ if (strpos($table, "/") !== false) {
 } elseif (strpos($table, ".") !== false) {
     $parts = explode('.', $table);
     $subpage = $parts[1];
-    $page =$this->subparent[$subpage];
+   $page =$this->subparent[$subpage];
 }
  #gs.form.handleNewRow(event, \'' . $table . '\', {0: {row: \'name\', placeholder: \'Give a Name\'}, 1: {row: \'created\', type: \'hidden\', value: gs.date(\'Y-m-d H:i:s\')}})
 return '<h3>

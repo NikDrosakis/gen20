@@ -9,6 +9,60 @@ public $httpClient;
 
 protected function fetchUrl(string $url, array $options = []) {
     $this->httpClient = new Client();
+    $cacheKey = 'cubo_' . md5($url . json_encode($options)); // Unique cache key
+
+    // Try fetching from Redis cache
+    $cachedResponse = $this->redis->get($cacheKey);
+    if ($cachedResponse !== false) {
+        return $cachedResponse;
+    }
+
+    try {
+        // Preserve $_GET parameters in the URL
+        if (!empty($_GET)) {
+            $queryString = http_build_query($_GET);
+            $url .= (strpos($url, '?') === false ? '?' : '&') . $queryString;
+        }
+
+        // If the request is GET, remove body from options
+        if (($options['method'] ?? 'GET') === 'GET') {
+            unset($options['body']);
+        }
+
+        // Execute HTTP request
+        $response = $this->httpClient->request(
+            $options['method'] ?? 'GET',
+            $url,
+            [
+                'headers' => $options['headers'] ?? [],
+            ]
+        );
+
+        $statusCode = $response->getStatusCode();
+        if ($statusCode >= 200 && $statusCode < 300) {
+            $contentType = $response->getHeaderLine('Content-Type');
+            $body = $response->getBody()->getContents();
+
+            if (strpos($contentType, 'application/json') !== false) {
+                $decodedBody = json_decode($body, true);
+                $this->redis->set($cacheKey, $decodedBody, 1000); // Store JSON response in Redis
+                return $decodedBody;
+            }
+
+            // Store raw content (HTML or others) in Redis
+            $this->redis->set($cacheKey, $body, 1000);
+            return $body;
+        } else {
+            return ["error" => "HTTP error! Status: $statusCode"];
+        }
+    } catch (GuzzleException $e) {
+        return ["error" => "Fetch error: " . $e->getMessage()];
+    }
+}
+
+
+protected function fetchUrlOld(string $url, array $options = []) {
+    $this->httpClient = new Client();
 
     try {
         // Διατήρησε τα $_GET στο URL και μην τα βάζεις στο body
@@ -47,8 +101,7 @@ protected function fetchUrl(string $url, array $options = []) {
     }
 }
 
-protected function insertUrl(string $url, array $data, array $options = []): array
-{
+protected function insertUrl(string $url, array $data, array $options = []): array{
     $this->httpClient = new Client();
     try {
         $response = $this->httpClient->request(
@@ -81,8 +134,7 @@ protected function insertUrl(string $url, array $data, array $options = []): arr
     }
 }
 
-protected function updateUrl(string $url, array $data, array $options = []): array
-{
+protected function updateUrl(string $url, array $data, array $options = []): array{
     $this->httpClient = new Client();
     try {
         $response = $this->httpClient->request(
@@ -109,8 +161,7 @@ protected function updateUrl(string $url, array $data, array $options = []): arr
     }
 }
 
-protected function deleteUrl(string $url, array $options = []): array
-{
+protected function deleteUrl(string $url, array $options = []): array{
    // $this->httpClient = new Client();
     try {
         $response = $this->httpClient->request(

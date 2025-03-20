@@ -3,7 +3,9 @@ namespace Core;
 use Redis;
 
 class Gredis extends Redis {
+
  public $redis_running = false;
+
      public function __construct(string $database = ''){
         if(class_exists('Redis') && basename(getcwd()) !== 'crons') {
             parent::__construct();
@@ -28,23 +30,31 @@ class Gredis extends Redis {
 
         }
 
-         public function set(string $key, mixed $fetch, mixed $options = null): Redis|string|bool{
-            if (!$fetch) {
-                return false;
-            } else {
-                if (is_int($fetch)) {
-                    parent::set($key, $fetch,$options);
-                } elseif (is_array($fetch)) {
-                    $fetch = json_encode($fetch, JSON_UNESCAPED_UNICODE);
-                    parent::setex($key, 1000, $fetch);
-                } elseif (is_json($fetch)) {
-                    parent::set($key, $fetch,$options);
-                } else {
-                    parent::set($key, $fetch,$options);
-                }
-                parent::persist($key);
-            }
+public function set(string $key, mixed $fetch, mixed $options = null): Redis|string|bool {
+    if (!$fetch) {
+        return false;
+    }
+
+    try {
+        if (is_int($fetch)) {
+            parent::set($key, $fetch, $options);
+        } elseif (is_array($fetch)) {
+            $fetch = json_encode($fetch, JSON_UNESCAPED_UNICODE);
+            parent::setex($key, 1000, $fetch); // Ensure expiry
+        } elseif (is_string($fetch) && isJson($fetch)) {
+            parent::set($key, $fetch, $options);
+        } else {
+            parent::set($key, $fetch, $options);
         }
+
+        parent::persist($key);
+        return true;
+    } catch (Exception $e) {
+        error_log("Redis Set Error: " . $e->getMessage());
+        return false;
+    }
+}
+
 
     public function append(string $key, mixed $value): Redis|int|false {
         $state = false;
@@ -62,22 +72,25 @@ class Gredis extends Redis {
         $service is Redis
         read from cache
         */
-        public function  get($key, $format = 'arraystring'):Redis|array|false{
-            $res = $this->exists($key);
-            $type = parent::object("encoding", $key);
-            if ($res) {
-                $get = parent::get($key);
-                if ($type == 'int') {
-                    return (int)$get;
-                } elseif (is_json($get)) {
-                    return json_decode($get, true);
-                } else {
-                    return !$get ? false : $get;
-                }
-            } else {
-                return false;
-            }
-        }
+public function get($key):mixed {
+    $res = $this->exists($key);
+    $type = parent::object("encoding", $key);
+
+    if (!$res) {
+        return false;
+    }
+    $get = parent::get($key);
+    if ($type == 'int') {
+        return (int)$get;
+    } elseif (isJson($get)) {
+        return json_decode($get, true);
+    } elseif ($get === '' || is_string($get)) {  // Explicitly allow empty and non-empty strings
+        return $get;
+    } else {
+        return false;
+    }
+}
+
 
         public function incr(string $key, int $by = 1): Redis|int|false{
             parent::incr($field,$by);
@@ -88,9 +101,16 @@ class Gredis extends Redis {
         }
 
         //update saving keys to list with lrange
-        public function keys($criteria):Redis|array{
-            return parent::keys($criteria);
-        }
+    public function keys(string $pattern): array|false {
+    try {
+        // Get keys matching the pattern
+        $keys = parent::keys($pattern); // Use the Redis `keys` command to find matching keys
+        return $keys ?: false; // Return keys, or false if no keys are found
+    } catch (RedisException $e) {
+        error_log("Redis Get Keys With Wildcard Error: " . $e->getMessage());
+        return false;
+    }
+    }
 
         public function liste():?array {
     		$args= func_get_args();

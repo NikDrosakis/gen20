@@ -4,6 +4,7 @@ use Exception;
 use DateTime;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+
 trait Domain {
 /**
 DOC
@@ -257,8 +258,6 @@ $domain = is_array($domainame) ? $domainame['key'] : $domainame;
         throw new Exception("Failed to generate SSL certificate for $domain. Output: " . $output);
     }
 }
-
-
 
 protected function getSSLs(): array
 {

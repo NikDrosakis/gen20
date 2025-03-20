@@ -34,8 +34,6 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-
-
 COMMAND="$1"
 FILENAME="$2"
 
@@ -56,21 +54,12 @@ restart)
 bash "$DAEMON restart"
 exit 0
 ;;
-
-  ai)
-    ;;;
-  ws)
-        WS_URL="wss://0.0.0.0:3010/?userid=1 # Αντικατάστησε με την πραγματική URL
-
-        if command -v wscat &> /dev/null; then
-            echo "▶ Σύνδεση στον WebSocket server ($WS_URL)..."
-            wscat -c "$WS_URL"
-        else
-            echo "❌ Σφάλμα: Το wscat δεν είναι εγκατεστημένο."
-            exit 1
-        fi
-        ;;
-
+ai)
+    echo "σύνδεση με ai"
+    ;;
+ws)
+    bash "$CLI_ROOT/com/ws/$FILENAME.sh"
+    ;;
 all)
 if [ -n "$FILENAME" ]; then
 for dir in "$BASE_DIR"/*/; do
@@ -102,95 +91,18 @@ fi
 
 # Γλώσσες και εντολές που πρέπει να αποκτούν πρόσβαση μέσω CLI περιβάλλοντος
 kronos)
-    KRONOS_MAIN="main:app"
-    KRONOS_PORT=3006
-    KRONOS_LOG="$LOG_DIR/kronos.log"
-
-    # Έλεγχος αν το Kronos τρέχει
-    if netstat -tuln | grep ":$KRONOS_PORT" > /dev/null; then
-        echo "✅ Το Kronos τρέχει."
-        if [ "$FILENAME" == "log" ]; then
-            if [ -z "$KRONOS_LOGGING_ENABLED" ]; then
-                export KRONOS_LOGGING_ENABLED="true"
-                echo "✅ Kronos logging enabled."
-            else
-                unset KRONOS_LOGGING_ENABLED
-                echo "❌ Kronos logging disabled."
-            fi
-        elif [ -n "$FILENAME" ]; then
-            SCRIPT="$BASE_DIR/$COMMAND/$FILENAME.sh"
-            if [ -f "$SCRIPT" ]; then
-                bash "$SCRIPT"
-                exit $?
-            else
-                echo "❌ Σφάλμα: Λείπει το script για το $COMMAND/$FILENAME"
-                exit 1
-            fi
-        else
-            echo "📂 Λίστα διαθέσιμων scripts στο $BASE_DIR/$COMMAND:"
-            ls -1 "$BASE_DIR/$COMMAND/" | grep -E '\.sh$' | sed 's/\.sh$//' || echo "⚠ Δεν βρέθηκαν scripts στο $BASE_DIR/$COMMAND"
-            exit 0
-        fi
-    else
-        echo "❌ Το Kronos δεν τρέχει. Ξεκινάω..."
-        if [ -f "main.py" ]; then #assuming the main.py is in the current directory
-            # Ξεκίνημα του Kronos
-            nohup uvicorn "$KRONOS_MAIN" --host 0.0.0.0 --port "$KRONOS_PORT" --reload > "$KRONOS_LOG" 2>&1 &
-            # Περιμένουμε λίγο να ξεκινήσει η υπηρεσία
-            sleep 5
-            # Έλεγχος αν η υπηρεσία ξεκίνησε
-            if netstat -tuln | grep ":$KRONOS_PORT" > /dev/null; then
-                echo "✅ Το Kronos ξεκίνησε."
-                if [ "$FILENAME" == "log" ]; then
-                    if [ -z "$KRONOS_LOGGING_ENABLED" ]; then
-                        export KRONOS_LOGGING_ENABLED="true"
-                        echo "✅ Kronos logging enabled."
-                    else
-                        unset KRONOS_LOGGING_ENABLED
-                        echo "❌ Kronos logging disabled."
-                    fi
-                elif [ -n "$FILENAME" ]; then
-                    SCRIPT="$BASE_DIR/$COMMAND/$FILENAME.sh"
-                    if [ -f "$SCRIPT" ]; then
-                        bash "$SCRIPT"
-                        exit $?
-                    else
-                        echo "❌ Σφάλμα: Λείπει το script για το $COMMAND/$FILENAME"
-                        exit 1
-                    fi
-                else
-                    echo "📂 Λίστα διαθέσιμων scripts στο $BASE_DIR/$COMMAND:"
-                    ls -1 "$BASE_DIR/$COMMAND/" | grep -E '\.sh$' | sed 's/\.sh$//' || echo "⚠ Δεν βρέθηκαν scripts στο $BASE_DIR/$COMMAND"
-                    exit 0
-                fi
-            else
-                echo "❌ Αποτυχία εκκίνησης του Kronos."
-                exit 1
-            fi
-        else
-            echo "❌ Σφάλμα: Το script Kronos (main.py) δεν βρέθηκε."
-            exit 1
-        fi
-    fi
+    bash "$CLI_ROOT/com/kronos/$FILENAME.sh"
     ;;
 
 redis)
   redis-cli --auth "yjF1f7uiHttcp"
   ;;
 
-   cubos)
-        CUBO_URL="http://localhost/cubos" # Αντικατάστησε με την πραγματική URL
+cubos)
+ bash "$CLI_ROOT/com/cubos/$FILENAME.sh"
+;;
 
-        if command -v curl &> /dev/null; then
-            echo "▶ Έλεγχος προσβασιμότητας του $CUBO_URL..."
-            curl -I "$CUBO_URL"
-        else
-            echo "❌ Σφάλμα: Το curl δεν είναι εγκατεστημένο."
-            exit 1
-        fi
-        ;;
-
-  git)
+git)
         GIT_SCRIPT="$CLI_ROOT/com/git/$FILENAME.sh"
 
         if [ -f "$GIT_SCRIPT" ]; then
@@ -201,170 +113,20 @@ redis)
             exit 1
         fi
         ;;
-
-
 ermis)
-  SERVICE_URL="https://0.0.0.0:3010"
-  ERMIS_SCRIPT="$ROOT/ermis/index.js"
-  # Έλεγχος αν η υπηρεσία τρέχει
-  if curl --silent --show-error --insecure "$SERVICE_URL" > /dev/null; then
-  echo "✅ Η υπηρεσία Ermis τρέχει."
-  else
-  echo "❌ Η υπηρεσία Ermis δεν τρέχει. Ξεκινάω..."
-  if [ -f "$ERMIS_SCRIPT" ]; then
-  # Ξεκίνημα της υπηρεσίας
-  if ps aux | grep -v grep | grep "$ERMIS_SCRIPT" > /dev/null; then
-        echo "Η υπηρεσία Ermis τρέχει ήδη."
-    else
-        # Ξεκίνημα της υπηρεσίας
-        nohup nodemon "$ERMIS_SCRIPT" > "$LOG_DIR/ermis.log" 2>&1 &
-        echo "Η υπηρεσία Ermis ξεκίνησε."
-    fi
-  # Περιμένουμε λίγο να ξεκινήσει η υπηρεσία
-  sleep 5
-  # Έλεγχος αν η υπηρεσία ξεκίνησε
-  if curl --silent --show-error --insecure "$SERVICE_URL" > /dev/null; then
-  echo "✅ Η υπηρεσία Ermis ξεκίνησε."
-
-  else
-  echo "❌ Αποτυχία εκκίνησης της υπηρεσίας Ermis."
-  exit 1
-  fi
-
-  else
-  echo "❌ Σφάλμα: Το script Ermis ($ERMIS_SCRIPT) δεν βρέθηκε."
-  exit 1
-  fi
-  fi
-  # Πρόσβαση στο REPL
-  echo "▶ Πρόσβαση στο REPL του Ermis..."
-  node
-  ;;
+bash "$CLI_ROOT/com/ermis/$FILENAME.sh"
+;;
 
 mars)
-    MARS_MAIN="$ROOT/mars/main.cpp"
-    MARS_PORT=3004
-    MARS_LOG="$LOG_DIR/mars.log"
-    MARS_EXECUTABLE="mars_executable"
-
-    # Έλεγχος αν το Mars τρέχει
-    if netstat -tuln | grep ":$MARS_PORT" > /dev/null; then
-        echo "✅ Το Mars τρέχει."
-        if [ "$FILENAME" == "log" ]; then
-            if [ -z "$MARS_LOGGING_ENABLED" ]; then
-                export MARS_LOGGING_ENABLED="true"
-                echo "✅ Mars logging enabled."
-            else
-                unset MARS_LOGGING_ENABLED
-                echo "❌ Mars logging disabled."
-            fi
-        elif [ -n "$FILENAME" ]; then
-            SCRIPT="$BASE_DIR/$COMMAND/$FILENAME.sh"
-            if [ -f "$SCRIPT" ]; then
-                bash "$SCRIPT"
-                exit $?
-            else
-                echo "❌ Σφάλμα: Λείπει το script για το $COMMAND/$FILENAME"
-                exit 1
-            fi
-        else
-            echo "📂 Λίστα διαθέσιμων scripts στο $BASE_DIR/$COMMAND:"
-            ls -1 "$BASE_DIR/$COMMAND/" | grep -E '\.sh$' | sed 's/\.sh$//' || echo "⚠ Δεν βρέθηκαν scripts στο $BASE_DIR/$COMMAND"
-            exit 0
-        fi
-    else
-        echo "❌ Το Mars δεν τρέχει. Ξεκινάω..."
-        if [ -f "$MARS_MAIN" ]; then
-            # Μεταγλώττιση του main.cpp
-            g++ "$MARS_MAIN" -o "$MARS_EXECUTABLE" -lboost_system -lboost_thread -lpthread -lyaml-cpp -lnlohmann_json -lhiredis
-            if [ $? -eq 0 ]; then
-                # Ξεκίνημα του Mars
-                nohup ./"$MARS_EXECUTABLE" > "$MARS_LOG" 2>&1 &
-                # Περιμένουμε λίγο να ξεκινήσει η υπηρεσία
-                sleep 5
-                # Έλεγχος αν η υπηρεσία ξεκίνησε
-                if netstat -tuln | grep ":$MARS_PORT" > /dev/null; then
-                    echo "✅ Το Mars ξεκίνησε."
-                    if [ "$FILENAME" == "log" ]; then
-                        if [ -z "$MARS_LOGGING_ENABLED" ]; then
-                            export MARS_LOGGING_ENABLED="true"
-                            echo "✅ Mars logging enabled."
-                        else
-                            unset MARS_LOGGING_ENABLED
-                            echo "❌ Mars logging disabled."
-                        fi
-                    elif [ -n "$FILENAME" ]; then
-                        SCRIPT="$BASE_DIR/$COMMAND/$FILENAME.sh"
-                        if [ -f "$SCRIPT" ]; then
-                            bash "$SCRIPT"
-                            exit $?
-                        else
-                            echo "❌ Σφάλμα: Λείπει το script για το $COMMAND/$FILENAME"
-                            exit 1
-                        fi
-                    else
-                        echo "📂 Λίστα διαθέσιμων scripts στο $BASE_DIR/$COMMAND:"
-                        ls -1 "$BASE_DIR/$COMMAND/" | grep -E '\.sh$' | sed 's/\.sh$//' || echo "⚠ Δεν βρέθηκαν scripts στο $BASE_DIR/$COMMAND"
-                        exit 0
-                    fi
-                else
-                    echo "❌ Αποτυχία εκκίνησης του Mars."
-                    exit 1
-                fi
-            else
-                echo "❌ Σφάλμα: Αποτυχία μεταγλώττισης του main.cpp."
-                exit 1
-            fi
-        else
-            echo "❌ Σφάλμα: Το script Mars (main.cpp) δεν βρέθηκε."
-            exit 1
-        fi
-    fi
+bash "$CLI_ROOT/com/mars/$FILENAME.sh"
     ;;
 
 god)
-    GOD_MAIN="$ROOT/god/main.go"
-    GOD_PORT=3008
-
-    # Έλεγχος αν το σύστημα Go τρέχει
-    if netstat -tuln | grep ":$GOD_PORT" > /dev/null; then
-        echo "✅ Το σύστημα God τρέχει."
-        #Εκτέλεση του script
-        if [ -n "$FILENAME" ]; then
-            go run "$FILENAME"
-        else
-            echo "❌ Σφάλμα: Το FILENAME δεν έχει οριστεί."
-            exit 1
-        fi
-
-    else
-        echo "❌ Το σύστημα God δεν τρέχει. Ξεκινάω..."
-        if [ -f "$GOD_MAIN" ]; then
-            # Ξεκίνημα του συστήματος
-            nohup go run "$GOD_MAIN" > "$LOG_DIR/god.log" 2>&1 &
-            # Περιμένουμε λίγο να ξεκινήσει η υπηρεσία
-            sleep 5
-            # Έλεγχος αν η υπηρεσία ξεκίνησε
-            if netstat -tuln | grep ":$GOD_PORT" > /dev/null; then
-                echo "✅ Το σύστημα God ξεκίνησε."
-                #Εκτέλεση του script
-                if [ -n "$FILENAME" ]; then
-                    go run "$FILENAME"
-                else
-                    echo "❌ Σφάλμα: Το FILENAME δεν έχει οριστεί."
-                    exit 1
-                fi
-            else
-                echo "❌ Αποτυχία εκκίνησης του συστήματος God."
-                exit 1
-            fi
-
-        else
-            echo "❌ Σφάλμα: Το script God ($GOD_MAIN) δεν βρέθηκε."
-            exit 1
-        fi
-    fi
+bash "$CLI_ROOT/com/god/$FILENAME.sh"
     ;;
+composer)
+  su - dros -c "cd '$ROOT/gaia' && composer '$COMMAND'"
+  ;;
 gaia)
   # Εκτέλεση του PHP script για το Gaia
   if [ -n "$FILENAME" ]; then
