@@ -1,4 +1,7 @@
 .
+├── base_class.sh
+├── bg
+│   └── daemon-update.sh
 ├── bin
 │   ├── backup.sh
 │   ├── domain.sh
@@ -25,6 +28,10 @@
 │   │   ├── status.sh
 │   │   └── test.sh
 │   ├── db
+│   │   ├── arango.sh
+│   │   ├── elastic.sh
+│   │   ├── mari.sh
+│   │   └── redis.sh
 │   ├── docker
 │   ├── domain
 │   │   └── add.sh
@@ -78,13 +85,15 @@
 │       ├── status.sh
 │       └── test.sh
 ├── gen
-├── lib
-│   └── utils.sh
+├── gen_admin.systems param2]
 ├── old
 │   ├── gen
+│   ├── gen.old2
+│   ├── gen.ολδ
 │   ├── gscli
 │   └── update-gen.sh
 ├── README.md
-└── tree.md
+├── tree.md
+└── utils.sh
 
-20 directories, 68 files
+20 directories, 77 files

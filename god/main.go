@@ -14,20 +14,45 @@ import (
 	"god/core"
 )
 
+var logFile *os.File
+var logger *log.Logger
+
+func init() {
+    // Open log file
+    var err error
+    logFile, err = os.OpenFile("god.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    if err != nil {
+        log.Fatalf("Failed to open log file: %v", err)
+    }
+
+    // Create logger
+    logger = log.New(io.MultiWriter(logFile, os.Stdout), "GOD: ", log.LstdFlags)
+}
+
+func logMessage(message string) {
+    if os.Getenv("GOD_LOGGING_ENABLED") == "true" {
+        logger.Println(message)
+    } else {
+        logger.Output(2, message) // Write only to file
+    }
+}
+
+
 func main() {
+    defer logFile.Close()
 	// Load environment variables
 	godotenv.Load()
 
 	// Initialize a new Gredis instance
 	gredisInstance, err := core.NewGredis()
 	if err != nil {
-		log.Fatalf("Failed to create Gredis instance: %v", err)
+		 logMessage(fmt.Sprintf("Failed to create Gredis instance: %v", err))
 	}
 
 	// Retrieve and print all keys
 	keys, err := gredisInstance.Keys("*") // "*" pattern retrieves all keys
 	if err != nil {
-		log.Fatalf("Failed to retrieve keys: %v", err)
+		 logMessage(fmt.Sprintf("Failed to retrieve keys: %v", err))
 	}
 	fmt.Printf("Keys: %v\n", keys)
 
@@ -76,20 +101,20 @@ func main() {
 			upgrader := websocket.Upgrader{}
 			conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 			if err != nil {
-				log.Println("Error upgrading connection:", err)
+				 logMessage(fmt.Sprintf("Error upgrading connection:", err))
 				return
 			}
 			defer conn.Close()
 			for {
 				messageType, p, err := conn.ReadMessage()
 				if err != nil {
-					log.Println("Error reading message:", err)
+					 logMessage(fmt.Sprintf("Error reading message:", err))
 					return
 				}
 				log.Printf("Received message: %s\n", string(p))
 				err = conn.WriteMessage(messageType, p)
 				if err != nil {
-					log.Println("Error writing message:", err)
+					 logMessage(fmt.Sprintf("Error writing message:", err))
 					return
 				}
 			}
@@ -98,7 +123,7 @@ func main() {
 		// Initialize WebSocket client
         wsClient, err := core.NewWebSocketClient()
         if err != nil {
-            log.Println("WebSocket connection failed, continuing without it...")
+             logMessage(fmt.Sprintf("WebSocket connection failed, continuing without it..."))
         } else {
             defer wsClient.Close() // Close only if wsClient is not nil
         }
@@ -115,12 +140,12 @@ func main() {
         if wsClient != nil {
             err = wsClient.SendMessage()
             if err != nil {
-               log.Printf("WebSocket failed to send message: %v", err)
+                logMessage(fmt.Sprintf("WebSocket failed to send message: %v", err))
             } else {
-                log.Println("Message sent successfully.")
+                 logMessage(fmt.Sprintf("Message sent successfully."))
             }
         } else {
-            log.Println("Skipping WebSocket message send since connection is unavailable.")
+             logMessage(fmt.Sprintf("Skipping WebSocket message send since connection is unavailable."))
         }
 
 	//}
@@ -132,7 +157,7 @@ func main() {
 	if port == "" {
 		port = "3008"
 	}
-	log.Printf("Server starting on port %s\n", port)
+	 logMessage(fmt.Sprintf("Server starting on port %s\n", port))
 	router.Run(fmt.Sprintf(":%s", port))
 }
 
