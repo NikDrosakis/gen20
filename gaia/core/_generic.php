@@ -761,7 +761,7 @@ function redirect($to=null,$permanent = false) {
 }
 
 // @filemeta.features is_json
-function is_json(string $string) {
+function isJson(string $string) {
     // First check if the input is a string, as only strings can be valid JSON
     if (!is_string($string)) {
         return false;

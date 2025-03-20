@@ -202,6 +202,7 @@ protected function md_decode(string $markdownContent): string{
     $htmlContent = $parsedown->text($markdownContent);
     return $htmlContent;
 }
+
 protected function parse_systems_md($systems_content) {
     // Split content by lines
     $lines = explode(PHP_EOL, $systems_content);
@@ -341,6 +342,10 @@ if
             });
     }
 
+protected function getThis() {
+return $this;
+}
+
 protected function getClassMethods() {
     $methods = [];
 
@@ -471,7 +476,7 @@ protected function navigate() {
             $this->apages[$slug]['subs'][$sub['name']] = [
                 "slug" => $sub['name'],
                 "icon" => $sub['img'],
-                "mode" => $sub['type']
+                "mode" => $sub['type'] ?? ''
             ];
          }
          }
@@ -479,28 +484,5 @@ protected function navigate() {
 }
     return $this->apages;
 }
-
-  public function shell($method) {
-        // Run the shell command using shell_exec
-
-        $command = "bash /var/www/gs/cli/com/gaia/$method.sh";
-        $output = shell_exec($command);
-
-        // If there's an issue executing the command, handle the error
-        if ($output === null) {
-          //  echo json_encode(['error' => 'Command execution failed']);
-            return;
-        }
-
-        // Prepare the output as an array (you can modify this depending on the output format)
-        $result = [
-            'status' => 'success',
-            'data' => $output
-        ];
-
-        // Encode the result into JSON and return it
-        echo json_encode($result);
-    }
-
 
 }

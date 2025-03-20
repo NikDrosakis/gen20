@@ -487,8 +487,8 @@ public function fetch(string $q, array $params = [], int $limit = 10, int $curre
     $qData = "SELECT $cols, COUNT(*) OVER () AS total FROM ($q) AS subquery $order LIMIT :limit OFFSET :offset";
 
     // Debugging logs
-    error_log("Generated SQL Query: " . $qData);
-    error_log("Pagination parameters - Limit: $limit, Offset: $offset");
+   // error_log("Generated SQL Query: " . $qData);
+    //error_log("Pagination parameters - Limit: $limit, Offset: $offset");
 
     // Prepare query parameters separately to avoid modifying $params directly
     $queryParams = [
