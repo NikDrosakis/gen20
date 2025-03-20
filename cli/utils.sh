@@ -114,6 +114,7 @@ run_command() {
     fi
 }
 
+
 # Start Daemon
 start_daemon() {
     if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then

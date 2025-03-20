@@ -1,0 +1,7 @@
+🔧 Το .env έχει φορτωθεί επιτυχώς.
+▶ Πρόσβαση στο CLI του gaia για εντολή: buildTable...
+Arguments: gaia buildTable [key= param3 and helloworld
+▶ Εκτέλεση PHP για το Gaia με παραμέτρους: buildTable
+NULL
+NULL
+Usage: php cli/index.php <command> <method> [params...]

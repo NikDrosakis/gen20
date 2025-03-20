@@ -1,38 +1,39 @@
 #!/bin/bash
 
-# Set the API endpoint URL
-API_URL="https://vivalibro.com/apy/v1/gemini/conversation" # Replace with your actual URL
+set -x  # Ενεργοποίηση του debugging
 
-# Function to send a message and get the response
-send_message() {
-  local message="$3"
-  local conversation_id="$4"
+# Εκτύπωση όλων των παραμέτρων
+echo "Arguments passed: $@"
 
-  # Construct the JSON payload (using jq)
-  payload=$(jq -n --arg msg "$message" --arg conv_id "$conversation_id" '{message: $msg, conversation_id: $conv_id}')
+# Ελέγχουμε την πρώτη παράμετρο
+echo "First argument: $1"
 
-  # Send the request using curl
-  local response=$(curl -s -H "Content-Type: application/json" -d "$payload" "$API_URL")
-
-  # Handle response (e.g., print it)
-  echo "$response"
-
-  # OPTIONAL: Parse the json output (unchanged)
-  # ... (rest of the function remains the same)
-}
-
-# Example Usage:
+# Αν το πρώτο όρισμα είναι κενό, κάνουμε έλεγχο
 if [ -z "$1" ]; then
-  echo "Please provide a message as the first argument."
+  echo "Πρέπει να δώσεις μήνυμα ως πρώτο όρισμα."
   exit 1
 fi
 
-if [ -z "$2" ]; then
-  echo "Please provide a conversation_id as the second argument."
-    exit 1
+# Ορισμός μεταβλητών
+API_URL="https://vivalibro.com/apy/v1/gemini/conversation"
+CONVERSATIONID="1"
+
+# Αποστολή μηνύματος
+message="$1"
+echo "Sending message: $message"
+
+# Χρήση του jq για την αποστολή του μηνύματος
+payload=$(jq -n --arg msg "$message" --arg conv_id "$CONVERSATIONID" '{message: $msg, conversation_id: $conv_id}')
+
+# Εκτέλεση cURL για αποστολή του μηνύματος
+response=$(curl -s -H "Content-Type: application/json" -d "$payload" "$API_URL")
+
+# Έλεγχος αν η απόκριση είναι κενή
+if [[ -z "$response" ]]; then
+  echo "Σφάλμα: Δεν υπάρχει απόκριση από τον διακομιστή."
+  exit 1
 fi
 
-
-message="$3"
-conversation_id="$3"
-send_message "$message" "$conversation_id"
+# Εκτύπωση της απόκρισης
+echo "Response from API:"
+echo "$response" | jq .

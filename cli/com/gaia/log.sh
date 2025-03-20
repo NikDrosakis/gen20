@@ -1,134 +1,71 @@
 #!/bin/bash
 
-# Set log file paths (these can be environment variables or passed as arguments)
-LOG_DIR="/var/www/gs/log"
-ERROR_LOG="$LOG_DIR/error.log"
-GEN_LOG="$LOG_DIR/gen.log"
-LOG_FILE="$GEN_LOG"  # Default log file
+# API Endpoint for AI insights
+API_URL="https://vivalibro.com/apy/v1/gemini/conversation"
 
-# Standardized log function with log levels (INFO, ERROR, DEBUG)
-log() {
-    local level="$1"
-    local message="$2"
-    local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
-    local script_name=$(basename "$0")
-    local log_entry="[$timestamp] [$level] [$script_name] $message"
 
-    # Log message output based on level
-    case "$level" in
-        INFO)
-            echo "$log_entry" >> "$LOG_FILE"
-            ;;
-        ERROR)
-            echo "$log_entry" >> "$ERROR_LOG"
-            ;;
-        DEBUG)
-            if [ "$DEBUG_MODE" == "true" ]; then
-                echo "$log_entry" >> "$LOG_FILE"
-            fi
-            ;;
-        *)
-            echo "❌ Invalid log level: $level"
-            return 1
-            ;;
-    esac
+CONVERSATIONID="$3"
 
-    # You can add more logic here for external log aggregators (e.g., to forward logs to a centralized system)
+# Function to collect system data
+collect_system_data() {
+    php_modules=$(php -m | grep -v '^\[.*\]$' | tr '\n' ',' | sed 's/,$//')
+    os_details=$(php -r 'echo php_uname();')
+    disk_usage=$(df -h | tr '\n' ';')
+    ram_usage=$(free -m | tr '\n' ';')
+    php_fpm_status=$(top -b -n 1 | grep php-fpm | tr '\n' ';')
+
+    # Format data as JSON
+    jq -n \
+        --arg php_modules "$php_modules" \
+        --arg os_details "$os_details" \
+        --arg disk_usage "$disk_usage" \
+        --arg ram_usage "$ram_usage" \
+        --arg php_fpm_status "$php_fpm_status" \
+        '{
+            php_modules: $php_modules,
+            os_details: $os_details,
+            disk_usage: $disk_usage,
+            ram_usage: $ram_usage,
+            php_fpm_status: $php_fpm_status
+        }'
 }
 
-# Standardized error function with enhanced error tracking
-error() {
-    local message="$1"
-    local exit_code="${2:-1}"
-    local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
-    local script_name=$(basename "$0")
+# Function to send data to AI API for analysis
+send_log() {
+    local system_data="$1"
+    local conversation_id="$2"
 
-    echo "[$timestamp] [ERROR] [$script_name] $message" >> "$ERROR_LOG"
-    log "ERROR" "$message"
+    # Create YAML payload
+    payload=$(cat <<EOF
+message: $system_data
+CONVERSATIONID: $conversation_id
+request_type: log_analysis
+EOF
+)
 
-    exit "$exit_code"
+    # Send the payload to the API
+    response=$(curl -s -H "Content-Type: application/yaml" -d "$payload" "$API_URL")
+
+    # Extract AI-generated insights and code suggestions from YAML response
+insights=$(echo "$response" | yq eval '.result.analysis.insights' -)
+code_suggestions=$(echo "$response" | yq eval '.result.analysis.code' -)
+
+    # Log structured output in YAML format
+    cat <<EOF
+timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+log_message: $system_data
+insights: $insights
+code_suggestions: $code_suggestions
+EOF
 }
+# Collect system data
+echo "Collecting system data..."
+system_data=$(collect_system_data)
 
-# Clear logs (can be customized for the specific logs you want to clear)
-clear_logs() {
-    echo "Clearing logs..."
-    > "$GEN_LOG"
-    > "$ERROR_LOG"
-    log "INFO" "Logs cleared."
-}
+# Print collected data (debug)
+echo "Collected Data:"
+echo "$system_data" | jq .
 
-# Helper to log specific system commands (AI-friendly and automation-friendly)
-log_command_execution() {
-    local command="$1"
-    local output="$2"
-    local status="$3"
-
-    local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
-    local script_name=$(basename "$0")
-    local log_entry="[$timestamp] [COMMAND] [$script_name] Command: $command, Status: $status, Output: $output"
-
-    # Filter out unnecessary details for automation purposes
-    log "INFO" "$log_entry"
-}
-
-# Function to handle specific system logs (to integrate with external systems like AI or automation)
-handle_system_logs() {
-    local system="$1"
-    local log_file="$2"
-
-    if [ ! -f "$log_file" ]; then
-        log "ERROR" "Log file not found: $log_file"
-        return 1
-    fi
-
-    local log_data=$(cat "$log_file" | grep -v '^#' | grep -v '^$')  # Clean empty lines and comments
-    local log_entry="[$system] Log file: $log_file, Entries: $log_data"
-
-    # AI-friendly encoding: convert logs to JSON-like format for easier parsing
-    log "INFO" "{ \"system\": \"$system\", \"log\": \"$log_data\" }"
-}
-
-# Centralized function for handling multiple logs (for systems like MariaDB, Redis, Web server, etc.)
-handle_multiple_logs() {
-    local systems=("maria" "redis" "php" "nginx" "gen20")
-
-    for system in "${systems[@]}"; do
-        local log_file="$LOG_DIR/$system.log"
-        handle_system_logs "$system" "$log_file"
-    done
-}
-
-# Advanced system status check: aggregate logs into a status file for monitoring systems
-check_system_status() {
-    local status_file="$LOG_DIR/system_status.log"
-    local status_entry="[$(date "+%Y-%m-%d %H:%M:%S")] System status check"
-
-    log "INFO" "$status_entry"
-    handle_multiple_logs
-
-    # Save aggregated status to a file
-    echo "$status_entry" >> "$status_file"
-}
-
-
-# Function to rotate logs (helps prevent logs from getting too large)
-rotate_logs() {
-    local max_log_size=50000000  # Example max size in bytes (50MB)
-    local log_size=$(stat -c %s "$LOG_FILE")
-
-    if [ "$log_size" -gt "$max_log_size" ]; then
-        mv "$LOG_FILE" "$LOG_FILE.old"
-        touch "$LOG_FILE"
-        log "INFO" "Log rotated. Old log saved as $LOG_FILE.old"
-    fi
-}
-
-# Example of logging actions
-log "INFO" "Logging started."
-log "DEBUG" "Debug mode enabled."
-
-# Call the status check function to log multiple system statuses
-check_system_status
-
-# Example of rotating logs if they exceed size limit
-rotate_logs
+# Send log to AI for insights
+echo "Sending system log to AI..."
+send_log "$system_data" "$CONVERSATIONID"

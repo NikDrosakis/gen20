@@ -1,8 +1,5 @@
 <?php
-define('DOMAIN','localhost');
-define('TEMPLATE', 'localhost');
-define('ROOT', dirname(dirname(__DIR__)).'/gaia/');
-define('ADMIN_ROOT', ROOT.'admin/');
+define('ROOT', dirname(dirname(dirname(__DIR__))).'/gaia/');
 require ROOT.'vendor/autoload.php';
 use Core\Cli;
 $gaia = new Cli();
