@@ -1,145 +1,168 @@
 #!/bin/bash
 
-ROOT="/var/www/gs/"
-CLI_ROOT="/var/www/gs/cli"
-LOG_DIR="/var/www/gs/log"
-CLI_UTILS="$CLI_ROOT/utils.sh"
-BG_DIR="$CLI_ROOT/bg"
-PID_FILE="/tmp/gen-daemon.pid"
-LOG_FILE="/var/www/gs/log/gen20.log"
-DAEMON="$BG_DIR/daemon-update.sh"
-BASE_DIR="$CLI_ROOT/com"
+# ==================================================
+# gen20 CLI Manager
+# ==================================================
+# A command-line interface (CLI) for managing various services, scripts, and tasks
+# within the gen20 ecosystem. This script acts as a central entry point for executing
+# commands related to Gaia, Redis, Composer, and other services.
+#
+# Usage:
+#   gen <system> <command> [args...]
+#
+# Examples:
+#   gen gaia buildTable gen_admin.globs
+#   gen composer install
+#   gen redis
+#   gen start  # Start the daemon
+#   gen stop   # Stop the daemon
+# ==================================================
 
-# Βεβαιώσου ότι το .env είναι φορτωμένο
-ENV_FILE="/var/www/gs/.env"
+# ==================================================
+# Configuration
+# ==================================================
+ROOT="/var/www/gs/"                     # Root directory of the application
+CLI_ROOT="/var/www/gs/cli"               # Directory for CLI scripts
+LOG_DIR="/var/www/gs/log"               # Directory for log files
+CLI_UTILS="$CLI_ROOT/utils.sh"          # Path to the utils.sh script
+BG_DIR="$CLI_ROOT/bg"                   # Directory for background processes
+PID_FILE="/tmp/gen-daemon.pid"          # PID file for the daemon
+LOG_FILE="/var/www/gs/log/gen20.log"    # Log file for the CLI
+DAEMON="$BG_DIR/daemon-update.sh"       # Path to the daemon script
+BASE_DIR="$CLI_ROOT/com"                # Base directory for command scripts
+
+# ==================================================
+# Load Environment Variables
+# ==================================================
+ENV_FILE="/var/www/gs/.env"             # Path to the .env file
 if [ -f "$ENV_FILE" ]; then
-    source "$ENV_FILE"
- #   echo "🔧 Το .env έχει φορτωθεί επιτυχώς."
+    source "$ENV_FILE"                  # Load the .env file
 else
-    echo "❌ Σφάλμα: Λείπει το αρχείο .env."
+    echo "❌ Error: Missing .env file."
     exit 1
 fi
 
-# Φορτώνουμε το utils.sh
+# ==================================================
+# Load CLI Utilities
+# ==================================================
 if [ -f "$CLI_UTILS" ]; then
-    source "$CLI_UTILS"
+    source "$CLI_UTILS"                 # Load the utils.sh script
 else
-    echo "❌ Σφάλμα: Λείπει το αρχείο utils.sh."
+    echo "❌ Error: Missing utils.sh file."
     exit 1
 fi
 
-# Έλεγχος παραμέτρων
+# ==================================================
+# Validate Input Parameters
+# ==================================================
 if [ -z "$1" ]; then
-    echo "❌ Σφάλμα: Χρησιμοποιήστε τη σωστή σύνταξη: $0 <system> <command> [args...]"
+    echo "❌ Error: Usage: $0 <system> <command> [args...]"
     exit 1
 fi
 
-COMMAND="$1"
-FILENAME="$2"
+COMMAND="$1"                            # First argument: System or command
+FILENAME="$2"                           # Second argument: Script or subcommand
 
-# Έλεγχος αν πρόκειται για προκαθορισμένη εντολή daemon
+# ==================================================
+# Command Handling
+# ==================================================
 case "$COMMAND" in
+    # ==============================================
+    # Daemon Commands
+    # ==============================================
+    start)
+        bash "$DAEMON start"            # Start the daemon
+        exit 0
+        ;;
+    stop)
+        bash "$DAEMON stop"             # Stop the daemon
+        exit 0
+        ;;
+    restart)
+        bash "$DAEMON restart"         # Restart the daemon
+        exit 0
+        ;;
 
-start)
-bash "$DAEMON start"
-exit 0
-;;
-
-stop)
-bash "$DAEMON stop"
-exit 0
-;;
-
-restart)
-bash "$DAEMON restart"
-exit 0
-;;
-ai)
-    echo "σύνδεση με ai"
-    ;;
-ws)
-    bash "$CLI_ROOT/com/ws/$FILENAME.sh"
-    ;;
-all)
-if [ -n "$FILENAME" ]; then
-for dir in "$BASE_DIR"/*/; do
-CMD_NAME=$(basename "$dir")
-SCRIPT="$dir/$FILENAME.sh"
-if [ -f "$SCRIPT" ]; then
-    echo "▶ Εκτέλεση $CMD_NAME/$FILENAME.sh..."
-    bash "$SCRIPT"
-else
-    echo "⚠ Λείπει το script για το $CMD_NAME/$FILENAME"
-fi
-done
-else
-echo "❌ Σφάλμα: Το FILENAME δεν έχει οριστεί."
-exit 1
-fi
-;;
-
-# Γλώσσες και εντολές που εκτελούν .sh αρχεία
-php|python|go|node)
-interpreter="${COMMAND}" # Αποθηκεύουμε το όνομα του διερμηνέα
-script_name="${FILENAME}" # Το πλήρες όνομα του αρχείου
-if [ -f "$script_name" ]; then
-"${interpreter}" "${script_name}" # Εκτελούμε το script με τον κατάλληλο διερμηνέα
-else
-echo "Το αρχείο $script_name δεν βρέθηκε."
-fi
-;;
-
-# Γλώσσες και εντολές που πρέπει να αποκτούν πρόσβαση μέσω CLI περιβάλλοντος
-kronos)
-    bash "$CLI_ROOT/com/kronos/$FILENAME.sh"
-    ;;
-
-redis)
-  redis-cli --auth "yjF1f7uiHttcp"
-  ;;
-
-cubos)
- bash "$CLI_ROOT/com/cubos/$FILENAME.sh"
-;;
-
-git)
-        GIT_SCRIPT="$CLI_ROOT/com/git/$FILENAME.sh"
-
-        if [ -f "$GIT_SCRIPT" ]; then
-            bash "$GIT_SCRIPT"
-            exit $?
+    # ==============================================
+    # Execute Scripts for All Commands
+    # ==============================================
+    all)
+        if [ -n "$FILENAME" ]; then
+            # Loop through all directories in $BASE_DIR
+            for dir in "$BASE_DIR"/*/; do
+                CMD_NAME=$(basename "$dir")  # Get the command name
+                SCRIPT="$dir/$FILENAME.sh"   # Path to the script
+                if [ -f "$SCRIPT" ]; then
+                    echo "▶ Executing $CMD_NAME/$FILENAME.sh..."
+                    bash "$SCRIPT"          # Execute the script
+                else
+                    echo "⚠ Missing script for $CMD_NAME/$FILENAME"
+                fi
+            done
         else
-            echo "❌ Σφάλμα: Το script Git ($GIT_SCRIPT) δεν βρέθηκε."
+            echo "❌ Error: FILENAME is not specified."
             exit 1
         fi
         ;;
-ermis)
-bash "$CLI_ROOT/com/ermis/$FILENAME.sh"
-;;
 
-mars)
-bash "$CLI_ROOT/com/mars/$FILENAME.sh"
-    ;;
+    # ==============================================
+    # Language-Specific Commands
+    # ==============================================
+    php|python|go|node)
+        interpreter="${COMMAND}"        # Store the interpreter name
+        script_name="${FILENAME}"       # Store the script name
+        if [ -f "$script_name" ]; then
+            "${interpreter}" "${script_name}"  # Execute the script
+        else
+            echo "❌ Error: File $script_name not found."
+        fi
+        ;;
 
-god)
-bash "$CLI_ROOT/com/god/$FILENAME.sh"
-    ;;
-composer)
-  su - dros -c "cd '$ROOT/gaia' && composer '$COMMAND'"
-  ;;
-gaia)
-  # Εκτέλεση του PHP script για το Gaia
-  if [ -n "$FILENAME" ]; then
-  # Pass all remaining arguments to the PHP script
-  php "$CLI_ROOT/com/gaia/index.php" "$@"
-  else
-  echo "❌ Σφάλμα: Το FILENAME δεν έχει οριστεί για το Gaia."
-  exit 1
-  fi
-  exit 0
-  ;;
-*)
-    echo "❌ Άγνωστη υπηρεσία CLI για το $COMMAND"
-    exit 1
-    ;;
+    # ==============================================
+    # Custom Commands (Ermis, Mars, God, etc.)
+    # ==============================================
+    domain|ermis|mars|god|kronos|cubos|ws|ai|git)
+            if [ -z "$FILENAME" ]; then
+            echo "❌ Error: FILENAME is not specified for Gaia."
+          else
+            bash "$CLI_ROOT/com/$COMMAND/$FILENAME.sh"  # Execute the custom script
+            exit 1
+           fi
+          exit 0
+         ;;
+    # ==============================================
+    # Redis CLI
+    # ==============================================
+    redis)
+        redis-cli --auth "yjF1f7uiHttcp"  # Connect to Redis with authentication
+        ;;
+
+    # ==============================================
+    # Composer Commands
+    # ==============================================
+    composer)
+        su - dros -c "cd '$ROOT/gaia' && composer '$FILENAME'"  # Run Composer as the 'dros' user
+        ;;
+
+    # ==============================================
+    # Gaia Commands
+    # ==============================================
+    gaia)
+        if [ -n "$FILENAME" ]; then
+            # Pass all arguments to the Gaia PHP script
+            php "$CLI_ROOT/com/gaia/index.php" "$@"
+        else
+            echo "❌ Error: FILENAME is not specified for Gaia."
+            exit 1
+        fi
+        exit 0
+        ;;
+
+    # ==============================================
+    # Unknown Command
+    # ==============================================
+    *)
+        echo "❌ Unknown CLI service: $COMMAND"
+        exit 1
+        ;;
 esac
