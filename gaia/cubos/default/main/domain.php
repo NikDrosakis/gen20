@@ -82,7 +82,7 @@ echo "User ID: " . posix_getuid() . "\n";
 ?>
 
 
-<?php echo $this->synchronizeDomains(); ?>
+<?php //echo $this->synchronizeDomains(); ?>
 <?php //echo $this->renderFileFormList($this->getSSLs(),"GET SSLS")?>
 
 <h3>Integrate existing domain</h3>

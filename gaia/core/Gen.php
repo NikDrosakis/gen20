@@ -2,14 +2,17 @@
 namespace Core;
 use Exception;
 use Wordpress;
-
 /*
-ADMIN Core Class ROUTING
-layout with channels and drag and drop
+PUBLIC & ADMIN WEB UI INSTANCE
+Core Class ROUTING
+layout
+manifestEditor
 abstract database access for use in traits
+wordpress integrated
+magento integrated
 */
 class Gen extends Gaia {
-use  System, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Media, Filemeta, My, Cubo, Template,Book;
+use  System, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Media, Filemeta, My, CuboAdmin, CuboPublic, Template,Book;
 
 protected $database;
 protected $layout_selected;
@@ -196,6 +199,15 @@ protected function executeMethod($method, $param) {
         error_log("Error executing method '$method': " . $e->getMessage());
         return "<p>Error executing method '$method'.</p>";
     }
+}
+
+protected function addHeaderCubo(string $cubo){
+        $title = implode(' ', array_map('ucfirst', explode('.', $cubo)));
+return "<h3>
+<input id='{$cubo}_panel' class='red indicator'>
+<a href='/$cubo'><span class='glyphicon glyphicon-edit'></span>$title</a>
+<button onclick='gs.dd.init()' class='bare toggle-button'>🖱️</button>
+</h3>";
 }
 /**
 $url = SITE_URL.'api/v1/local/buildTable?table=gen_vivalibrocom.main'

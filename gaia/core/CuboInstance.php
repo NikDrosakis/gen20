@@ -35,11 +35,7 @@ class CuboInstance extends Gaia {
             return;
         }
         // Construct the full file path
-        if ($file === 'public.php') {
-            $filePath = CUBO_ROOT . $cubo . '/' . $file;
-        } else {
-            $filePath = CUBO_ROOT . $cubo . '/main/' . $file;
-        }
+        $filePath = CUBO_ROOT . $cubo . '/main/' . $file;
 
         // Determine file type
         $extension = pathinfo($filePath, PATHINFO_EXTENSION);

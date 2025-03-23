@@ -1,8 +1,9 @@
 <?php
 namespace Core;
+use ReflectionMethod;
 
 class Cli extends Gaia {
-use  System, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Media, Filemeta, My, Cubo, Template,Book;
+use  System, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Media, Filemeta, My, CuboPublic, CuboAdmin, Template,Book;
     public $argv=[]; // To store the arguments passed to the script
     public $argc; // Store the argument count
     protected $cliDir = "/var/www/gs/cli"; // Adjust this path as needed
@@ -21,7 +22,58 @@ protected function handleRequest() {
         echo "THIS IS NOT CLI\n";
     }
 }
+/**
+ Comma-separated key-value pairs (e.g., key1=value1,key2=value2).
+  Standalone key-value pairs (e.g., key=value).
+  Standalone parameters (e.g., param4).
+ */
+protected function parseParams($params) {
+    $parsedParams = [];
 
+    foreach ($params as $param) {
+        // Handle comma-separated strings
+        if (strpos($param, ',') !== false) {
+            $parts = explode(',', $param);
+
+            // Check if the parts contain key-value pairs
+            $isAssociative = false;
+            foreach ($parts as $part) {
+                if (strpos($part, '=') !== false) {
+                    $isAssociative = true;
+                    break;
+                }
+            }
+
+            // If it's an associative array (key-value pairs)
+            if ($isAssociative) {
+                foreach ($parts as $part) {
+                    if (strpos($part, '=') !== false) {
+                        list($key, $value) = explode('=', $part, 2);
+                        $parsedParams[$key] = $value;
+                    } else {
+                        $parsedParams[] = $part;
+                    }
+                }
+            }
+            // If it's a simple array (comma-separated values)
+            else {
+                // Add the entire comma-separated string as a single array element
+                $parsedParams[] = $parts;
+            }
+        }
+        // Handle standalone key-value pairs (e.g., key=value)
+        elseif (strpos($param, '=') !== false) {
+            list($key, $value) = explode('=', $param, 2);
+            $parsedParams[$key] = $value;
+        }
+        // Handle standalone parameters (e.g., param4)
+        else {
+            $parsedParams[] = $param;
+        }
+    }
+
+    return $parsedParams;
+}
 
   protected function router() {
      global $argv, $argc;
@@ -38,36 +90,8 @@ protected function handleRequest() {
       // Extract parameters (everything after the method)
       $params = array_slice($argv, 3);
 
-      // Parse parameters into an associative array
-// Parse parameters into an associative array
-$parsedParams = [];
-foreach ($params as $param) {
-    // Handle comma-separated key-value pairs (e.g., key=gen_admin.systems,cols=cols,key2=value2)
-    if (strpos($param, ',') !== false) {
-        // Split the string by commas
-        $pairs = explode(',', $param);
-        foreach ($pairs as $pair) {
-            // Handle key-value pairs separated by '='
-            if (strpos($pair, '=') !== false) {
-                list($key, $value) = explode('=', $pair, 2);
-                $parsedParams[$key] = $value;
-            }
-            // Handle standalone parameters (e.g., param4)
-            else {
-                $parsedParams[] = $pair;
-            }
-        }
-    }
-    // Handle key-value pairs separated by '=' (no commas)
-    elseif (strpos($param, '=') !== false) {
-        list($key, $value) = explode('=', $param, 2);
-        $parsedParams[$key] = $value;
-    }
-    // Handle standalone parameters (e.g., param4)
-    else {
-        $parsedParams[] = $param;
-    }
-}
+    // Parse parameters into an associative array
+    $parsedParams= $this->parseParams($params);
 
       // Call the run method with the method and parsed params
       $this->methodCli($method, $parsedParams);
@@ -97,8 +121,12 @@ foreach ($params as $param) {
         echo json_encode($result);
     }
 
-
-protected function thisCli($argv){
+/**
+Traversing the arguments to find the target property, array value, or method.
+Parsing the remaining arguments into parameters using parseParams.
+Executing the target method with the parsed parameters
+*/
+protected function thisCli($argv) {
     $target = $this;
     $params = [];
 
@@ -113,7 +141,16 @@ protected function thisCli($argv){
         } elseif (is_object($target) && method_exists($target, $key)) {
             // Next argument is a method, remaining args are parameters
             $method = $key;
-            $params = array_slice($argv, $i + 1);
+
+            // Extract the table name (first argument after the method)
+            $tableName = $argv[$i + 1] ?? null;
+            if (!$tableName) {
+                echo "❌ Table name is required for '{$method}' method.\n";
+                exit(1);
+            }
+
+            // Parse the remaining arguments into an associative array
+            $params = $this->parseParams(array_slice($argv, $i + 2));
             break;
         } else {
             echo "❌ No such property or method: '{$key}'\n";
@@ -123,7 +160,13 @@ protected function thisCli($argv){
 
     // If it's a method, execute it
     if (isset($method) && method_exists($target, $method)) {
-        $result = call_user_func_array([$target, $method], $params);
+        // Debug: Print the method name, table name, and parsed params
+        echo "Method: {$method}\n";
+        echo "Table Name: {$tableName}\n";
+        echo "Params: " . print_r($params, true) . "\n";
+
+        // Call the method with the table name and params
+        $result = $target->{$method}($tableName, $params);
 
         if (is_array($result) || is_object($result)) {
             $this->arrayCli($result);  // Format structured output
@@ -139,34 +182,14 @@ protected function thisCli($argv){
         }
     }
 }
+protected function methodCli($method, $parsedParams) {
+    // Debugging: Output the parsed parameters
+    echo "Parsed Parameters:\n";
+    print_r($parsedParams);
 
-protected function methodCli($method, $params) {
-    //var_dump($params);
-
-    // Ensure $params is always an array
-    if (!is_array($params)) {
-        if (is_string($params)) {
-            $params = [$params]; // Convert string to array
-        } elseif (is_object($params) && method_exists($params, '__toString')) {
-            $params = [(string) $params]; // Convert object to string and then to array
-        } else {
-            $params = (array) $params; // Force other types into an array
-        }
-    }
-
-    // Parse key-value pairs in $params
-    $parsedParams = [];
-    foreach ($params as $param) {
-        if (strpos($param, '=') !== false) {
-            list($key, $value) = explode('=', $param, 2);
-            $parsedParams[$key] = $value;
-        } else {
-            $parsedParams[] = $param;
-        }
-    }
-
-    // Check if the method exists and call it with parsed parameters
+    // Check if the method exists
     if (method_exists($this, $method)) {
+        // Call the method with the parsed parameters
         $result = call_user_func_array([$this, $method], $parsedParams);
 
         // If the result is an array or object, use arrayCli to format output

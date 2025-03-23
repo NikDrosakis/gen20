@@ -12,12 +12,13 @@ DOC
 6 steps of creation Domain edited in /admin/developer/domain?id=11 with sql-centered command in COMMENT load-createSSL
 1) zone
 2) ssl
-3) file_system (folder)
+3) file_system (fs)
 4) nginx
 5) maria
+6) PUBLIC basic template
 after the five redirect to
 /admin/developer/globs?mode=setup to add basis data
-6) basic template
+
 */
 protected $domain;
 protected $connection;
@@ -88,8 +89,7 @@ protected $os;
          return $report;
      }
 
-protected function synchronizeDomains(): array
-{
+protected function synchronizeDomains(): array{
     $report = [];
 
     // 1. Get lists of domains from various sources

@@ -302,4 +302,46 @@ protected function generateImg($prompt){
         return preg_replace('/[^a-zA-Z0-9-_\.]/', '', $filename);
     }
 
+
+protected function updateCuboImg($table = '',$name = '') {
+$cubo = is_array($current_cubo) ? $current_cubo['key'] : $current_cubo;
+$db=explode('.',$table)[0];
+
+    $cuboFolder = $db=='gen_admin' ? ADMIN_IMG_ROOT . $cubo . "/" : $this->CUBO_ROOT . $cubo . "/";
+    $publicFilePath = $cuboFolder . "public.php";
+
+    // Validate Cubo folder and file
+    if (!file_exists($publicFilePath)) {
+        throw new Exception("Cubo file not found: " . $publicFilePath);
+    }
+
+    // Generate the HTML output
+    $htmlOutputPath = $cuboFolder . "render.html";
+    $html = $this->include_buffer($publicFilePath);
+
+    if (empty($html)) {
+        throw new Exception("Failed to load HTML from: " . $publicFilePath);
+    }
+
+    // Save the rendered HTML to a file
+    file_put_contents($htmlOutputPath, $html);
+
+    // Define output image path
+    $outputImagePath = $cuboFolder . 'output_' . $cubo . '.png';
+
+    // Use wkhtmltoimage to convert HTML to PNG
+    $command = escapeshellcmd("wkhtmltoimage --quality 90 $htmlOutputPath $outputImagePath");
+    exec($command, $output, $resultCode);
+
+    if ($resultCode !== 0) {
+        throw new Exception("Error executing wkhtmltoimage: " . implode("\n", $output));
+    }
+
+    // Update the database with the new image path
+    $this->db->q("UPDATE $table SET img = ? WHERE name = ?", [$outputImagePath, $cubo]);
+
+    return "Image successfully saved as $outputImagePath";
+}
+
+
 }

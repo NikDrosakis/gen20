@@ -74,15 +74,70 @@ case "$COMMAND" in
         bash "$DAEMON start"            # Start the daemon
         exit 0
         ;;
-    stop)
-        bash "$DAEMON stop"             # Stop the daemon
-        exit 0
-        ;;
     restart)
         bash "$DAEMON restart"         # Restart the daemon
         exit 0
         ;;
-
+    stop)
+        bash "$DAEMON stop"             # Stop the daemon
+        exit 0
+        ;;
+    status)
+           bash "$DAEMON status"           # Check daemon status
+           exit 0
+           ;;
+    ports)
+        netstat -tulnp | grep LISTEN     # Check open ports
+        exit 0
+        ;;
+    find:large)
+      echo "Searching for files >500MB across the system..."
+      sudo find / -type f -size +500M -exec ls -lh {} \; 2>/dev/null
+      exit 0
+      ;;
+    net:info)
+        echo "Fetching detailed network information..."
+        echo "Public IP: $(curl -s ifconfig.me)"
+        echo "DNS Resolvers: $(cat /etc/resolv.conf | grep nameserver)"
+        echo "Active Interfaces:"
+        ip -brief a
+        echo "Open Network Ports:"
+        sudo netstat -tulnp | grep LISTEN
+        exit 0
+        ;;
+    net:speed)
+        echo "Running network speed test..."
+        curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python3 -
+        exit 0
+        ;;
+     history:grep)
+            if [ -z "$FILENAME" ]; then
+                echo "Usage: gen history:grep <keyword>"
+                exit 1
+            fi
+            echo "Searching shell history for '$2'..."
+            history | grep "$2"
+            exit 0
+            ;;
+    top)
+      echo "Showing top 10 processes by CPU usage..."
+      ps -eo pid,user,%cpu,%mem,command --sort=-%cpu | head -n 11
+      exit 0
+      ;;
+    performance)
+        echo "Checking system performance..."
+        echo "CPU Load:"
+        uptime
+        echo "Memory Usage:"
+        free -m
+        echo "Disk Usage:"
+        df -h
+        exit 0
+        ;;
+    log)
+       tail -f /var/log/gen20.log       # Live log monitoring
+       exit 0
+       ;;
     # ==============================================
     # Execute Scripts for All Commands
     # ==============================================
@@ -121,7 +176,72 @@ case "$COMMAND" in
     # ==============================================
     # Custom Commands (Ermis, Mars, God, etc.)
     # ==============================================
-    domain|ermis|mars|god|kronos|cubos|ws|ai|git)
+    domain:nginx)
+        echo "Listing active domains from Nginx..."
+        grep -r "server_name" /etc/nginx/conf.d/ | awk '{print $3}' | tr -d ';'
+        exit 0
+        ;;
+      domain:ssl)
+          echo "Checking active SSL certificates..."
+          sudo ls -1 /etc/letsencrypt/live/
+          exit 0
+          ;;
+        domain:zone)
+            echo "Listing configured BIND zones..."
+            grep -r "zone" /etc/bind/ | awk '{print $2}' | tr -d '"'
+            exit 0
+            ;;
+        maria:dump)
+            echo "Dumping all MariaDB databases..."
+            mysqldump -u root --all-databases > ~/mariadb_backup_$(date +%F).sql
+            echo "Backup saved at ~/mariadb_backup_$(date +%F).sql"
+            exit 0
+            ;;
+          maria:compare)
+              if [ -z "$2" ] || [ -z "$3" ]; then
+                  echo "Usage: gen maria:compare <db1> <db2>"
+                  exit 1
+              fi
+              echo "Comparing MariaDB databases: $2 vs $3..."
+              mysqldump -u root "$2" | grep -v "Dump completed" > /tmp/db1.sql
+              mysqldump -u root "$3" | grep -v "Dump completed" > /tmp/db2.sql
+              diff -u /tmp/db1.sql /tmp/db2.sql
+              exit 0
+              ;;
+            ai)
+              echo "Executing AI process for Gen20..."
+               python3 /var/www/gen20/ai/run_model.py "$2"
+               exit 0
+               ;;
+             elastic)
+                 echo "Fetching Elasticsearch index status..."
+                 curl -s "http://localhost:9200/_cat/indices?v"
+                 exit 0
+                 ;;
+               arango)
+                   echo "Listing ArangoDB collections..."
+                   curl -s -u root:password "http://localhost:8529/_api/collection" | jq '.result[].name'
+                   exit 0
+                   ;;
+                 php:lint)
+                     if [ -z "$2" ]; then
+                         echo "Usage: gen php:lint <file.php>"
+                         exit 1
+                     fi
+                     echo "Linting PHP file: $2"
+                     php -l "$2"
+                     exit 0
+                     ;;
+                   history:grep)
+                       if [ -z "$2" ]; then
+                           echo "Usage: gen history:grep <keyword>"
+                           exit 1
+                       fi
+                       echo "Searching history for '$2'..."
+                       history | grep --color=auto "$2"
+                       exit 0
+                       ;;
+    ermis|mars|god|kronos|cubos|ws|ai|git)
             if [ -z "$FILENAME" ]; then
             echo "❌ Error: FILENAME is not specified for Gaia."
           else
@@ -147,6 +267,31 @@ case "$COMMAND" in
     # ==============================================
     # Gaia Commands
     # ==============================================
+    permissions)
+      echo "▶ Applying permissions to: $ROOT"
+      # Change ownership recursively
+      chown -R dros:dros "$ROOT"
+      # Make everything executable
+      chmod -R +x "$ROOT"
+      echo "✔ Permissions applied successfully!"
+        exit 0
+       ;;
+    help)
+      declare -A COMMAND_SCRIPTS
+      echo "📌 Gen20 CLI - Available Commands"
+        echo "-----------------------------------"
+        for dir in "$BASE_DIR"/*/; do
+            cmd_name=$(basename "$dir")
+            echo "▶ $cmd_name"
+            for script in "$dir"/*.sh; do
+                if [[ -f "$script" ]]; then
+                    subcmd_name=$(basename "$script" .sh)
+                    echo "   ├── $subcmd_name"
+                fi
+            done
+        done
+        exit 0
+          ;;
     gaia)
         if [ -n "$FILENAME" ]; then
             # Pass all arguments to the Gaia PHP script

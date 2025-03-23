@@ -1,112 +1,46 @@
 <?php
 namespace Core;
 use Exception;
-use Imagick;
-use Symfony\Component\Yaml\Yaml;
-/**
- /cubos/[CuboName]/
- ├── [CuboName].php            # Main class file for the Cubo
- ├── main/                     # Directory for main PHP pages
- │   ├── [main1].php           # Each main corresponds to a key in `manifest.yml.mains`
- │   ├── [main2].php
- ├── manifest.yml              # YAML file defining Cubo mains and metadata
- ├── setup.yml                 # Optional: Predefined setup configurations
- ├── sql/                      # Directory for SQL scripts
- │   ├── c_[table1].sql
- │   ├── c_[table2].sql
- ├── output_[CuboName].png     # Optional: Related output/image assets
- ├── tax.json                  # Optional: JSON for taxonomy or configuration
- └── template.pug              # Optional: Templating file
-
-gen_admin.cubo:
-
-Stores high-level details about each Cubo.
-Example:
-php
-Copy
-Edit
-['name' => 'book', 'tables' => 'cat,lib,...', 'mains' => 'book,categories,...']
-publicdb.maingrp:
-
-Groups the mains of a Cubo.
-Insert with cuboid and name from manifest.yml.
-publicdb.main:
-
-Individual mains for each Cubo, linked to maingrp.
-publicdb.maincubo:
-
-Links individual mains with Cubo-level metadata.
-Example:
-php
-Copy
-Edit
-['mainid' => $mainId, 'area' => 'm', 'cuboid' => $cuboId, 'name' => 'book']
-{$this->publicdb}.main:
-
-Stores links to admin functionality for each Cubo.
-Ensure admin link generation aligns with:
-php
-Copy
-Edit
-
-
- created in gen_admin.cubo where is the main mapping of the module
- passed in mains and maincubo
-to maingrp has the group of mains defaults,
-schema
-----------
-gen_admin.cubo  setup
-publicdb.maingrp routes group (linked with cubo)
-publicdb.main: a cubo may have one or multiple mains (linked with maingrp, links)
-publicdb.links the menu links  (linked with linkgrp, parent)
-publicdb.linksgrp just a new menu
-publicdb.maincubo: THE CONSTRUCTION layout with all the cubos build in each page
-{$this->publicdb}.maingrp
-{$this->publicdb}.main
-------------
-1) default is a cubo with login, 404 etc
-2) main(s) are pages by default contains cubo.mains at the m area
-3) cubo is a resource
-
-- admin>layout UI for building mains
-- construction in the maincubo
-- json in main.mainplan
-
-cubos with main cubo => cubo.mains if null just a module in layout construction
-
-cubo --> maingrp --> main (instance of cubo in )--> links (menuid)-->linkgrp (menu) --> maincubo (construction)
-either have links
-required admin.php main maingrp=5
-πέρα απ'το Cubo class που έχει ολα τα διαχειριστικά, βολεύει κάθε Cubo να έχει δικό του
-
-Δημουργία -> σβήσιμο createCubo, setupCubo, totalDeleteCubo
-
-*/
 
 trait Cubo {
 
-/**
-reading manifest.yaml from fs cubos/[cubo]/manifest.yaml
- cubo installation if cubo.mains
-  1) cubo.sql not null foreach cubo.mains as main... mysql > sql/[main].sql and an sql folder sql in publicdb
-  2) cubo.mains not null gen_admin.links include cubos/[cubo]/admin.php page
+protected function syncFSCubo($fsPath) {
+    // Scan the FS for cubo files
+    $cuboFiles = glob($fsPath . '/*.json'); // Assuming JSON files for cubo data
 
- Moreover if cubo.main NOT EMPTY
- -----------------------------------------
-  1) $this->db->inse($this->publicdb.".maingrp",array); array= cuboid=cubo.id, name=cubo.name  return [insertedid]
-  2) foreach yaml.mains as  $this->db->inse($this->publicdb.".main",array); array= maingrpid=[insertedid], name=cubo.main return []insertedmainid]
-cubo.name > yaml.maykey split _ 0
-  3) check if has links if checked $this->db->inse($this->publicdb.".links",array); array= links.title= ucFirst(cubo.name)
-  4) foreach yaml.mains  $this->db->inse($this->publicdb.".maincubo",array); array=maincubo.mainid=[insertedmainid],maincubo.area='m', maincubo.cuboid=yaml.id, maincubo.name=cubo.name
- */
+    foreach ($cuboFiles as $file) {
+        // Read the JSON file
+        $cuboData = json_decode(file_get_contents($file), true);
+
+        if ($cuboData) {
+            // Check if the cubo already exists in the database
+            $cuboId = $cuboData['id'] ?? null;
+            $existingCubo = $this->getCuboById($cuboId);
+
+            if ($existingCubo) {
+                // Update the existing cubo
+                $this->updateCubo($cuboData);
+                echo "Updated cubo: {$cuboData['name']}\n";
+            } else {
+                // Insert a new cubo
+                $this->insertCubo($cuboData);
+                echo "Inserted new cubo: {$cuboData['name']}\n";
+            }
+        }
+    }
+}
+
+protected function getCuboById($id) {
+    return $this->db->f("SELECT * FROM gen_admin.cubo WHERE id = ?", [$id]);
+}
 
 protected function addHeaderCubo(string $cubo){
         $title = implode(' ', array_map('ucfirst', explode('.', $cubo)));
 return "<h3>
-                                         <input id='{$cubo}_panel' class='red indicator'>
-                                         <a href='/$cubo'><span class='glyphicon glyphicon-edit'></span>$title</a>
-                                         <button onclick='gs.dd.init()' class='bare toggle-button'>🖱️</button>
-                                     </h3>";
+<input id='{$cubo}_panel' class='red indicator'>
+<a href='/$cubo'><span class='glyphicon glyphicon-edit'></span>$title</a>
+<button onclick='gs.dd.init()' class='bare toggle-button'>🖱️</button>
+</h3>";
 }
 
 protected function include_cubofile(string $file){
@@ -130,9 +64,9 @@ $file = is_array($file) ? $file['key'] : $file;
  /**
   A manifest.yml is started in a new folder with the basic configuration files
   */
-protected function createCubo(string $name): bool|int {
+protected function addMainCubo(string $name): bool|int {
     //Step 1 -  Create folder and files
-    $cuboDir = CUBO_ROOT . $name . '/';
+    $cuboDir = CUBO_ROOT . $name . '/main';
     if (!mkdir($cuboDir, 0777, true)) {
         return false;
     }
@@ -186,10 +120,19 @@ if (file_put_contents($manifestFilePath, $manifestContent) === false) {
 After edited the manifest.yml file & the sql files are created
  @setupCubo all db mains & sql installation
  */
-protected function setupCubo($name = '') {
+
+protected function setupInDomainCubo($domain='', $name = '') {
+
+
+}
+/**
+based on yaml
+
+ */
+protected function createYaml2Cubo($name = '') {
     $cuboDir = CUBO_ROOT . $name . '/';
     $setupPath = $cuboDir . 'manifest.yml';
-        xecho(GLOB("$cuboDir*"));
+      //  xecho(GLOB("$cuboDir*"));
     // Check if manifest.yml exists
     if (!file_exists($setupPath)) {
         throw new Exception("Setup file not found for cubo: $name");
@@ -490,70 +433,6 @@ protected function getCubos(): array
         return $this->db->q('DELETE FROM gen_admin.cubos WHERE name =?',[$id]);
     }
 
-    // Example of using proc_open() for shell execution and logging
-    protected function runShellCommand(string $command): array {
-        $descriptors = [
-            0 => ['pipe', 'r'],  // STDIN
-            1 => ['pipe', 'w'],  // STDOUT
-            2 => ['pipe', 'w']   // STDERR
-        ];
-
-        // Open the process
-        $process = proc_open($command, $descriptors, $pipes);
-
-        if (!is_resource($process)) {
-            throw new \Exception('Could not start process.');
-        }
-
-        // Get the output and error streams
-        $output = stream_get_contents($pipes[1]);
-        fclose($pipes[1]);
-
-        $errorOutput = stream_get_contents($pipes[2]);
-        fclose($pipes[2]);
-
-        // Close the process and get the exit code
-        $returnCode = proc_close($process);
-
-        // Log the command and the results
-        $this->logShellExecution($command, $output, $errorOutput, $returnCode);
-
-        return [
-            'output' => $output,
-            'error' => $errorOutput,
-            'status' => $returnCode
-        ];
-    }
-
-    // Log shell command executions for auditing purposes
-    protected function logShellExecution(string $command, string $output, string $error, int $status): void {
-        $logData = [
-            'command' => $command,
-            'output' => $output,
-            'error' => $error,
-            'status' => $status,
-            'timestamp' => date('Y-m-d H:i:s')
-        ];
-
-        file_put_contents('/var/log/admin_shell_log.txt', json_encode($logData, JSON_PRETTY_PRINT), FILE_APPEND);
-    }
-
-    // Example: Update a widget using shell commands (for demo)
-    protected function updateWidgetWithShell(int $id, array $data): bool {
-        // Perform some update logic
-        $updateStatus = $this->updateWidget($id, $data);
-
-        // Run shell command (example)
-        $command = 'echo "Widget ' . $id . ' updated"';
-        $result = $this->runShellCommand($command);
-
-        // Check for any shell errors
-        if ($result['status'] !== 0) {
-            throw new \Exception('Shell command failed: ' . $result['error']);
-        }
-
-        return $updateStatus;
-    }
 
 protected function renderCubo($cubo) {
     try {
@@ -564,7 +443,6 @@ protected function renderCubo($cubo) {
         } else {
             $url = SITE_URL . "cubos/index.php?cubo=$cubo&file=public.php";
         }
-
         // Fetch the URL with the correct cubo and file
         $response = $this->fetchUrl($url);
 
@@ -587,92 +465,6 @@ protected function renderCubo($cubo) {
     }
 }
 
-/**
- * Renders a section containing multiple cubos.
- */
-protected function renderCubos($pc, $area){
-    echo "<div id=\"$area\">";
-        if (!empty($pc[$area]) && is_array($pc[$area])) {  // 🔹 Ensure it's an array
-            foreach ($pc[$area] as $cubo) {
-                echo "<div class=\"cubo\">";
-                try {
-                    //$this->safeInclude(CUBO_ROOT . $cubo . "/public.php", "Error loading $cubo");
-                    //$this->safeInclude(CUBO_ROOT . $cubo . "/public.php", "Error loading $cubo");
-                    $this->renderCubo($cubo);
-                } catch (\Throwable $e) {
-                    echo "<!-- Error: " . $e->getMessage() . " -->";
-                }
-                echo "</div>";
-            }
-        }
-    echo "</div>";
-}
-
-
-    protected function buildCubo(string $name){
-      $cubo= $this->getCubo($name);
-      if(!$cubo['mains']){
-      include CUBO_ROOT.$name."/public.php";
-      }else{
-      include CUBO_ROOT.$name."/mains/$name.php";
-      }
-    }
-    // Other methods (existing)...
-
-protected function getUsers() {
-        return $this->db->fa("SELECT * FROM {$this->publicdb}.user");
-    }
-
-    protected function postlist(){
-
-        $orderby = !empty($_COOKIE['orderby']) ? $_COOKIE['orderby'] : "post.sort";
-        //pagination
-        //$pagin=$bot->is('pagin'); //pagination num of result for each page
-        $pagin=12; //pagination num of result for each page
-        $limit= " LIMIT ".(($_GET['page'] - 1) * $pagin).",$pagin";
-
-        $q=!empty($_GET['q']) ? $_GET['q']: '';
-        $qq=$q!="" ? "WHERE post.title LIKE '%$q%'
-            OR user.name LIKE '%$q%'
-            OR tax.name LIKE '%$q%' "
-            :"";
-
-        $sub= isset($_GET['sub']) ? $_GET['sub']:'';
-        $taxQ= $sub!="" ? "WHERE tax.name='$sub'":"";
-        $query= "SELECT post.*,tax.name as taxname,user.name as username FROM post
-        LEFT JOIN user ON post.uid=user.id LEFT JOIN tax ON post.taxid=tax.id $taxQ GROUP BY post.id ORDER BY $orderby";
-
-        $sel= $db->fa("$query $limit");
-        $buffer['count']= count($db->fa($query));
-        if(empty($_COOKIE['list_style']) || $_COOKIE['list_style']=='table'){
-            $buffer['html']=include_buffer($this->SITE_ROOT."post_loop_table.php",$sel);
-        }elseif($_COOKIE['list_style']=='archieve'){
-            $buffer['html']=include_buffer($this->SITE_ROOT."post_loop_archive.php",$sel);
-        }
-        return json_encode($buffer);
-
-        }
-
-        // Method to retrieve comments for a specific type and ID
-       protected function getComments($type = 'book') {
-            $sel = $this->db->fa("SELECT comment.*, CONCAT(user.firstname, ' ', user.lastname) AS fullname, user.img
-              FROM {$this->publicdb}.comment
-              LEFT JOIN user ON comment.uid=user.id
-              WHERE comment.type=? AND comment.typeid=? AND comment.reply_id=0
-              ORDER BY comment.created DESC", [$type, $_GET['id']]);
-            // Insert replies into comments
-            if (!empty($sel)) {
-                foreach ($sel as $i => $comment) {
-                    $sel[$i]['replies'] = $this->db->fa("SELECT comment.*, CONCAT(user.firstname,' ',user.lastname) AS fullname, user.img
-                                                         FROM {$this->publicdb}.comment
-                                                         LEFT JOIN user ON comment.uid=user.id
-                                                         WHERE comment.reply_id=?
-                                                         ORDER BY comment.created DESC", [$comment['id']]);
-                }
-            }
-            return $sel;
-        }
-
 protected function getMaincubo($pageName = '') {
     $page = is_array($pageName) ? $pageName['key'] : ($pageName !== '' ? $pageName : $this->page);
     $list = [];
@@ -692,47 +484,4 @@ protected function getMaincubo($pageName = '') {
 }
 
 
-
-//yaml methods
-
-protected function loadConfig($filePath) {
-    return Yaml::parseFile($filePath);
 }
-
-protected function sendWsNotification($message) {
-    $wsUrl = "wss://".$_SERVER['SERVER_NAME'].":3010/?userid=1";
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $wsUrl);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $message);
-    curl_exec($ch);
-    curl_close($ch);
-}
-
-protected function executeCuboAction($action) {
-    $config = loadConfig(__DIR__ . '/../configs/cubo_example.yml');
-
-    switch ($action) {
-        case 'setup':
-            $this->db->exec($config['setup']['sql']);
-            echo "Setup Complete: " . $config['description'];
-            sendWsNotification($config['notifications']['ws']);
-            break;
-        case 'update':
-            $this->db->exec($config['update']['sql']);
-            echo $config['update']['message'];
-            sendWsNotification($config['notifications']['ws']);
-            break;
-        case 'uninstall':
-            $this->db->exec($config['uninstall']['sql']);
-            echo $config['uninstall']['message'];
-            break;
-        default:
-            echo "Invalid action.";
-    }
-}
-
-
-
-}
-
