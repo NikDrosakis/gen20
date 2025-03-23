@@ -7,14 +7,16 @@ use GuzzleHttp\Exception\RequestException;
 
 trait Domain {
 /**
+aka Dom
 DOC
 ===
 6 steps of creation Domain edited in /admin/developer/domain?id=11 with sql-centered command in COMMENT load-createSSL
-1) zone
+1) trait DomainZone
 2) ssl
-3) file_system (fs)
-4) nginx
-5) maria
+3) trait DomainFS gs/gaia/public/[domain] fs
+4) trait DomainServer nginx
+5) maria gen_[domain]
++
 6) PUBLIC basic template
 after the five redirect to
 /admin/developer/globs?mode=setup to add basis data
@@ -25,6 +27,8 @@ protected $connection;
 protected $os;
   protected $vhostfile;
   protected $hostfile;
+
+
 
 /**
      * Synchronizes the domain records in the database with the actual system state and generates a detailed report.

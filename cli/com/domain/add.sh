@@ -68,46 +68,9 @@ echo -e "RewriteEngine On\nRewriteBase /\nDirectoryIndex index.php index.html\nR
 #4 TEMPLATE move myblog to template
 sudo cp -R $gaiafolder/myblog /var/www/$domain/templates
 
-#5 WEBSERVER set virtual host for apache2 or for nginx
-if [ $webserver="apache" ]; then
-sudo cat <<EOF >> /var/www/apache/$domain.conf
-<VirtualHost *:443>
-Protocols h2 http/1.1
-ServerAdmin $email
-ServerName $domain
-ServerAlias $domain
-DocumentRoot "/var/www/$domain"
-Alias "/gaia" "/var/www/gaia"
-Alias "/gitweb" "/usr/share/gitweb"
-<Directory />
-AllowOverride All
-Require all granted
-</Directory>
-<Directory /var/www/$domain/>
-Options Indexes FollowSymLinks
-AllowOverride all
-Require all granted
-</Directory>
-ErrorLog /var/www/logs/$domain-error.log
-CustomLog /var/www/logs/$domain-access.log combined
-SSLEngine on
-SSLCertificateFile /etc/letsencrypt/live/$domain/fullchain.pem
-SSLCertificateKeyFile /etc/letsencrypt/live/$domain/privkey.pem
- <FilesMatch "\.(cgi|shtml|phtml|php)$">
-SSLOptions +StdEnvVars
-</FilesMatch>
-<Directory /usr/lib/cgi-bin>
-SSLOptions +StdEnvVars
-</Directory>
-BrowserMatch "MSIE [2-6]" \
-nokeepalive ssl-unclean-shutdown \
-downgrade-1.0 force-response-1.0
-</VirtualHost>
-EOF
-sudo a2ensite $domain".conf"
 
-elif [ $webserver="apache" ]; then
-sudo cat <<EOF >> /var/www/nginx/$domain
+elif [ $webserver="nginx" ]; then
+sudo cat <<EOF >> /var/www/nginx/conf.d/$domain
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
@@ -118,7 +81,7 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/$domain/privkey.pem;
 
    location ~* \.php$ {
-   fastcgi_pass unix:/run/php/php7.2-fpm.sock;
+   fastcgi_pass unix:/run/php/php8.2-fpm.sock;
    include         fastcgi_params;
 	expires 30d;
 	proxy_pass https://192.168.2.2:8443;

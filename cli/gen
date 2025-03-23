@@ -186,11 +186,6 @@ case "$COMMAND" in
           sudo ls -1 /etc/letsencrypt/live/
           exit 0
           ;;
-        domain:zone)
-            echo "Listing configured BIND zones..."
-            grep -r "zone" /etc/bind/ | awk '{print $2}' | tr -d '"'
-            exit 0
-            ;;
         maria:dump)
             echo "Dumping all MariaDB databases..."
             mysqldump -u root --all-databases > ~/mariadb_backup_$(date +%F).sql
@@ -241,15 +236,16 @@ case "$COMMAND" in
                        history | grep --color=auto "$2"
                        exit 0
                        ;;
-    ermis|mars|god|kronos|cubos|ws|ai|git)
-            if [ -z "$FILENAME" ]; then
-            echo "❌ Error: FILENAME is not specified for Gaia."
-          else
-            bash "$CLI_ROOT/com/$COMMAND/$FILENAME.sh"  # Execute the custom script
-            exit 1
-           fi
-          exit 0
-         ;;
+chat|domain|ermis|mars|god|kronos|cubos|ws|ai|git)
+    if [ -z "$FILENAME" ]; then
+        echo "❌ Error: FILENAME is not specified for $COMMAND."
+    else
+        # Execute the custom script and pass all additional arguments
+        bash "$CLI_ROOT/com/$COMMAND/$FILENAME.sh" "$@"
+        exit 1
+    fi
+    exit 0
+    ;;
     # ==============================================
     # Redis CLI
     # ==============================================

@@ -3,22 +3,27 @@ namespace Core;
 use Exception;
 
 trait CuboPublic {
-
-
-
 /**
-After edited the manifest.yml file & the sql files are created
- @setupCubo all db mains & sql installation
-aka CP
+aka CP based on domain
 db gen_localost data installed from gen_admin tables main, maincubo, maingrp
 and constructs the web UI of any domain
+CA in Layout provides all cubos with their mains
+τώρα το maingrp κάνει τη διαδικασία το οποίο χρησιμοποιείται
+μόνο για grouparisma σε usergrps
 
-1) installCuboPublic($domain)
+custom domain: gen_localhost
+1) addCP
+2) delCP
+3) renderCubo
+4) genMaincubo
+- addPageCA
+- delPageCA
+- maintainCA
+- backupCA
+
 */
-
-protected function addCP($domain='', $name = '') {
-
-
+protected function addPagegrpCP($domain='', $name = '') {
+echo "add cubo to maingrp, copies cubo to ";
 }
 
 protected function delCP(string $domain='',string $name): bool {
@@ -39,7 +44,6 @@ protected function delCP(string $domain='',string $name): bool {
         echo "Error deleting database entries for `$name`: " . $e->getMessage() . "\n";
         return false;
     }
-
     // Step 2: Drop the table(s) (if applicable)
     try {
         if ($this->drop("$name", 'table')) {

@@ -1,26 +1,23 @@
 <?php
 namespace Core;
 use Exception;
+
+trait CuboAdmin {
 /**
 db gen_admin data received from API
-tables cubo, cubo_default, cubo_mains, cubo_ver
+tables cubo, cubo_default, cuboviews, cubo_ver
 and viewed in layout and manifest Editor
-
-addCA
-delCA
-addMainCA
-delMainCA
-maintainCA
+- addCA
+- delCA
+- addMainCA
+- delMainCA
+- maintainCA
+- backupCA
 
 fs and db
 
 
 */
-trait CuboAdmin {
- /**
- aka CA
-  A manifest.yml is started in a new folder with the basic configuration files
-  */
 protected function addMainCA(string $cuboname, int $cuboid, string $mainame) {
     // Validate $cuboid
     if (!is_int($cuboid)) {
@@ -29,7 +26,7 @@ protected function addMainCA(string $cuboname, int $cuboid, string $mainame) {
     }
 
     // Step 1 - Create main entry in the database
-    $mainid = $this->db->inse("gen_admin.cubo_main", ["name" => "$cuboname.$mainame", "cuboid" => $cuboid]);
+    $mainid = $this->db->inse("gen_admin.cuboview", ["name" => "$cuboname.$mainame", "cuboid" => $cuboid]);
 
     if ($mainid) {
         $cuboDir = CUBO_ROOT . $cuboname . '/main';
@@ -69,7 +66,7 @@ protected function delMainCA(string $cuboname, int $cuboid, string $mainame) {
         return false;
     }
 // Step 1 - Create main entry in the database
-    $delmainid = $this->db->q("DELETE FROM gen_admin.cubo_main where name='$cuboname.$mainame' AND cuboid=$cuboid");
+    $delmainid = $this->db->q("DELETE FROM gen_admin.cuboview where name='$cuboname.$mainame' AND cuboid=$cuboid");
     if(!$delmainid){
      echo "❌ Failed to delete main: $cuboname\n";
         return false;
@@ -208,14 +205,14 @@ protected function maintainCA(): void {
 
                 // Check if the main file exists in the database
                 $mainExists = $this->db->f(
-                    "SELECT id FROM gen_admin.cubo_main WHERE name = ? AND cuboid = ?",
+                    "SELECT id FROM gen_admin.cuboview WHERE name = ? AND cuboid = ?",
                     ["$cuboname.$mainame", $cuboid]
                 )['id'];
 
                 if (!$mainExists) {
                     // Main file exists in FS but not in DB
                     echo "❌ Main file '$mainame' exists in FS but not in DB. Adding to DB...\n";
-                    $mainid = $this->db->inse("gen_admin.cubo_main", [
+                    $mainid = $this->db->inse("gen_admin.cuboview", [
                         "name" => "$cuboname.$mainame",
                         "cuboid" => $cuboid
                     ]);
@@ -234,7 +231,7 @@ protected function maintainCA(): void {
 
         // Step 4: Check the database for missing files
         $dbMains = $this->db->fa(
-            "SELECT name FROM gen_admin.cubo_main WHERE cuboid = ?",
+            "SELECT name FROM gen_admin.cuboview WHERE cuboid = ?",
             [$cuboid]
         );
 
@@ -320,7 +317,7 @@ protected function backupCA(): void {
 
     // Step 2: Backup the database
     $backupSqlFile = $backupDir . '/cubo_db_backup.sql';
-    $tables = ['gen_admin.cubo', 'gen_admin.cubo_main']; // Add other tables if needed
+    $tables = ['gen_admin.cubo', 'gen_admin.cuboview']; // Add other tables if needed
 
     $sqlDump = '';
     foreach ($tables as $table) {
