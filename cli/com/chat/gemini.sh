@@ -9,7 +9,7 @@ echo "Arguments passed: $@"
 echo "First argument: $1"
 
 # Αν το πρώτο όρισμα είναι κενό, κάνουμε έλεγχο
-if [ -z "$1" ]; then
+if [ -z "$3" ]; then
   echo "Πρέπει να δώσεις μήνυμα ως πρώτο όρισμα."
   exit 1
 fi
@@ -19,7 +19,7 @@ API_URL="https://vivalibro.com/apy/v1/gemini/conversation"
 CONVERSATIONID="1"
 
 # Αποστολή μηνύματος
-message="$1"
+message="$3"
 echo "Sending message: $message"
 
 # Χρήση του jq για την αποστολή του μηνύματος

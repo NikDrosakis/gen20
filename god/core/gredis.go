@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"time"
 	"os"
-		"github.com/joho/godotenv"
+
+	"github.com/joho/godotenv"
 	"github.com/go-redis/redis/v8"
 )
+
 // Gredis struct to encapsulate Redis client
 type Gredis struct {
 	client *redis.Client
@@ -22,8 +24,8 @@ func NewGredis() (*Gredis, error) {
 
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     os.Getenv("REDIS_URI"), // REDIS_URL should be set in your .env file
-		Password: "yjF1f7uiHttcp",         // No password by default, adjust if needed
-		DB:       0,                      // Use default DB
+		Password: "yjF1f7uiHttcp",       // No password by default, adjust if needed
+		DB:       2,                      // Use default DB
 	})
 
 	ctx := context.Background()
@@ -38,63 +40,58 @@ func NewGredis() (*Gredis, error) {
 	}, nil
 }
 
+// Get retrieves a value from Redis
+func (g *Gredis) Get(key string) (string, error) {
+	val, err := g.client.Get(g.ctx, key).Result()
+	if err == redis.Nil {
+		return "", nil // Key doesn't exist (not treated as error)
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to get key %s: %w", key, err)
+	}
+	return val, nil
+}
+
 // Set sets a key with a value, handling different types
-func (g *Gredis) Set(key string, fetch interface{}, options ...time.Duration) error {
-	if fetch == nil {
+func (g *Gredis) Set(key string, value interface{}, expiration int) error {
+	if value == nil {
 		return fmt.Errorf("value to set cannot be nil")
 	}
 
-	var setOptions *redis.SetArgs
-	if len(options) > 0 {
-		setOptions = &redis.SetArgs{
-			Mode: "XX",
-			TTL: options[0],
-		}
-	}
+	var err error
+	exp := time.Duration(expiration) * time.Second
 
-	switch v := fetch.(type) {
-	case int:
-		err := g.client.Set(g.ctx, key, v, 0).Err()
-		if err != nil {
-			return fmt.Errorf("failed to set int value: %w", err)
-		}
-	case []interface{}:
-		jsonValue, err := json.Marshal(v)
-		if err != nil {
-			return fmt.Errorf("failed to marshal array to json: %w", err)
-		}
-		err = g.client.SetEX(g.ctx, key, jsonValue, 1000*time.Second).Err() // Corrected line
-		if err != nil {
-			return fmt.Errorf("failed to set json value: %w", err)
-		}
+	switch v := value.(type) {
 	case string:
 		if IsJSON(v) {
-			err := g.client.Set(g.ctx, key, v, 0).Err()
-			if err != nil {
-				return fmt.Errorf("failed to set json string value: %w", err)
-			}
+			// Store JSON strings directly
+			err = g.client.Set(g.ctx, key, v, exp).Err()
 		} else {
-			err := g.client.Set(g.ctx, key, v, 0).Err()
-			if err != nil {
-				return fmt.Errorf("failed to set string value: %w", err)
-			}
+			// Escape regular strings to ensure proper storage
+			err = g.client.Set(g.ctx, key, v, exp).Err()
 		}
+	case []byte:
+		err = g.client.Set(g.ctx, key, v, exp).Err()
 	default:
-		err := g.client.Set(g.ctx, key, fmt.Sprintf("%v", v), 0).Err()
+		// Marshal other types to JSON
+		jsonValue, err := json.Marshal(v)
 		if err != nil {
-			return fmt.Errorf("failed to set value: %w", err)
+			return fmt.Errorf("failed to marshal value: %w", err)
 		}
+		err = g.client.Set(g.ctx, key, jsonValue, exp).Err()
 	}
 
-	if setOptions == nil {
-		err := g.client.Persist(g.ctx, key).Err()
-		if err != nil {
-			return fmt.Errorf("failed to persist key: %w", err)
-		}
+	if err != nil {
+		return fmt.Errorf("failed to set key %s: %w", key, err)
 	}
-
 	return nil
 }
+
+// SetEx sets a key with expiration (explicit version)
+func (g *Gredis) SetEx(key string, value interface{}, expiration time.Duration) error {
+	return g.client.Set(g.ctx, key, value, expiration).Err()
+}
+
 // Keys retrieves all keys matching a given pattern
 func (g *Gredis) Keys(pattern string) ([]string, error) {
 	keys, err := g.client.Keys(g.ctx, pattern).Result()
@@ -103,6 +100,12 @@ func (g *Gredis) Keys(pattern string) ([]string, error) {
 	}
 	return keys, nil
 }
+
+// Close terminates the Redis connection
+func (g *Gredis) Close() error {
+	return g.client.Close()
+}
+
 // Helper function to check if a string is JSON
 func IsJSON(str string) bool {
 	var js json.RawMessage

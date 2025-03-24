@@ -814,10 +814,9 @@ protected function runExternalRecource(array $rec){
 
                     $options['body'] = $bodyData;
                 }
-//xecho( $rec['endpoint_rendered']);
 
                 // Perform the request
-                $response = $this->fetchUrl($rawurl, $options);
+                $response = $this->fetchExtUrl($rawurl, $options);
 
                 // Return the response if successful
                 return $response;

@@ -97,13 +97,11 @@ protected function renderCubo($cubo) {
 protected function getMaincubo($pageName = '') {
     $page = is_array($pageName) ? $pageName['key'] : ($pageName !== '' ? $pageName : $this->page);
     $list = [];
-
     // Ensure we fetch multiple rows
-    $fetch = $this->db->fa("SELECT maincubo.area,maincubo.method, maincubo.name as cubo
+    $fetch = $this->db->fa("SELECT maincubo.area,maincubo.method, main.name as cubo
         FROM {$this->publicdb}.maincubo
         LEFT JOIN {$this->publicdb}.main ON main.id = maincubo.mainid
         WHERE main.name = ?", [$page]);
-
     if (!empty($fetch) && is_array($fetch)) {
         foreach ($fetch as $row) {
             $list[$row['area']][$row['method']] = $row['cubo'];

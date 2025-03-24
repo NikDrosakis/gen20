@@ -21,7 +21,6 @@ class Messenger {
             }else{
                 verba=results.verba;
             }
-    //
             return {
                 system: results.system || '*',  // The target system for the message
                 execute: results.execute, // JavaScript command to be executed in the browser
@@ -41,7 +40,6 @@ class Messenger {
                 console.warn(`Skipping invalid statement or domappend: ${statement}`);
                 return '';
             }
-
             // Fetch SQL values dynamically using the 'statement'
             const statementResults = await mariapublic.fetch(statement);
             const results = {};

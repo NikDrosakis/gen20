@@ -7,6 +7,12 @@ use GuzzleHttp\Exception\GuzzleException;
 trait Url {
 public $httpClient;
 
+/**
+ TODO cubo method `gen god getUrl [url]` to replace fetchUrl
+ */
+protected function getUrl(string $url, array $options = []) {
+
+}
 protected function fetchUrl(string $url, array $options = []) {
     $this->httpClient = new Client();
     $cacheKey = 'cubo_' . md5($url . json_encode($options)); // Unique cache key
@@ -50,6 +56,62 @@ protected function fetchUrl(string $url, array $options = []) {
             }
 
             // Store raw content (HTML or others) in Redis
+            $this->redis->set($cacheKey, $body, 1000);
+            return $body;
+        } else {
+            return ["error" => "HTTP error! Status: $statusCode"];
+        }
+    } catch (GuzzleException $e) {
+        return ["error" => "Fetch error: " . $e->getMessage()];
+    }
+}
+
+protected function fetchExtUrl(string $url, array $options = []) {
+    $this->httpClient = new Client();
+    $cacheKey = 'cubo_' . md5($url . json_encode($options)); // Unique cache key
+
+    // Try fetching from Redis cache
+    $cachedResponse = $this->redis->get($cacheKey);
+    if ($cachedResponse !== false) {
+        return $cachedResponse;
+    }
+
+    try {
+        if (!empty($_GET)) {
+            $queryString = http_build_query($_GET);
+            $url .= (strpos($url, '?') === false ? '?' : '&') . $queryString;
+        }
+
+        // If it's a GET request, remove the body
+        if (($options['method'] ?? 'GET') === 'GET') {
+            unset($options['body']);
+        }
+
+        // Fix: Use 'json' instead of manually encoding the body
+        $requestOptions = [
+            'headers' => $options['headers'] ?? [],
+        ];
+        if (isset($options['body'])) {
+            $requestOptions['json'] = json_decode($options['body'], true); // Proper JSON encoding
+        }
+
+        $response = $this->httpClient->request(
+            $options['method'] ?? 'GET',
+            $url,
+            $requestOptions
+        );
+
+        $statusCode = $response->getStatusCode();
+        if ($statusCode >= 200 && $statusCode < 300) {
+            $contentType = $response->getHeaderLine('Content-Type');
+            $body = $response->getBody()->getContents();
+
+            if (strpos($contentType, 'application/json') !== false) {
+                $decodedBody = json_decode($body, true);
+                $this->redis->set($cacheKey, $decodedBody, 1000); // Store JSON response in Redis
+                return $decodedBody;
+            }
+
             $this->redis->set($cacheKey, $body, 1000);
             return $body;
         } else {

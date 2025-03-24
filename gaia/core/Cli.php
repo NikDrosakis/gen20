@@ -98,7 +98,6 @@ protected function parseParams($params) {
 
   }
 
-
   protected function shell($method) {
         // Run the shell command using shell_exec
 
@@ -182,16 +181,13 @@ protected function thisCli($argv) {
         }
     }
 }
-protected function methodCli($method, $parsedParams) {
-    // Debugging: Output the parsed parameters
-    echo "Parsed Parameters:\n";
-    print_r($parsedParams);
 
+protected function methodCli($method, $parsedParams) {
     // Check if the method exists
     if (method_exists($this, $method)) {
         // Call the method with the parsed parameters
-        $result = call_user_func_array([$this, $method], $parsedParams);
-
+        //$result = call_user_func_array([$this, $method], $parsedParams);
+        $result = $this->$method($parsedParams);
         // If the result is an array or object, use arrayCli to format output
         if (is_array($result) || is_object($result)) {
             $this->arrayCli($result);
@@ -202,7 +198,6 @@ protected function methodCli($method, $parsedParams) {
         echo "❌ Method not found: '{$method}'\n";
         exit(1);
     }
-
     return $result;
 }
 

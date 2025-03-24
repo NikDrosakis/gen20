@@ -9,12 +9,12 @@ BASE_DIR="$CLI_ROOT/com"
 
 # Standardized log function
 log() {
-    echo "[${BASH_SOURCE[0]}:${LINENO}] [LOG] $1"
+    echo "[${BASH_SOURCE[1]}:${LINENO}] [LOG] $1"
 }
 
 # Standardized error function
 error() {
-    echo "[${BASH_SOURCE[0]}:${LINENO}] [ERROR] $1" >&2
+    echo "[${BASH_SOURCE[1]}:${LINENO}] [ERROR] $1" >&2
     exit 1
 }
 

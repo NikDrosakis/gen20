@@ -1,4 +1,19 @@
 #!/bin/bash
+# Standardized log function
+log() {
+    echo "[${BASH_SOURCE[0]}:${LINENO}] [LOG] $1"
+}
+
+# Function to check if a service is active
+check_service() {
+    local service_name="$3"
+    log "Checking service: $service_name"
+    if systemctl is-active --quiet "$service_name"; then
+        log "✅ $service_name is running"
+    else
+        error "❌ $service_name is NOT running"
+    fi
+}
 
 # Check if required services are running
 check_service "nginx"

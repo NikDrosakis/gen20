@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==================================================
-# gen20 CLI Manager
+# gen20 CLI v1
 # ==================================================
 # A command-line interface (CLI) for managing various services, scripts, and tasks
 # within the gen20 ecosystem. This script acts as a central entry point for executing
@@ -30,6 +30,10 @@ PID_FILE="/tmp/gen-daemon.pid"          # PID file for the daemon
 LOG_FILE="/var/www/gs/log/gen20.log"    # Log file for the CLI
 DAEMON="$BG_DIR/daemon-update.sh"       # Path to the daemon script
 BASE_DIR="$CLI_ROOT/com"                # Base directory for command scripts
+# ==================================================
+# Measure Execution Time
+# ==================================================
+START_TIME=$(date +%s%N) # Capture start time in nanoseconds
 
 # ==================================================
 # Load Environment Variables
@@ -86,6 +90,10 @@ case "$COMMAND" in
            bash "$DAEMON status"           # Check daemon status
            exit 0
            ;;
+    wget)
+    wget -r -l 1 -A.html -P $ROOT/$3 https://$FILENAME
+    exit 0
+    ;;
     ports)
         netstat -tulnp | grep LISTEN     # Check open ports
         exit 0
@@ -107,7 +115,7 @@ case "$COMMAND" in
         ;;
     net:speed)
         echo "Running network speed test..."
-        curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python3 -
+        speetest
         exit 0
         ;;
      history:grep)
@@ -179,18 +187,15 @@ case "$COMMAND" in
     domain:nginx)
         echo "Listing active domains from Nginx..."
         grep -r "server_name" /etc/nginx/conf.d/ | awk '{print $3}' | tr -d ';'
-        exit 0
         ;;
       domain:ssl)
           echo "Checking active SSL certificates..."
           sudo ls -1 /etc/letsencrypt/live/
-          exit 0
           ;;
         maria:dump)
             echo "Dumping all MariaDB databases..."
             mysqldump -u root --all-databases > ~/mariadb_backup_$(date +%F).sql
             echo "Backup saved at ~/mariadb_backup_$(date +%F).sql"
-            exit 0
             ;;
           maria:compare)
               if [ -z "$2" ] || [ -z "$3" ]; then
@@ -201,22 +206,18 @@ case "$COMMAND" in
               mysqldump -u root "$2" | grep -v "Dump completed" > /tmp/db1.sql
               mysqldump -u root "$3" | grep -v "Dump completed" > /tmp/db2.sql
               diff -u /tmp/db1.sql /tmp/db2.sql
-              exit 0
               ;;
             ai)
               echo "Executing AI process for Gen20..."
                python3 /var/www/gen20/ai/run_model.py "$2"
-               exit 0
                ;;
              elastic)
                  echo "Fetching Elasticsearch index status..."
                  curl -s "http://localhost:9200/_cat/indices?v"
-                 exit 0
                  ;;
                arango)
                    echo "Listing ArangoDB collections..."
                    curl -s -u root:password "http://localhost:8529/_api/collection" | jq '.result[].name'
-                   exit 0
                    ;;
                  php:lint)
                      if [ -z "$2" ]; then
@@ -225,7 +226,6 @@ case "$COMMAND" in
                      fi
                      echo "Linting PHP file: $2"
                      php -l "$2"
-                     exit 0
                      ;;
                    history:grep)
                        if [ -z "$2" ]; then
@@ -234,7 +234,6 @@ case "$COMMAND" in
                        fi
                        echo "Searching history for '$2'..."
                        history | grep --color=auto "$2"
-                       exit 0
                        ;;
 chat|domain|ermis|mars|god|kronos|cubos|ws|ai|git)
     if [ -z "$FILENAME" ]; then
@@ -244,7 +243,6 @@ chat|domain|ermis|mars|god|kronos|cubos|ws|ai|git)
         bash "$CLI_ROOT/com/$COMMAND/$FILENAME.sh" "$@"
         exit 1
     fi
-    exit 0
     ;;
     # ==============================================
     # Redis CLI
@@ -270,7 +268,6 @@ chat|domain|ermis|mars|god|kronos|cubos|ws|ai|git)
       # Make everything executable
       chmod -R +x "$ROOT"
       echo "✔ Permissions applied successfully!"
-        exit 0
        ;;
     help)
       declare -A COMMAND_SCRIPTS
@@ -286,7 +283,6 @@ chat|domain|ermis|mars|god|kronos|cubos|ws|ai|git)
                 fi
             done
         done
-        exit 0
           ;;
     gaia)
         if [ -n "$FILENAME" ]; then
@@ -296,7 +292,6 @@ chat|domain|ermis|mars|god|kronos|cubos|ws|ai|git)
             echo "❌ Error: FILENAME is not specified for Gaia."
             exit 1
         fi
-        exit 0
         ;;
 
     # ==============================================
@@ -307,3 +302,9 @@ chat|domain|ermis|mars|god|kronos|cubos|ws|ai|git)
         exit 1
         ;;
 esac
+# ==================================================
+# Calculate Execution Time
+# ==================================================
+END_TIME=$(date +%s%N) # Capture end time
+ELAPSED_TIME=$(( (END_TIME - START_TIME) / 1000000 )) # Convert to milliseconds
+echo "⏱ Execution Time: $ELAPSED_TIME ms"

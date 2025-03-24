@@ -30,6 +30,30 @@ class Gredis extends Redis {
 
         }
 
+public function delKeys(array|string $key): Redis|int|false {
+    try {
+        // Normalize input to an array (supports both string and array inputs)
+        $keys = is_array($key) ? $key : [$key];
+
+        // Expand wildcards (e.g., "cache_*" → ["cache_1", "cache_2"])
+        $finalKeys = [];
+        foreach ($keys as $k) {
+            if (is_string($k) && str_contains($k, '*')) {
+                $matchedKeys = parent::keys($k);
+                $finalKeys = array_merge($finalKeys, $matchedKeys ?: []);
+            } else {
+                $finalKeys[] = $k;
+            }
+        }
+
+        // Call parent::del() using argument unpacking
+        return !empty($finalKeys) ? parent::del(...$finalKeys) : 0;
+    } catch (RedisException $e) {
+        error_log("Redis Delete Error: " . $e->getMessage());
+        return false;
+    }
+}
+
 public function set(string $key, mixed $fetch, mixed $options = null): Redis|string|bool {
     if (!$fetch) {
         return false;

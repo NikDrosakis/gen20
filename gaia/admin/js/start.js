@@ -237,5 +237,33 @@ gs.api.binding();
             }
 
         }
+//measure execution time
+    executionTime();
 
 });
+
+
+function executionTime(){
+    const startTime = performance.now(); // Start time for DOM processing
+
+    // Example DOM manipulation or processing code
+    const domProcessingStart = performance.now();
+    console.log("DOM processing started...");
+    // Example DOM operation (change background color)
+    document.body.style.backgroundColor = "lightblue";
+    const domProcessingEnd = performance.now();
+    console.log("DOM processing completed in " + (domProcessingEnd - domProcessingStart) + "ms");
+
+    // Example post-DOM operations (e.g., adding event listeners, AJAX, etc.)
+    const afterDomProcessingStart = performance.now();
+    console.log("Post-DOM processing started...");
+    // Example of a post-DOM task, e.g., simulate an AJAX request or timeout
+    setTimeout(() => {
+        const afterDomProcessingEnd = performance.now();
+        console.log("Post-DOM processing completed in " + (afterDomProcessingEnd - afterDomProcessingStart) + "ms");
+
+        // Total execution time for DOM and post-DOM processing
+        const totalExecutionTime = performance.now() - startTime;
+        console.log("Total execution time: " + totalExecutionTime + "ms");
+    }, 500); // Simulating an asynchronous post-DOM task (like AJAX)
+}
