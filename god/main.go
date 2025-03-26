@@ -56,16 +56,14 @@ func getUrl(c *gin.Context) {
 
     cacheKey := fmt.Sprintf("cubo_%s", GenerateCacheKey(url))
 
+    // 1. Check cache first
     cachedResponse, err := gredisInstance.Get(cacheKey)
     if err == nil && cachedResponse != "" {
-        c.JSON(http.StatusOK, gin.H{
-            "status":  "success",
-            "message": "Data fetched from cache",
-            "data":    cachedResponse,
-        })
+        c.Data(http.StatusOK, "application/json", []byte(cachedResponse)) // Serve raw JSON
         return
     }
 
+    // 2. Fetch data if not cached
     resp, err := http.Get(url)
     if err != nil {
         logMessage(fmt.Sprintf("Error fetching URL: %v", err))
@@ -81,17 +79,17 @@ func getUrl(c *gin.Context) {
         return
     }
 
-    err = gredisInstance.Set(cacheKey, string(body), 3600)
+    // 3. Store in Redis before returning
+    jsonResponse := fmt.Sprintf(string(body))
+    err = gredisInstance.Set(cacheKey, jsonResponse, 3600) // Cache for 1 hour
     if err != nil {
         logMessage(fmt.Sprintf("Error caching response: %v", err))
     }
 
-    c.JSON(http.StatusOK, gin.H{
-        "status":  "success",
-        "message": "Data fetched from URL",
-        "data":    string(body),
-    })
+    // 4. Return fetched data
+    c.Data(http.StatusOK, "application/json", []byte(jsonResponse))
 }
+
 
 func main() {
     defer logFile.Close()

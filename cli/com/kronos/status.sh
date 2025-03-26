@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Define paths
-LOG_FILE="/var/www/gs/log/gen20.log"  # Adjust if needed
+LOG_FILE="/var/www/gs/log/kronos.log"  # Adjust if needed
 CLI_ROOT="/var/www/gs/cli"
-UTILS="$CLI_ROOT/lib/utils.sh"
+UTILS="$CLI_ROOT/utils.sh"
 
 # Source utils.sh or exit if missing
 if ! source "$UTILS" 2>/dev/null; then

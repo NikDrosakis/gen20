@@ -16,7 +16,7 @@
                 echo "❌ Mars logging disabled."
             fi
         elif [ -n "$FILENAME" ]; then
-            SCRIPT="$BASE_DIR/$COMMAND/$FILENAME.sh"
+            SCRIPT="$COM_DIR/$COMMAND/$FILENAME.sh"
             if [ -f "$SCRIPT" ]; then
                 bash "$SCRIPT"
                 exit $?
@@ -25,8 +25,8 @@
                 exit 1
             fi
         else
-            echo "📂 Λίστα διαθέσιμων scripts στο $BASE_DIR/$COMMAND:"
-            ls -1 "$BASE_DIR/$COMMAND/" | grep -E '\.sh$' | sed 's/\.sh$//' || echo "⚠ Δεν βρέθηκαν scripts στο $BASE_DIR/$COMMAND"
+            echo "📂 Λίστα διαθέσιμων scripts στο $COM_DIR/$COMMAND:"
+            ls -1 "$COM_DIR/$COMMAND/" | grep -E '\.sh$' | sed 's/\.sh$//' || echo "⚠ Δεν βρέθηκαν scripts στο $COM_DIR/$COMMAND"
             exit 0
         fi
     else
@@ -51,7 +51,7 @@
                             echo "❌ Mars logging disabled."
                         fi
                     elif [ -n "$FILENAME" ]; then
-                        SCRIPT="$BASE_DIR/$COMMAND/$FILENAME.sh"
+                        SCRIPT="$COM_DIR/$COMMAND/$FILENAME.sh"
                         if [ -f "$SCRIPT" ]; then
                             bash "$SCRIPT"
                             exit $?
@@ -60,8 +60,8 @@
                             exit 1
                         fi
                     else
-                        echo "📂 Λίστα διαθέσιμων scripts στο $BASE_DIR/$COMMAND:"
-                        ls -1 "$BASE_DIR/$COMMAND/" | grep -E '\.sh$' | sed 's/\.sh$//' || echo "⚠ Δεν βρέθηκαν scripts στο $BASE_DIR/$COMMAND"
+                        echo "📂 Λίστα διαθέσιμων scripts στο $COM_DIR/$COMMAND:"
+                        ls -1 "$COM_DIR/$COMMAND/" | grep -E '\.sh$' | sed 's/\.sh$//' || echo "⚠ Δεν βρέθηκαν scripts στο $COM_DIR/$COMMAND"
                         exit 0
                     fi
                 else

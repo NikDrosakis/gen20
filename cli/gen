@@ -21,15 +21,16 @@
 # ==================================================
 # Configuration
 # ==================================================
-ROOT="/var/www/gs/"                     # Root directory of the application
-CLI_ROOT="/var/www/gs/cli"               # Directory for CLI scripts
-LOG_DIR="/var/www/gs/log"               # Directory for log files
-CLI_UTILS="$CLI_ROOT/utils.sh"          # Path to the utils.sh script
+ROOT="/var/www/gs"                     # Root directory of the application
+CLI_ROOT="$ROOT/cli"               # Directory for CLI scripts
+COMMON="$CLI_ROOT/utils.sh"          # Path to the utils.sh script
+LOG_DIR="$ROOT/log"               # Directory for log files
+LOG_FILE="$ROOT/log/cli.log"    # Log file for the CLI
+BACKUP_DIR="$ROOT/backup"               # Directory for log files
 BG_DIR="$CLI_ROOT/bg"                   # Directory for background processes
-PID_FILE="/tmp/gen-daemon.pid"          # PID file for the daemon
-LOG_FILE="/var/www/gs/log/gen20.log"    # Log file for the CLI
 DAEMON="$BG_DIR/daemon-update.sh"       # Path to the daemon script
-BASE_DIR="$CLI_ROOT/com"                # Base directory for command scripts
+PID_FILE="/tmp/gen-daemon.pid"          # PID file for the daemon
+COM_DIR="$CLI_ROOT/com"                # Base directory for command scripts
 # ==================================================
 # Measure Execution Time
 # ==================================================
@@ -38,7 +39,7 @@ START_TIME=$(date +%s%N) # Capture start time in nanoseconds
 # ==================================================
 # Load Environment Variables
 # ==================================================
-ENV_FILE="/var/www/gs/.env"             # Path to the .env file
+ENV_FILE="$ROOT/.env"             # Path to the .env file
 if [ -f "$ENV_FILE" ]; then
     source "$ENV_FILE"                  # Load the .env file
 else
@@ -49,8 +50,8 @@ fi
 # ==================================================
 # Load CLI Utilities
 # ==================================================
-if [ -f "$CLI_UTILS" ]; then
-    source "$CLI_UTILS"                 # Load the utils.sh script
+if [ -f "$COMMON" ]; then
+    source "$COMMON"                 # Load the utils.sh script
 else
     echo "❌ Error: Missing utils.sh file."
     exit 1
@@ -64,8 +65,16 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
+
 COMMAND="$1"                            # First argument: System or command
 FILENAME="$2"                           # Second argument: Script or subcommand
+
+# Ορίζουμε τις δυνατές επιλογές για την ομάδα (folders)
+GEN_COMMANDS=("chat" "domain" "ermis" "mars" "god" "kronos" "cubos" "ws" "ai" "git")
+# Ορισμός της συνάρτησης autocompletion για την εντολή 'gen'
+complete -F _gen_autocomplete gen
+
+parsed_args=$(parse_args "$@")
 
 # ==================================================
 # Command Handling
@@ -75,33 +84,26 @@ case "$COMMAND" in
     # Daemon Commands
     # ==============================================
     start)
-        bash "$DAEMON start"            # Start the daemon
-        exit 0
+        bash "$DAEMON" start            # Start the daemon
         ;;
     restart)
-        bash "$DAEMON restart"         # Restart the daemon
-        exit 0
+        bash "$DAEMON" restart         # Restart the daemon
         ;;
     stop)
-        bash "$DAEMON stop"             # Stop the daemon
-        exit 0
+        bash "$DAEMON" stop             # Stop the daemon
         ;;
     status)
-           bash "$DAEMON status"           # Check daemon status
-           exit 0
+           bash "$DAEMON" status           # Check daemon status
            ;;
     wget)
     wget -r -l 1 -A.html -P $ROOT/$3 https://$FILENAME
-    exit 0
     ;;
     ports)
         netstat -tulnp | grep LISTEN     # Check open ports
-        exit 0
         ;;
     find:large)
       echo "Searching for files >500MB across the system..."
       sudo find / -type f -size +500M -exec ls -lh {} \; 2>/dev/null
-      exit 0
       ;;
     net:info)
         echo "Fetching detailed network information..."
@@ -111,12 +113,10 @@ case "$COMMAND" in
         ip -brief a
         echo "Open Network Ports:"
         sudo netstat -tulnp | grep LISTEN
-        exit 0
         ;;
     net:speed)
         echo "Running network speed test..."
         speetest
-        exit 0
         ;;
      history:grep)
             if [ -z "$FILENAME" ]; then
@@ -125,12 +125,10 @@ case "$COMMAND" in
             fi
             echo "Searching shell history for '$2'..."
             history | grep "$2"
-            exit 0
             ;;
     top)
       echo "Showing top 10 processes by CPU usage..."
       ps -eo pid,user,%cpu,%mem,command --sort=-%cpu | head -n 11
-      exit 0
       ;;
     performance)
         echo "Checking system performance..."
@@ -140,19 +138,17 @@ case "$COMMAND" in
         free -m
         echo "Disk Usage:"
         df -h
-        exit 0
         ;;
     log)
-       tail -f /var/log/gen20.log       # Live log monitoring
-       exit 0
+       tail -f "/$ROOT/log/$FILENAME.log"       # Live log monitoring
        ;;
     # ==============================================
     # Execute Scripts for All Commands
     # ==============================================
     all)
         if [ -n "$FILENAME" ]; then
-            # Loop through all directories in $BASE_DIR
-            for dir in "$BASE_DIR"/*/; do
+            # Loop through all directories in $COM_DIR
+            for dir in "$COM_DIR"/*/; do
                 CMD_NAME=$(basename "$dir")  # Get the command name
                 SCRIPT="$dir/$FILENAME.sh"   # Path to the script
                 if [ -f "$SCRIPT" ]; then
@@ -194,7 +190,7 @@ case "$COMMAND" in
           ;;
         maria:dump)
             echo "Dumping all MariaDB databases..."
-            mysqldump -u root --all-databases > ~/mariadb_backup_$(date +%F).sql
+            mysqldump -u root --all-databases > $BACKUP_DIR/mariadb_backup_$(date +%F).sql
             echo "Backup saved at ~/mariadb_backup_$(date +%F).sql"
             ;;
           maria:compare)
@@ -269,11 +265,14 @@ chat|domain|ermis|mars|god|kronos|cubos|ws|ai|git)
       chmod -R +x "$ROOT"
       echo "✔ Permissions applied successfully!"
        ;;
+    tree)
+      /usr/bin/tree -L 2 -d "$ROOT"
+      ;;
     help)
       declare -A COMMAND_SCRIPTS
       echo "📌 Gen20 CLI - Available Commands"
         echo "-----------------------------------"
-        for dir in "$BASE_DIR"/*/; do
+        for dir in "$COM_DIR"/*/; do
             cmd_name=$(basename "$dir")
             echo "▶ $cmd_name"
             for script in "$dir"/*.sh; do

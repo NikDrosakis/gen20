@@ -39,4 +39,3 @@ fi
 
 # Log the final success message
 log "✅ All checks passed! System is OK."
-exit 0

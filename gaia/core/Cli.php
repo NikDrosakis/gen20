@@ -3,7 +3,7 @@ namespace Core;
 use ReflectionMethod;
 
 class Cli extends Gaia {
-use  System, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Media, Filemeta, My, CuboPublic, CuboAdmin, Template,Book;
+use  System, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Media, Filemeta, My, CuboPublic, CuboAdmin, Template,Book, Share;
     public $argv=[]; // To store the arguments passed to the script
     public $argc; // Store the argument count
     protected $cliDir = "/var/www/gs/cli"; // Adjust this path as needed
@@ -22,11 +22,80 @@ protected function handleRequest() {
         echo "THIS IS NOT CLI\n";
     }
 }
+
 /**
  Comma-separated key-value pairs (e.g., key1=value1,key2=value2).
   Standalone key-value pairs (e.g., key=value).
   Standalone parameters (e.g., param4).
  */
+protected function parseArgs($params) {
+    $parsedParams = [];
+
+    // Ensure we always work with an array
+    $params = is_array($params) ? $params : [$params];
+
+    foreach ($params as $param) {
+        // Skip empty parameters
+        if ($param === null || $param === '') {
+            continue;
+        }
+
+        // Convert to string if possible
+        if (is_object($param) && method_exists($param, '__toString')) {
+            $param = (string)$param;
+        }
+
+        // Process array markers
+        if (is_string($param) && strpos($param, '_') === 0) {
+            $arrayContent = substr($param, 1);
+
+            // Handle empty array case
+            if ($arrayContent === '') {
+                $parsedParams[] = [];
+                continue;
+            }
+
+            $arrayParts = [];
+
+            // Process comma-separated array elements
+            foreach (explode(',', $arrayContent) as $element) {
+                $element = trim($element);
+                if ($element === '') continue;
+
+                // Handle array element key-value pairs
+                if (strpos($element, '=') !== false) {
+                    list($key, $value) = explode('=', $element, 2);
+                    $arrayParts[trim($key)] = trim($value);
+                } else {
+                    $arrayParts[] = $element;
+                }
+            }
+
+            $parsedParams[] = $arrayParts;
+        }
+        // Handle regular string parameters
+        else {
+            // Key-value pair
+            if (is_string($param) && strpos($param, '=') !== false) {
+                list($key, $value) = explode('=', $param, 2);
+                $parsedParams[trim($key)] = trim($value);
+            }
+            // Simple string value
+            else {
+                $parsedParams[] = is_string($param) ? trim($param) : $param;
+            }
+        }
+    }
+
+    // If single non-array parameter was passed, return it directly
+    if (count($parsedParams) === 1 && !isset($parsedParams[0]) && !is_array($parsedParams)) {
+        return reset($parsedParams);
+    }
+
+    return $parsedParams;
+}
+
+
 protected function parseParams($params) {
     $parsedParams = [];
 
@@ -91,7 +160,7 @@ protected function parseParams($params) {
       $params = array_slice($argv, 3);
 
     // Parse parameters into an associative array
-    $parsedParams= $this->parseParams($params);
+    $parsedParams= $this->parseArgs($params);
 
       // Call the run method with the method and parsed params
       $this->methodCli($method, $parsedParams);
@@ -149,7 +218,7 @@ protected function thisCli($argv) {
             }
 
             // Parse the remaining arguments into an associative array
-            $params = $this->parseParams(array_slice($argv, $i + 2));
+            $params = $this->parseArgs(array_slice($argv, $i + 2));
             break;
         } else {
             echo "❌ No such property or method: '{$key}'\n";

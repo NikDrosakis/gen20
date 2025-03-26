@@ -12,7 +12,7 @@ wordpress integrated
 magento integrated
 */
 class Gen extends Gaia {
-use  System, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Media, Filemeta, My, CuboAdmin, CuboPublic, Template,Book;
+use  System, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Media, Filemeta, My, CuboAdmin, CuboPublic, Template,Book, Share;
 
 protected $database;
 protected $layout_selected;
@@ -20,9 +20,9 @@ protected $layout;
 protected $db_sub;
 protected $db_page;
 protected $default_admin_manifest='h:
-  - renderCubo: "default.menuadmin"
+  - renderCubo: "default.menuweb"
 sl:
-  - renderCubo: "slideshow"
+  - renderCubo: "slideshow.public"
   - renderCubo: "default.mediac"
 sr:
   - renderCubo: "default.notificationweb"
@@ -30,9 +30,9 @@ sr:
 f:
 ';
 protected $default_public_manifest='h:
-  - renderCubo: "default.menuweb"
+  - renderCubo: "default.menuadmin"
 sl:
-  - renderCubo: "slideshow"
+  - renderCubo: "slideshow.public"
 sr:
   - renderCubo: "default.notificationweb"
   - renderCubo: "default.nbar"
@@ -106,9 +106,9 @@ $this->renderAdminHead();
 
 //BODY
 if($_SERVER['SYSTEM']=='admin'){
-echo $this->buildManifest($this->page);
+    echo $this->buildManifest($this->page);
 }else{
-echo $this->buildManifest($this->page);
+    echo $this->buildManifest($this->page);
 }
 
 //FOOTER
@@ -250,7 +250,7 @@ protected function buildManifest($name) {
 
     // Left Sidebar
     $html .= '<div id="sidebar-left">';
-    $html .= $this->manifestEditor();
+   // $html .= $this->manifestEditor();
     foreach ($plan['sl'] as $methods) {
         foreach ($methods as $method => $param) {
             $result = $this->executeMethod($method, $param);

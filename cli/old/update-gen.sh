@@ -1,11 +1,11 @@
 #!/bin/bash
 hash -r
 # Define the base directory for all commands
-BASE_DIR="/var/www/gs/cli"
+COM_DIR="/var/www/gs/cli"
 
 # Set correct permissions
-chmod -R +x "$BASE_DIR"/*
-chown -R dros:dros "$BASE_DIR"/*
+chmod -R +x "$COM_DIR"/*
+chown -R dros:dros "$COM_DIR"/*
 
 # Load environment variables
 ENV_FILE="/var/www/gs/.env"

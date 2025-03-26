@@ -1,12 +1,12 @@
 #!/bin/bash
 
 CLI_ROOT="/var/www/gs/cli"
-CLI_UTILS="$CLI_ROOT/utils.sh"
+COMMON="$CLI_ROOT/utils.sh"
 BG_DIR="$CLI_ROOT/bg"
 PID_FILE="/tmp/gen-daemon.pid"
 LOG_FILE="/var/www/gs/log/gen20.log"
 DAEMON="$BG_DIR/daemon-update.sh"
-BASE_DIR="$CLI_ROOT/com"
+COM_DIR="$CLI_ROOT/com"
 
 # Βεβαιώσου ότι το .env είναι φορτωμένο
 ENV_FILE="/var/www/gs/.env"
@@ -19,8 +19,8 @@ else
 fi
 
 # Φορτώνουμε το utils.sh
-if [ -f "$CLI_UTILS" ]; then
-    source "$CLI_UTILS"
+if [ -f "$COMMON" ]; then
+    source "$COMMON"
 else
     error "Λείπει το αρχείο utils.sh."
 fi
@@ -64,7 +64,7 @@ case "$COMMAND" in
         ;;
     all)
         if [ -n "$FILENAME" ]; then
-            for dir in "$BASE_DIR"/*/; do
+            for dir in "$COM_DIR"/*/; do
                 CMD_NAME=$(basename "$dir")
                 SCRIPT="$dir/$FILENAME.sh"
                 if [ -f "$SCRIPT" ]; then
@@ -83,7 +83,7 @@ case "$COMMAND" in
           # Handle predefined system commands
           action|ai|chat|cubo|db|domain|ermis|gaia|git|god|kronos|mars|micro|wp|ws)
        if [ -n "$FILENAME" ]; then
-                  SCRIPT="$BASE_DIR/$COMMAND/$FILENAME.sh"
+                  SCRIPT="$COM_DIR/$COMMAND/$FILENAME.sh"
                   if [ -f "$SCRIPT" ]; then
                       bash "$SCRIPT"
                       exit $?
@@ -92,9 +92,9 @@ case "$COMMAND" in
                       exit 1
                   fi
               else
-                  log "📂 Listing available scripts in $BASE_DIR/$COMMAND:"
+                  log "📂 Listing available scripts in $COM_DIR/$COMMAND:"
                   # List scripts without the .sh extension
-                  ls -1 "$BASE_DIR/$COMMAND/" | grep -E '\.sh$' | sed 's/\.sh$//' || log "⚠ No scripts found in $BASE_DIR/$COMMAND"
+                  ls -1 "$COM_DIR/$COMMAND/" | grep -E '\.sh$' | sed 's/\.sh$//' || log "⚠ No scripts found in $COM_DIR/$COMMAND"
                   exit 0
               fi
               ;;

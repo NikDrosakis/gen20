@@ -66,12 +66,8 @@ protected function delCP(string $domain='',string $name): bool {
 protected function renderCubo($cubo) {
     try {
         // Check if the $cubo contains a dot
-        if (strpos($cubo, '.') !== false) {
             list($c, $file) = explode('.', $cubo);
             $url = SITE_URL . "cubos/index.php?cubo=$c&file=$file.php";
-        } else {
-            $url = SITE_URL . "cubos/index.php?cubo=$cubo&file=public.php";
-        }
         // Fetch the URL with the correct cubo and file
         $response = $this->fetchUrl($url);
 
@@ -108,6 +104,10 @@ protected function getMaincubo($pageName = '') {
         }
     }
     return $list;
+}
+
+protected function getLinks() {
+return $this->db->fa("SELECT * FROM {$this->publicdb}.links WHERE linksgrpid=2 ORDER BY sort");
 }
 
 

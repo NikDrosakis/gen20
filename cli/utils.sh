@@ -1,11 +1,11 @@
 #!/bin/bash
 CLI_ROOT="/var/www/gs/cli"
-CLI_UTILS="$CLI_ROOT/lib/utils.sh"
+COMMON="$CLI_ROOT/utils.sh"
 BG_DIR="$CLI_ROOT/bg"
 PID_FILE="/tmp/gen-daemon.pid"
 LOG_FILE="/var/www/gs/log/gen20.log"
 DAEMON="$BG_DIR/daemon-update.sh"
-BASE_DIR="$CLI_ROOT/com"
+COM_DIR="$CLI_ROOT/com"
 
 # Standardized log function
 log() {
@@ -65,7 +65,7 @@ check_port_listening() {
 
 # Run status checks for all systems
 run_all_status() {
-    for SYSTEM_DIR in "$BASE_DIR"/*; do
+    for SYSTEM_DIR in "$COM_DIR"/*; do
         SYSTEM=$(basename "$SYSTEM_DIR")
         STATUS_SCRIPT="$SYSTEM_DIR/status.sh"
 
@@ -88,15 +88,15 @@ run_command() {
     SYSTEM=$1    # Example: gaia, ermis, kronos
     COMMAND=$2   # Example: start, deploy, generate
     shift 2
-    SCRIPT_PATH="$BASE_DIR/$SYSTEM/$COMMAND.sh"
+    SCRIPT_PATH="$COM_DIR/$SYSTEM/$COMMAND.sh"
 
     if [ ! -f "$SCRIPT_PATH" ]; then
         log "❌ Error: Command script '$SCRIPT_PATH' not found!"
 
         # Suggest available commands
-        if [ -d "$BASE_DIR/$SYSTEM" ]; then
+        if [ -d "$COM_DIR/$SYSTEM" ]; then
             log "🛠 Available commands for $SYSTEM:"
-            ls "$BASE_DIR/$SYSTEM" | grep '.sh$' | sed 's/.sh//g'
+            ls "$COM_DIR/$SYSTEM" | grep '.sh$' | sed 's/.sh//g'
         else
             log "⚠️ No such system: $SYSTEM"
         fi
@@ -114,36 +114,62 @@ run_command() {
     fi
 }
 
+# Function to parse command-line arguments
+# Function to parse command-line arguments
+# Function to parse command-line arguments
+parse_args() {
+    local params=("$@")  # All command-line arguments passed to the function
+    local parsed_params=()  # To store parsed parameters
+    local key_value_regex="^([^=]+)=(.*)$"  # Regex to check for key-value pairs
 
-# Start Daemon
-start_daemon() {
-    if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
-        log "⚠️ Gen daemon is already running (PID: $(cat "$PID_FILE"))"
-    else
-        nohup "$CLI_ROOT/bg/daemon-update.sh" &>> "$LOG_FILE" &
-        echo $! > "$PID_FILE"
-        log "✅ Gen daemon started (PID: $(cat "$PID_FILE"))"
-    fi
-}
-
-# Stop Daemon
-stop_daemon() {
-    if [ -f "$PID_FILE" ]; then
-        PID=$(cat "$PID_FILE")
-        if kill "$PID" 2>/dev/null; then
-            log "🛑 Gen daemon stopped (PID: $PID)"
+    # Loop through each argument passed
+    for param in "${params[@]}"; do
+        # Handle quoted strings (single or double quotes)
+        if [[ "$param" =~ ^\".*\"$ ]] || [[ "$param" =~ ^'.*'$ ]]; then
+            # Remove surrounding quotes (either single or double)
+            param="${param:1:-1}"
+            parsed_params+=("$param")  # Add as a single argument
+        # Check if the argument contains a comma (for CSV-style parsing)
+        elif [[ "$param" == *","* ]]; then
+            # Split by comma and handle it as a list
+            IFS=',' read -r -a split_params <<< "$param"
+            for item in "${split_params[@]}"; do
+                parsed_params+=("$item")  # Add each item to parsed params
+            done
+        # Check if the argument is a key-value pair (e.g., key=value)
+        elif [[ "$param" =~ $key_value_regex ]]; then
+            # Extract key and value from key=value format
+            local key="${BASH_REMATCH[1]}"
+            local value="${BASH_REMATCH[2]}"
+            parsed_params+=("$key=$value")  # Store in parsed params
         else
-            log "⚠️ Failed to stop daemon (PID: $PID)"
+            # Handle standalone parameters (just add them as they are)
+            parsed_params+=("$param")
         fi
-        rm -f "$PID_FILE"
-    else
-        log "⚠️ No running daemon found."
-    fi
+    done
+
+    # Return the parsed arguments as a single string
+    echo "${parsed_params[@]}"
 }
 
-# Restart Daemon
-restart_daemon() {
-    stop_daemon
-    sleep 1
-    start_daemon
+# Συνάρτηση για το autocompletion
+_gen_autocomplete() {
+    local cur
+    cur="${COMP_WORDS[COMP_CWORD]}"  # Η τρέχουσα λέξη που πληκτρολογείται
+    COMPREPLY=()  # Αδειάζει τις υπάρχουσες προτάσεις
+
+    # Εάν είναι το πρώτο μέρος της εντολής (π.χ. 'gen')
+    if [ ${COMP_CWORD} -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "${GEN_COMMANDS[*]}" -- "$cur") )  # Προτείνουμε τις ομάδες (folders)
+    # Εάν είναι το δεύτερο μέρος της εντολής (π.χ. το όνομα αρχείου ή command)
+    elif [ ${COMP_CWORD} -eq 2 ]; then
+        # Ελέγχουμε αν υπάρχει κάποια ομάδα που ταιριάζει (π.χ. 'chat', 'domain', κλπ.)
+        local selected_group="${COMP_WORDS[1]}"
+        if [[ " ${GEN_COMMANDS[*]} " =~ " ${selected_group} " ]]; then
+            # Εδώ μπορείς να προσθέσεις έλεγχο για αρχεία μέσα στον φάκελο της ομάδας
+            # Π.χ. να προσφέρεις αρχεία με την κατάληξη '.sh' στον φάκελο της ομάδας
+            COMPREPLY=( $(compgen -W "$(ls "$CLI_ROOT/com/$selected_group"/*.sh 2>/dev/null)" -- "$cur") )
+        fi
+    fi
+    return 0
 }

@@ -15,7 +15,8 @@
         "twig/twig": "^2.16",
         "symfony/yaml": "^5.4",
         "johnpbloch/wordpress": "^6.7",
-        "guzzlehttp/guzzle": "^7.9"
+        "guzzlehttp/guzzle": "^7.9",
+        "abraham/twitteroauth": "^7.0"
     },
     "autoload": {
         "psr-4": {

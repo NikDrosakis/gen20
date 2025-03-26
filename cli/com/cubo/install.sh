@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Load utilities
-source "$(dirname "$0")/../lib/utils.sh"
+source "$(dirname "$0")/../utils.sh"
 
 log "Processing Cubo operations..."
 

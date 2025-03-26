@@ -1,5 +1,7 @@
 <?php
 namespace Core;
+use Abraham\TwitterOAuth\TwitterOAuth;
+
 /**
 share content with profile
 facebook, twitter, tiktok, instagram
@@ -26,6 +28,40 @@ trait Share{
         ];
         return $this->makeHttpRequest($url, $params, 'POST');
     }
+
+protected function tweet(string $tweet='Message from Gen20') {
+
+define("API_KEY", "1uRQpkjU5XkgsomDExNwVuHII");
+define("API_SECRET", "dvGwUhC4mYVutDe5Og7IFeSp064IDRKRjsEPaoFmHV3g1wmfep");
+define("BEARER_TOKEN", "AAAAAAAAAAAAAAAAAAAAAMSy0AEAAAAAL%2BpHyxfxkrSQ%2B%2Flqb8fubw%2BIcu4%3DpbmP5v4xtDVcPPYOND2z7CinomNIynpwR2WcsvGzdpueEn0SfK");
+
+$url = "https://api.twitter.com/2/tweets";
+$headers = [
+    "Authorization: Bearer " . BEARER_TOKEN,
+    "Content-Type: application/json"
+];
+
+$data = json_encode(["text" => $tweet]);
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($http_code == 201) {
+    echo "✅ Tweet sent successfully!\n";
+} else {
+    echo "❌ Error: " . $response . "\n";
+}
+
+}
+
 
     public function shareToTwitter($content) {
         $url = "https://api.twitter.com/2/tweets";

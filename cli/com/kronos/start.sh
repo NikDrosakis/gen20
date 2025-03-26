@@ -3,7 +3,7 @@
 # Define paths
 LOG_FILE="/var/www/gs/log/gen20.log"  # Adjust if needed
 CLI_ROOT="/var/www/gs/cli"
-UTILS="$CLI_ROOT/lib/utils.sh"
+UTILS="$CLI_ROOT/utils.sh"
 VENV_ROOT="/var/www/gs/kronos/genenv"  # Path to the virtual environment
 KRONOS_ROOT="/var/www/gs/kronos"       # Path to the Kronos application
 

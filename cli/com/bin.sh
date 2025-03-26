@@ -1,5 +1,5 @@
 #!/bin/bash
-source "$(dirname "$0")/../lib/utils.sh"
+source "$(dirname "$0")/../utils.sh"
 
 # Ensure a subcommand is provided
 if [ -z "$1" ]; then

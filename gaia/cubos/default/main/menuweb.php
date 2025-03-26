@@ -162,9 +162,10 @@
     </a>
     <?php
 
-        $menu=$this->getLinks();
+        $menu=$this->navigate();
+
         for($i=0;$i<count($menu);$i++){
-            $icon=$menu[$i]['icon'];
+            $icon = $menu[$i]['icon'];
             ?>
        <a href="/<?=$menu[$i]['uri']?>" class="<?=$this->page==$menu[$i]['uri'] ?'active':''?>" >
        <?php if($icon!=null){ ?>
@@ -180,8 +181,8 @@
     <?php } ?>
 </div>
 <!---profile navigation-->
-<div class="profile-nav">
     <?php if($this->G['loggedin']){ ?>
+<div class="profile-nav">
         <div class="profile-menu">
             <div class="profile-container">
                 <!-- Profile Image -->
@@ -200,7 +201,7 @@
                 </div>
             </div>
         </div>
-    <?php } ?>
+
 <?php include CUBO_ROOT_DEFAULT."search" ?>
 <!---apps-->
             <div class="profile-container" style="float: left;margin: 9px 16px 0 33px;">
@@ -240,8 +241,8 @@
             </div>
     <div id="indicator" class="red indicator"></div>
     <div id="indicator2" class="red indicator"></div>
-    <button class="bare right" onclick="gs.api.bind(this, { showLabel: false, showSwal: true })" data-name="<?=$this->page?>" data-method="manifestEditor">
+  <!---- <button class="bare right" onclick="gs.api.bind(this, { showLabel: false, showSwal: true })" data-name="<?=$this->page?>" data-method="manifestEditor">-->
     <span class="glyphicon glyphicon-sign"></span>Editor</button>
-
     <div id="c_active_users"></div>
 </div>
+    <?php } ?>

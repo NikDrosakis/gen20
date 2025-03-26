@@ -11,7 +11,7 @@ const path = require('path'); // Add this line
 require('dotenv').config();
 
 // Logging setup
-const logFilePath = 'ermis.log';
+const logFilePath = '/var/www/gs/log/ermis.log';
 let consoleLoggingEnabled = false;
 
 function log(message) {
@@ -62,11 +62,12 @@ app.use((err, req, res, next) => {
 const action = require('./action');
 action.actionLoop();
 
+const startTime = process.hrtime(); // ✅ Right before server creation
 // HTTPS Server
 const server = https.createServer(credentials, app);
 
 //RUN Ermis WebSocket
-const { WServer } = require('./ws');
+const { WServer } = require('./ws/main');
 WServer(server);
 
 // Handle dynamic method execution
@@ -90,3 +91,6 @@ const PORT = process.env.ERMIS_PORT || 3010;
 server.listen(PORT, function () {
     log('Server listening on port ' + PORT);
 });
+
+const executionTime = process.hrtime(startTime);
+console.log(`✅ Actual server startup time: ${executionTime[0] * 1e3 + executionTime[1] / 1e6} ms`);

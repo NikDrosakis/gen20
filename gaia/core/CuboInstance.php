@@ -2,7 +2,7 @@
 namespace Core;
 
 class CuboInstance extends Gaia {
-    use System, Url, Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Bundle, Media, Filemeta, My, Cubo, Template, Book;
+    use System, Url, Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Bundle, Media, Filemeta, My, CuboAdmin,CuboPublic, Template, Book, Share;
 
     public function __construct() {
         parent::__construct();

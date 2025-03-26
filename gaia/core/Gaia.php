@@ -473,8 +473,12 @@ protected function navigate() {
          if(!empty($subs)){
          foreach ($subs as $sub) {
          if($sub['maingrpid']==$page['id']){
+
+          [$cuboname, $main] = explode('.',$sub['name']) + [null, null];
             $this->apages[$slug]['subs'][$sub['name']] = [
+                "cubo" => $cuboname,
                 "slug" => $sub['name'],
+                "main" => $main,
                 "icon" => $sub['img'],
                 "mode" => $sub['type'] ?? ''
             ];
