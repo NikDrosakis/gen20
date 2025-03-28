@@ -26,6 +26,7 @@ gaia/wordpress
 !gaia/public/_reactdomain.local/
 # Ignore node_modules inside public/_reactdomain.local
 gaia/public/_reactdomain.local/node_modules/
+gaia/public/_reactdomain.local/build/
 god/vendor/
 god/tmp/
 god/old/
