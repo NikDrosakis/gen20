@@ -56,7 +56,7 @@ protected function loadDynamicActions($libraries) {
             <meta http-equiv="name" content="value">
             <meta name="ROBOTS" content="NOARCHIVE">
             <meta name="google" content="notranslate">
-            <link href="/admin/css/core.css" rel="stylesheet" type="text/css">
+            <link href="/asset/css/core.css" rel="stylesheet" type="text/css">
             <link href="/style.css" rel="stylesheet" type="text/css">
             <link href="https://unpkg.com/ionicons@4.5.10-0/dist/css/ionicons.min.css" rel="stylesheet">
             <link href="atom.xml" type="application/atom+xml" rel="alternate" title="Sitewide ATOM Feed">
@@ -83,16 +83,16 @@ protected function loadDynamicActions($libraries) {
     }
 
 
-protected function renderAdminHead() {
+protected function renderHead() {
     ?>
     <!DOCTYPE html>
     <html>
     <head>
         <?php echo $this->buildMeta();?>
-        <link rel="icon" href="/img/icon.png">
+        <link rel="icon" href="/asset/img/icon.png">
         <title>Admin GEN20</title>
         <!-- Main Styles -->
-        <link rel="stylesheet" href="/admin/css/core.css">
+        <link rel="stylesheet" href="/asset/css/core.css">
       <!---loadHeadSetup-->
         <?php
                $scripts=  $this->loadHeadSetup();
@@ -103,8 +103,8 @@ protected function renderAdminHead() {
               <!-- Dynamic CDN Actions-->
             <!-- $this->loadDynamicActions([]);-->
     <!-- Additional External Scripts -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.3/Sortable.min.js" integrity="sha512-8AwTn2Tax8NWI+SqsYAXiKT8jO11WUBzTEWRoilYgr5GWnF4fNqBRD+hCr4JRSA1eZ/qwbI+FPsM3X/PQeHgpQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-       <script src="https://apis.google.com/js/api.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.3/Sortable.min.js" integrity="sha512-8AwTn2Tax8NWI+SqsYAXiKT8jO11WUBzTEWRoilYgr5GWnF4fNqBRD+hCr4JRSA1eZ/qwbI+FPsM3X/PQeHgpQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="https://apis.google.com/js/api.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     </head>
@@ -122,8 +122,8 @@ protected function renderAdminHead() {
                         })();
                 </script>
     <script type="text/javascript">var G=<?=json_encode($this, JSON_UNESCAPED_UNICODE)?>;</script>
-    <script src="/admin/js/gen.js"></script>
-    <script src="/admin/js/admin.js"></script>
+    <script src="/asset/js/gen.js"></script>
+    <script src="/asset/js/admin.js"></script>
     <?php
 }
 

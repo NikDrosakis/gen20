@@ -47,7 +47,7 @@ const Mari = require('./core/Mari');
 const Messenger = require('./core/Messenger');
 require('dotenv').config();
 const ROOT = process.env.ROOT || path.resolve(__dirname);
-const mariadmin = new Mari(process.env.MARIADMIN);
+const mari = new Mari();
 
 let executionRunning = false;
 //for new default is 5
@@ -67,9 +67,9 @@ const ACTION_STATUS = {
 
 async function runAction(name) {
     try {
-        const record = await mariadmin.f(`
+        const record = await mari.f(`
             SELECT actiongrp.keys, actiongrp.name as grpName, actiongrp.base,systems.apiprefix, action.*
-            FROM action
+            FROM gen_admin.action
             LEFT JOIN gen_admin.actiongrp ON actiongrp.id = action.actiongrpid
             LEFT JOIN gen_admin.systems ON systems.id = action.systemsid
             WHERE action.name='${name}'
@@ -111,39 +111,38 @@ async function runAction(name) {
 }
 async function actionLoop() {
     if (executionRunning) {
-        process.stdout.write('🏃‍♂️ Loop is already running');
-        return; // Avoid concurrent executions
+        process.stdout.write('🏃‍♂️ Loop is already running\n');
+        return;
     }
 
     executionRunning = true;
+
     try {
         const preLoopCounts = await getActionStatusCounts();
         console.table(preLoopCounts);
-        // Fetch only actions that need processing
-        const actions = await mariadmin.fa(`
-            SELECT actiongrp.keys, actiongrp.name as grpName, actiongrp.base,systems.apiprefix, systems.name as systemName, 
-                   action.*
+
+        const actions = await mari.fa(`
+            SELECT actiongrp.keys, actiongrp.name as grpName, actiongrp.base,
+                   systems.apiprefix, systems.name as systemName, action.*
             FROM gen_admin.action
-            LEFT JOIN gen_admin.actiongrp ON actiongrp.id = action.actiongrpid
-            LEFT JOIN gen_admin.systems ON systems.id = action.systemsid
+                     LEFT JOIN gen_admin.actiongrp ON actiongrp.id = action.actiongrpid
+                     LEFT JOIN gen_admin.systems ON systems.id = action.systemsid
             WHERE systems.name = 'ermis' AND action.status > 3
             ORDER BY action.sort;
         `);
+
         if (!actions || actions.length === 0) {
-            process.stdout.write(`✗  No pending actions. Waiting...`);
-            //Set next loop in 5 seconds
-       //     setTimeout(mainLoop,5000)
+            process.stdout.write('✗ No pending actions. Waiting...\n');
         } else {
             const {total, success, statusStats, percentage} = await processActions(actions, app);
-            process.stdout.write(`📊 ${success}/${total} --> ${percentage} %success`);
+            process.stdout.write(`📊 ${success}/${total} --> ${percentage}% success\n`);
             const postLoopCounts = await getActionStatusCounts();
             console.log('🏁 Post-Loop Status Counts:');
             console.table(postLoopCounts);
         }
     } catch (err) {
-        process.stdout.write(`✗  Error in main loop:`, err.message);
-        //Set next loop in 10 seconds
-      //  setTimeout(mainLoop,10000);
+        // Corrected error handling
+        process.stdout.write(`✗ Error in main loop: ${err.message}\n`);
     } finally {
         executionRunning = false;
     }
@@ -197,8 +196,8 @@ async function getActionStatusCounts() {
     COUNT(CASE WHEN status = ${val} THEN 1 END) as ${key}
   `);
 
-    const query = `SELECT ${queryParts.join(', ')} FROM action WHERE systemsid in(0,3)`;
-    const statusCounts = await mariadmin.f(query);
+    const query = `SELECT ${queryParts.join(', ')} FROM gen_admin.action WHERE systemsid in(0,3)`;
+    const statusCounts = await mari.f(query);
 
     return statusCounts;
 }
@@ -236,7 +235,7 @@ async function executeAction(rec) {
 async function updateEndpointParams(endpoint, params, name) {
     try {
         const stringifiedParams = JSON.stringify(params);
-        await mariadmin.q("UPDATE action SET params=?, method=?,endpoint=? WHERE actiongrp.name=?", [
+        await mari.q("UPDATE action SET params=?, method=?,endpoint=? WHERE actiongrp.name=?", [
             stringifiedParams,
             method,
             endpoint,
@@ -251,7 +250,7 @@ async function updateEndpointParams(endpoint, params, name) {
 }
 
 async function updateStatus(rec, newstatus, log = '', exeTime = 0) {
-    await mariadmin.q(
+    await mari.q(
         "UPDATE gen_admin.action SET status = ?, log = ?, updated = CURRENT_TIMESTAMP, exe_time = ? WHERE id = ?",
         [newstatus, log, exeTime, rec.id]
     )
@@ -625,10 +624,10 @@ async function add(routes) {
             console.log('what is the folder',folderName)
             delete route.actiongrp;
             return true;
-            route.actiongrpid = await mariadmin.upsert("actiongrp", { name: folderName });
+            route.actiongrpid = await mari.upsert("actiongrp", { name: folderName });
 
             // Insert into actiongrp
-            const insertAction = await mariadmin.upsert("action", route);
+            const insertAction = await mari.upsert("action", route);
 
             if (!insertAction) {
                 throw new Error('Error inserting actiongrp');

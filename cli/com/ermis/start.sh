@@ -42,9 +42,9 @@ else
 fi
 
 # Start related services
-start_service "nginx"
-start_service "php8.2-fpm"
-start_service "mariadb"
+#start_service "nginx"
+#start_service "php8.2-fpm"
+#start_service "mariadb"
 
 # Final check
 log "✅ All services started successfully!"

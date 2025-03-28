@@ -45,7 +45,7 @@ public $LOC;
 public $LIB;
 public $TEMPLATE;
 public $PAGECUBO;
-public $ADMIN_ROOT;
+public $ASSET_ROOT;
 public $MEDIA_ROOT;
 public $SYSTEM;
 public $SITE_URL;
@@ -76,9 +76,9 @@ public $PUBLIC_ROOT;
 public $PUBLIC_ROOT_WEB;
 public $PUBLIC_IMG_ROOT;
 public $PUBLIC_IMG;
-public $ADMIN_IMG_ROOT;
-public $ADMIN_IMG;
-public $ADMIN_URL;
+public $ASSET_IMG_ROOT;
+public $ASSET_IMG;
+public $ASSET_URL;
 public $REFERER;
 public $server;
 public $HTTP_HOST;
@@ -132,10 +132,10 @@ public $greekMonths;
     $this->is = $this->db->flist("SELECT name, val from gen_admin.globs");
     $this->set = $this->db->flist("SELECT name, val from {$this->publicdb}.setup");
     $this->usergrps = $this->db->flist("SELECT id, name FROM {$this->publicdb}.usergrp");
-    $this->pagelist = $this->db->flist("SELECT id, name FROM {$this->publicdb}.maingrp");
-    $this->subparent = $this->db->flist("SELECT main.name, maingrp.name as parent
-    FROM {$this->publicdb}.main
-    LEFT JOIN {$this->publicdb}.maingrp on main.maingrpid=maingrp.id");
+    $this->pagelist = $this->db->flist("SELECT id, name FROM {$this->publicdb}.pagegrp");
+    $this->subparent = $this->db->flist("SELECT page.name, pagegrp.name as parent
+    FROM {$this->publicdb}.page
+    LEFT JOIN {$this->publicdb}.pagegrp on page.pagegrpid=pagegrp.id");
 
      // Handle requests (delegated to child classes)
         $this->handleRequest();
@@ -161,40 +161,6 @@ public $greekMonths;
      protected function isApiRequest(): bool {
             // Check if the request is made to the /api path
             return strpos($_SERVER['REQUEST_URI'], '/api') === 0;
-    }
-
-/*
-Using non blocking features of web worker
-to be updated to $_post AND json content
- */
-  protected function handleWorkerRequest():void{
-   try {
-          // Start output buffering with gzip compression if supported
-           $buffer='';
-          ob_start();
-          // Not necessary params
-         $a = $_REQUEST['a'] ?? null;
-        $b = $_REQUEST['b'] ?? $_GET['b'] ?? null;
-        $c = $_REQUEST['c'] ?? $_GET['c'] ?? null;
-        $d = $_REQUEST['d'] ?? $_GET['d'] ?? null;
-        $file = isset($_REQUEST['file']) ? $_REQUEST['file'].".php":  ($this->SYSTEM=='admin' ? $this->ADMIN_ROOT."xhr.php" : $this->SITE_ROOT."ajax.php");
-        $loop = isset($_REQUEST['loop']) ? json_decode($_REQUEST['loop'],true): '';
-
-          // Include the specified file
-          if (file_exists($file . '.php')) {
-              include $file . '.php';
-          } else {
-              $buffer = "File not found: " . htmlspecialchars($file);
-          }
-          // Capture HTML content
-          $buffer = ob_get_clean();
-      } catch (Exception $e) {
-          // Handle exception and set error in buffer
-          $buffer = $e->getMessage();
-      }
-      //HTML content
-    header('Content-Type: text/html');
-    echo $buffer;
     }
 
 protected function md_decode(string $markdownContent): string{
@@ -306,20 +272,20 @@ Handle XHR request.
 
 /**
 db-centric
-checks db {$this->publicdb}.main for details of admin page
+checks db {$this->publicdb}.page for details of admin page
 if
  */
-    protected function mainplan($name='') {
+    protected function pageplan($name='') {
        $name = is_array($name) ? $name['key'] : ($name !== '' ? $name : $this->page);
         if ($this->SYSTEM=='admin'){
          $name = $name!='' ? $name : $this->page;
-         $mainplan = $this->db->f("SELECT * FROM {$this->publicdb}.main WHERE name=?",[$name]);
+         $pageplan = $this->db->f("SELECT * FROM {$this->publicdb}.page WHERE name=?",[$name]);
         } elseif($this->SYSTEM==TEMPLATE || $this->SYSTEM=="api"){
          $name = $name!='' ? $name : $this->page;
-         $mainplan = $this->db->f("SELECT * FROM {$this->publicdb}.main WHERE name=?",[$name]);
+         $pageplan = $this->db->f("SELECT * FROM {$this->publicdb}.page WHERE name=?",[$name]);
         }
-        if($mainplan){
-           return $mainplan;
+        if($pageplan){
+           return $pageplan;
         }
         return false;
     }
@@ -443,12 +409,36 @@ protected function setup($name = '', $value = ''){
 }
 
 
+    public function cat($methodName) {
+        // Reflect the current class
+        $class = new \ReflectionClass($this);
+
+        // Check if the method exists
+        if ($class->hasMethod($methodName)) {
+            $method = $class->getMethod($methodName);
+
+            // Fetch the start and end line for the method
+            $startLine = $method->getStartLine();
+            $endLine = $method->getEndLine();
+
+            // Get the code from the file
+            $filePath = $class->getFileName();
+            $lines = file($filePath);
+
+            // Slice the array to get the method code
+            $methodCode = implode("", array_slice($lines, $startLine - 1, $endLine - $startLine + 1));
+
+            return $methodCode;
+        }
+
+        return "Method not found.";
+    }
 /**
 navigation
 */
-protected function navigate() {
+protected function getMenu() {
     // Fetch data from the database
-    $pages = $this->db->fa("SELECT * FROM {$this->publicdb}.maingrp ORDER BY sort");
+    $pages = $this->db->fa("SELECT * FROM {$this->publicdb}.pagegrp ORDER BY sort");
 
     // Initialize the navigation structure
     $this->apages = [];
@@ -456,37 +446,44 @@ protected function navigate() {
     // Populate the navigation structure
     foreach ($pages as $page) {
         // Extract relevant details
-        $slug = $page['name']; // Assuming 'name' corresponds to the desired slug
+        $pagegrpname = $page['name']; // Assuming 'name' corresponds to the desired slug
         $title = ucfirst($page['name']);
         $icon = $page['img']; // Assuming 'img' corresponds to the icon
 
         // Check if the parent key (like "manage") exists, otherwise create it
-        if (!isset($this->apages[$slug])) {
-            $this->apages[$slug] = [
+        if (!isset($this->apages[$pagegrpname])) { // Use $pagegrpname instead of $slug
+            $this->apages[$pagegrpname] = [
                 "title" => $title,
                 "subs" => [],
                 "icon" => $icon
             ];
         }
-        // Add sub-navigation if applicable
-         $subs = $this->db->fa("SELECT * FROM {$this->publicdb}.main order by sort");
-         if(!empty($subs)){
-         foreach ($subs as $sub) {
-         if($sub['maingrpid']==$page['id']){
 
-          [$cuboname, $main] = explode('.',$sub['name']) + [null, null];
-            $this->apages[$slug]['subs'][$sub['name']] = [
-                "cubo" => $cuboname,
-                "slug" => $sub['name'],
-                "main" => $main,
-                "icon" => $sub['img'],
-                "mode" => $sub['type'] ?? ''
-            ];
-         }
-         }
+        // Add sub-navigation if applicable
+        $subs = $this->db->fa("SELECT * FROM {$this->publicdb}.page ORDER BY sort");
+        if (!empty($subs)) {
+            foreach ($subs as $sub) {
+                if ($sub['pagegrpid'] == $page['id']) {
+                    // Safely handle the name splitting
+                    $nameParts = explode('.', $sub['name'] ?? '');
+                    $cuboname = $nameParts[0] ?? null;
+                    $view = $nameParts[1] ?? null;
+
+                    // Only proceed if we have both parts
+                    if ($cuboname && $view) {
+                        $this->apages[$pagegrpname]['subs'][$view] = [
+                            "cubo" => $cuboname,
+                            "view" => $view,
+                            "icon" => $sub['img'] ?? '',
+                            "mode" => $sub['type'] ?? ''
+                        ];
+                    }
+                }
+            }
         }
-}
+    }
     return $this->apages;
 }
+
 
 }

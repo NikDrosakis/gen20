@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Λήψη commit message
-commit_message="$2"
+commit_message="$3"
 
 # Αν δεν υπάρχει commit message, ζητά από τον χρήστη
 if [ -z "$commit_message" ]; then

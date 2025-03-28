@@ -5,17 +5,17 @@ use Exception;
 trait CuboPublic {
 /**
 aka CP based on domain
-db gen_localost data installed from gen_admin tables main, maincubo, maingrp
+db gen_localost data installed from gen_admin tables page, pagecubo, pagegrp
 and constructs the web UI of any domain
-CA in Layout provides all cubos with their mains
-τώρα το maingrp κάνει τη διαδικασία το οποίο χρησιμοποιείται
+CA in Layout provides all cubos with their pages
+τώρα το pagegrp κάνει τη διαδικασία το οποίο χρησιμοποιείται
 μόνο για grouparisma σε usergrps
 
 custom domain: gen_localhost
 1) addCP
 2) delCP
 3) renderCubo
-4) genMaincubo
+4) genpagecubo
 - addPageCA
 - delPageCA
 - maintainCA
@@ -23,7 +23,7 @@ custom domain: gen_localhost
 
 */
 protected function addPagegrpCP($domain='', $name = '') {
-echo "add cubo to maingrp, copies cubo to ";
+echo "add cubo to pagegrp, copies cubo to ";
 }
 
 protected function delCP(string $domain='',string $name): bool {
@@ -36,8 +36,8 @@ protected function delCP(string $domain='',string $name): bool {
 
     // Step 1: Delete related database entries
     try {
-        $this->db->q("DELETE FROM {$this->publicdb}.maingrp WHERE name = ?", [$name]);
-        $this->db->q("DELETE FROM {$this->publicdb}.main WHERE name = ?", [$name]);
+        $this->db->q("DELETE FROM {$this->publicdb}.pagegrp WHERE name = ?", [$name]);
+        $this->db->q("DELETE FROM {$this->publicdb}.page WHERE name = ?", [$name]);
 
         echo "Database entries for `$name` deleted successfully.\n";
     } catch (PDOException $e) {
@@ -63,13 +63,41 @@ protected function delCP(string $domain='',string $name): bool {
     return true;
 }
 
-protected function renderCubo($cubo) {
+protected function updateCacheCP($cuboview) {
+    // Split the cuboview into cubo and view parts
+    list($cubo, $view) = explode('.', $cuboview);
+    // Construct the URL to fetch data
+    $url = SITE_URL . "cubos/index.php?cubo=$cubo&file=$view.php";
+
+    // Delete the existing cache key
+    $this->redis->del("cubo_" . $cuboview);
+
+    // Fetch the new data
+    $response = $this->fetchUrl($url);
+
+    // Set the new response to cache
+    $this->redis->set("cubo_" . $cuboview, $response);
+}
+
+
+protected function renderCubo($cuboview) {
     try {
-        // Check if the $cubo contains a dot
-            list($c, $file) = explode('.', $cubo);
-            $url = SITE_URL . "cubos/index.php?cubo=$c&file=$file.php";
-        // Fetch the URL with the correct cubo and file
-        $response = $this->fetchUrl($url);
+        // Split the cuboview into cubo and view parts
+        list($cubo, $view) = explode('.', $cuboview);
+        // Construct the URL to fetch data
+        $url = SITE_URL . "cubos/index.php?cubo=$cubo&file=$view.php";
+
+        // Check for cache first
+        $cache = $this->redis->get("cubo_" . $cuboview);
+
+        if ($cache) {
+            // Use cached response if available
+            $response = $cache;
+        } else {
+            // If no cache found, fetch the data and set the cache
+            $response = $this->fetchUrl($url);
+            $this->redis->set("cubo_" . $cuboview, $response);
+        }
 
         // If the response is an array, return the 'data' key
         if (is_array($response) && isset($response['data'])) {
@@ -90,14 +118,15 @@ protected function renderCubo($cubo) {
     }
 }
 
-protected function getMaincubo($pageName = '') {
+
+protected function getpagecubo($pageName = '') {
     $page = is_array($pageName) ? $pageName['key'] : ($pageName !== '' ? $pageName : $this->page);
     $list = [];
     // Ensure we fetch multiple rows
-    $fetch = $this->db->fa("SELECT maincubo.area,maincubo.method, main.name as cubo
-        FROM {$this->publicdb}.maincubo
-        LEFT JOIN {$this->publicdb}.main ON main.id = maincubo.mainid
-        WHERE main.name = ?", [$page]);
+    $fetch = $this->db->fa("SELECT pagecubo.area,pagecubo.method, page.name as cubo
+        FROM {$this->publicdb}.pagecubo
+        LEFT JOIN {$this->publicdb}.page ON page.id = pagecubo.pageid
+        WHERE page.name = ?", [$page]);
     if (!empty($fetch) && is_array($fetch)) {
         foreach ($fetch as $row) {
             $list[$row['area']][$row['method']] = $row['cubo'];

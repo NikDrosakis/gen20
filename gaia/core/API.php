@@ -26,9 +26,6 @@ class API extends Gaia{
     } elseif ($this->isCuboRequest()) {
         $this->log("Incoming Cubo request: " . json_encode($_REQUEST), 'info');
         $this->handleCuboRequest();
-    } elseif ($this->isWorkerRequest()) {
-        $this->log("Incoming Worker request: " . json_encode($_REQUEST), 'info');
-        $this->handleWorkerRequest();
     }
     }
 

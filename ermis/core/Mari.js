@@ -3,18 +3,31 @@ const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 class Mari {
-    constructor(database = process.env.MARIA) {  //OR MARIADBMIN
+    constructor() {
         const config = {
             host: process.env.MARIAHOST,
             user: process.env.MARIAUSER,
             password: process.env.MARIAPASS,
-            database: database,
             connectionLimit: 10,
             waitForConnections: true,
             queueLimit: 0,
             multipleStatements: true
         };
-        this.pool = mysql.createPool(config); // Create a connection pool
+
+        try {
+            this.pool = mysql.createPool(config);
+            // Test the connection
+            this.pool.getConnection()
+                .then(conn => {
+                    console.log('Connected to MariaDB server');
+                    conn.release();
+                })
+                .catch(err => {
+                    console.error('Error connecting to MariaDB:', err);
+                });
+        } catch (err) {
+            console.error('Error creating connection pool:', err);
+        }
     }
 
     /**

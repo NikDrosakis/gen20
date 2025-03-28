@@ -7,12 +7,12 @@ const Maria = require('./core/Maria');
 const Messenger = require('./core/Messenger');
 require('dotenv').config();
 const ROOT = process.env.ROOT || path.resolve(__dirname);
-const mariadmin = new Maria(process.env.MARIADMIN);
+const maria = new Maria();
 const { runAction } = require('./action'); // Assuming index.js contains runAction
 
 async function getPlans() {
     try {
-        const plans = await mariadmin.fa('SELECT * FROM plan');
+        const plans = await maria.fa('SELECT * FROM gen_admin.plan');
         return plans;
     } catch (error) {
         console.error("Error fetching plans:", error);
@@ -22,7 +22,7 @@ async function getPlans() {
 
 async function getPlanActions(planId) {
     try {
-        const actions = await mariadmin.fa(`
+        const actions = await maria.fa(`
             SELECT action.*
             FROM action_plan
             LEFT JOIN action ON action.id = action_plan.actionid
@@ -79,7 +79,7 @@ async function actionPlanLoop() {
 // Function to create a new plan
 async function createPlan(name, description) {
     try {
-        const insertResult = await mariadmin.inse("plan", {
+        const insertResult = await mari.inse("plan", {
             name: name,
             description: description
         });
@@ -102,7 +102,7 @@ async function createPlan(name, description) {
 
 async function addActionToPlan(planId, actionId) {
     try {
-        await mariadmin.inse("action_plan", {
+        await mari.inse("action_plan", {
             planid: planId,
             actionid: actionId
         });

@@ -3,7 +3,7 @@ namespace Core;
 use Pug\Pug;
 /**
 @filemeta.description locationzalition tool to add edit remove languages (multilanguage schema)
-@filemeta.depends admin/main/language.php
+@filemeta.depends asset/main/language.php
 @filemeta.todo
 switch default lang
 add lang (auto translate custom posts)

@@ -9,8 +9,9 @@ tables cubo, cubo_default, cuboviews, cubo_ver
 and viewed in layout and manifest Editor
 - addCA
 - delCA
-- addMainCA
-- delMainCA
+- addViewCA
+- delViewCA
+- renameViewCA
 - maintainCA
 - backupCA
 
@@ -18,7 +19,7 @@ fs and db
 
 
 */
-protected function addMainCA(string $cuboname, int $cuboid, string $mainame) {
+protected function addViewCA(string $cuboname, int $cuboid, string $viewname) {
     // Validate $cuboid
     if (!is_int($cuboid)) {
         echo "❌ Invalid cuboid: $cuboid (must be an integer)\n";
@@ -26,14 +27,18 @@ protected function addMainCA(string $cuboname, int $cuboid, string $mainame) {
     }
 
     // Step 1 - Create main entry in the database
-    $mainid = $this->db->inse("gen_admin.cuboview", ["name" => "$cuboname.$mainame", "cuboid" => $cuboid]);
 
-    if ($mainid) {
+    $viewid = $this->db->f("SELECT name from gen_admin.cuboview WHERE name=? AND cuboid=?",[$cuboname.$viewname,$cuboid])['name'];
+    if(empty($viewid)){
+    $viewid = $this->db->inse("gen_admin.cuboview", ["name" => "$cuboname.$viewname", "cuboid" => $cuboid]);
+    }
+
+    if ($viewid) {
         $cuboDir = CUBO_ROOT . $cuboname . '/main';
-        $publicFilePath = $cuboDir . '/' . $mainame . '.php';
+        $publicFilePath = $cuboDir . '/' . $viewname . '.php';
         $publicContent = "<?php\n";
-        $publicContent .= "// Auto-generated $mainame file for cubo: $cuboname\n\n";
-        $publicContent .= "echo 'Welcome to $cuboname cubo main $mainame!';\n";
+        $publicContent .= "// Auto-generated $viewname file for cubo: $cuboname\n\n";
+        $publicContent .= "echo 'Welcome to $cuboname cubo main $viewname!';\n";
 
         // Ensure the directory exists
         if (!is_dir($cuboDir)) {
@@ -57,17 +62,67 @@ protected function addMainCA(string $cuboname, int $cuboid, string $mainame) {
     }
 }
 
-protected function delMainCA(string $cuboname, int $cuboid, string $mainame) {
+
+protected function renameViewCA(string $cuboname, int $cuboid, string $oldname, string $newname) {
+    // Validate $cuboid
+    if (!is_int($cuboid)) {
+        echo "❌ Invalid cuboid: $cuboid (must be an integer)\n";
+        return false;
+    }
+
     $cuboDir = CUBO_ROOT . $cuboname . '/main';
-    $publicFilePath = $cuboDir . '/' . $mainame . '.php';
+    $oldFilePath = $cuboDir . '/' . $oldname . '.php';
+    $newFilePath = $cuboDir . '/' . $newname . '.php';
+
+    // Check if old file exists
+    if (!file_exists($oldFilePath)) {
+        echo "❌ Source file not found: $oldFilePath\n";
+        return false;
+    }
+
+    // Check if new file already exists
+    if (file_exists($newFilePath)) {
+        echo "❌ Target file already exists: $newFilePath\n";
+        return false;
+    }
+
+    // Update database entry
+    $updateResult = $this->db->q("UPDATE gen_admin.cuboview
+                                 SET name = '$cuboname.$newname'
+                                 WHERE name = '$cuboname.$oldname' AND cuboid = $cuboid");
+
+    if (!$updateResult) {
+        echo "❌ Failed to update database entry for: $cuboname.$oldname\n";
+        return false;
+    }
+
+    // Rename the file
+    if (!rename($oldFilePath, $newFilePath)) {
+        echo "❌ Failed to rename file from $oldFilePath to $newFilePath\n";
+
+        // Attempt to revert database change if file rename failed
+        $this->db->q("UPDATE gen_admin.cuboview
+                     SET name = '$cuboname.$oldname'
+                     WHERE name = '$cuboname.$newname' AND cuboid = $cuboid");
+
+        return false;
+    }
+
+    echo "✅ Successfully renamed $oldname to $newname in cubo: $cuboname\n";
+    return true;
+}
+
+protected function delViewCA(string $cuboname, int $cuboid, string $viewname) {
+    $cuboDir = CUBO_ROOT . $cuboname . '/main';
+    $publicFilePath = $cuboDir . '/' . $viewname . '.php';
     // Validate $cuboid
     if (!is_int($cuboid)) {
         echo "❌ Invalid cuboid: $cuboid (must be an integer)\n";
         return false;
     }
 // Step 1 - Create main entry in the database
-    $delmainid = $this->db->q("DELETE FROM gen_admin.cuboview where name='$cuboname.$mainame' AND cuboid=$cuboid");
-    if(!$delmainid){
+    $delviewid = $this->db->q("DELETE FROM gen_admin.cuboview where name='$cuboname.$viewname' AND cuboid=$cuboid");
+    if(!$delviewid){
      echo "❌ Failed to delete main: $cuboname\n";
         return false;
     }
@@ -110,12 +165,12 @@ protected function addCA(string $name, array $mains=[]){
 
     $cuboid=(int)$cuboid;
     if(empty($mains)){
-        $this->addMainCA($name,$cuboid,"public");
-        $this->addMainCA($name,$cuboid,"admin");
+        $this->addViewCA($name,$cuboid,"public");
+        $this->addViewCA($name,$cuboid,"admin");
     }else{
         foreach($mains as $main){
-            $this->addMainCA($name,$cuboid,$main);
-            $this->addMainCA($name,$cuboid,$main."_admin");
+            $this->addViewCA($name,$cuboid,$main);
+            $this->addViewCA($name,$cuboid,$main."_admin");
         }
     }
 
@@ -200,29 +255,29 @@ protected function maintainCA(): void {
             $mainFiles = glob($mainDir . '/*.php');
 
             foreach ($mainFiles as $mainFile) {
-                $mainame = basename($mainFile, '.php');
-                echo "Checking main file: $mainame\n";
+                $viewname = basename($mainFile, '.php');
+                echo "Checking main file: $viewname\n";
 
                 // Check if the main file exists in the database
                 $mainExists = $this->db->f(
                     "SELECT id FROM gen_admin.cuboview WHERE name = ? AND cuboid = ?",
-                    ["$cuboname.$mainame", $cuboid]
+                    ["$cuboname.$viewname", $cuboid]
                 )['id'];
 
                 if (!$mainExists) {
                     // Main file exists in FS but not in DB
-                    echo "❌ Main file '$mainame' exists in FS but not in DB. Adding to DB...\n";
-                    $mainid = $this->db->inse("gen_admin.cuboview", [
-                        "name" => "$cuboname.$mainame",
+                    echo "❌ Main file '$viewname' exists in FS but not in DB. Adding to DB...\n";
+                    $viewid = $this->db->inse("gen_admin.cuboview", [
+                        "name" => "$cuboname.$viewname",
                         "cuboid" => $cuboid
                     ]);
-                    if (!$mainid) {
-                        echo "❌ Failed to add main file '$mainame' to DB.\n";
+                    if (!$viewid) {
+                        echo "❌ Failed to add main file '$viewname' to DB.\n";
                         continue;
                     }
-                    echo "✅ Added main file '$mainame' to DB with ID: $mainid.\n";
+                    echo "✅ Added main file '$viewname' to DB with ID: $viewid.\n";
                 } else {
-                    echo "✅ Main file '$mainame' exists in DB.\n";
+                    echo "✅ Main file '$viewname' exists in DB.\n";
                 }
             }
         } else {
@@ -236,13 +291,13 @@ protected function maintainCA(): void {
         );
 
         foreach ($dbMains as $dbMain) {
-            $mainame = str_replace("$cuboname.", "", $dbMain['name']);
-            $mainFile = $mainDir . '/' . $mainame . '.php';
+            $viewname = str_replace("$cuboname.", "", $dbMain['name']);
+            $mainFile = $mainDir . '/' . $viewname . '.php';
 
             if (!file_exists($mainFile)) {
                 // Main entry exists in DB but not in FS
-                echo "❌ Main file '$mainame' exists in DB but not in FS. Adding to FS...\n";
-                $this->addMainCA($cuboname, $cuboid, $mainame);
+                echo "❌ Main file '$viewname' exists in DB but not in FS. Adding to FS...\n";
+                $this->addViewCA($cuboname, $cuboid, $viewname);
             }
         }
     }

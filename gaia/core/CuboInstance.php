@@ -12,8 +12,6 @@ class CuboInstance extends Gaia {
             $this->handleXHRRequest();
         } else if ($this->isCuboRequest()) {
             $this->handleCuboRequest();
-        } else if ($this->isWorkerRequest()) {
-            $this->handleWorkerRequest();
         }
     }
 
@@ -50,6 +48,8 @@ class CuboInstance extends Gaia {
                 ob_start();
                 include $filePath;
                 $output = ob_get_clean();
+                // Remove unwanted \r and \n characters
+            //    $output = str_replace(["\r", "\n"], '', $output);
                 $this->sendResponse(200, 'EXECUTED', $output);
             } else {
                 $this->sendResponse(415, 'UNSUPPORTED_MEDIA_TYPE', null, 'Unsupported file type');

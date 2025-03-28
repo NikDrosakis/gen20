@@ -83,7 +83,7 @@ $type=$sel[$i]['type'];
 					</form>
 			<a class="viewImage" href="<?=$sel[$i]['lang']?>">
 				<div id="imgView<?=$id?>">
-					<img id="img<?=$id?>" class="img-thumbnail" src="<?=!$sel[$i]["en"] ? "/admin/img/post.jpg": urldecode($sel[$i]["en"])?>" style="max-height:150px;">
+					<img id="img<?=$id?>" class="img-thumbnail" src="<?=!$sel[$i]["en"] ? "/asset/img/post.jpg": urldecode($sel[$i]["en"])?>" style="max-height:150px;">
 				</div>
 			</a>
 			<button class="btn btn-xs" onclick="$('#img<?=$id?>').attr('src',$('#set<?=$id?>').val())">Show me</button>

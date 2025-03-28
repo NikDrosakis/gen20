@@ -4,7 +4,7 @@ const path = require('path');
 const Maria = require('./core/Maria'); // Adjust the path as necessary
 require('dotenv').config();
 const ROOT = process.env.ROOT || path.resolve(__dirname);
-const mariadmin = new Maria(process.env.MARIADMIN);
+const mari = new Mari();
 const { updateEndpointParams } = require('./action');
 
 // Watch a specific directory
@@ -32,7 +32,7 @@ async function watchSystem(directory, systems) {
 async function fswatch() {
     const watchers = {};
     try {
-        const systems = await mariadmin.fa("SELECT * FROM systems WHERE status='active'");
+        const systems = await mari.fa("SELECT * FROM gen_admin.systems WHERE status='active'");
 
         if (!systems || systems.length === 0) {
             throw new Error("No active systems found for watching.");
@@ -53,8 +53,8 @@ async function fswatch() {
 // Build watch list from the database
 async function buildWatch(rec) {
     try {
-        const watchList = await mariadmin.fa(`SELECT actiongrp.keys, actiongrp.name as grpName, action.*
-                                              FROM action LEFT JOIN actiongrp ON actiongrp.id = action.actiongrpid
+        const watchList = await mari.fa(`SELECT actiongrp.keys, actiongrp.name as grpName, action.*
+                                              FROM gen_admin.action LEFT JOIN gen_admin.actiongrp ON actiongrp.id = action.actiongrpid
                                               WHERE actiongrp.name='fswatch' ORDER BY action.sort;`);
         await fswatch(); // get json_merged_id_name_path_with_this
         return true;

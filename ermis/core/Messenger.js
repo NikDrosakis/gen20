@@ -1,11 +1,10 @@
 /**
  Constructs the communication standardized message
  * */
-const Maria = require('./Maria');
+const Mari = require('./Mari');
 const Manifest = require('./Manifest');
 require('dotenv').config();
-const mariadmin = new Maria(process.env.MARIADMIN);
-const mariapublic = new Maria(process.env.MARIA);
+const mari = new Mari();
 class Messenger {
     // Main method to construct the default message
     static async buildMessage(results) {

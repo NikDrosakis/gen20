@@ -3,7 +3,7 @@ namespace Core;
 use Exception;
 use Wordpress;
 /*
-PUBLIC & ADMIN WEB UI INSTANCE
+WEB UI INSTANCE
 Core Class ROUTING
 layout
 manifestEditor
@@ -12,29 +12,19 @@ wordpress integrated
 magento integrated
 */
 class Gen extends Gaia {
-use  System, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Media, Filemeta, My, CuboAdmin, CuboPublic, Template,Book, Share;
+use  System, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form, DomainZone,DomainFS,DomainDB,DomainServer,Kronos, WS, Action, Template, Media, Filemeta, My, CuboAdmin, CuboPublic, Template,Book, Share;
 
 protected $database;
 protected $layout_selected;
 protected $layout;
 protected $db_sub;
 protected $db_page;
-protected $default_admin_manifest='h:
-  - renderCubo: "default.menuweb"
+protected $default_manifest='h:
+  - renderCubo: "default.menu"
 sl:
   - renderCubo: "slideshow.public"
-  - renderCubo: "default.mediac"
+  - renderCubo: "default.media"
 sr:
-  - renderCubo: "default.notificationweb"
-  - renderCubo: "default.nbar"
-f:
-';
-protected $default_public_manifest='h:
-  - renderCubo: "default.menuadmin"
-sl:
-  - renderCubo: "slideshow.public"
-sr:
-  - renderCubo: "default.notificationweb"
   - renderCubo: "default.nbar"
 f:
 ';
@@ -48,15 +38,15 @@ protected $layouts=[
       '6'=>['name'=>'6','columns'=>"1fr 1fr 1fr", 'rows'=>"1fr 1fr",'channels'=>6]
       ];
 protected $editor;
-protected $main;
-protected $maingrp;
+public $page;
+public $pagegrp;
 protected $emptyChannelImg='<img src="https://scontent.fath6-1.fna.fbcdn.net/v/t39.30808-6/346640854_1464202694405870_4821110064275118463_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=cc71e4&_nc_eui2=AeET8MMdyrrxcZXQPQRHxxULzTMCkFTvUl7NMwKQVO9SXlWjH0Q-knjnox1ZdrOQV0Q&_nc_ohc=kaVtIYyBrmEQ7kNvgHtt038&_nc_zt=23&_nc_ht=scontent.fath6-1.fna&_nc_gid=AKEgjeaOYw12bRkO0FEl6jd&oh=00_AYDlYaFlI9-vLGr2Zyak5KKkzHVXnaDNqSRly3sY4d_zaQ&oe=67232B67">';
 
 
    public function __construct() {
            parent::__construct();
 
-        $this->PAGECUBO = $this->getMaincubo($this->page);
+        $this->PAGECUBO = $this->getpagecubo($this->page);
    }
 
 /**
@@ -67,13 +57,6 @@ protected $emptyChannelImg='<img src="https://scontent.fath6-1.fna.fbcdn.net/v/t
 	 public function handleRequest() {
  		if ($this->isXHRRequest()) {
           $this->handleXHRRequest();
-
-        } else if($this->isWorkerRequest()){
-                $this->handleWorkerRequest();
-
-//merge routers
-        }elseif ($_SERVER['SYSTEM'] == 'admin') {
-            $this->router();
 
         }elseif ($_SERVER['SYSTEM'] == 'vivalibrocom') {
 				$this->router();
@@ -101,19 +84,15 @@ protected function wpRouter() {
 
 protected function router() {
 //HEAD
-$this->renderAdminHead();
+$this->renderHead();
 
 
 //BODY
-if($_SERVER['SYSTEM']=='admin'){
     echo $this->buildManifest($this->page);
-}else{
-    echo $this->buildManifest($this->page);
-}
 
 //FOOTER
 //     include_once CUBO_ROOT."venus/public.php";
-echo '<script src="/admin/js/start.js"></script>';
+echo '<script src="/asset/js/start.js"></script>';
 echo '</body>';
 echo '</html>';
 }
@@ -140,24 +119,9 @@ protected function produceCuboadmin($channel){
      return $html;
  }
 
-protected function defaultAdminManifest($name,$type='file') {
+protected function defaultManifest($name,$type='file') {
     //include subfile if exists
-    $manifest = yaml_parse($this->default_admin_manifest);
-    $sub=CUBO_ROOT."default/main/".$name . ".php";
-
-    if(file_exists($sub)){
-    $manifest['m'][0]= ["renderCubo"=>"default.$name"];
-    //if table exists insert table
-
-    }elseif($type=='table'){
-    $manifest['m'][0]= ["buildTable"=>"gen_admin.$name"];
-    }
-    return $manifest;
-}
-
-protected function defaultPublicManifest($name,$type='file') {
-    //include subfile if exists
-    $manifest = yaml_parse($this->default_public_manifest);
+    $manifest = yaml_parse($this->default_manifest);
     $sub=CUBO_ROOT."default/main/".$name . ".php";
     //if file exists insert file
     if($this->id !='' && $this->mode ==''){
@@ -210,32 +174,26 @@ return "<h3>
 </h3>";
 }
 /**
-$url = SITE_URL.'api/v1/local/buildTable?table=gen_vivalibrocom.main'
+$url = SITE_URL.'api/v1/local/buildTable?table=gen_vivalibrocom.page'
 $this->fetchUrl($url)
 */
 protected function buildManifest($name) {
-    $main = $this->mainplan($name);
+    $page = $this->pageplan($name);
 
-    $default_admin = yaml_parse($this->default_admin_manifest) ?: [];
-    $default_public = yaml_parse($this->default_public_manifest) ?: [];
-    $system = $this->SYSTEM != 'admin' ? $default_public : $default_admin;
+    $default = yaml_parse($this->default_manifest) ?: [];
+    $plan = $page['manifest'] ? yaml_parse($page['manifest']) : $this->defaultManifest($name, $page['type']);
 
-    if ($this->SYSTEM != 'admin'){
-        $plan = $main['manifest'] ? yaml_parse($main['manifest']) : $this->defaultPublicManifest($name, $main['type']);
-    } else {
-        $plan = $main['manifest'] ? yaml_parse($main['manifest']) : $this->defaultAdminManifest($name, $main['type']);
-    }
 
     // Ensure primary keys exist, fallback to default if missing
     foreach (['h', 'm', 'sl', 'sr', 'f'] as $section) {
         if (!isset($plan[$section]) || !is_array($plan[$section])) {
-            $plan[$section] = $this->SYSTEM == 'admin' ? $this->defaultAdminManifest($name)[$section] : $this->defaultPublicManifest($name)[$section];
+            $plan[$section] = $this->defaultManifest($name)[$section];
         }
     }
 
     $html = '<div id="container">';
     $html .= '<header>';
-    $planH = empty($plan['h']) ? $system['h'] : $plan['h'];
+    $planH = empty($plan['h']) ? $default['h'] : $plan['h'];
     foreach ($planH as $methods) {
         foreach ($methods as $method => $param) {
             $result = $this->executeMethod($method, $param);
@@ -264,7 +222,7 @@ protected function buildManifest($name) {
     }
     $html .= '</div>';
 
-    // Main Page
+    // page Page
     $html .= '<div id="mainpage2">';
     foreach ($plan['m'] as $methods) {
         foreach ($methods as $method => $param) {
@@ -313,15 +271,6 @@ protected function buildManifest($name) {
     return $html;
 }
 
-protected function main() {
-    $widgets = read_folder($this->WIDGETURI);
-    $subs=array();
-     foreach ($widgets as $wid) {
-        if (file_exists($this->WIDGETURI . $wid . "/admin.php")) {
-            $subs[$wid] = ["slug" => ucfirst($wid), "icon" => "time"];
-        }
-    }
-    return $subs;
-}
+
 
 }

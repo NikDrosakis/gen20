@@ -6,7 +6,7 @@ trait Media {
 protected $UNSPLASH_URL='https://api.unsplash.com/search/photos/';
 
 protected function validateImg($img) {
-    return !$img ? "/admin/img/myface.jpg" : (strpos($img, '/') === 0 ? $img : MEDIA_URL . $img);
+    return !$img ? "/asset/img/myface.jpg" : (strpos($img, '/') === 0 ? $img : MEDIA_URL . $img);
 }
 
 

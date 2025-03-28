@@ -28,8 +28,9 @@ LOG_DIR="$ROOT/log"               # Directory for log files
 LOG_FILE="$ROOT/log/cli.log"    # Log file for the CLI
 BACKUP_DIR="$ROOT/backup"               # Directory for log files
 BG_DIR="$CLI_ROOT/bg"                   # Directory for background processes
+BIN="$CLI_ROOT/bin"                   # Directory for background processes
 DAEMON="$BG_DIR/daemon-update.sh"       # Path to the daemon script
-PID_FILE="/tmp/gen-daemon.pid"          # PID file for the daemon
+PID_FILE="$BG_DIR/gen-daemon.pid"          # PID file for the daemon
 COM_DIR="$CLI_ROOT/com"                # Base directory for command scripts
 # ==================================================
 # Measure Execution Time
@@ -95,6 +96,9 @@ case "$COMMAND" in
     status)
            bash "$DAEMON" status           # Check daemon status
            ;;
+    kill)
+           bash "$BIN/kill.sh" "$@"  # Pass all arguments through
+      ;;
     wget)
     wget -r -l 1 -A.html -P $ROOT/$3 https://$FILENAME
     ;;
@@ -203,10 +207,6 @@ case "$COMMAND" in
               mysqldump -u root "$3" | grep -v "Dump completed" > /tmp/db2.sql
               diff -u /tmp/db1.sql /tmp/db2.sql
               ;;
-            ai)
-              echo "Executing AI process for Gen20..."
-               python3 /var/www/gen20/ai/run_model.py "$2"
-               ;;
              elastic)
                  echo "Fetching Elasticsearch index status..."
                  curl -s "http://localhost:9200/_cat/indices?v"
@@ -286,7 +286,7 @@ chat|domain|ermis|mars|god|kronos|cubos|ws|ai|git)
     gaia)
         if [ -n "$FILENAME" ]; then
             # Pass all arguments to the Gaia PHP script
-            php "$CLI_ROOT/com/gaia/index.php" "$@"
+            php "$CLI_ROOT/com/gaia/index.php" "$@" 2> >(bash "$COM_DIR/ai/review.sh")
         else
             echo "❌ Error: FILENAME is not specified for Gaia."
             exit 1
@@ -301,6 +301,12 @@ chat|domain|ermis|mars|god|kronos|cubos|ws|ai|git)
         exit 1
         ;;
 esac
+# ==================================================
+# ERROR AI SUGGEST
+# ==================================================
+ERROR_HANDLER_SCRIPT="$COM/ai/review.sh"
+# Catch errors and redirect to error handler
+trap 'bash "$ERROR_HANDLER_SCRIPT" "$(tail -n 1 /var/log/syslog)"' ERR
 # ==================================================
 # Calculate Execution Time
 # ==================================================

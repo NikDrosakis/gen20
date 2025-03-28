@@ -19,7 +19,7 @@ DOC
 +
 6) PUBLIC basic template
 after the five redirect to
-/admin/developer/globs?mode=setup to add basis data
+/developer/globs?mode=setup to add basis data
 
 */
 protected $domain;
@@ -562,7 +562,7 @@ protected function standardNginx($domain) {
 	/*
 	protected function setup_zip($name){
 	//copy
-	$remoteFolder='/var/www/admin/public_html/code/modules/';
+	$remoteFolder='/var/www/gs/public_html/code/modules/';
 	$localFolder='/var/www/admin/public_html/code/modules/';
 	ssh2_scp_send($this->connection, $remoteFolder."$name/$name.zip", SITE_ROOT, 0777);
 	//unzip file
@@ -693,7 +693,7 @@ protected function setupDomain($jsonsetup,$url){
 	 @rename($gaiaroot.'myblog', SITEROOT.'templates/myblog');
 
 	//3	create domain index.php && .htaccess (if apache)
-		$indexfile="<?php define('GAIAROOT',dirname(dirname(__FILE__)).'/admin/'); include GAIAROOT.'bootstrap.php'; ?>";
+		$indexfile="<?php define('GAIAROOT',dirname(dirname(__FILE__)).'/'); include GAIAROOT.'bootstrap.php'; ?>";
 		@file_put_contents(SITEROOT."index.php",$indexfile);
 		$htaccess="RewriteEngine On\n";
 		$htaccess.="RewriteBase /\n";
@@ -840,7 +840,7 @@ protected function setupDomain($jsonsetup,$url){
 
 ////copy the system to backup folder
             //update copy gaia to sys_folder
-            recurse_copy(SERVERBASE . $domainame.'/admin/', $sys_folder);
+            recurse_copy(SERVERBASE . $domainame.'/', $sys_folder);
 
 //create tar.gz for sys_folder
             $srepo = new PharData("$sys_folder.tar");

@@ -3,8 +3,8 @@ const WebSocket = require('ws');
 const EventEmitter = require('events');
 const { stats } = require('./stats');
 const Messenger = require('../core/Messenger');
-//const emitter = new EventEmitter();
-//emitter.setMaxListeners(1000);
+const emitter = new EventEmitter();
+emitter.setMaxListeners(1000);
 let wss;
 
 

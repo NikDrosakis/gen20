@@ -65,37 +65,37 @@ if (!empty($setup['main'])) {
         }
     }
 }
-    // Step 4: Insert cubo metadata into `maingrp`
-    $maingrpData = [
+    // Step 4: Insert cubo metadata into `pagegrp`
+    $pagegrpData = [
         'cuboid' => $cuboId, // Assuming a cubo ID has been created
         'name' => $cuboName,
         'description' => $setup['description'] ?? ''
     ];
-    $maingrpGrpId = $this->db->inse("$this->publicdb.maingrp", $maingrpData);
-    if($maingrpGrpId){
-    echo "Inserted maincubo $maingrpGrpId";
+    $pagegrpGrpId = $this->db->inse("$this->publicdb.pagegrp", $pagegrpData);
+    if($pagegrpGrpId){
+    echo "Inserted pagecubo $pagegrpGrpId";
     }
 
     // Step 5: Insert `mains` components into `main` table
     if (!empty($setup['mains'])) {
         foreach ($setup['mains'] as $main) {
             $mainData = [
-                'maingrpid' => $maingrpGrpId,
+                'pagegrpid' => $pagegrpGrpId,
              'manifest' => "m:\\n -\"$main\"",
                 'name' => $main
             ];
             $insertedMainId = $this->db->inse("$this->publicdb.main", $mainData);
 
-            // Step 4: Insert into `maincubo` table for each main
-            $mainCuboData = [
+            // Step 4: Insert into `pagecubo` table for each main
+            $pagecuboData = [
                 'mainid' => $insertedMainId,
                 'area' => 'm',
                 'cuboid' => $insertedGrpId,
                 'name' => $cuboName
             ];
-            $insertedMaincuboId = $this->db->inse("$this->publicdb.maincubo", $mainCuboData);
-            if($insertedMaincuboId){
-            echo "Inserted maincubo $insertedMaincuboId";
+            $insertedpagecuboId = $this->db->inse("$this->publicdb.pagecubo", $pagecuboData);
+            if($insertedpagecuboId){
+            echo "Inserted pagecubo $insertedpagecuboId";
             }
         }
     }
@@ -105,7 +105,7 @@ if (!empty($setup['main'])) {
     if (file_exists($adminFilePath)) {
     // Step 5: Insert links for admin.php if it exists
         $linksData = [
-            'maingrpid' => 5,
+            'pagegrpid' => 5,
             'name' => $name,
             'title' => ucfirst($name),
             'manifest' => "m:\\n -renderCubo:\"$name./admin.php\"",

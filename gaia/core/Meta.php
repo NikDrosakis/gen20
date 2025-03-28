@@ -22,7 +22,7 @@ protected function getPageMetatags(): array {
                 $db = $_SERVER['SYSTEM']=='admin' ? "gen_admin" : $this->publicdb;
                 $meta = $this->db->f("SELECT meta FROM {$db}.metadata WHERE name = ?", [$this->page]);
             } else {
-                $meta = $this->db->f("SELECT meta FROM {$this->publicdb}.main WHERE name = ?", [$this->page]);
+                $meta = $this->db->f("SELECT meta FROM {$this->publicdb}.page WHERE name = ?", [$this->page]);
             }
 
             // Append comma-separated meta if found
@@ -30,8 +30,8 @@ protected function getPageMetatags(): array {
                 $metaString .= ',' . $meta['meta'];
             }
         } else {
-            // MAIN ADMIN PAGE
-            $meta = $this->db->f("SELECT meta FROM {$this->publicdb}.maingrp WHERE name = ?", [$this->page]);
+            // page ADMIN PAGE
+            $meta = $this->db->f("SELECT meta FROM {$this->publicdb}.pagegrp WHERE name = ?", [$this->page]);
             if ($meta) {
                 $metaString .= ',' . $meta['meta'];
             }
@@ -41,9 +41,9 @@ protected function getPageMetatags(): array {
              $db = $_SERVER['SYSTEM']=='admin' ? "gen_admin" : $this->publicdb;
         if (!empty($this->page)) {
             // PUBLIC PAGE
-            $meta = $this->db->f("SELECT meta FROM {$this->publicdb}.main WHERE name = ?", [$this->page]);
+            $meta = $this->db->f("SELECT meta FROM {$this->publicdb}.page WHERE name = ?", [$this->page]);
         } else {
-            // PUBLIC MAIN PAGE
+            // PUBLIC page PAGE
             $meta = $this->db->f("SELECT meta FROM {$db}.metadata WHERE name = ?", [$this->page]);
         }
 

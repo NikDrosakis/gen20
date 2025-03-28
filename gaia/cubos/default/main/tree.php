@@ -204,7 +204,7 @@ $request=["value"=>$domain];
 
 //$tree=$this->getBranches("gen_admin");
 //xecho($tree);
-//xecho($this->mainCuboBranch());
+//xecho($this->pagecuboBranch());
 
 
 

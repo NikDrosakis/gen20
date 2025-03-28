@@ -32,7 +32,7 @@ width: 50%;
     min-height: 120px;
     }
     .unwid{background: wheat;}
-    .mainbox{width:100%;margin: 2px;border: 1px solid darkcyan;}
+    .mainbox{width:100%;margin: 2px;border: 1px solid darkcyan;padding: 8px;}
     .cubobox{min-width: 120px;cursor:pointer;margin: 2px;border: 1px solid darkcyan;}
     .wid{
 width: 100%;
@@ -77,9 +77,9 @@ float: left;
     }
     .list-group-item,.widheader{
 background: aliceblue;
-    font-size: 1em;
+    font-size: 12px;
     color: #333;
-    font-weight:700;
+    font-weight:500;
 }
 .widbody{
 font-size:12px;
@@ -115,7 +115,7 @@ $cubos= $this->db->fa("SELECT * from gen_admin.cubo order by name ASC");
 <div style="min-width: 50%;max-height: 90vh;
                                overflow: scroll;">
 <div style="font-strength:700">Main Pages of <?=TEMPLATE?>  (<?=count($pages)?>)         <span class="glyphicon glyphicon-plus"></span></div>
-<?php //$pc = $this->getMaincubo($selectedPageName); //pagecubo ?>
+<?php //$pc = $this->getpagecubo($selectedPageName); //pagecubo ?>
 
 <div style="display:flex;flex-wrap: wrap;">
 
@@ -124,10 +124,11 @@ $name=$pages[$i]['name'];
 $id=$pages[$i]['id'];
 ?>
 <div class="mainbox">
-<div style="background: antiquewhite;">
-    <a href="/<?=$name?>" style="margin-left:33%;"><?=$name?></a>
-<button style="float:right" data-mainid="<?=$id?>" onclick="handleClear(this)" class="clear-cubos bare button">clear</button>
-<button style="float:left" data-mainid="<?=$id?>" class="bare button">autoset</button>
+<div style="background: antiquewhite;padding: 8px;display: flex;  justify-content: space-between;">
+<button data-mainid="<?=$id?>" class="bare button">autoset</button>
+    <a href="/<?=$name?>"><?=$name?></a>
+<button data-mainid="<?=$id?>" onclick="handleClear(this)" class="clear-cubos bare button">clear</button>
+
 </div>
 <div id="<?=$name?>-wid" mainid="<?=$id?>" class="wid list-group-item nested-1">
         <!--Header(H)-->
@@ -159,7 +160,7 @@ $id=$pages[$i]['id'];
 
 <?php
 $count_instances = $this->db->fa("SELECT cuboid, COUNT(*) AS num
-                                 FROM {$this->publicdb}.maincubo
+                                 FROM {$this->publicdb}.pagecubo
                                  group by cuboid
                                 ");
 $cuboidCounts = [];
@@ -172,9 +173,7 @@ foreach($cubos as $cubo){             ?>
     <div class="cubobox draggable list-group-item global nested-<?=$cubo['name']?> wid"
      id="<?=$cubo['id']?>"
      title="This is the <?=$cubo['name']?> widget. Drag and drop it to the desired area.">
-    <div class="widheader" cuboid="<?=$cubo['id']?>">
-        <?=$cubo['name']?> (<span id="cuboinstance_<?=$cubo['id']?>"><?=$cuboidCounts[$cubo['id']] ?? 0?></span>)
-    </div>
+    <div class="widheader" cuboid="<?=$cubo['id']?>"><?=$cubo['name']?> <span id="cuboinstance_<?=$cubo['id']?>"><?=$cuboidCounts[$cubo['id']] ?? 0?></span></div>
     <div class="widbody" cuboid="<?=$cubo['id']?>">
         <?=$cubo['description']?>
     </div>
@@ -194,7 +193,7 @@ foreach($cubos as $cubo){             ?>
 
     async function restoreAllStates() {
     try {
-   const getpages = await gs.api.maria.fa(`SELECT * FROM ${G.publicdb}.main`);
+   const getpages = await gs.api.maria.fa(`SELECT * FROM ${G.publicdb}.page`);
           // Get all available pages
         const pageOptions = getpages.data || [];
 
@@ -247,19 +246,19 @@ droppableAreas.forEach(function (area) {
 
     // Function handling the delete action
     async function handleClear(event) {
-        const mainid = event.target.getAttribute("data-mainid");
-        if (!mainid) return;
+        const pageid = event.target.getAttribute("data-pageid");
+        if (!pageid) return;
         try {
             // Delete from the database
-            await gs.api.maria.q(`DELETE FROM ${G.publicdb}.maincubo WHERE mainid=? and area!=?`, [mainid, 'm']);
+            await gs.api.maria.q(`DELETE FROM ${G.publicdb}.pagecubo WHERE pageid=? and area!=?`, [pageid, 'm']);
 
             // Remove all associated cubobox elements
-            document.querySelectorAll(`.cubobox[data-mainid='${mainid}']`).forEach((cubo) => cubo.remove());
+            document.querySelectorAll(`.cubobox[data-pageid='${pageid}']`).forEach((cubo) => cubo.remove());
 
-            // Remove the main section from the UI
-            document.getElementById(`main-${mainid}`).remove();
+            // Remove the page section from the UI
+            document.getElementById(`page-${pageid}`).remove();
         } catch (error) {
-            console.error("Error deleting main section:", error);
+            console.error("Error deleting page section:", error);
         }
     }
 
@@ -276,29 +275,29 @@ droppableAreas.forEach(function (area) {
 });
 
     // Function to save the state
-       //find mainid in maincubo=fetchid > if !=false in mainid update maincubo SET cuboid=draggedItemId where id=fetchid > else INSERT maincubo (mainid,cuboid,area)
-      //  const updatepage= await gs.api.maria.q(`UPDATE ${G.publicdb}.maincubo SET ${dropTargetId}=? WHERE id=?`,[draggedItemId,selectedPageName]);
+       //find pageid in pagecubo=fetchid > if !=false in pageid update pagecubo SET cuboid=draggedItemId where id=fetchid > else INSERT pagecubo (pageid,cuboid,area)
+      //  const updatepage= await gs.api.maria.q(`UPDATE ${G.publicdb}.pagecubo SET ${dropTargetId}=? WHERE id=?`,[draggedItemId,selectedPageName]);
 async function saveState(evt) {
   var draggedItem = evt.item;  // The dragged element
     const dropTarget = evt.to;     // The droppable area it was dropped into
-    const mainName=dropTarget.id.split('-')[0];
-    const mainId=dropTarget.getAttribute('mainid');
+    const pageName=dropTarget.id.split('-')[0];
+    const pageId=dropTarget.getAttribute('pageid');
     const draggedItemId = draggedItem.id;
     const dropTargetId = dropTarget.id.split('-')[1];
        try {
-            // Find the record in maincubo
+            // Find the record in pagecubo
             const fetchResult = await gs.api.maria.f(`
-                SELECT id FROM ${G.publicdb}.maincubo
-                    WHERE mainid = ? AND area = ?`,[mainId, dropTargetId]);
+                SELECT id FROM ${G.publicdb}.pagecubo
+                    WHERE pageid = ? AND area = ?`,[pageId, dropTargetId]);
 
             // Check if a record was found
             if (fetchResult && fetchResult.length > 0) {
                 // Record exists, update cuboid for the found id
                 const fetchId = fetchResult.data.id;
-                await gs.api.maria.q(`UPDATE ${G.publicdb}.maincubo SET cuboid = ? WHERE id = ?`,[draggedItemId, fetchId]);
+                await gs.api.maria.q(`UPDATE ${G.publicdb}.pagecubo SET cuboid = ? WHERE id = ?`,[draggedItemId, fetchId]);
             } else {
                 // No matching record, insert new row
-                await gs.api.maria.q(`INSERT INTO ${G.publicdb}.maincubo (mainid, cuboid, area) VALUES (?, ?, ?)`,[mainId, draggedItemId, dropTargetId]);
+                await gs.api.maria.q(`INSERT INTO ${G.publicdb}.pagecubo (pageid, cuboid, area) VALUES (?, ?, ?)`,[pageId, draggedItemId, dropTargetId]);
                 }
              // Increase the cuboid count by 1 in the DOM
                     const instanceCountSpan = document.getElementById(`cuboinstance_${draggedItemId}`);
@@ -333,7 +332,7 @@ function makeDraggable(cubo) {
             const mcid = cubo.getAttribute("data-mcid");
             if (mcid) {
                 try {
-                    await gs.api.maria.q(`DELETE FROM ${G.publicdb}.maincubo WHERE id=?`, [mcid]);
+                    await gs.api.maria.q(`DELETE FROM ${G.publicdb}.pagecubo WHERE id=?`, [mcid]);
                     cubo.remove();
                 } catch (error) {
                     console.error("Error deleting cubo:", error);
@@ -363,7 +362,7 @@ newCubo.querySelector(".delete-btn").onclick = async () => {
 
     if (mcid) {
         try {
-            await gs.api.maria.q(`DELETE FROM ${G.publicdb}.maincubo WHERE id=?`, [mcid]);
+            await gs.api.maria.q(`DELETE FROM ${G.publicdb}.pagecubo WHERE id=?`, [mcid]);
             newCubo.remove();
 
             // Decrease the cuboid count by 1
@@ -418,11 +417,11 @@ newCubo.querySelector(".delete-btn").onclick = async () => {
 async function restoreState(layoutpage, pageName, cubocont, dropareas) {
     try {
         const getpage = await gs.api.maria.fa(`
-            SELECT cubo.id as cuboid, maincubo.id as mcid, maincubo.fixed, main.id as mainid, maincubo.area, cubo.name as cubo
-            FROM ${G.publicdb}.maincubo
-            LEFT JOIN ${G.publicdb}.main ON main.id = maincubo.mainid
-            LEFT JOIN gen_admin.cubo ON cubo.id = maincubo.cuboid
-            WHERE main.id = ?`, [layoutpage]);
+            SELECT cubo.id as cuboid, pagecubo.id as mcid, pagecubo.fixed, page.id as pageid, pagecubo.area, cubo.name as cubo
+            FROM ${G.publicdb}.pagecubo
+            LEFT JOIN ${G.publicdb}.page ON page.id = pagecubo.pageid
+            LEFT JOIN gen_admin.cubo ON cubo.id = pagecubo.cuboid
+            WHERE page.id = ?`, [layoutpage]);
 
         const state = getpage.data || [];
 
@@ -440,7 +439,7 @@ async function restoreState(layoutpage, pageName, cubocont, dropareas) {
 
                 // Store `mcid` in a data attribute for deletion
                 newCubo.setAttribute("data-mcid", item.mcid);
-                newCubo.setAttribute("data-mainid", item.mainid);
+                newCubo.setAttribute("data-pageid", item.pageid);
 
                 // Append the Cubo to the area
                 area.appendChild(newCubo);

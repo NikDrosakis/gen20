@@ -34,22 +34,6 @@ services:
     networks:
       - gen-network
 
-#1 micro php
-  admin:
-    build:
-      context: .
-      dockerfile: ./gaia/admin/Dockerfile
-    ports:
-      - "8044:8044"
-    depends_on:
-      - maria
-      - apiv1
-      - redis
-    volumes:
-      - ./gaia/admin:/app/admin
-      - ./gaia/core:/app/core
-    networks:
-      - gen-network
 #2 micro php
   cubos:
     build:

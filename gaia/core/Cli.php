@@ -3,7 +3,7 @@ namespace Core;
 use ReflectionMethod;
 
 class Cli extends Gaia {
-use  System, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Media, Filemeta, My, CuboPublic, CuboAdmin, Template,Book, Share;
+use  System, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form,DomainZone,DomainFS,DomainDB,DomainServer, Kronos, WS, Action, Template, Media, Filemeta, My, CuboPublic, CuboAdmin, Template,Book, Share;
     public $argv=[]; // To store the arguments passed to the script
     public $argc; // Store the argument count
     protected $cliDir = "/var/www/gs/cli"; // Adjust this path as needed
@@ -229,9 +229,9 @@ protected function thisCli($argv) {
     // If it's a method, execute it
     if (isset($method) && method_exists($target, $method)) {
         // Debug: Print the method name, table name, and parsed params
-        echo "Method: {$method}\n";
-        echo "Table Name: {$tableName}\n";
-        echo "Params: " . print_r($params, true) . "\n";
+      //  echo "Method: {$method}\n";
+       // echo "Table Name: {$tableName}\n";
+       // echo "Params: " . print_r($params, true) . "\n";
 
         // Call the method with the table name and params
         $result = $target->{$method}($tableName, $params);
@@ -252,11 +252,13 @@ protected function thisCli($argv) {
 }
 
 protected function methodCli($method, $parsedParams) {
+
     // Check if the method exists
     if (method_exists($this, $method)) {
         // Call the method with the parsed parameters
         //$result = call_user_func_array([$this, $method], $parsedParams);
-        $result = $this->$method($parsedParams);
+        //$result = $this->$method($parsedParams);
+          $result = $this->$method(...$parsedParams);
         // If the result is an array or object, use arrayCli to format output
         if (is_array($result) || is_object($result)) {
             $this->arrayCli($result);

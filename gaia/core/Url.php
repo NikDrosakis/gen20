@@ -15,14 +15,6 @@ protected function getUrl(string $url, array $options = []) {
 }
 protected function fetchUrl(string $url, array $options = []) {
     $this->httpClient = new Client();
-    $cacheKey = 'cubo_' . md5($url . json_encode($options)); // Unique cache key
-
-    // Try fetching from Redis cache
-    $cachedResponse = $this->redis->get($cacheKey);
-    if ($cachedResponse !== false) {
-        return $cachedResponse;
-    }
-
     try {
         // Preserve $_GET parameters in the URL
         if (!empty($_GET)) {
@@ -51,12 +43,8 @@ protected function fetchUrl(string $url, array $options = []) {
 
             if (strpos($contentType, 'application/json') !== false) {
                 $decodedBody = json_decode($body, true);
-                $this->redis->set($cacheKey, $decodedBody, 1000); // Store JSON response in Redis
                 return $decodedBody;
             }
-
-            // Store raw content (HTML or others) in Redis
-            $this->redis->set($cacheKey, $body, 1000);
             return $body;
         } else {
             return ["error" => "HTTP error! Status: $statusCode"];

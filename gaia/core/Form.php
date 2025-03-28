@@ -268,12 +268,12 @@ $tableHtml .= '</div>';
 /**
  abstraction with pug json
 {
-  "id": "td a(href=`/admin/${page}/${subpage}?id=${row.id}`) span.glyphicon.glyphicon-edit | ${row.id}",
+  "id": "td a(href=`/asset/${page}/${subpage}?id=${row.id}`) span.glyphicon.glyphicon-edit | ${row.id}",
   "sort": "td span(id=`menusrt${row.id}`) ${row.sort}",
   "label": "td | ${is_string(value) ? htmlspecialchars(value, 'ENT_QUOTES', 'UTF-8') : ''}",
   "javascript": "td = renderRunField(method, row.name, row[colName])",
   "button": "td = renderButtonField(colData.comment, row[colName])",
-  "selectjoin": "td a(style='position: absolute;', href=`/admin/${link}`) span.glyphicon.glyphicon-link | #{renderSelectField(colName, row[colName], options)}",
+  "selectjoin": "td a(style='position: absolute;', href=`/asset/${link}`) span.glyphicon.glyphicon-link | #{renderSelectField(colName, row[colName], options)}",
   "checkbox": "td input#${colName}${row.id}(type='checkbox', switch='', checked='${row[colName] ? \"checked\" : \"\"}', class='switcher', onchange=`gs.form.updateRow(this, '${table}')`)",
   "method": "td = renderSelectField(colName, row[colName], getClassMethods())",
   "select": "td = renderSelectField(colName, row[colName], options)",
@@ -310,7 +310,7 @@ protected function tableBody($tableName,$colArray=[],$data=[]) {
 
             // @fm.features Auto ID column
             if ($colName === 'id') {
-                 $tableHtml .= '<a href="/admin/'.$subpage.'?id='.$row['id'].'"><span class="glyphicon glyphicon-edit"></span></a>';
+                 $tableHtml .= '<a href="/asset/'.$subpage.'?id='.$row['id'].'"><span class="glyphicon glyphicon-edit"></span></a>';
                  $tableHtml .= htmlspecialchars($row['id']);
 
             }elseif ($colName === 'sort') {
@@ -335,7 +335,7 @@ protected function tableBody($tableName,$colArray=[],$data=[]) {
                         $tableName = explode('.', $rowtable)[0];
                         $rowId = explode('.', $rowtable)[1];
                         $link=$this->page==$tableName ? $tableName.'?id=' . $row[$rowId] : $this->page.'/'.$tableName.'?id=' . $row[$rowId];
-                        $tableHtml .= '<a style="position: absolute;" href="/admin/' . $link . '"><span class="glyphicon glyphicon-link"></span></a> ';
+                        $tableHtml .= '<a style="position: absolute;" href="/asset/' . $link . '"><span class="glyphicon glyphicon-link"></span></a> ';
                         $options=$this->getSelectOptions($colData['comment'],$value);
                         $tableHtml .=  $this->renderSelectField($colName, $value, $options);
 
@@ -496,7 +496,7 @@ protected function formFilters($colData,$row=[],$table='') {
         //page should not be included like that
         $link=$this->page==$tableName ? $tableName.'?id=' . $row["id"] : $this->page.'/'.$tableName.'?id=';
         //link goto page
-        $tableHtml .= '<a href="/admin/' . $link . '"><span class="glyphicon glyphicon-link"></span></a> ';
+        $tableHtml .= '<a href="/' . $link . '"><span class="glyphicon glyphicon-link"></span></a> ';
         //drop down options
         $options = $this->getSelectOptions($colData['comment'], $row[$colName]);
         //drop down UI,
@@ -607,7 +607,7 @@ return '<h3>
             <input id="cms_panel" class="red indicator">
            <button class="bare" onclick="openPanel(\'common/doc.php\')"><span class="glyphicon glyphicon-info-sign bare"></span></button>
            <button class="bare" onclick="openPanel(\'common/guide.php\')"><span class="glyphicon glyphicon-question-sign"></span></button>
-            <a href="/admin/'.$subpage.'"><span class="glyphicon glyphicon-edit"></span>'.ucfirst($subpage).'</a>
+            <a href="/'.$subpage.'"><span class="glyphicon glyphicon-edit"></span>'.ucfirst($subpage).'</a>
             <button class="bare right"
             onclick="gs.api.bind(this, { showLabel: false, showSwal: true })"
             data-method="buildForm"

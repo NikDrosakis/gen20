@@ -18,7 +18,7 @@
     </tr>
     </tbody>
     <?php
-    xecho($this->listTemplates());
+    //xecho($this->listTemplates());
     foreach($tree as $dom => $domarray){
         foreach(glob(GAIABASE.$dom."/templates/*") as $template){
             $name=basename($template);

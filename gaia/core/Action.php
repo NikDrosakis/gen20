@@ -668,7 +668,7 @@ function renderBody(array $rec): string {
         . (isset($url['query']) ? '?' . http_build_query($url['query']) : '')
         . (isset($url['fragment']) ? '#' . $url['fragment'] : '');
     }
-    protected function renderHead(array $rec): array {
+    protected function renderHeadA(array $rec): array {
         // Get api keys from actiongrp.keys
         $keyValuePairs = [];
         if (isset($rec['keys'])) {
@@ -810,7 +810,7 @@ protected function runExternalRecource(array $rec){
 
                     $bodyData = $this->renderBody($rec);
 
-                   $options['headers'] = $this->renderHead($rec);
+                   $options['headers'] = $this->renderHeadA($rec);
 
                     $options['body'] = $bodyData;
                 }

@@ -1,39 +1,37 @@
 #!/bin/bash
 
-set -x  # Ενεργοποίηση του debugging
+set -x  # Enable debugging
 
-# Εκτύπωση όλων των παραμέτρων
+# Print all arguments
 echo "Arguments passed: $@"
 
-# Ελέγχουμε την πρώτη παράμετρο
-echo "First argument: $1"
-
-# Αν το πρώτο όρισμα είναι κενό, κάνουμε έλεγχο
-if [ -z "$3" ]; then
-  echo "Πρέπει να δώσεις μήνυμα ως πρώτο όρισμα."
+# Check if the message argument is provided
+if [ -z "$1" ]; then
+  echo "You must provide a message as the first argument."
   exit 1
 fi
 
-# Ορισμός μεταβλητών
+# Define variables
 API_URL="https://vivalibro.com/apy/v1/gemini/conversation"
 CONVERSATIONID="1"
+API_KEY="YOUR_API_KEY_HERE"  # Replace with your actual API key
 
-# Αποστολή μηνύματος
-message="$3"
+# Get the message from the first argument
+message="$1"
 echo "Sending message: $message"
 
-# Χρήση του jq για την αποστολή του μηνύματος
+# Use jq to create the JSON payload
 payload=$(jq -n --arg msg "$message" --arg conv_id "$CONVERSATIONID" '{message: $msg, conversation_id: $conv_id}')
 
-# Εκτέλεση cURL για αποστολή του μηνύματος
-response=$(curl -s -H "Content-Type: application/json" -d "$payload" "$API_URL")
+# Execute cURL to send the message with the API key in the header
+response=$(curl -s -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "$payload" "$API_URL")
 
-# Έλεγχος αν η απόκριση είναι κενή
+# Check if the response is empty
 if [[ -z "$response" ]]; then
-  echo "Σφάλμα: Δεν υπάρχει απόκριση από τον διακομιστή."
+  echo "Error: No response from the server."
   exit 1
 fi
 
-# Εκτύπωση της απόκρισης
+# Print the response
 echo "Response from API:"
 echo "$response" | jq .

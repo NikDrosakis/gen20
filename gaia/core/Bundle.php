@@ -38,7 +38,7 @@ trait Bundle {
             }
 
             // GET LIST OF CUBO used in domain
-            $cubosToBundle = $this->db->fa("SELECT * from {$this->publicdb}.maincubo");
+            $cubosToBundle = $this->db->fa("SELECT * from {$this->publicdb}.pagecubo");
 
             // Bundle each each file in each folder
             foreach ($cubosToBundle as $cubo) {

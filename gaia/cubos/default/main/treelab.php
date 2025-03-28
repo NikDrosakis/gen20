@@ -1,7 +1,7 @@
 <?php
 //$tree=$this->getBranches("gen_admin");
 //xecho($tree);
-//xecho($this->mainCuboBranch());
+//xecho($this->pagecuboBranch());
 
 
 //xecho($this->createDefaultSchema("db","metadata"));

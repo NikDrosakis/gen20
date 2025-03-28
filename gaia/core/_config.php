@@ -7,7 +7,6 @@
             $_SERVER['HTTPS'] = '';                 // or set to an empty string
             define('TEMPLATE', "localhost");
             define('DOMAIN',$_SERVER['SERVER_NAME']);
-            define('ADMIN_ROOT', ROOT.'admin/');
         }
 	define('GSROOT','/var/www/gs/');
     define('GAIAROOT',GSROOT.'gaia/');
@@ -27,7 +26,7 @@
     define('PUBLIC_ROOT',GAIAROOT.TEMPLATE.'/');
     define('PUBLIC_ROOT_WEB',GAIAROOT.'public/'.$_SERVER['SERVER_NAME'].'/');
     define('CUBO_URL',SITE_URL.'cubos/');
-    define('ADMIN_URL',REFERER.HTTP_HOST. '/admin/');
+    define('ASSETa_URL',REFERER.HTTP_HOST. '/asset/');
     define('SITE',$_SERVER['HTTP_HOST']);
     define('DOM_EXT', pathinfo($_SERVER['SERVER_NAME'], PATHINFO_EXTENSION));
     define('DOM_ARRAY', explode('.',$_SERVER['SERVER_NAME']));
@@ -36,12 +35,14 @@
     define('LANG','en');
     define('AJAXREQUEST', isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
     define('MEDIA_ROOT', GSROOT.'media/'.DOMAIN.'/');
+    define('ASSET_URL',SITE_URL.'asset/');
     define('MEDIA_URL',SITE_URL.'media/');
     define('MEDIA_ROOT_ICON', MEDIA_ROOT.DOMAIN.'/thumbs/');
     define('PUBLIC_IMG_ROOT', PUBLIC_ROOT_WEB.'img/');
     define('PUBLIC_IMG',SITE_URL.'img/');
-    define('ADMIN_IMG_ROOT', ADMIN_ROOT.'img/');
-    define('ADMIN_IMG',ADMIN_URL.'img/');
+    define('ASSET_ROOT',GAIAROOT.'asset/');
+    define('ASSET_IMG_ROOT', ASSET_ROOT.'img/');
+    define('ASSET_IMG',ASSET_URL.'img/');
     define('URL_FILE',basename($_SERVER['PHP_SELF']));
     define('IMG',"/media/");
     define ('TEMPLATESURI',PUBLIC_ROOT_WEB."templates/");
@@ -62,10 +63,10 @@
     $this->PUBLIC_ROOT_WEB = PUBLIC_ROOT_WEB;
     $this->PUBLIC_IMG_ROOT = PUBLIC_IMG_ROOT;
     $this->PUBLIC_IMG = PUBLIC_IMG;
-    $this->ADMIN_IMG_ROOT = ADMIN_IMG_ROOT;
-    $this->ADMIN_IMG = ADMIN_IMG;
-    $this->ADMIN_ROOT = ADMIN_ROOT;
-    $this->ADMIN_URL = ADMIN_URL;
+    $this->ASSET_IMG_ROOT = ASSET_IMG_ROOT;
+    $this->ASSET_IMG = ASSET_IMG;
+    $this->ASSET_ROOT = ASSET_ROOT;
+    $this->ASSET_URL = ASSET_URL;
     $this->REFERER = REFERER;
     $this->server = $_SERVER;
     $this->HTTP_HOST = HTTP_HOST;
@@ -262,14 +263,7 @@
  //   $this->classif = json_decode(file_get_contents(PUBLIC_ROOT_WEB . "tax.json"), true);
     $this->id = isset($_GET['id']) ? trim($_GET['id']) : '';
     $this->userid = isset($_GET['userid']) ? trim($_GET['userid']) : '';
-
-    if ($this->SYSTEM == 'admin') {
-      $this->page = $_GET['page'] != '' ? $_GET['page'] : 'home';
-    } elseif ($this->SYSTEM == 'vivalibrocom') {
-      $this->page = $_GET['page'] != '' ? $_GET['page'] : 'home';
-    }
-
-    $this->sub = $this->sub = $_GET['sub'] ?? '';
+    $this->page = isset($_GET['page']) ? $_GET['page'] : 'home';
     $this->mode = $this->mode = $_GET['mode'] ?? '';
     $this->action = $_GET['action'] ?? '';
     $this->slug = $_GET['slug'] ?? '';
@@ -282,9 +276,9 @@
 
     $this->book_status = array("0" => "lost", "1" => "not owned", "2" => "desired to buy", "3" => "owned on shelve");
     $this->isread = array(0 => "no", 1 => "reading", 2 => "read");
-    $this->bookdefaultimg = "/img/empty.png";
-    $this->publisherdefaultimg = "/img/empty_publisher.png";
-    $this->writerdefaultimg = "/img/empty_user.png";
+    $this->bookdefaultimg = "/isset/img/empty.png";
+    $this->publisherdefaultimg = "/isset/img/empty_publisher.png";
+    $this->writerdefaultimg = "/asset/img/empty_user.png";
 
     $this->logo = "/img/logo.png";
 

@@ -2,7 +2,7 @@
 namespace Core;
 use Exception;
 /**
-db gen_localost data installed from gen_admin tables main, maincubo, maingrp
+db gen_localost data installed from gen_admin tables main, pagecubo, pagegrp
 and constructs the web UI of any domain
 
 1) installCuboPublic($domain)
