@@ -1,0 +1,47 @@
+name: API CI/CD
+
+on:
+  push:
+    paths:
+      - 'apiv1/**'
+      - 'core/**'
+  pull_request:
+    paths:
+      - 'apiv1/**'
+      - 'core/**'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+      - name: Validate composer.json and composer.lock
+        run: composer validate
+      - name: Install composer dependencies
+        run: composer install --no-progress --no-interaction --prefer-dist
+      - name: Run linting tests
+        run: ./vendor/bin/phpcs --standard=PSR12 apiv1/
+      - name: Run unit tests
+        run: ./vendor/bin/phpunit --testsuite APITests
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+      - name: Install composer dependencies
+        run: composer install --no-progress --no-interaction --prefer-dist
+      - name: Build Docker Image and Push (Example)
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          docker build -t "${{ secrets.DOCKER_USERNAME }}/api:${{ github.sha }}" ./apiv1
+          docker push "${{ secrets.DOCKER_USERNAME }}/api:${{ github.sha }}"

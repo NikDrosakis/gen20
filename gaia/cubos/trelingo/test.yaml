@@ -1,0 +1,37 @@
+main: trelingo
+area: m
+sequence: 1
+template: |
+  #title Trelingo
+  .card
+    .author= name is not null ? name : ''
+    .cover
+      %img{id: "img#{postid}", src: img}
+    .description
+      - if books is not empty
+        %p.title= title.join("</p><p class='title'>")
+        .published= "#{publisher}, #{published}"
+      - else
+        .no-books No books listed
+    - if summary is not null
+      .card-summary= summary.join(',')
+
+query: >
+  SELECT c_book_publisher.*, c_book.title 
+  FROM c_book_publisher 
+  LEFT JOIN c_book ON c_book.publisher = c_book_publisher.id 
+  ORDER BY c_book_publisher.name
+  params: []
+database:
+  name: c_trelingo_word
+fields:
+  - id
+  - english: read
+  - italian:
+      - input
+      - onkeyup: check correct input
+      - sound: update
+  - spanish:
+      - input
+      - onkeyup: check correct input
+      - sound: update

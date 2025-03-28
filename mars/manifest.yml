@@ -1,0 +1,49 @@
+actions:
+  name: "Mars"
+  path: "mars"
+  img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Mars_-_August_30_2021_-_Flickr_-_Kevin_M._Gill.png/435px-Mars_-_August_30_2021_-_Flickr_-_Kevin_M._Gill.png"
+  description: "A Gen subsystem for handling Redis and MariaDB connections with YAML config parsing"
+  github: "gen20"
+  created: "2025-01-03"
+  version: 1
+  ecosystem: "C++"
+  requires:
+    - hiredis
+    - mysql
+    - yaml-cpp
+    - nlohmann-json
+  features:
+    - watching
+    - parsing YAML
+    - crud MariaDB
+    - crud Redis Lists
+    - Dockerfile
+    - Github Workflow
+    - auto save update alter systems
+  todo:
+    - ver.sh convert
+    - CLI Action
+    - CLI chat with generatives through liburl
+    - Redis PUBSUB Subscribe & Publish
+    - AI pretrain
+  author: "Nik Drosakis"
+  contact: "nikosdrosakis@gmail.com"
+  context:
+    - step: "Install"
+      command: "bash install.sh"
+    - step: "Update"
+      command: "bash install.sh"
+    - step: "Run the application"
+      command: "./main [yml filename]"
+  doc: "README.md"
+  actions:
+    - Input cli level
+    - Parse yaml file
+    - core.Maria > maria connector CRUD & INDEX AND MANAGE THE WHOLE SCHEMA
+    - core.Gredis > heredis PUBSUB + CRUD LISTS NATIVE PROCESS WITH CAPABILITIES
+    - API INTERACTION with libcurl (no pistache USE THE PUBSUB)
+    - STANDALONE Connect with version.cpp & create the daemon subsystem Mars
+    - MICROSERVICES perform better in terms of processing efficiency and speed, especially for computational tasks
+    - AI pretrained Have binding at TensorFlow, Bert, Onnx to train models
+    - CLI chat with generatives or irc channel through liburl
+    - version.cpp to replace ver.sh

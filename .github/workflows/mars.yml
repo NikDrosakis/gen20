@@ -1,0 +1,28 @@
+name: Mars
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: debian-latest  # Change this to 'debian-latest'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build Docker image
+        run: |
+          docker build -t my-cpp-project .
+
+      - name: Run Docker container
+        run: |
+          docker run my-cpp-project plan

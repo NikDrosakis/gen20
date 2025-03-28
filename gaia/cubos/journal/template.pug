@@ -1,0 +1,86 @@
+//- SmallImage
+if type == 'SmallImage'
+  .item.SmallImage
+    .item-media
+      a(href=uri)
+        img(src=img, alt=title)
+    .item-content
+      h4= title
+      span= published
+      p= excerpt
+
+//- LargeImage
+if type == 'LargeImage'
+  .item.LargeImage
+    .item-media
+      a(href=uri)
+        img(src=img, alt=title)
+    .item-content
+      h3= title
+      h5= subtitle
+      span= published
+
+//- SmallImageDetail
+if type == 'SmallImageDetail'
+  .item.SmallImageDetail
+    .item-media
+      a(href=uri)
+        img(src=img, alt=title)
+    .item-content
+      h4= title
+      span= published
+      p= excerpt
+
+//- Blockquote
+if type == 'Blockquote'
+  blockquote.item.Blockquote
+    p= excerpt
+    footer= author
+
+//- SmallImageFacts
+if type == 'SmallImageFacts'
+  .item.SmallImageFacts
+    .item-media
+      a(href=uri)
+        img(src=img, alt=title)
+    .item-content
+      h4= title
+      span= published
+      p= excerpt
+
+//- VideoThumbnail
+if type == 'VideoThumbnail'
+  .item.VideoThumbnail
+    .item-media
+      a(href=uri)
+        img(src=img, alt=title)
+    .item-content
+      h4= title
+      span= published
+      p= excerpt
+
+//- Gallery
+if type == 'Gallery'
+  .item.Gallery
+    h3= title
+
+//- Recommendations
+if type == 'Recommendations'
+  .item.Recommendations
+    h3= title
+    ul
+      li= excerpt
+
+//- Opinion
+if type == 'Opinion'
+  .item.Opinion
+    h3= title
+    h4= author
+    p= excerpt
+
+//- Event
+if type == 'Event'
+  .item.Event
+    h3= title
+    span= published
+    p= excerpt

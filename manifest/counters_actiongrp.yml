@@ -1,0 +1,52 @@
+---
+counters_actiongrp:
+  id: 4
+  name: counters
+  img: ~
+  type: ws
+  description: Counters for Notications (N)
+  sort: 0
+  status: active
+  keys: ~
+  project_id: ~
+  updated: "2024-12-21 07:43:22"
+  created: "2024-12-21 07:43:22"
+  doc: ~
+  meta: ~
+  actions:
+  - id: 1
+    name: counters_vivalibrocom
+    img: ~
+    sort: 0
+    actiongrpid: 4
+    systemsid: 1
+    status: activated
+    type: "N"
+    endpoint: ~
+    message: '{system: "vivalibrocom",page: '''',cast: ''all'',type: ''N'',text: notifications,class:
+      "c_square cblue"}'
+    description: 'Public Counters for vivalibro '
+    title: User active libraries,Total books in the library,Total English titles available,Total
+      Greek titles available,Total publishers registered,Total writers registered
+    domappend: c_active_libraries,c_total_books,c_en_titles,c_el_titles,c_publishers,c_writers
+    domaffect: '*'
+    statement: SELECT COUNT(id) AS c_active_libraries FROM c_book_lib WHERE status=2;SELECT
+      COUNT(id) AS c_total_books FROM c_book;SELECT COUNT(id) AS c_en_titles FROM
+      c_book WHERE lang='en';SELECT COUNT(id) AS c_el_titles FROM c_book WHERE lang='el';SELECT
+      COUNT(id) AS c_publishers FROM c_book_publisher;SELECT COUNT(id) AS c_writers
+      FROM c_book_writer;
+    rule: ~
+    execute: for(const [key, value] of Object.entries(message.text)){const span=document.createElement('span');const
+      existingClass=document.querySelector(key);if(existingClass){const span=document.createElement('span');span.className=message.class;span.textContent=value;existingClass.appendChild(span);}}
+    exe_mode: direct
+    schedule: ~
+    cast: all
+    usergroups: ~
+    interval_time: 40
+    log: ~
+    doc: better  publish and php will  get GSocket
+    win: 0
+    lose: 0
+    created: "2024-12-31 19:50:00"
+    updated: "2025-01-06 19:24:18"
+...

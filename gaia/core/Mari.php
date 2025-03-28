@@ -1,0 +1,891 @@
+<?php
+/**
+Mari is a gen20 implementation of Maria, abstracted from one database to multiple,
+contains 3 types of methods:
+a) core database create_, alter, show etc
+b) helpers fa, fl, f, q, inse
+c) dbcentric DESCRIBE comments & metadata in formatted GEn20 tables
+
+*/
+namespace Core;
+use PDO;
+use PDOException;
+
+class Mari {
+    public $_db;
+    public $dbhost= "localhost";
+    public $dbuser = "root";
+    public $dbpass = "n130177!";
+
+    // Constructor: Connect to the server without specifying a database
+    public function __construct() {
+        try {
+            // Connect to the server without specifying a database
+            $this->_db = new PDO("mysql:host=$this->dbhost", $this->dbuser, $this->dbpass,
+                array(
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_EMULATE_PREPARES => FALSE,
+                    PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true,
+                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'utf8'",
+                    PDO::ATTR_PERSISTENT => true
+                ));
+        } catch (PDOException $error) {
+            if ($error->getCode() == 23000) {
+                // Handle duplicate entry error specifically
+                echo "Warning: Duplicate entry for 'name'. Please try a different value or update existing one.";
+            } else {
+                throw new Exception("Database connection failed: " . $error->getMessage());
+            }
+        }
+    }
+/**
+ A METHODS  core database create_, alter, show
+
+ */
+
+   public function show($expression,$var='') {
+        $query = '';
+        switch ($expression) {
+            case 'databases':
+                    $query = 'SHOW DATABASES';
+                try {
+                    $stmt = $this->_db->query($query);
+                    $res = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                    return $res;
+                } catch (PDOException $e) {
+                    // Handle database errors
+                    echo "Database error: " . $e->getMessage();
+                }
+                case 'plugins':
+                    $query = 'SHOW PLUGINS';
+                try {
+                    $stmt = $this->_db->query($query);
+                    $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    return $res;
+                } catch (PDOException $e) {
+                    // Handle database errors
+                    echo "Database error: " . $e->getMessage();
+                }
+            case 'triggers':
+                $query = "SHOW TRIGGERS FROM $var";
+                            try {
+                                $stmt = $this->_db->query($query);
+                                $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                return $res;
+                        } catch (PDOException $e) {
+                            // Handle database errors specifically related to PDO
+                            echo "Database error: " . $e->getMessage();
+                       }
+           case 'events':
+               $query = "SHOW EVENTS FROM $var";
+               try {
+                   $stmt = $this->_db->query($query);
+                   $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                   return $res;
+               } catch (PDOException $e) {
+                   // Handle database errors specifically related to PDO
+                   echo "Database error: " . $e->getMessage();
+               }
+            case 'tables':
+                // Optional: Add a specific database name if required
+                $query = "SHOW TABLES FROM $var";
+                try {
+                    $stmt = $this->_db->query($query);
+                    $res = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                    return $res;
+                } catch (PDOException $e) {
+                    // Handle database errors
+                    echo "Database error: " . $e->getMessage();
+                }
+
+                break;
+            case 'status':
+                $query = 'SHOW STATUS';
+                        try {
+                            $stmt = $this->_db->query($query);
+                            $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                            $assoc=[];
+                            foreach($res as $key=>$val){
+                            $assoc[$val['Variable_name']]=$val['Value'];
+                            }
+                            return $assoc;
+                        } catch (PDOException $e) {
+                            // Handle database errors
+                            echo "Database error: " . $e->getMessage();
+                        }
+            case 'variables':
+                $query = 'SHOW VARIABLES';
+                        try {
+                            $stmt = $this->_db->query($query);
+                            $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                            $assoc=[];
+                            foreach($res as $key=>$val){
+                            $assoc[$val['Variable_name']]=$val['Value'];
+                            }
+                            return $assoc;
+                        } catch (PDOException $e) {
+                            // Handle database errors
+                            echo "Database error: " . $e->getMessage();
+                        }
+            case 'processlist':
+                $query = 'SHOW PROCESSLIST';
+                        try {
+                            $stmt = $this->_db->query($query);
+                            $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                            return $res;
+                        } catch (PDOException $e) {
+                            // Handle database errors
+                            echo "Database error: " . $e->getMessage();
+                        }
+            case 'engine':
+                $query = 'SHOW ENGINE STATUS';
+                    try {
+                        $stmt = $this->_db->query($query);
+                        $res = $stmt->fetch(PDO::FETCH_ASSOC);
+                        return $res;
+                    } catch (PDOException $e) {
+                        // Handle database errors
+                        echo "Database error: " . $e->getMessage();
+                    }
+        }
+    }
+/**
+ $columnDetails = [
+     'COLUMN_NAME' => 'new_column',
+     'COLUMN_TYPE' => 'VARCHAR(255)',
+     'COLUMN_COMMENT' => 'loc',
+     'null' => 'NOT NULL'
+ ];
+ // Modify the 'description' column in the 'main' table
+ $columnDetails = [
+     'name' => 'description',
+     'type' => 'TEXT',
+     'null' => 'NULL'  // Change the 'description' column to allow NULL values
+ ];
+ $this->alter('main.title', 'add', $columnDetails, 'title');
+ $this->alter('main.description', 'modify', $columnDetails);
+
+ // Drop the 'old_column' from the 'main' table
+ $columnDetails = [
+     'name' => 'old_column',
+ ];
+
+ $this->alter('main.old_column', 'drop', $columnDetails);
+ */
+public function drop(string $dbdottable, string $operation): bool {
+    // Ensure the $dbdottable is in the correct 'database.table' format
+    $dbTableParts = explode('.', $dbdottable);
+    if (count($dbTableParts) !== 2) {
+        throw new InvalidArgumentException("Invalid table format. Expected 'database.table'.");
+    }
+    $dbName = $dbTableParts[0];
+    $tableName = $dbTableParts[1];
+
+    // Construct the SQL query based on the operation
+    try {
+        switch (strtolower($operation)) {
+            case 'table':
+                $sql = "DROP TABLE IF EXISTS `$dbName`.`$tableName`";
+                break;
+            case 'database':
+                $sql = "DROP DATABASE IF EXISTS `$dbName`";
+                break;
+            case 'other':
+                throw new InvalidArgumentException("Unsupported operation: $operation");
+            default:
+                throw new InvalidArgumentException("Invalid operation. Allowed values are 'table', 'database', or 'other'.");
+        }
+
+        // Execute the query
+        $this->_db->exec($sql);
+        echo ucfirst($operation) . " `$dbdottable` successfully dropped.\n";
+        return true;
+    } catch (PDOException $e) {
+        // Handle database errors
+        echo "Database error: " . $e->getMessage() . "\n";
+        return false;
+    }
+}
+
+
+public function alter($dbdottable, $operation, $columnDetails, $afterColumn = null) {
+    // Ensure the $dbdottable is sanitized and in the correct format
+    $dbTableParts = explode('.', $dbdottable);
+    if (count($dbTableParts) !== 2) {
+        throw new InvalidArgumentException("Invalid table format. Expected 'database.table'.");
+    }
+    $dbName = $dbTableParts[0];
+    $tableName = $dbTableParts[1];
+
+    try {
+        switch (strtolower($operation)) {
+            case 'add':
+                // Construct the base SQL for adding a column
+                $sql = "ALTER TABLE `$dbName`.`$tableName` ADD COLUMN `{$columnDetails['COLUMN_NAME']}` {$columnDetails['COLUMN_TYPE']}";
+
+                // Include default value if specified
+                if (!empty($columnDetails['COLUMN_DEFAULT'])) {
+                    $sql .= " DEFAULT {$columnDetails['COLUMN_DEFAULT']}";
+                }
+
+                // Include nullability
+                $sql .= " " . ($columnDetails['IS_NULLABLE'] === 'NO' ? 'NOT NULL' : 'NULL');
+
+                // Include the comment
+                $sql .= " COMMENT '{$columnDetails['COLUMN_COMMENT']}'";
+
+                // Specify the position of the column if afterColumn is provided
+                if ($afterColumn) {
+                    $sql .= " AFTER `$afterColumn`";
+                }
+                break;
+
+            case 'modify':
+                // Construct the base SQL for modifying a column
+                $sql = "ALTER TABLE `$dbName`.`$tableName` MODIFY COLUMN `{$columnDetails['COLUMN_NAME']}` {$columnDetails['COLUMN_TYPE']}";
+
+                // Include default value if specified
+                if (!empty($columnDetails['COLUMN_DEFAULT'])) {
+                    $sql .= " DEFAULT {$columnDetails['COLUMN_DEFAULT']}";
+                }
+
+                // Include nullability
+                $sql .= " " . ($columnDetails['IS_NULLABLE'] === 'NO' ? 'NOT NULL' : 'NULL');
+
+                // Include the comment
+                $sql .= " COMMENT '{$columnDetails['COLUMN_COMMENT']}'";
+                break;
+
+            case 'drop':
+                // SQL for dropping a column
+                $sql = "ALTER TABLE `$dbName`.`$tableName` DROP COLUMN `{$columnDetails['COLUMN_NAME']}`";
+                break;
+
+            default:
+                throw new InvalidArgumentException("Unsupported operation: $operation. Supported operations are 'add', 'modify', 'drop'.");
+        }
+
+        // Execute the query
+        $stmt = $this->_db->query($sql);
+        return true;
+    } catch (PDOException $e) {
+        // Handle database errors using PDOException
+        echo "Database error: " . $e->getMessage();
+        return false;
+    }
+}
+
+
+
+public function create_db(string $dbname){
+	try {
+		$this->_db = new PDO("mysql:host=localhost", $this->dbuser, $this->dbpass);
+		$this->_db->exec("CREATE DATABASE `$this->dbname`;
+				CREATE USER '$this->dbuser'@'localhost' IDENTIFIED BY '$this->dbpass';
+				GRANT ALL ON `$this->dbname`.* TO '$this->dbuser'@'localhost';
+				FLUSH PRIVILEGES;")
+		or die(print_r($this->_db->errorInfo(), true));
+
+	} catch (PDOException $e) {
+		die("DB ERROR: ". $e->getMessage());
+	}
+}
+public function create_table($table,$schema) {
+    // SQL to create the table
+    $sql = "CREATE TABLE `$table` (";
+    $sql .= implode(', ', $schema);
+    $sql .= ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
+
+    // Execute the query and handle potential errors
+    try {
+        $this->_db->exec($sql);
+        echo "Table `$table` created successfully.\n";
+    } catch (PDOException $e) {
+        echo "Error creating table `$table`: " . $e->getMessage() . "\n";
+    }
+}
+public function runSqlFile($filePath,$db='gen_admin') {
+        // Check if the SQL file exists
+        if (!file_exists($filePath)) {
+            echo "SQL file not found: $filePath\n";
+            return;
+        }
+        // Read the SQL file content
+        $file = file_get_contents($filePath);
+        $command = "mysql -uroot -p{$this->dbpass} database $db < " . escapeshellarg($file);
+        try {
+            $this->_db->exec($command,$output, $returnVar);
+            return $returnVar;
+        } catch (PDOException $e) {
+            echo "Error executing SQL file `$filePath`: " . $e->getMessage() . "\n";
+        }
+}
+
+public function create_trigger(string $dbname, string $triggerName, string $tableName, string $timing, string $event, string $body) {
+        try {
+            $this->_db->exec("USE `$this->dbname`");
+
+            $sql = "CREATE TRIGGER `$triggerName`
+                    $timing $event ON `$tableName`
+                    FOR EACH ROW
+                    $body";
+
+            $this->_db->exec($sql);
+            echo "Trigger '$triggerName' created successfully.";
+        } catch (PDOException $e) {
+            die("DB ERROR: " . $e->getMessage());
+        }
+    }
+
+    public function exec(string $q){
+		 return $this->_db->exec($q);
+	}
+
+public function getDatabasesInfo() {
+    $databases = $this->show('databases');
+    $dbInfo = [];
+
+    foreach ($databases as $db) {
+        // Skip system databases like information_schema, performance_schema
+        if (in_array($db, ['information_schema', 'performance_schema', 'mysql', 'sys'])) {
+            continue;
+        }
+
+        $query = "SELECT table_schema, SUM(data_length + index_length) AS size,
+                  (SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '$db') AS record_count
+                  FROM information_schema.tables WHERE table_schema = '$db'";
+        $stmt = $this->_db->query($query);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($result) {
+            $dbInfo[] = [
+                'name' => $db,
+                'size' => $result['size'],  // in bytes
+                'record_count' => $result['record_count']
+            ];
+        }
+    }
+
+    return $dbInfo;
+}
+
+/**
+
+ B TYPES OF METHODS - HELPERS & Content Operators CRUD
+addresses the "Duplicate entry" scenario by checking for a PDOException with a specific error code (23000) and extracting the ID of the existing entry from the database rather than throwing an error.
+
+ */
+public function inse(string $table, array $params = []) {
+    // Check if 'name' exists in $params
+    if (isset($params['name'])) {
+        $uniqueName = $params['name'];
+
+        try {
+            // Check if an entry with the same 'name' already exists
+            $query = "SELECT id FROM $table WHERE name = ?";
+            $stmt = $this->_db->prepare($query);
+            $stmt->execute([$uniqueName]);
+
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($result && isset($result['id'])) {
+                // If the record exists, return its ID
+                return $result['id'];
+            }
+        } catch (PDOException $e) {
+            // Handle query errors during the check
+            echo "Database error during existence check: " . $e->getMessage() . "\n";
+            return false;
+        }
+    }
+
+    // If 'name' doesn't exist in $params or no matching record was found, proceed with the insert
+    try {
+        // Build the insert query
+        $columns = implode(',', array_keys($params));
+        $placeholders = implode(',', array_fill(0, count($params), '?'));
+        $sql = "INSERT INTO $table ($columns) VALUES ($placeholders)";
+        $params = array_values($params);  // Extract the values for prepared statement
+
+        $stmt = $this->_db->prepare($sql);
+        $stmt->execute($params);
+
+        // Return the last insert ID if successful
+        return $this->_db->lastInsertId() ?: true;
+    } catch (PDOException $e) {
+        // Handle insert errors, including duplicate entry exceptions
+        if ($e->getCode() == 23000 && isset($params['name'])) {
+            // Duplicate entry for 'name', return existing ID
+            $query = "SELECT id FROM $table WHERE name = ?";
+            $stmt = $this->_db->prepare($query);
+            $stmt->execute([$params['name']]);
+
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($result && isset($result['id'])) {
+                return $result['id'];
+            }
+        }
+
+        // Handle other errors
+        echo "Database error occurred during insert: " . $e->getMessage() . "\n";
+        return false;
+    }
+}
+
+
+    /*
+    *Query Method replaces standard pdo query method
+    Usage: with	INSERT, UPDATE, DELETE queries
+    updated $q validation for API flows
+    */
+    public function q(string $q, array $params = []): bool {
+            $res = $this->_db->prepare($q);
+            $res->execute($params);
+            if (!$res)return FALSE;
+            return true;
+    }
+
+   public function f(string $q, array $params = []): array|string|bool {
+            $res = $this->_db->prepare($q);
+            $res->execute($params);
+            if (!$res) return FALSE;
+            return $res->fetch(PDO::FETCH_ASSOC);
+    }
+    /*
+    *	Fetch MANY result
+    *	Updated with memcache
+    */
+    public function fa(string $q, array $params = array()){
+  		$res = $this->_db->prepare($q);
+            $res->execute($params);
+		if(!$res) return FALSE;
+            return $res->fetchAll(PDO::FETCH_ASSOC);
+    }
+/**
+Used only for form records
+*/
+public function fetch(string $q, array $params = [], int $limit = 10, int $currentPage = 1, $orderBy = "", $orderDir = ""): bool|array
+{
+    // Handle case where $q is empty
+    if (empty($q)) {
+        error_log("SQL Query is empty, returning no results.");
+        return false;
+    }
+
+    // Ensure $params['cols'] exists and is an array
+    $cols = (!empty($params['cols']) && is_array($params['cols'])) ? implode(',', $params['cols']) : '*';
+
+    // Calculate the offset for pagination
+    $offset = ($currentPage - 1) * $limit;
+
+    // Add ordering if needed
+    $order = "";
+    if (!empty($orderBy)) {
+        $order = " ORDER BY $orderBy $orderDir";
+    }
+
+    // Construct the final query
+    $qData = "SELECT $cols, COUNT(*) OVER () AS total FROM ($q) AS subquery $order LIMIT :limit OFFSET :offset";
+
+    // Debugging logs
+   // error_log("Generated SQL Query: " . $qData);
+    //error_log("Pagination parameters - Limit: $limit, Offset: $offset");
+
+    // Prepare query parameters separately to avoid modifying $params directly
+    $queryParams = [
+        ':limit' => $limit,
+        ':offset' => $offset,
+    ];
+
+    try {
+        // Prepare the statement
+        $stmt = $this->_db->prepare($qData);
+
+        // Execute the statement with the parameters
+        $stmt->execute($queryParams);
+
+        // Fetch results
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // If no results, return false
+        if (empty($results)) {
+            error_log("No results found for the query.");
+            return false;
+        }
+
+        // Extract total count from the first row
+        $totalCount = $results[0]['total'];
+
+        // Clean up the result rows (remove 'total' field)
+        foreach ($results as &$row) {
+            unset($row['total']);
+        }
+
+        // Return the paginated data with metadata
+        return [
+            'query' => $qData,
+            'params' => $queryParams,
+            'total' => $totalCount,
+            'data' => $results,
+            'currentPage' => $currentPage,
+            'totalPages' => ceil($totalCount / $limit),
+        ];
+
+    } catch (PDOException $e) {
+        error_log("Error executing query: " . $e->getMessage());
+        return false;
+    }
+}
+
+
+ //update of fetchRowList and fetchCoupleList
+public function flist(string $query, array $params = []): bool|array {
+    $list = [];
+    // Execute the query
+    $fetch = $this->fa($query,$params);
+    if (empty($fetch)) {
+        return false; // Return false if no result is found
+    }
+
+    // Determine the number of columns in the result
+    $firstRow = $fetch[0];
+    $columnCount = count($firstRow);
+
+    // Case 1: One column (flat list of values)
+    if ($columnCount === 1) {
+        foreach ($fetch as $row) {
+            $list[] = reset($row); // Get the single column value
+        }
+    // Case 2: Two columns (key-value pair)
+    } elseif ($columnCount === 2) {
+        foreach ($fetch as $row) {
+            $list[array_values($row)[0]] = array_values($row)[1];
+        }
+    // Case 3: More than two columns (assume 'id' as key, if exists)
+    } else {
+        foreach ($fetch as $row) {
+            if (isset($row['id'])) {
+                $list[$row['id']] = $row; // Use 'id' as the key
+            } else {
+                $list[] = $row; // Default to numeric indexing
+            }
+        }
+    }
+
+    return $list;
+}
+
+public function fl(string|array $rows, string $table, $clause=''): bool|array {
+    $list = array();
+
+    // Handle the case where $rows is an array
+    if (is_array($rows)) {
+        // Fetch couple list
+        $row1 = $rows[0];
+        $row2 = $rows[1];
+
+        // Modify the SQL query to include the joins and clause correctly
+        $fetch = $this->fa("SELECT $row1, $row2 FROM $table $clause");
+
+        if (!empty($fetch)) {
+            foreach ($fetch as $row) {
+                // Create an associative array with row1 as key and row2 as value
+                $list[$row[$row1]] = $row[$row2];
+            }
+            return $list;
+        } else {
+            return false;
+        }
+    } else {
+        // Handle the case where $rows is a single string
+        $fetch = $this->fa("SELECT $rows FROM $table $clause");
+
+        if (!empty($fetch)) {
+            foreach ($fetch as $row) {
+                $list[] = $row[$rows];
+            }
+            return $list;
+        } else {
+            return false;
+        }
+    }
+}
+
+	public function sort(string $q, array $params=[]):bool {
+    $caseStatement = '';
+    foreach ($params as $param) {
+        $caseStatement .= "WHEN id = {$param[1]} THEN {$param[0]} ";
+    }
+    // Create the SQL query
+    $sql = "
+        UPDATE {$this->publicdb}.links
+        SET sort = CASE
+            $caseStatement
+            ELSE sort
+        END
+        WHERE id IN (" . implode(',', array_column($params, 1)) . ")";
+         return $this->q($sql);
+    }
+
+    //count_ results
+    public function count_(string $rowt, $table, $clause = null, $params = array()): ?int {
+            $result = $this->_db->prepare("SELECT COUNT($rowt) FROM $table $clause");
+            $result->execute($params);
+            if (!$result) return FALSE;
+            return $result->fetchColumn();
+    }
+
+    //count_ results
+    public function counter(string $query = null, $params = array()){
+            $result = $this->_db->prepare($query);
+            $result->execute($params);
+            if (!$result) return FALSE;
+            return $result->fetchColumn();
+    }
+
+/*
+  fUnique SELECT uid,cv.* FROM cv returns [uid]=>array(id=1,title=asdfdsf)
+  for cases we want unique id to avoid for loops
+  NEW METHOD 2
+ * */
+    public function  fUnique(string $query): ?array {
+        return $this->_db->query($query)->fetchAll(PDO::FETCH_UNIQUE);
+    }
+    /*
+      fGroup SELECT uid,id,title FROM cv returns
+      [uid]=>array(
+             [0]=>(id=1,title=asdfdsf)
+             [1]=>
+      good for nested arrays to avoid for loops
+      NEW METHOD 3
+     * */
+    public function  fGroup($query): ?array {
+        return $this->_db->query($query)->fetchAll(PDO::FETCH_GROUP);
+    }
+    public function truncate(string $table){
+            $q = $this->_db->exec("TRUNCATE TABLE $table");
+    }
+
+/**
+C METHODS - FORMATTING SCHEMA
+
+
+ * Prepare data from DB to be inserted or updated, according to the column format.
+ */
+public function columns(string $table, bool $list=false): ?array{
+    $q = $this->_db->prepare("DESCRIBE $table");
+    $q->execute();
+    return $list ? $q->fetchAll(PDO::FETCH_COLUMN) : $q->fetchAll(PDO::FETCH_ASSOC);
+}
+public function getColumnsWithComment(string $db,string $var) {
+    try {
+
+        // SQL query with placeholders
+        $sql = "
+            SELECT TABLE_NAME, COLUMN_NAME,COLUMN_TYPE, COLUMN_COMMENT
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = ? AND COLUMN_COMMENT = ?
+        ";
+        // Prepare the SQL statement
+        $stmt = $this->_db->prepare($sql);
+
+        // Execute the statement with parameters (use ? for positional binding)
+        $stmt->execute([$db, $var]);
+
+        // Fetch all results
+        $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Return the results
+        return $columns;
+    } catch (PDOException $e) {
+        // Handle the exception and return an error message
+        return "Error: " . $e->getMessage();
+    }
+}
+public function prepareColumnFormat(array $record, array $columnsFormat): array {
+    foreach ($record as $key => &$value) {
+        if (isset($columnsFormat[$key])) {
+            $comment = $columnsFormat[$key];
+
+            // Handle file includes (like README.md) for 'includes' field
+ if (is_array($value) && array_key_exists('includes', $value)) {
+                $filePath = $value['includes'];
+                // If the 'includes' key exists and is a valid file, use file_get_contents
+                if (file_exists(ROOT.$filePath)) {
+                    $value = file_get_contents(ROOT.$filePath);  // Read file content
+
+                } else {
+                    echo "File at '$filePath' not found.";
+                }
+            }
+
+            // If it's a comma-separated field, convert array to string
+            elseif (strpos($comment, 'comma') !== false && is_array($value)) {
+                $value = implode(',', $value);  // Convert array to comma-separated string
+            }
+
+            // If it's a JSON field, convert array to JSON string
+            elseif (strpos($comment, 'json') !== false && is_array($value)) {
+                $value = json_encode($value);  // Convert array to JSON string
+            }
+        }
+    }
+    return $record;
+}
+/*
+pdo update or insert based on name
+comment=>format included
+* */
+public function colFormat($table){
+$select=[];
+    $tableMeta= $this->tableMeta($table);
+        foreach ($tableMeta as $colData) {
+            $select[$colData['COLUMN_NAME']] = trim($colData['COLUMN_COMMENT']);
+        }
+    return $select;
+}
+
+
+public function upsert(string $table, array $record): int|bool {
+    // Ensure 'name' key exists in the params
+    if (!isset($record['name']) && !isset($record['id'])) {
+        echo "'name' or 'id' param required upsert.";
+    }
+    // Get columns format
+    $columnsFormat = $this->colFormat($table);
+
+    // Format the params based on the column comments
+    $record = $this->prepareColumnFormat($record, $columnsFormat);
+
+    // Extract the 'name' value for the WHERE clause
+    $name = $record['name'];
+    unset($record['name']); // Remove 'name' to avoid duplication in insert/update
+
+    // Check if the record with the given name exists
+    $checkSql = "SELECT COUNT(*) FROM $table WHERE name = ?";
+    $checkStmt = $this->_db->prepare($checkSql);
+    $checkStmt->execute([$name]);
+    $exists = $checkStmt->fetchColumn() > 0;
+
+    if ($exists) {
+        // Prepare an UPDATE statement
+        $updateColumns = implode(' = ?, ', array_keys($record)) . ' = ?';
+        $updateSql = "UPDATE $table SET $updateColumns WHERE name = ?";
+        $updateStmt = $this->_db->prepare($updateSql);
+
+        // Execute the UPDATE statement
+        $updateStmt->execute([...array_values($record), $name]);
+        return true; // Return true for a successful update
+    } else {
+        // Prepare an INSERT statement
+        $insertColumns = implode(',', array_keys($record));
+        $placeholders = implode(',', array_fill(0, count($record), '?'));
+        $insertSql = "INSERT INTO $table (name, $insertColumns) VALUES (?, $placeholders)";
+        $insertStmt = $this->_db->prepare($insertSql);
+
+        // Execute the INSERT statement
+        $insertStmt->execute([$name, ...array_values($record)]);
+        return $this->_db->lastInsertId() ?: true;  // Return the last insert ID or true if no ID
+    }
+}
+
+    public function types($table){
+        $sel=array();
+        $select = $this ->_db->query("SELECT * FROM $table");
+        foreach($this->columns($table) as $colid => $col) {
+            $meta= $select->getColumnMeta($colid);
+            $sel[$meta['name']] = $meta['native_type'];
+        }
+        return $sel;
+    }
+
+public function tableMeta(string $tableName, array $cols = []): ?array {
+    $exp = explode('.', $tableName);
+    if (!empty($exp)) {
+        $db = $exp[0];
+        $table = $exp[1];
+
+        $query = "SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_KEY, EXTRA, COLUMN_COMMENT
+                  FROM information_schema.COLUMNS
+                  WHERE TABLE_SCHEMA = ?
+                  AND TABLE_NAME = ?";
+        $params = [$db, $table];
+
+        // Ensure $cols is an array
+        if (!empty($cols) && is_array($cols)) {
+            $placeholders = implode(',', array_fill(0, count($cols), '?'));
+            $query .= " AND COLUMN_NAME IN ($placeholders)";
+            $params = array_merge($params, $cols);
+        }
+
+        return $this->fa($query, $params);
+    }
+
+    return null;
+}
+
+
+public function getSchemaTable($tableName): ?array {
+    try {
+        // Fetch column metadata for the given table
+        $columns = $this->tableMeta($tableName);
+        $schema = [];
+
+        // Map the column details to a schema definition
+        foreach ($columns as $column) {
+            $columnName = $column['COLUMN_NAME'];
+            $columnType = $column['COLUMN_TYPE'];
+
+            // Check for nullability
+            $isNullable = ($column['IS_NULLABLE'] === 'NO') ? 'NOT NULL' : 'NULL';
+
+            // Set default value
+            $default = '';
+            if ($column['COLUMN_DEFAULT'] !== null) {
+                $default = $column['COLUMN_DEFAULT'] === 'NULL' ? 'DEFAULT NULL' : "DEFAULT '{$column['COLUMN_DEFAULT']}'";
+            }
+
+            // Set comment if it exists
+            $comment = !empty($column['COLUMN_COMMENT']) ? "COMMENT '{$column['COLUMN_COMMENT']}'" : '';
+
+            // Build the column definition string
+            $columnDefinition = "$columnType $isNullable $default $comment";
+            $schema[$columnName] = trim($columnDefinition); // Trim to avoid extra spaces
+        }
+
+        return $schema;
+    } catch (PDOException $e) {
+        echo "Error retrieving schema for table `$tableName`: " . $e->getMessage() . "\n";
+        return null; // Return null if an error occurs
+    }
+}
+
+public function generateFkReport(string $table, string $column) {
+    // SQL query to fetch foreign key constraints
+    $query = "
+        SELECT CONSTRAINT_NAME, TABLE_NAME, COLUMN_NAME
+        FROM information_schema.KEY_COLUMN_USAGE
+        WHERE REFERENCED_TABLE_NAME = :table
+        AND REFERENCED_COLUMN_NAME = :column";
+
+    try {
+        // Prepare and execute the query
+        $stmt = $this->_db->prepare($query);
+        $stmt->execute([':table' => $table, ':column' => $column]);
+
+        $foreignKeys = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (empty($foreignKeys)) {
+            echo "No foreign key constraints found for table `$table` and column `$column`.\n";
+            return;
+        }
+
+        // Iterate and print the foreign key details
+        foreach ($foreignKeys as $fk) {
+            echo "Foreign Key Constraint: {$fk['CONSTRAINT_NAME']} in table `{$fk['TABLE_NAME']}` on column `{$fk['COLUMN_NAME']}`\n";
+        }
+    } catch (PDOException $e) {
+        echo "Error generating foreign key report: " . $e->getMessage() . "\n";
+    }
+}
+
+}

@@ -1,0 +1,22 @@
+---
+ermis_systems:
+  id: 3
+  name: ermis
+  path: ermis
+  img: ~
+  github: gen20
+  created: "0000-00-00 00:00:00"
+  updated: "2024-08-28 03:43:41"
+  version: 0
+  description: WS Nodejs API Web Services
+  author: Nik Drosakis
+  requires: ~
+  features: ~
+  context: ~
+  capabilities: Provides API endpoints for data access and interactions
+  ecosystem: Node.js, Express.js, RESTful APIs
+  status: active
+  doc:
+    includes: "README.md"
+  todo: ~
+...

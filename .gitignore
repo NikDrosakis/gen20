@@ -1,0 +1,61 @@
+# Ignore environment files
+#changing this file I apply git rm -r --cached /folderchanged
+#then git add . && git commit -m "changed" && git push
+.env
+.vscode
+# Python cache files
+*/__pycache__/
+*/node_modules/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.sql
+
+
+# Media files
+log/
+media/
+backup/
+
+# Ignore everything in public/
+gaia/public/*
+gaia/wordpress
+# Allow these specific folders
+!gaia/public/_phpdomain.local/
+!gaia/public/_reactdomain.local/
+# Ignore node_modules inside public/_reactdomain.local
+gaia/public/_reactdomain.local/node_modules/
+gaia/public/_reactdomain.local/build/
+god/vendor/
+god/tmp/
+god/old/
+setup/
+vendor/
+rus/target/
+# Specific directories and files
+kronos/__pycache__/
+kronos/genenv/
+ermis/node_modules/
+cubos/node_modules/
+venus/node_modules/
+ermis/services/aistudio/.env
+ermis/services/botpress/.env
+ermis/services/huggingface/.env
+ermis/services/openai/.env
+venus/services/openai/.env
+mars/server
+mars/tmp2
+/.env
+###> symfony/framework-bundle ###
+/.env.local
+/.env.local.php
+/.env.*.local
+/config/secrets/prod/prod.decrypt.private.php
+/public/bundles/
+/vendor/
+###< symfony/framework-bundle ###
+###> phpunit/phpunit ###
+/phpunit.xml
+.phpunit.result.cache
+###< phpunit/phpunit ###

@@ -1,0 +1,6 @@
+{
+    "require": {
+        "guzzlehttp/guzzle": "*",
+        "abraham/twitteroauth": "^7.0"
+    }
+}

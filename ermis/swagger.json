@@ -1,0 +1,52 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "ermis WebSocketNodeAPI Integrations Docs",
+    "version": "1.0.0",
+    "description": "ermis API documentation"
+  },
+  "servers": [
+    {
+      "url": "https://vivalibro.com/ermis/v1",
+      "description": "ermis"
+    }
+  ],
+  "paths": {
+    "/items/{itemId}": {
+      "get": {
+        "summary": "Get an item by ID",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the item"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A single item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "itemId": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
