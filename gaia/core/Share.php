@@ -26,7 +26,51 @@ trait Share{
             'message' => $content['message'],
             'link' => $content['link']
         ];
-        return $this->makeHttpRequest($url, $params, 'POST');
+        return $this->fetchUrl($url, $params, 'POST');
+    }
+
+    protected function shareTo($platform, $content) {
+        switch ($platform) {
+            case 'facebook':
+                $url = "https://graph.facebook.com/v12.0/me/feed";
+                $params = [
+                    'access_token' => $this->facebookAccessToken,
+                    'message' => $content['message'],
+                    'link' => $content['link']
+                ];
+                break;
+
+            case 'twitter':
+                $url = "https://api.twitter.com/2/tweets";
+                $params = [
+                    'text' => $content['message']
+                ];
+                $headers = ['Authorization: Bearer ' . $this->twitterBearerToken];
+                break;
+
+            case 'instagram':
+                $url = "https://graph.facebook.com/v12.0/{user-id}/media";
+                $params = [
+                    'access_token' => $this->instagramAccessToken,
+                    'image_url' => $content['image_url'],
+                    'caption' => $content['message']
+                ];
+                break;
+
+            case 'tiktok':
+                $url = "https://open-api.tiktok.com/v1/post/share";
+                $params = [
+                    'access_token' => $this->tiktokAccessToken,
+                    'video_url' => $content['video_url'],
+                    'caption' => $content['message']
+                ];
+                break;
+
+            default:
+                throw new \Exception("Unsupported platform: $platform");
+        }
+
+        $this->makeHttpRequest($url, $params, 'POST', $headers ?? []);
     }
 
 protected function tweet(string $tweet='Message from Gen20') {
@@ -68,7 +112,7 @@ if ($http_code == 201) {
         $params = [
             'text' => $content['message']
         ];
-        return $this->makeHttpRequest($url, $params, 'POST', ['Authorization: Bearer ' . $this->twitterBearerToken]);
+        return $this->fetchUrl($url, $params, 'POST', ['Authorization: Bearer ' . $this->twitterBearerToken]);
     }
 
     public function shareToInstagram($content) {
@@ -79,7 +123,7 @@ if ($http_code == 201) {
             'image_url' => $content['image_url'],
             'caption' => $content['message']
         ];
-        return $this->makeHttpRequest($url, $params, 'POST');
+        return $this->fetchUrl($url, $params, 'POST');
     }
 
     public function shareToTikTok($content) {
@@ -89,10 +133,10 @@ if ($http_code == 201) {
             'video_url' => $content['video_url'],
             'caption' => $content['message']
         ];
-        return $this->makeHttpRequest($url, $params, 'POST');
+        return $this->fetchUrl($url, $params, 'POST');
     }
 
-    protected function makeHttpRequest($url, $params, $method = 'POST', $headers = []) {
+    protected function fetchUrl($url, $params, $method = 'POST', $headers = []) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
