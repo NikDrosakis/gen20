@@ -2,11 +2,11 @@
 
 # Define paths
 LOG_FILE="/var/www/gs/log/god.log"
-CLI_ROOT="/var/www/gs/cli"
-UTILS="$CLI_ROOT/utils.sh"
+CLI_DIR="/var/www/gs/cli"
+UTILS="$CLI_DIR/utils.sh"
 
 # Source utils.sh or exit if missing
-if ! source "$CLI_ROOT/com/god/common.sh" 2>/dev/null; then
+if ! source "$CLI_DIR/com/god/common.sh" 2>/dev/null; then
     echo "❌ Error: Missing common.sh" >&2
     exit 1
 fi

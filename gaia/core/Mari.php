@@ -10,6 +10,7 @@ c) dbcentric DESCRIBE comments & metadata in formatted GEn20 tables
 namespace Core;
 use PDO;
 use PDOException;
+use ReflectionClass;
 
 class Mari {
     public $_db;
@@ -671,7 +672,7 @@ C METHODS - FORMATTING SCHEMA
 
  * Prepare data from DB to be inserted or updated, according to the column format.
  */
-public function columns(string $table, bool $list=false): ?array{
+public function columns(string $table, $list=false): ?array{
     $q = $this->_db->prepare("DESCRIBE $table");
     $q->execute();
     return $list ? $q->fetchAll(PDO::FETCH_COLUMN) : $q->fetchAll(PDO::FETCH_ASSOC);

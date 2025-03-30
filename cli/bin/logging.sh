@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Load environment variables
-if [ -f ./cli/configs/.env ]; then
+if [ -f ./.env ]; then
     export $(grep -v '^#' ./cli/configs/.env | xargs)
 fi
 SCRIPT_NAME=$(basename "$0")

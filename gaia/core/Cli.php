@@ -1,17 +1,21 @@
 <?php
 namespace Core;
-use ReflectionMethod;
+use ReflectionClass;
 
 class Cli extends Gaia {
-use  System, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form,DomainZone,DomainFS,DomainDB,DomainServer, Kronos, WS, Action, Template, Media, Filemeta, My, CuboPublic, CuboAdmin, Template,Book, Share;
-    public $argv=[]; // To store the arguments passed to the script
-    public $argc; // Store the argument count
-    protected $cliDir = "/var/www/gs/cli"; // Adjust this path as needed
 
-    public function __construct() {
+use  Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form,DomainZone,DomainFS,DomainDB,DomainServer, Kronos, WS, Action, Template, Media, Filemeta, My, CuboPublic, CuboAdmin, Template,Book;
+public $argv=[]; // To store the arguments passed to the script
+public $argc; // Store the argument count
+protected $cliDir = "/var/www/gs/cli"; // Adjust this path as needed
+
+public function __construct() {
       parent::__construct();
-      }
+}
 
+/**
+Abstract Gaia function
+*/
 protected function handleRequest() {
     global $argv, $argc;
 
@@ -43,6 +47,12 @@ protected function parseArgs($params) {
         // Convert to string if possible
         if (is_object($param) && method_exists($param, '__toString')) {
             $param = (string)$param;
+        }
+
+        // Handle boolean values explicitly
+        if (is_string($param) && in_array(strtolower($param), ['true', 'false'], true)) {
+            $parsedParams[] = strtolower($param) === 'true';
+            continue;
         }
 
         // Process array markers
@@ -95,7 +105,9 @@ protected function parseArgs($params) {
     return $parsedParams;
 }
 
-
+/**
+Deprecated with parseArgs
+*/
 protected function parseParams($params) {
     $parsedParams = [];
 

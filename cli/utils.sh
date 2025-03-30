@@ -1,10 +1,10 @@
 #!/bin/bash
-CLI_ROOT="/var/www/gs/cli"
-COMMON="$CLI_ROOT/utils.sh"
-BG_DIR="$CLI_ROOT/bg"
-LOG_FILE="/var/www/gs/log/gen20.log"
-DAEMON="$BG_DIR/daemon-update.sh"
-COM_DIR="$CLI_ROOT/com"
+ROOT="/var/www/gs"
+CLI_DIR="$ROOT/cli"
+COMMON="$CLI_DIR/utils.sh"
+BG_DIR="$CLI_DIR/bg"
+LOG_FILE="$ROOT/log/gen.log"
+COM_DIR="$CLI_DIR/com"
 
 # Standardized log function
 log() {
@@ -16,7 +16,49 @@ error() {
     echo "[${BASH_SOURCE[1]}:${LINENO}] [ERROR] $1" >&2
     exit 1
 }
+# ==================================================
+# Daemon Control Functions
+# ==================================================
 
+start() {
+    if [ -f "$PID_FILE" ] && kill -0 $(cat "$PID_FILE") 2>/dev/null; then
+        echo "Daemon already running (PID: $(cat "$PID_FILE"))"
+        return 0
+    fi
+
+    echo "Starting gen20 daemon..."
+    nohup "$DAEMON" >> "$LOG_DIR/gend.log" 2>&1 &
+    echo $! > "$PID_FILE"
+
+    sleep 0.5  # Give it time to start
+    if [ -f "$PID_FILE" ] && kill -0 $(cat "$PID_FILE") 2>/dev/null; then
+        echo "✅ Daemon started (PID: $(cat "$PID_FILE"))"
+    else
+        echo "❌ Failed to start daemon"
+        [ -f "$PID_FILE" ] && rm -f "$PID_FILE"
+        return 1
+    fi
+}
+
+stop() {
+    if [ -f "$PID_FILE" ]; then
+        PID=$(cat "$PID_FILE")
+        if kill -0 "$PID" 2>/dev/null; then
+            kill -9 "$PID"
+            rm -f "$PID_FILE"
+            echo "Daemon stopped"
+        else
+            echo "Stale PID file found - cleaning up"
+            rm -f "$PID_FILE"
+        fi
+    else
+        echo "Daemon not running"
+    fi
+}
+
+is_running() {
+    [ -f "$PID_FILE" ] && kill -0 $(cat "$PID_FILE") 2>/dev/null
+}
 # MariaDB Execution Helper
 mariadb_exec() {
     QUERY="$1"
@@ -167,117 +209,8 @@ _gen_autocomplete() {
         if [[ " ${GEN_COMMANDS[*]} " =~ " ${selected_group} " ]]; then
             # Εδώ μπορείς να προσθέσεις έλεγχο για αρχεία μέσα στον φάκελο της ομάδας
             # Π.χ. να προσφέρεις αρχεία με την κατάληξη '.sh' στον φάκελο της ομάδας
-            COMPREPLY=( $(compgen -W "$(ls "$CLI_ROOT/com/$selected_group"/*.sh 2>/dev/null)" -- "$cur") )
+            COMPREPLY=( $(compgen -W "$(ls "$CLI_DIR/com/$selected_group"/*.sh 2>/dev/null)" -- "$cur") )
         fi
     fi
     return 0
-}
-
-
-
-
-# Start Daemon
-start_daemon() {
-    # Clean up stale PID first with more detailed checks
-    if [ -f "$PID_FILE" ]; then
-        PID=$(cat "$PID_FILE")
-        if [ -n "$PID" ] && [ "$PID" -eq "$PID" ] 2>/dev/null; then  # Verify it's a number
-            if kill -0 "$PID" 2>/dev/null; then
-                log "⚠️ Daemon already running (PID: $PID)"
-                return 1
-            else
-                log "⚠️ Cleaning up stale PID file (dead PID: $PID)"
-                rm -f "$PID_FILE"
-            fi
-        else
-            log "⚠️ Invalid PID found in $PID_FILE"
-            rm -f "$PID_FILE"
-        fi
-    fi
-
-    log "🚀 Starting Gen daemon..."
-    if nohup "$CLI_ROOT/bg/daemon-update.sh" &>> "$LOG_FILE" & then
-        PID=$!
-        echo "$PID" > "$PID_FILE"
-        sleep 1  # Give process time to start
-        if kill -0 "$PID" 2>/dev/null; then
-            log "✅ Daemon started successfully (PID: $PID)"
-            return 0
-        else
-            log "❌ Daemon failed to start (PID: $PID exited immediately)"
-            rm -f "$PID_FILE"
-            return 1
-        fi
-    else
-        log "❌ Failed to execute daemon process"
-        return 1
-    fi
-}
-
-stop_daemon() {
-    local TIMEOUT=5  # Seconds to wait for graceful shutdown
-    local FORCE_TIMEOUT=3  # Additional seconds before force kill
-
-    if [ ! -f "$PID_FILE" ]; then
-        log "⚠️ No PID file found at $PID_FILE"
-        return 1
-    fi
-
-    PID=$(cat "$PID_FILE")
-    if [ -z "$PID" ] || ! [ "$PID" -eq "$PID" ] 2>/dev/null; then
-        log "❌ Invalid PID in $PID_FILE"
-        rm -f "$PID_FILE"
-        return 1
-    fi
-
-    if kill -0 "$PID" 2>/dev/null; then
-        log "🛑 Stopping daemon (PID: $PID)..."
-        kill "$PID"  # Send SIGTERM
-
-        # Wait for graceful shutdown
-        local waited=0
-        while kill -0 "$PID" 2>/dev/null && [ "$waited" -lt "$TIMEOUT" ]; do
-            sleep 1
-            ((waited++))
-        done
-
-        if kill -0 "$PID" 2>/dev/null; then
-            log "⚠️ Daemon not responding to SIGTERM, forcing kill..."
-            kill -9 "$PID"
-            sleep "$FORCE_TIMEOUT"
-            if kill -0 "$PID" 2>/dev/null; then
-                log "❌ Failed to kill daemon (PID: $PID)"
-                return 1
-            fi
-        fi
-
-        rm -f "$PID_FILE"
-        log "✅ Daemon stopped successfully"
-        return 0
-    else
-        log "⚠️ No running daemon found (stale PID: $PID)"
-        rm -f "$PID_FILE"
-        return 1
-    fi
-}
-# Restart Daemon
-restart_daemon() {
-    stop_daemon
-    sleep 1
-    start_daemon
-}
-
-# Check Daemon Status
-status_daemon() {
-    if [ -f "$PID_FILE" ]; then
-        PID=$(cat "$PID_FILE")
-        if kill -0 "$PID" 2>/dev/null; then
-            log "✅ Daemon is running (PID: $PID)"
-        else
-            log "⚠️ Stale PID file found (dead PID: $PID)"
-            rm -f "$PID_FILE"
-        fi
-    else
-        log "⚠️ Daemon is not running"
-    fi
 }

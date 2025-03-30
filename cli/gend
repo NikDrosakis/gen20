@@ -1,0 +1,105 @@
+#!/bin/bash
+
+ROOT="/var/www/gs"
+DAEMON="$ROOT/cli/gen-daemon"  # MUST point to actual daemon executable
+PID_FILE="$ROOT/cli/gen.pid"
+LOG_FILE="$ROOT/log/gen.log"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
+start_daemon() {
+    # Check if already running
+    if [ -f "$PID_FILE" ]; then
+        PID=$(cat "$PID_FILE")
+        if kill -0 "$PID" 2>/dev/null; then
+            log "Daemon already running (PID: $PID)"
+            echo "Daemon already running (PID: $PID)"
+            return 1
+        else
+            log "Removing stale PID file (PID: $PID)"
+            rm -f "$PID_FILE"
+        fi
+    fi
+
+    log "Starting daemon..."
+    echo "Starting gen daemon..."
+
+    # Start the daemon with nohup and proper output redirection
+    nohup "$DAEMON" >> "$LOG_FILE" 2>&1 &
+    DAEMON_PID=$!
+    echo "$DAEMON_PID" > "$PID_FILE"
+
+    # Verify it started
+    sleep 0.5
+    if kill -0 "$DAEMON_PID" 2>/dev/null; then
+        log "Daemon started successfully (PID: $DAEMON_PID)"
+        echo "Daemon started successfully (PID: $DAEMON_PID)"
+        return 0
+    else
+        log "Failed to start daemon (exit code: $?)"
+        echo "Failed to start daemon"
+        rm -f "$PID_FILE"
+        return 1
+    fi
+}
+
+stop_daemon() {
+    if [ -f "$PID_FILE" ]; then
+        PID=$(cat "$PID_FILE")
+        if kill -0 "$PID" 2>/dev/null; then
+            log "Stopping daemon (PID: $PID)"
+            echo "Stopping daemon (PID: $PID)"
+            kill -9 "$PID" && rm -f "$PID_FILE"
+            return $?
+        else
+            log "Found PID file but process not running (PID: $PID)"
+            echo "Found PID file but process not running"
+            rm -f "$PID_FILE"
+            return 1
+        fi
+    else
+        log "No PID file found - daemon not running?"
+        echo "No PID file found - daemon not running?"
+        return 1
+    fi
+}
+
+case "$1" in
+    start)
+        start_daemon
+        ;;
+    stop)
+        stop_daemon
+        ;;
+    restart)
+        stop_daemon
+        sleep 1  # Give time for process to fully stop
+        start_daemon
+        ;;
+    status)
+        echo "DEBUG: Checking PID file at $PID_FILE" >&2
+        if [ -f "$PID_FILE" ]; then
+            PID=$(cat "$PID_FILE")
+            echo "DEBUG: Found PID $PID" >&2
+            if kill -0 "$PID" 2>/dev/null; then
+                echo "Running (PID: $PID)"
+                exit 0
+            else
+                echo "DEBUG: kill -0 failed for PID $PID" >&2
+                echo "Not running (stale PID: $PID)"
+                rm -f "$PID_FILE"
+                exit 1
+            fi
+        else
+            echo "DEBUG: No PID file found" >&2
+            echo "Not running"
+            exit 1
+        fi
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|status}"
+        exit 1
+        ;;
+esac

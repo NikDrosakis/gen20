@@ -1,6 +1,6 @@
 #!/bin/bash
 # Load environment variables
-source /var/www/gs/cli/configs/.env
+source /var/www/gs/.env
 #new ermis.sh
 #param $1=name $2 new || delete
 #if param $2=new

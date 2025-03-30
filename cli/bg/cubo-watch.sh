@@ -1,30 +1,31 @@
 #!/bin/bash
+# SINGLE-PROCESS Cubo Watcher - To be managed by gen-daemon
 
-ROOT="/var/www/gs"                  # Root directory
-CUBO_ROOT="$ROOT/gaia/cubos"         # Cubo root directory
-LOG_FILE="$ROOT/log/cli.log"         # Log file
+ROOT="/var/www/gs"
+CUBO_DIR="$ROOT/gaia/cubos"
+LOG_FILE="$ROOT/log/cubo-watch.log"
 
-# Watch for changes in the cubo directory
-inotifywait -m -r -e modify,create,delete "$CUBO_ROOT" --format '%w%f' |
-while read FILE; do
-    # Extract the Cubo name from the file path. Assuming the cubo name is the parent directory of the file.
-# Extract the CUBO_NAME (parent folder name)
-CUBO_NAME=$(basename "$(dirname "$(dirname "$FILE")")")
+# Processing function
+process_cubo_change() {
+    local changed_file="$1"
+    local cubo_name=$(basename "$(dirname "$changed_file")")  # Immediate parent dir
+    local file_name=$(basename "$changed_file" .php)
+    local resource="$cubo_name.$file_name"
 
-# Extract the file name (without path)
-FILE_NAME=$(basename "$FILE" .php)
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Processing: $resource" >> "$LOG_FILE"
 
-# Combine CUBO_NAME and FILE_NAME with a dot separator
-RESULT="$CUBO_NAME.$FILE_NAME"
+    if gen gaia updateCacheCP "$resource"; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Cache updated: $resource" >> "$LOG_FILE"
+    else
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] FAILED: $resource" >> "$LOG_FILE"
+    fi
+}
 
-# Output the result
-echo "CUBO_NAME: $RESULT"
+# Initial setup
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Service started (PID: $$)" >> "$LOG_FILE"
 
-#update cubo cache method
-gen gaia updateCacheCP "$RESULT"
-
-#set the process as background
-
-#sent notification to reload page
-
+# Single inotifywait instance
+inotifywait -m -r -e modify,create,delete "$CUBO_DIR" --format '%w%f' | \
+while read -r changed_file; do
+    process_cubo_change "$changed_file"
 done

@@ -95,7 +95,7 @@ protected function insertTablesIntoMetadata($database) {
     $tables = $this->db->show("tables",$database);
     // Prepare the insert statement
 
-    $insertQuery = "INSERT INTO ${publicdb}.metadata (name, title, description, status) VALUES (?, ?, ?, ?)";
+    $insertQuery = "INSERT INTO $this->publicdb.metadata (name, title, description, status) VALUES (?, ?, ?, ?)";
     foreach ($tables as $table) {
         // You might want to set title and description based on your requirements
         $title = ucfirst($table); // Example title (capitalized table name)

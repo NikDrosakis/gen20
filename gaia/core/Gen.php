@@ -12,7 +12,7 @@ wordpress integrated
 magento integrated
 */
 class Gen extends Gaia {
-use  Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form, DomainZone,DomainFS,DomainDB,DomainServer,Kronos, WS, Action, Template, Media, Filemeta, My, CuboAdmin, CuboPublic, Template,Book, Share;
+use  Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form, DomainZone,DomainFS,DomainDB,DomainServer,Kronos, WS, Action, Template, Media, Filemeta, My, CuboAdmin, CuboPublic, Template,Book;
 
 protected $database;
 protected $layout_selected;

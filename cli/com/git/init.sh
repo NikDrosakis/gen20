@@ -1,6 +1,6 @@
 #!/bin/bash
 
-        GIT_SCRIPT="$CLI_ROOT/com/git/$FILENAME.sh"
+        GIT_SCRIPT="$CLI_DIR/com/git/$FILENAME.sh"
         if [ -f "$GIT_SCRIPT" ]; then
             bash "$GIT_SCRIPT"
             exit $?

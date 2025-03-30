@@ -7,13 +7,20 @@ trait Ad {
     protected $configAd;    // Store configuration for the ad service
     protected $client;    // Google API client
 
+/**
+
+*/
 protected $configAd = [
             'service' => 'adsense',
             'credentials' => '/path/to/credentials.json',
             'scopes' => ['https://www.googleapis.com/auth/adsense.readonly'],
             'access_type' => 'offline',
         ];
-    protected function getReport() {
+
+/**
+Report Helper
+*/
+protected function getReport() {
         $report = $this->fetchAdReport('2024-01-01', '2024-01-31');
         print_r($report);
     }
@@ -40,7 +47,9 @@ protected $configAd = [
         }
     }
 
-    // Create Google API client with provided config
+    /**
+    Create Google API client with provided config
+     */
     protected function createClient(array $configAd) {
         $client = new \Google_Client();
 
@@ -84,6 +93,7 @@ protected $configAd = [
 
         return $this->adService->reports->generate($optParams);
     }
+
 
     // Fetch report for AdMob
     protected function fetchAdMobReport($startDate, $endDate, $filters = []) {

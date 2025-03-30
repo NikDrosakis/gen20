@@ -2,13 +2,13 @@
 
 # Define paths
 LOG_FILE="/var/www/gs/log/gen20.log"  # Adjust if needed
-CLI_ROOT="/var/www/gs/cli"
-UTILS="$CLI_ROOT/utils.sh"
+CLI_DIR="/var/www/gs/cli"
+UTILS="$CLI_DIR/utils.sh"
 MARS_ROOT="/var/www/gs/mars"  # Path to the Mars application
 
 # Source utils.sh or exit if missing
 if ! source "$UTILS" 2>/dev/null; then
-    echo "❌ Error: Missing utils.sh in $CLI_ROOT/lib/" >&2
+    echo "❌ Error: Missing utils.sh in $CLI_DIR/lib/" >&2
     exit 1
 fi
 

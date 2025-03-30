@@ -1,0 +1,48 @@
+#!/bin/bash
+# Main daemon process - manages all bg/ services
+
+ROOT="/var/www/gs"
+BG_DIR="$ROOT/cli/bg"
+LOG_DIR="$ROOT/log"
+SERVICES=()  # Will store active service PIDs
+
+# Start all background services
+start_services() {
+    for script in "$BG_DIR"/*.sh; do
+        if [ -x "$script" ]; then
+            local name=$(basename "$script" .sh)
+            nohup "$script" >> "$LOG_DIR/${name}.log" 2>&1 &
+            SERVICES+=($!)
+            echo "Started $name (PID: $!)"
+        fi
+    done
+}
+
+# Stop all background services
+stop_services() {
+    for pid in "${SERVICES[@]}"; do
+        if kill -0 "$pid" 2>/dev/null; then
+            kill -9 "$pid"
+            echo "Stopped process $pid"
+        fi
+    done
+    SERVICES=()
+}
+
+# Cleanup on exit
+trap stop_services EXIT
+
+# Main daemon loop
+start_services
+while true; do
+    # Monitor services and restart if needed
+    for i in "${!SERVICES[@]}"; do
+        if ! kill -0 "${SERVICES[$i]}" 2>/dev/null; then
+            script=$(ls "$BG_DIR" | sed -n "$((i+1))p")
+            echo "Restarting crashed service: $script"
+            nohup "$BG_DIR/$script" >> "$LOG_DIR/${script%.*}.log" 2>&1 &
+            SERVICES[$i]=$!
+        fi
+    done
+    sleep 10
+done

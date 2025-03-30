@@ -9,6 +9,7 @@ use ArangoDBClient\Cursor;
 use ArangoDBClient\Key;
 use ArangoDBClient\Exception;
 
+
 /**
  * Trait for basic CRUD operations in ArangoDB
  */

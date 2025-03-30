@@ -7,11 +7,11 @@ fi
 log() {
     echo "[INFO] $1"
 }
-ROOT=$(pwd)
-CUBO_DIR="${ROOT}/cubos"
-KRONOS_SERVICES="${ROOT}/kronos/services"
-ERMIS_SERVICES="${ROOT}/ermis/services"
-GOD_SERVICES="${ROOT}/god/services"
+ROOT="/var/www/gs"
+CUBO_DIR="$ROOT/cubos"
+KRONOS_SERVICES="$ROOT/kronos/services"
+ERMIS_SERVICES="$ROOT/ermis/services"
+GOD_SERVICES="$ROOT/god/services"
 # Helper function to execute MySQL commands
 mysql_exec() {
     mysql -u "$DB_USER" -p"$DB_PASS" -h "$DB_HOST" -e "$1" "$DB_NAME"

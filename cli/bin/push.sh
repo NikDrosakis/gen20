@@ -5,7 +5,7 @@
     error_page 500 = /error.php;
     location = /error.php {
         internal;
-        root /var/www/gs/cli;  # Directory where error.php is located
+        root /var/www/gs;  # Directory where error.php is located
         try_files $uri =404;  # Ensure the file exists
     }
 	

@@ -26,7 +26,7 @@ protected function addPagegrpCP($domain='', $name = '') {
 echo "add cubo to pagegrp, copies cubo to ";
 }
 
-protected function delCP(string $domain='',string $name): bool {
+protected function delCP(string $domain,string $name): bool {
     // Validate input
     if (empty($name)) {
         echo "Error: Cubo name cannot be empty.\n";

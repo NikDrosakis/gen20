@@ -1,12 +1,17 @@
 <?php
   // Handle SERVER_NAME in CLI
         if (php_sapi_name() == "cli") {
-            $_SERVER['SYSTEM'] = 'cli';  // or set a default value
             $_SERVER['SERVER_NAME'] = 'localhost';  // or set a default value
+            define('DOMAIN', $_SERVER['SERVER_NAME']);
+            $_SERVER['SYSTEM'] = 'cli';  // or set a default value
             $_SERVER['HTTP_HOST'] = 'localhost';    // or set a default value
             $_SERVER['HTTPS'] = '';                 // or set to an empty string
             define('TEMPLATE', "localhost");
-            define('DOMAIN',$_SERVER['SERVER_NAME']);
+        }else{
+            define('DOMAIN', $_SERVER['SERVER_NAME']);
+            $servernameArray = explode('.', DOMAIN);
+            $template = $servernameArray[0].$servernameArray[1];
+            define('TEMPLATE', $template);
         }
 	define('GSROOT','/var/www/gs/');
     define('GAIAROOT',GSROOT.'gaia/');
@@ -46,6 +51,9 @@
     define('URL_FILE',basename($_SERVER['PHP_SELF']));
     define('IMG',"/media/");
     define ('TEMPLATESURI',PUBLIC_ROOT_WEB."templates/");
+    define ('DEEPSEEK_API_URL',"https://api.deepseek.com/v1/chat/completions");
+    define ('DEEPSEEK_API_KEY',"sk-6f9b9c7c2f88482db3d4c2a367e0da0b");
+
     //this
     $this->time = time();
     $this->LIB = SITE_URL . "/lib/";
@@ -279,15 +287,17 @@
     $this->bookdefaultimg = "/isset/img/empty.png";
     $this->publisherdefaultimg = "/isset/img/empty_publisher.png";
     $this->writerdefaultimg = "/asset/img/empty_user.png";
-
     $this->logo = "/img/logo.png";
-
     $this->parenting_areas = [
        "h1" => "h", "h2" => "h", "h3" => "h",
        "sl1" => "sl", "sl2" => "sl", "sl3" => "sl",
        "sr1" => "sr", "sr2" => "sr", "sr3" => "sr",
        "fr" => "f", "fc" => "f", "fl" => "f"
     ];
+    $this->version = '0.69';
 
-    $this->version = '0.42';
+    $this->publicdb = "gen_".TEMPLATE;
+    $this->loggedin = !empty($_COOKIE['GSID']);
+    $this->ini = ini_get_all();
+    $this->env = getenv();
 

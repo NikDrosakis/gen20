@@ -34,6 +34,7 @@
 }
 </style>
 
+
 <div class="badge-cubo-container">
     <div class="badge-cubo" id="badgeCubo">
         <div class="badge-card" id="level1">

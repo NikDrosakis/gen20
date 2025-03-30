@@ -3,18 +3,20 @@ namespace Core;
 use Parsedown;
 use Exception;
 use DOMDocument;
+use ReflectionClass;
 
 abstract class Gaia {
 protected $db;
-protected $publicdb;
 // protected $mon;  // This is commented out, so no need to include it.
-protected $redis;
 protected $resource;
 protected $dom;
 protected $metadata = [];
 protected $parsedown;
 
+
 // API
+public $redis;
+public $publicdb;
 protected $response = [];
 public $verb;
 public $loggedin;
@@ -30,6 +32,21 @@ public $time;
 public $agent;
 public $tax; // Instantiate Taxonomy Class
 public $conf;
+public $pagelist;
+public $set;
+public $my;
+public $parenting_areas;
+public $ini;
+public $SELF_NONURL;
+public $URL_PAGE;
+public $QUERY_STRING;
+public $GET;
+public $CUBO_ROOT;
+public $status_message;
+public $CURRENT;
+public $SELF;
+public $URL_FILE;
+public $URL;
 public $confd;
 public $subparent;
 public $apages;
@@ -62,6 +79,7 @@ public $subs;
 public $icons;
 public $usergrps;
 public $is;
+public $env;
 public $aconf;
 public $layout_array;
 
@@ -119,9 +137,6 @@ public $greekMonths;
     //redis instantiate
     $this->redis=new Gredis("1");
 
-    $this->publicdb = "gen_".TEMPLATE;
-    $this->loggedin = !empty($_COOKIE['GSID']);
-    $this->ini = ini_get_all();
     $this->me = $_COOKIE['GSID'] ?? 0;
     $this->my=[];
     if ($this->loggedin) {
@@ -137,10 +152,90 @@ public $greekMonths;
     FROM {$this->publicdb}.page
     LEFT JOIN {$this->publicdb}.pagegrp on page.pagegrpid=pagegrp.id");
 
+       // Setup exception handler to catch errors in the child classes
+        set_exception_handler([$this, 'handleError']);
      // Handle requests (delegated to child classes)
         $this->handleRequest();
     }
+
 	abstract protected function handleRequest();
+
+
+// Method to handle exceptions and log AI suggestions
+    public function handleError($exception) {
+        // Get the error details
+        $errorFile = $exception->getFile();
+        $errorLine = $exception->getLine();
+        $errorMessage = $exception->getMessage();
+        $errorCode = $exception->getCode();
+
+        // Extract the first stack trace entry (root cause)
+        $trace = $exception->getTrace();
+        $rootTrace = isset($trace[0]) ? "{$trace[0]['file']} (Line {$trace[0]['line']})" : "N/A";
+
+        // Extract method name from trace (Assuming $trace is the debug backtrace)
+        $methodName = isset($trace[0]['function']) ? $trace[0]['function'] : 'N/A';
+        // Get method context via cat and help
+        $catOutput = $this->cat($methodName);
+        $helpOutput = $this->help($methodName);
+
+        // Prepare AI prompt with focused error handling context
+        $ERROR_INPUT = json_encode([
+            'role' => 'user',
+            'content' => "Error handling focus. Analyze following error and provide precise, not empty lines, brief suggestion for resolving it. Error Message: $errorMessage Method: $methodName File: $errorFile | Line: $errorLine Cat Output: $catOutput Help Output: $helpOutput"
+        ]);
+
+        // Log the error message (no full stack trace)
+        $logMessage = "[ERROR] $errorMessage (Code: $errorCode)\n";
+        $logMessage .= "Method: $methodName\n";
+        $logMessage .= "File: $errorFile | Line: $errorLine\n";
+        $logMessage .= "Root Cause: $rootTrace\n";
+        $logMessage .= "Cat Output: $catOutput\n";  // Adding cat method output to the error message
+        $logMessage .= "Help Output: $helpOutput\n";  // Adding help method output to the error message
+        $logMessage .= "\n";
+
+        // Log to gen.log file
+        //file_put_contents("/var/www/gs/log/gen.log", $logMessage, FILE_APPEND);
+
+        // Send request to DeepSeek API with the full error context as a JSON payload
+        $PAYLOAD = '{"model": "deepseek-chat", "messages": [{"role": "user", "content": "' . addslashes($ERROR_INPUT) . '"}]}';
+        $escapedPayload = escapeshellarg($PAYLOAD);
+        $escapedAPIUrl = escapeshellarg(DEEPSEEK_API_URL);
+        $escapedApiKey = escapeshellarg(DEEPSEEK_API_KEY);
+        // Ensure the response is captured correctly in the same process
+
+        $COMMAND = "curl -s -X POST $escapedAPIUrl -H 'Content-Type: application/json' -H 'Authorization: Bearer $escapedApiKey' -d $escapedPayload";
+        $RESPONSE = shell_exec($COMMAND);
+        // Remove control characters (ASCII codes 0 - 31) from the string
+        $cleanedResponse = preg_replace('/[\x00-\x1F\x7F]/', '', $RESPONSE);
+        // Now attempt to decode the cleaned response
+        $decodedResponse = json_decode($cleanedResponse, true);
+
+        // Check if the decoding was successful
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            echo "JSON decoding error: " . json_last_error_msg();
+        } else {
+            // Extract the AI suggestion if decoding is successful
+            if (isset($decodedResponse['choices'][0]['message']['content'])) {
+                $AI_SUGGESTION = $decodedResponse['choices'][0]['message']['content'];
+            } else {
+                echo "Error: Expected keys not found in the response.";
+            }
+        }
+        // Extract AI suggestion from the response
+       # $AI_SUGGESTION = json_decode($RESPONSE, true)['choices'][0]['message']['content'];
+
+        // Log & display AI suggestion
+        if (empty($AI_SUGGESTION)) {
+            $aiSuggestionMessage = "💡 AI Suggestion: No suggestion returned or failed to parse response.\n";
+        } else {
+            $aiSuggestionMessage = "💡 AI Suggestion: $AI_SUGGESTION\n";
+        }
+        //File_put_contents("/var/www/gs/log/gen.log", $aiSuggestionMessage, FILE_APPEND);
+        // Show error in CLI &  Display suggestion on CLI
+        echo $logMessage.$aiSuggestionMessage;
+   }
+
 
     protected function isCuboRequest(): bool {
         return $this->SYSTEM=== 'cubos';
@@ -243,7 +338,6 @@ protected function include_buffer(string $file, array $sel = [], array $params =
     }
 }
 
-
 /**
 Handle XHR request.
 */
@@ -289,24 +383,7 @@ if
         }
         return false;
     }
-    protected function catch_errors(){
-          //CATCH PHP FATAL ERROR
-            set_error_handler(function($errno, $errstr, $errfile, $errline) {
-                if (error_reporting() & $errno) {
-                    // Handle fatal errors (E_ERROR, E_PARSE, etc.)
-                    if (in_array($errno, [E_ERROR, E_PARSE, E_COMPILE_ERROR, E_CORE_ERROR])) {
-                        error_log("Fatal Error: [$errno] $errstr - File: $errfile, Line: $errline");
-                        http_response_code(500); // Send a 500 Internal Server Error
-                        // Optionally, include a minimal error message in the response:
-                        echo "An error has occurred. Please try again later.";
-                      //  exit; // Stop further execution
-                    } else {
-                        // ... handle other error types ...
-                        echo "I try hard other cases.";
-                    }
-                }
-            });
-    }
+
 
 protected function getThis() {
 return $this;
@@ -407,32 +484,92 @@ protected function setup($name = '', $value = ''){
     }
 
 }
+/**
+Returns the code for the specified method
+*  @param string $methodName The name of the method.
+ * @return string The code for the method, or a "Method not found" message.
+* USAGE gen gaia cat buildTable , but
+*/
+protected function cat($methodName)
+{
+    $class = new ReflectionClass($this);
 
+    $method = $class->getMethod($methodName);
+    $method->setAccessible(true); // Ensure private/protected methods can be accessed
 
-    public function cat($methodName) {
-        // Reflect the current class
-        $class = new \ReflectionClass($this);
-
-        // Check if the method exists
-        if ($class->hasMethod($methodName)) {
-            $method = $class->getMethod($methodName);
-
-            // Fetch the start and end line for the method
-            $startLine = $method->getStartLine();
-            $endLine = $method->getEndLine();
-
-            // Get the code from the file
-            $filePath = $class->getFileName();
-            $lines = file($filePath);
-
-            // Slice the array to get the method code
-            $methodCode = implode("", array_slice($lines, $startLine - 1, $endLine - $startLine + 1));
-
-            return $methodCode;
-        }
-
+    if (!$class->hasMethod($methodName)) {
         return "Method not found.";
     }
+
+    $method = $class->getMethod($methodName);
+    $filePath = $method->getFileName();
+    $lines = file($filePath, FILE_IGNORE_NEW_LINES);
+
+    // Adjusting start & end lines
+    $startLine = $method->getStartLine() - 1; // Convert to 0-based index
+    $endLine = $method->getEndLine();
+
+    // Extract method code
+    $methodCode = array_slice($lines, $startLine, $endLine - $startLine);
+
+    // Fix indentation issues
+    $methodCode = implode("\n", $methodCode);
+
+    return $methodCode;
+}
+
+/**
+returns the top comments of the method selected
+*/
+protected function help($methodName){
+
+    if ($this instanceof \PDO && property_exists($this, 'db')) {
+        $class = new ReflectionClass($this->db);
+    } elseif ($this instanceof \Redis && property_exists($this, 'redis')) {
+        $class = new ReflectionClass($this->redis);
+    } else {
+        $class = new ReflectionClass($this);
+    }
+
+    if (!$class->hasMethod($methodName)) {
+        return "Method not found.";
+    }
+
+    $method = $class->getMethod($methodName);
+    $filePath = $method->getFileName();
+    $lines = file($filePath, FILE_IGNORE_NEW_LINES);
+
+    // Locate the start of the method
+    $startLine = $method->getStartLine() - 1;
+
+    // Start scanning upwards to extract the docblock
+    $docLines = [];
+    for ($i = $startLine - 1; $i >= 0; $i--) {
+        $line = trim($lines[$i]);
+
+        // Stop scanning when we hit an empty line or another declaration
+        if ($line === "" || preg_match('/^(class|function|public|protected|private|#[\w]+)/', $line)) {
+            break;
+        }
+
+        // Prepend to maintain order
+        array_unshift($docLines, $lines[$i]);
+    }
+
+    // Strip the /** and */ markers
+    $cleanDoc = [];
+    foreach ($docLines as $line) {
+        $cleanLine = preg_replace('/^\s*\* ?/', '', $line); // Remove leading "* "
+        $cleanLine = trim($cleanLine, "/* "); // Remove possible leading/trailing slashes/stars
+        if ($cleanLine !== "") {
+            $cleanDoc[] = $cleanLine;
+        }
+    }
+
+    return implode("\n", $cleanDoc);
+}
+
+
 /**
 navigation
 */

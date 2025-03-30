@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Load environment variables
-source /var/www/gs/cli/.env
+source /var/www/gs/.env
 echo $GSROOT
 # Parameters: $1=name, $2=new or delete
 SERVICE_NAME=$1

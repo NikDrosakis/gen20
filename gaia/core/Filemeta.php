@@ -17,6 +17,28 @@ v.1 basic Trait, batch saving all files, changing all the style writing, having 
 - connect to Ermis for auto-update each file
 - logging all load data
 - having sense
+
+Existing Schema
+CREATE TABLE `filemetacore` (
+  `id` int(11) NOT NULL,
+  `inclass` varchar(155) DEFAULT NULL,
+  `inline` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `name` varchar(150) NOT NULL COMMENT 'method-core',
+  `description` text DEFAULT NULL,
+  `doc` text DEFAULT NULL COMMENT 'md',
+  `type` enum('class','js','php/html','pug','style-css') NOT NULL,
+  `status` enum('CORRECT','DEPRECATED','NEEDUPDATE','PENDING','FAILED') NOT NULL DEFAULT 'PENDING',
+  `dependent` text DEFAULT NULL,
+  `todo` text DEFAULT NULL,
+  `created` timestamp NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `version` smallint(6) DEFAULT 1,
+  `notes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `features` text DEFAULT NULL,
+  `updatelog` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+
 */
 namespace Core;
 

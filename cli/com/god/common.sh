@@ -2,8 +2,8 @@
 # Define paths
 ROOT="/var/www/gs"
 LOG_FILE="$ROOT/log/god.log"  # Adjust if needed
-CLI_ROOT="$ROOT/cli"
-UTILS="$ROOT/cli/utils.sh"
+CLI_DIR="$ROOT/cli"
+UTILS="$ROOT/utils.sh"
 GOD_ROOT="$ROOT/god"  # Path to the GoGin application
 
 # Source utils.sh if exists

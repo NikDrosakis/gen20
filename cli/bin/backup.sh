@@ -1,7 +1,7 @@
 #!/bin/bash
 description="back gen20 fs, upload zip to google drive"
 # Load environment variables from .env file
-source /var/www/gs/cli/configs/.env
+source /var/www/gs/.env
 
 # Set variables
 TIMESTAMP=$(date +"%Y-%m-%d")

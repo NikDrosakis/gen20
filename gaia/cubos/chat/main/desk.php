@@ -3,6 +3,7 @@
 #chatbox{
 color:black;
 }
+
 #chatresponse > div{
     line-height:18px;
         margin-top: 16px;
