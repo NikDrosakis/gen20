@@ -46,7 +46,6 @@ GEN_COMMANDS=("chat" "domain" "ermis" "mars" "god" "kronos" "cubos" "ws" "ai" "g
 # Ορισμός της συνάρτησης autocompletion για την εντολή 'gen'
 complete -F _gen_autocomplete gen
 parsed_args=$(parse_args "$@")
-echo "$ROOT"
 # ==================================================
 # Command Handling
 # ==================================================
@@ -55,6 +54,9 @@ case "$COMMAND" in
     # Daemon Commands
     # ==============================================
     kill) bash "$BIN/kill.sh" "$@"
+      ;;
+    reload|restart|start|stop|status)
+      systemctl "$COMMAND" "$FILENAME"
       ;;
     wget) wget -r -l 1 -A.html -P $ROOT/$3 https://$FILENAME
       ;;
@@ -99,7 +101,7 @@ case "$COMMAND" in
         df -h
         ;;
     log)
-       tail -f "$ROOT/log/$FILENAME.log"       # Live log monitoring
+       tail -f "$ROOT/log/$FILENAME"       # Live log monitoring
        ;;
 # ==============================================
 # Execute Scripts for All Commands

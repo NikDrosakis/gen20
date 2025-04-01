@@ -1,16 +1,23 @@
 #!/bin/bash
-# Main daemon process - manages all bg/ services
+# Main daemon process - manages all bg/services and monitors file changes
 
 ROOT="/var/www/gs"
 BG_DIR="$ROOT/cli/bg"
 LOG_DIR="$ROOT/log"
-SERVICES=()  # Will store active service PIDs
+CUBO_DIR="$ROOT/gaia/cubos"
+SOURCE_DIR="$ROOT/gaia/core"
+SERVICES=()  # Stores active service PIDs
 
 # Start all background services
 start_services() {
     for script in "$BG_DIR"/*.sh; do
         if [ -x "$script" ]; then
             local name=$(basename "$script" .sh)
+            # Check if already running
+            if pgrep -f "$script" > /dev/null; then
+                echo "$name is already running. Skipping."
+                continue
+            fi
             nohup "$script" >> "$LOG_DIR/${name}.log" 2>&1 &
             SERVICES+=($!)
             echo "Started $name (PID: $!)"
@@ -29,13 +36,37 @@ stop_services() {
     SERVICES=()
 }
 
+
+
+# File change processing function
+process_change() {
+    local changed_file="$1"
+    if [[ "$changed_file" == "$CUBO_DIR"* ]]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Cubo updated: $changed_file" >> "$LOG_DIR/cubo-watch.log"
+        gen gaia updateCacheCP "$(basename "$(dirname "$changed_file")").$(basename "$changed_file" .php)"
+    elif [[ "$changed_file" == "$SOURCE_DIR"* ]]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Gaia updated: $changed_file" >> "$LOG_DIR/gaia-watch.log"
+        cp "$changed_file" "$SOURCE_DIR/../core2/$(basename "$changed_file")"
+    fi
+}
+
+# Centralized inotify watcher
+watch_files() {
+    inotifywait -m -r -e modify,create,delete "$CUBO_DIR" "$SOURCE_DIR" --format '%w%f' | \
+    while read -r changed_file; do
+        process_change "$changed_file"
+    done
+}
+
 # Cleanup on exit
 trap stop_services EXIT
 
-# Main daemon loop
+# Start services and inotify watcher
 start_services
+watch_files &  # Runs inotify in the background
+
+# Main daemon loop to monitor services
 while true; do
-    # Monitor services and restart if needed
     for i in "${!SERVICES[@]}"; do
         if ! kill -0 "${SERVICES[$i]}" 2>/dev/null; then
             script=$(ls "$BG_DIR" | sed -n "$((i+1))p")

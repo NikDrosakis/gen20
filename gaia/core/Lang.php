@@ -1,6 +1,7 @@
 <?php
 namespace Core;
 use Pug\Pug;
+
 /**
 @filemeta.description locationzalition tool to add edit remove languages (multilanguage schema)
 @filemeta.depends asset/main/language.php

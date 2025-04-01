@@ -1,16 +1,12 @@
 #!/bin/bash
-# SINGLE-PROCESS Cubo Watcher - To be managed by gen-daemon
+# Cubo Watcher - Triggered by gen-daemon or an external service
 
 ROOT="/var/www/gs"
-CUBO_DIR="$ROOT/gaia/cubos"
 LOG_FILE="$ROOT/log/cubo-watch.log"
 
-# Processing function
+
 process_cubo_change() {
-    local changed_file="$1"
-    local cubo_name=$(basename "$(dirname "$changed_file")")  # Immediate parent dir
-    local file_name=$(basename "$changed_file" .php)
-    local resource="$cubo_name.$file_name"
+    local resource="$1"
 
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Processing: $resource" >> "$LOG_FILE"
 
@@ -21,11 +17,10 @@ process_cubo_change() {
     fi
 }
 
-# Initial setup
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Service started (PID: $$)" >> "$LOG_FILE"
-
-# Single inotifywait instance
-inotifywait -m -r -e modify,create,delete "$CUBO_DIR" --format '%w%f' | \
-while read -r changed_file; do
-    process_cubo_change "$changed_file"
-done
+# External calls should pass the full resource name (e.g., "main.public")
+if [[ -n "$1" ]]; then
+    process_cubo_change "$1"
+else
+    echo "Usage: $0 <resource_name>" >> "$LOG_FILE"
+    exit 1
+fi

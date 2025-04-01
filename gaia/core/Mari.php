@@ -7,6 +7,7 @@ b) helpers fa, fl, f, q, inse
 c) dbcentric DESCRIBE comments & metadata in formatted GEn20 tables
 
 */
+
 namespace Core;
 use PDO;
 use PDOException;

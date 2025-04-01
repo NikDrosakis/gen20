@@ -14,6 +14,8 @@
         margin-top: 20px;
     }
 </style>
+
+
 <h1>Enhanced Book Cover Recognition</h1>
 <div id="container">
     <video id="video" width="1280" height="720" autoplay></video>
@@ -26,6 +28,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const video = document.getElementById('video');
