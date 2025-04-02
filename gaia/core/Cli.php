@@ -1,10 +1,38 @@
 <?php
 namespace Core;
+
 use ReflectionClass;
+use Exception;
+use Core\Traits\Doc;
+use Core\Traits\Url;
+use Core\Traits\System;
+use Core\Traits\Meta;
+use Core\Traits\Manifest;
+use Core\Traits\Head;
+use Core\Traits\Ermis;
+use Core\Traits\Lang;
+use Core\Traits\Tree;
+use Core\Traits\Form;
+use Core\Traits\Domain;
+use Core\Traits\DomainZone;
+use Core\Traits\DomainFS;
+use Core\Traits\DomainSSL;
+use Core\Traits\DomainDB;
+use Core\Traits\DomainHost;
+use Core\Traits\Kronos;
+use Core\Traits\WS;
+use Core\Traits\Action;
+use Core\Traits\Template;
+use Core\Traits\Media;
+use Core\Traits\Filemeta;
+use Core\Traits\My;
+use Core\Traits\CuboPublic;
+use Core\Traits\CuboAdmin;
+use Core\Cubo\Book;
 
 class Cli extends Gaia {
+use  Doc, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form,Domain,DomainZone,DomainFS,DomainSSL,DomainDB,DomainHost, Kronos, WS, Action, Template, Media, Filemeta, My, CuboPublic, CuboAdmin, Template,Book;
 
-use  Doc, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form,DomainZone,DomainFS,DomainDB,DomainHost, Kronos, WS, Action, Template, Media, Filemeta, My, CuboPublic, CuboAdmin, Template,Book;
 public $argv=[]; // To store the arguments passed to the script
 public $argc; // Store the argument count
 protected $cliDir = "/var/www/gs/cli"; // Adjust this path as needed
@@ -13,7 +41,6 @@ public function __construct() {
       parent::__construct();
 }
 
-
 /**
 Abstract Gaia function
 */
@@ -21,7 +48,6 @@ protected function handleRequest() {
     global $argv, $argc;
 
     if ($this->isCliRequest()) {
-
         $this->router();
     } else {
         echo "THIS IS NOT CLI\n";

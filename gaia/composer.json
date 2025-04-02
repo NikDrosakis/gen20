@@ -1,6 +1,6 @@
 {
     "name": "gaia/core",
-    "version": "0.5.5",
+    "version": "0.6.9",
     "license": "proprietary",
     "description": "Core PHP library running in PHP8.2",
     "require": {
@@ -20,10 +20,11 @@
     },
     "autoload": {
         "psr-4": {
-            "Core\\": "core/",
-            "Vivalibro\\": "vivalibro/",
-            "Apiv1\\": "apiv1/",
-            "Cubo\\": "cubos/"
+            "Core\\": "core",
+            "Core\\Traits\\": "core/traits",
+            "Core\\Cubo\\": "core/cubo",
+            "Vivalibro\\": "vivalibro",
+            "Apiv1\\": "apiv1"
         }
     },
     "autoload-dev": {

@@ -2,6 +2,30 @@
 namespace Core;
 use Exception;
 use Wordpress;
+use Core\Traits\Url;
+use Core\Traits\System;
+use Core\Traits\Meta;
+use Core\Traits\Manifest;
+use Core\Traits\Head;
+use Core\Traits\Ermis;
+use Core\Traits\Lang;
+use Core\Traits\Tree;
+use Core\Traits\Form;
+use Core\Traits\DomainZone;
+use Core\Traits\DomainFS;
+use Core\Traits\DomainDB;
+use Core\Traits\DomainHost;
+use Core\Traits\Kronos;
+use Core\Traits\WS;
+use Core\Traits\Action;
+use Core\Traits\Template;
+use Core\Traits\Media;
+use Core\Traits\Filemeta;
+use Core\Traits\My;
+use Core\Traits\CuboAdmin;
+use Core\Traits\CuboPublic;
+use Core\Cubo\Book;
+
 /*
 WEB UI INSTANCE
 Core Class ROUTING

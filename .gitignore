@@ -17,6 +17,7 @@
 log/
 media/
 backup/
+core2/
 
 # Ignore everything in public/
 gaia/public/*

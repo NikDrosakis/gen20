@@ -1,8 +1,32 @@
 <?php
 namespace Core;
 
+use Core\Traits\System;
+use Core\Traits\Url;
+use Core\Traits\Meta;
+use Core\Traits\Manifest;
+use Core\Traits\Head;
+use Core\Traits\Ermis;
+use Core\Traits\Lang;
+use Core\Traits\Tree;
+use Core\Traits\Form;
+use Core\Traits\Domain;
+use Core\Traits\Kronos;
+use Core\Traits\WS;
+use Core\Traits\Action;
+use Core\Traits\Template;
+use Core\Traits\Bundle;
+use Core\Traits\Media;
+use Core\Traits\Filemeta;
+use Core\Traits\My;
+use Core\Traits\CuboAdmin;
+use Core\Traits\CuboPublic;
+use Core\Traits\Share;
+use Core\Traits\Doc;
+use Core\Cubo\Book;
+
 class CuboInstance extends Gaia {
-    use System, Url, Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Bundle, Media, Filemeta, My, CuboAdmin,CuboPublic, Template, Book, Share;
+    use Doc, System, Url, Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Media, Filemeta, My, CuboAdmin, CuboPublic, Book, Share;
 
     public function __construct() {
         parent::__construct();

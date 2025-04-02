@@ -130,7 +130,7 @@ public $greekMonths;
     public function __construct() {
 	require "_config.php";
 	require "_generic.php";
-
+   //$this->loadTraits(__DIR__ . '/traits/');
     $this->db = new Mari();
     //mongo db instantiate
     //   $this->mon = new Mon('vox');
@@ -177,7 +177,7 @@ public $greekMonths;
         $methodName = isset($trace[0]['function']) ? $trace[0]['function'] : 'N/A';
         // Get method context via cat and help
         $catOutput = $this->cat($methodName);
-        $helpOutput = $this->methodDoc($methodName);
+        $helpOutput = $this->help($methodName);
 
         // Prepare AI prompt with focused error handling context
         $ERROR_INPUT = json_encode([
@@ -235,7 +235,54 @@ public $greekMonths;
         // Show error in CLI &  Display suggestion on CLI
         echo $logMessage.$aiSuggestionMessage;
    }
+/**
+Dynamic Trait Use
+*/
+protected function loadTraits(string $dir): void {
+    foreach (glob("$dir*.php") as $file) {
+        $traitName = pathinfo($file, PATHINFO_FILENAME);
+        $this->registerTrait($traitName, $file);
+    }
+}
 
+protected function registerTrait(string $traitName, string $file): void {
+    // 1. Require the trait file
+    require_once $file;
+
+    // 2. Build fully-qualified trait class name
+    $traitClass = $this->getTraitClassName($traitName);
+
+    // 3. Verify trait exists before getting methods
+    if (!trait_exists($traitClass)) {
+        throw new \RuntimeException("Trait $traitClass not found after loading");
+    }
+
+    // 4. Get methods safely
+    $methods = $this->getTraitMethods($traitClass);
+
+    foreach ($methods as $method) {
+        $this->addDynamicMethod($traitClass, $method);
+    }
+}
+
+protected function getTraitClassName(string $traitName): string {
+    // Adjust namespace as needed (e.g., "Core\Traits\")
+    return __NAMESPACE__ . '\\Traits\\' . $traitName;
+}
+
+protected function getTraitMethods(string $traitClass): array {
+    return class_exists($traitClass) ? get_class_methods($traitClass) : [];
+}
+
+protected function addDynamicMethod(string $traitClass, string $method): void {
+    if (!method_exists($this, $method)) {
+        $this->$method = \Closure::fromCallable(
+            function(...$args) use ($traitClass, $method) {
+                return call_user_func_array([$traitClass, $method], $args);
+            }
+        );
+    }
+}
 
     protected function isCuboRequest(): bool {
         return $this->SYSTEM=== 'cubos';

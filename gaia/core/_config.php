@@ -1,18 +1,18 @@
 <?php
   // Handle SERVER_NAME in CLI
-        if (php_sapi_name() == "cli") {
-            $_SERVER['SERVER_NAME'] = 'localhost';  // or set a default value
-            define('DOMAIN', $_SERVER['SERVER_NAME']);
-            $_SERVER['SYSTEM'] = 'cli';  // or set a default value
-            $_SERVER['HTTP_HOST'] = 'localhost';    // or set a default value
-            $_SERVER['HTTPS'] = '';                 // or set to an empty string
-            define('TEMPLATE', "localhost");
-        }else{
-            define('DOMAIN', $_SERVER['SERVER_NAME']);
-            $servernameArray = explode('.', DOMAIN);
-            $template = $servernameArray[0].$servernameArray[1];
-            define('TEMPLATE', $template);
-        }
+    if (php_sapi_name() == "cli") {
+        $_SERVER['SERVER_NAME'] = 'localhost';  // or set a default value
+        define('DOMAIN', $_SERVER['SERVER_NAME']);
+        $_SERVER['SYSTEM'] = 'cli';  // or set a default value
+        $_SERVER['HTTP_HOST'] = 'localhost';    // or set a default value
+        $_SERVER['HTTPS'] = '';                 // or set to an empty string
+        define('TEMPLATE', "localhost");
+    }else{
+        define('DOMAIN', $_SERVER['SERVER_NAME']);
+        $servernameArray = explode('.', DOMAIN);
+        $template = $servernameArray[0].$servernameArray[1];
+        define('TEMPLATE', $template);
+    }
 	define('GSROOT','/var/www/gs/');
     define('GAIAROOT',GSROOT.'gaia/');
     define('API_ROOT',GAIAROOT.'apiv1/');
