@@ -90,12 +90,8 @@ font-size:12px;
 
 <?php
 $pages = $this->db->fa("SELECT * FROM {$this->publicdb}.main");
-
 $cubos= $this->db->fa("SELECT * from gen_admin.cubo order by name ASC");
-
-
 ?>
-
 <!--------layout-------------->
 <h3>
     <input id="cms_panel" class="red indicator">
@@ -157,7 +153,6 @@ $id=$pages[$i]['id'];
 <?php echo $this->formSearch('gen_admin.cubo','buildCoreTable2'); ?>
 
 <div id="cubo_table" class="list-group nested-sortable">
-
 <?php
 $count_instances = $this->db->fa("SELECT cuboid, COUNT(*) AS num
                                  FROM {$this->publicdb}.pagecubo
@@ -168,8 +163,8 @@ foreach ($count_instances as $instance) {
     $cuboidCounts[$instance['cuboid']] = $instance['num'];
 }
 
-
-foreach($cubos as $cubo){             ?>
+foreach($cubos as $cubo){
+?>
     <div class="cubobox draggable list-group-item global nested-<?=$cubo['name']?> wid"
      id="<?=$cubo['id']?>"
      title="This is the <?=$cubo['name']?> widget. Drag and drop it to the desired area.">

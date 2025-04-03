@@ -4,7 +4,7 @@ use Exception;
 
 trait CuboPublic {
 /**
-aka CP based on domain
+abbrev. CP based on domain
 db gen_localost data installed from gen_admin tables page, pagecubo, pagegrp
 and constructs the web UI of any domain
 CA in Layout provides all cubos with their pages
@@ -14,7 +14,7 @@ CA in Layout provides all cubos with their pages
 custom domain: gen_localhost
 1) addCP
 2) delCP
-3) renderCubo
+3) renderCP
 4) genpagecubo
 - addPageCA
 - delPageCA
@@ -65,24 +65,51 @@ protected function delCP(string $domain,string $name): bool {
     return true;
 }
 
-protected function updateCacheCP($cuboview) {
-    // Split the cuboview into cubo and view parts
-    list($cubo, $view) = explode('.', $cuboview);
-    // Construct the URL to fetch data
-    $url = SITE_URL . "cubos/index.php?cubo=$cubo&file=$view.php";
+protected function renderAPCuCP($cuboview) {
+    try {
+        // Split the cuboview into cubo and view parts
+        list($cubo, $view) = explode('.', $cuboview);
+        // Construct the URL to fetch data
+        $url = SITE_URL . "cubos/index.php?cubo=$cubo&file=$view.php";
 
-    // Delete the existing cache key
-    $this->redis->del("cubo_" . $cuboview);
+        // Check for APCu cache first
+        //$cache = apcu_fetch("cubo_" . $cuboview);
+            $cache=false;
+        if ($cache) {
+            // Use cached response if available
+            $response = $cache;
+        } else {
+            // If no cache found, fetch the data and set the cache
+            $response = $this->fetchUrl($url);
+            apcu_store("cubo_" . $cuboview, $response);
+        }
 
-    // Fetch the new data
-    $response = $this->fetchUrl($url);
+        // If the response is an array, return the 'data' key
+        if (is_array($response) && isset($response['data'])) {
+            return $response['data'];
+        }
 
-    // Set the new response to cache
-    $this->redis->set("cubo_" . $cuboview, $response);
+        // If the response is a string, return it directly
+        if (is_string($response)) {
+            return $response;
+        }
+
+        // Fallback if the response is invalid
+        return "<p>Error: Invalid cubo response for '$cubo'.</p>";
+    } catch (Exception $e) {
+        // Log the error and return a fallback message
+        error_log("Error rendering cubo '$cubo': " . $e->getMessage());
+        return "<p>Error loading cubo '$cubo'.</p>";
+    }
 }
 
 
-protected function renderCubo($cuboview) {
+/**
+Watch cubos viewfiles in cubo is changed
+a) update cubo_ cache saved in Redis
+*/
+protected function renderCP($cuboview) {
+
     try {
         // Split the cuboview into cubo and view parts
         list($cubo, $view) = explode('.', $cuboview);
@@ -110,7 +137,6 @@ protected function renderCubo($cuboview) {
         if (is_string($response)) {
             return $response;
         }
-
         // Fallback if the response is invalid
         return "<p>Error: Invalid cubo response for '$cubo'.</p>";
     } catch (Exception $e) {
@@ -120,18 +146,33 @@ protected function renderCubo($cuboview) {
     }
 }
 
+protected function pageCP($link = '') {
+    $page = $link !== '' ? $link : $this->page;
+    $list = [];
+    // Ensure we fetch multiple rows
+    $fetch = $this->db->fa("SELECT pagecubo.*,page.* FROM {$this->publicdb}.pagecubo
+        LEFT JOIN {$this->publicdb}.page ON page.id = pagecubo.pageid
+        WHERE page.link = ?", [$page]);
+    if (!empty($fetch) && is_array($fetch)) {
+        foreach ($fetch as $row) {
+            $list[$row['area']][][$row['method']] = $row;
+        }
+    }
+    return $list;
+}
+
 
 protected function getpagecubo($pageName = '') {
     $page = is_array($pageName) ? $pageName['key'] : ($pageName !== '' ? $pageName : $this->page);
     $list = [];
     // Ensure we fetch multiple rows
-    $fetch = $this->db->fa("SELECT pagecubo.area,pagecubo.method, page.name as cubo
+    $fetch = $this->db->fa("SELECT pagecubo.area,page.link,page.name as cubo
         FROM {$this->publicdb}.pagecubo
         LEFT JOIN {$this->publicdb}.page ON page.id = pagecubo.pageid
         WHERE page.name = ?", [$page]);
     if (!empty($fetch) && is_array($fetch)) {
         foreach ($fetch as $row) {
-            $list[$row['area']][$row['method']] = $row['cubo'];
+            $list[$row['area']]["renderCubo"] = $row['link'];
         }
     }
     return $list;

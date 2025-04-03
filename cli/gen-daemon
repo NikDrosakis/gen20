@@ -1,13 +1,22 @@
 #!/bin/bash
 # Main daemon process - manages all bg/services and monitors file changes
-
 ROOT="/var/www/gs"
+ENV_FILE="$ROOT/.env"
 BG_DIR="$ROOT/cli/bg"
 LOG_DIR="$ROOT/log"
 CUBO_DIR="$ROOT/gaia/cubos"
 SOURCE_DIR="$ROOT/gaia/core"
 SERVICES=()  # Stores active service PIDs
+[ -f "$ENV_FILE" ] && source "$ENV_FILE" || { echo "Missing .env file"; exit 1; }
+# Function to read the current GEN_VERSION from the .env file
+# Retrieve the current version
+CURRENT_VERSION=$(get_current_version)
 
+update_version_in_db() {
+    local new_version="$1"
+    local query="UPDATE gen_admin.globs SET val='$new_version' WHERE name='GEN_VERSION';"
+    mariadb -u "$DB_USER" -p"$DB_PASS" -h "$DB_HOST" -D "$DB_NAME" -e "$query"
+}
 # Start all background services
 start_services() {
     for script in "$BG_DIR"/*.sh; do
@@ -20,6 +29,18 @@ start_services() {
             fi
             nohup "$script" >> "$LOG_DIR/${name}.log" 2>&1 &
             SERVICES+=($!)
+            if [[ -z "CURRENT_VERSION" ]]; then
+                echo "GEN_VERSION not found in the database. Setting to 0.001."
+                new_version="0.001"
+            else
+                # Increment the version by 0.001
+                new_version=$(echo "CURRENT_VERSION + 0.001" | bc)
+                echo "Current GEN_VERSION is CURRENT_VERSION. Incrementing to $new_version."
+            fi
+
+            # Update the database with the new version
+            update_version_in_db "$new_version"
+
             echo "Started $name (PID: $!)"
         fi
     done
@@ -29,24 +50,37 @@ start_services() {
 stop_services() {
     for pid in "${SERVICES[@]}"; do
         if kill -0 "$pid" 2>/dev/null; then
-            kill -9 "$pid"
+            kill -15 "$pid"
             echo "Stopped process $pid"
         fi
     done
     SERVICES=()
 }
 
-
-
 # File change processing function
 process_change() {
     local changed_file="$1"
-    if [[ "$changed_file" == "$CUBO_DIR"* ]]; then
+
+    # Get the watched folders configuration
+    local watch_config
+    watch_config=$(gen gaia getClassMethods Core\\Traits\\Watch 2>/dev/null)
+
+    # Extract coreFolder and cubosFolder from the JSON
+    local core_folder cubos_folder
+    core_folder=$(echo "$watch_config" | jq -r '.coreFolder')
+    cubos_folder=$(echo "$watch_config" | jq -r '.cubosFolder')
+
+    # Default paths if extraction failed
+    [ -z "$core_folder" ] && core_folder="Core"
+    [ -z "$cubos_folder" ] && cubos_folder="Cubos"
+
+    # Check which folder was updated and execute corresponding command
+    if [[ "$changed_file" == *"/gaia/$cubos_folder/"* ]]; then
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] Cubo updated: $changed_file" >> "$LOG_DIR/cubo-watch.log"
-        gen gaia updateCacheCP "$(basename "$(dirname "$changed_file")").$(basename "$changed_file" .php)"
-    elif [[ "$changed_file" == "$SOURCE_DIR"* ]]; then
+        gen gaia "${cubos_folder,,}Folder"  # converts to lowercase for command
+    elif [[ "$changed_file" == *"/gaia/$core_folder/"* ]]; then
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] Gaia updated: $changed_file" >> "$LOG_DIR/gaia-watch.log"
-        cp "$changed_file" "$SOURCE_DIR/../core2/$(basename "$changed_file")"
+        gen gaia "${core_folder,,}Folder"  # converts to lowercase for command
     fi
 }
 

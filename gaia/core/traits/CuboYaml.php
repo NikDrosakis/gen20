@@ -109,7 +109,7 @@ if (!empty($setup['main'])) {
             'pagegrpid' => 5,
             'name' => $name,
             'title' => ucfirst($name),
-            'manifest' => "m:\\n -renderCubo:\"$name./admin.php\"",
+            'manifest' => "m:\\n -renderCP:\"$name./admin.php\"",
         ];
         $mainId = $this->db->inse("{$this->publicdb}.main", $linksData);
             if($mainId){

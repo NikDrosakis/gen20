@@ -4,6 +4,7 @@ DAEMON="$ROOT/cli/gen-daemon"
 PID_FILE="$ROOT/cli/gen.pid"
 LOG_FILE="$ROOT/log/gen.log"
 
+
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
 }
@@ -27,7 +28,6 @@ start_daemon() {
         echo "Daemon already running (PID: $(cat "$PID_FILE"))"
         return 1
     fi
-
     log "Starting daemon..."
     echo "Starting gen daemon..."
 

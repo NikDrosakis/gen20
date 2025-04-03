@@ -1,45 +1,43 @@
 <style>
-    header {
-        background-color: #333;
-        color: #fff !important;
-        padding: 10px;
-    }
-    main {
-        padding: 20px;
-        margin: 10px;
-            float: left;
-            font-size: 16px !important;
-            width:75%
-    }
-.sidebar {
-    position: relative;
-    float:left;
-    left: 0;
-    top: 0;
-    width: 250px;
-    height: 100%;
-    background-color: #d9d9d9;
-    padding-top: 20px;
-    overflow-x: hidden;
-    overflow-y: auto;
+/* Main Layout */
+.doc-container {
+    display: flex;
+    min-height: 100vh;
 }
 
-/* Navigation menu */
+.sidebar {
+    width: 250px;
+    background-color: #f5f5f5;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+    border-right: 1px solid #ddd;
+    padding-top: 60px; /* Space for fixed header */
+}
+
+main {
+    flex: 1;
+    margin-left: 250px; /* Ensure content is not under the sidebar */
+}
+
+/* Navigation */
 .nav-menu {
-    list-style-type: none;
+    list-style: none;
     padding: 0;
     margin: 0;
 }
 
+.selected {
+    background: #333;
+    color: white;
+}
+
 .nav-menu a {
-    margin: 0;
-        padding: 8px 16px;
-        text-align: left;
     display: block;
-    color: black;
+    padding: 12px 20px;
     text-decoration: none;
-    font-size: 16px;
-    border:1px dotted #00000036;
+    transition: all 0.3s;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 .nav-menu a:hover {
@@ -47,61 +45,94 @@
     color: white;
 }
 
-/* Section headers (like system titles) */
 .nav-header {
+    padding: 15px 20px;
     font-weight: bold;
-    font-size: 18px;
-    padding: 12px 16px;
-    color: #fff;
-    background-color: #444;
+    font-size: 1.1em;
+    cursor: pointer;
+    position: relative;
 }
 
-/* Icons (use Font Awesome or similar) */
-.icon {
-    margin-right: 8px;
+.nav-header:after {
+    content: '+';
+    position: absolute;
+    right: 20px;
+    transition: transform 0.3s;
 }
 
-.icon-tasks:before {
-    content: "\f0ae";
+.nav-header.collapsed:after {
+    content: '-';
+}
+
+.sub-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.sub-menu.collapsed {
+    max-height: 0;
+}
+
+.sub-menu.expanded {
+    max-height: 1000px; /* Adjust based on your content */
+}
+
+/* Content Styling */
+.post-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.post {
+    background: white;
+    padding: 25px;
+    margin-bottom: 30px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    height: 100vh;
+}
+
+.post-title {
+    color: #333;
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.post-meta {
+    color: #777;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+}
+
+.post-content {
+    line-height: 1.6;
 }
 </style>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Collapsible functionality
+    const headers = document.querySelectorAll('.nav-header');
+    headers.forEach(header => {
+        header.addEventListener('click', function() {
+            const subMenu = this.nextElementSibling;
+            this.classList.toggle('collapsed');
+            subMenu.classList.toggle('collapsed');
+            subMenu.classList.toggle('expanded');
+        });
 
-<div class="sidebar">
-    <ul class="nav-menu">
-    <?php
-    $sys= $this->db->fa("select * from gen_admin.systems");
-    //xecho($sys);
- //   $systms= file_get_contents(GSROOT."SYSTEMS.md");
-   // $mdsystems= $this->md_decode($systms);
-//    $lines = explode(PHP_EOL, $mdsystems);
-//    foreach ($lines as $line){
-//    $title=explode(':',$line)[0];
-  //  $description=explode(':',$line)[1];
-//    $link=strtolower(trim(explode(':',$line)[0]));
-foreach($sys as $sysdat){
-    ?>
-    <a href="/admin/docs/<?=$sysdat['name']?>"><?=$sysdat['name']?></a>
-    <?php } ?>
-    </ul>
-</div>
-<main>
-        <section id="content">
-            <?php
-            $sub=$this->page;
-               $subdoc= $this->db->f("select * from gen_admin.systems where name=?",[$sub]);
-            ?>
-            <!-- Page content goes here -->
-            <h1>[<?=$subdoc['name']?>]</h1>
-
-            <p>[Page Description]</p>
-            <?php echo $this->md_decode($subdoc['doc']); ?>
-        </section>
-    </main>
-
-
-
-
-
-
-
+        // Initialize collapsed state
+        const subMenu = header.nextElementSibling;
+        header.classList.add('collapsed');
+        subMenu.classList.add('collapsed');
+    });
+});
+</script>
+        <?php echo $this->formSearch('gen_admin.cubo','buildCoreTable2'); ?>
+<?php
+$this->buildDoc();
+?>

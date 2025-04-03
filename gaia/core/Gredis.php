@@ -30,7 +30,10 @@ class Gredis extends Redis {
 
         }
 
-public function delKeys(array|string $key): Redis|int|false {
+/**
+Delete keys one or multiple
+ */
+public function delkeys(array|string $key): Redis|int|false {
     try {
         // Normalize input to an array (supports both string and array inputs)
         $keys = is_array($key) ? $key : [$key];

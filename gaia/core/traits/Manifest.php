@@ -28,7 +28,7 @@ protected function manifestEditor($name=''){
 
 //DYnamic Create list of cubos
      // Get list of cubos with their main -  data options (should be fetched dynamically)
-    $renderCuboOptions = [
+    $renderCPOptions = [
         "default.layout" => "Main Layout",
         "default.dashboard" => "Admin Dashboard",
         "default.profile" => "User Profile"
@@ -38,8 +38,8 @@ protected function manifestEditor($name=''){
        // $escapedValue = htmlspecialchars($main['manifest'], ENT_QUOTES, 'UTF-8');
 
         // Generate the select dropdown
-        $selectHtml = '<select id="manifest-selector" class="editor-select" onchange="updateRenderCubo(this.value)">';
-        foreach ($renderCuboOptions as $key => $label) {
+        $selectHtml = '<select id="manifest-selector" class="editor-select" onchange="updaterenderCP(this.value)">';
+        foreach ($renderCPOptions as $key => $label) {
             $selectHtml .= "<option value='$key'>$label</option>";
         }
         $selectHtml .= '</select>';
@@ -70,10 +70,10 @@ protected function manifestEditor($name=''){
                   });
               }
 
- function updateRenderCubo(newValue) {
+ function updaterenderCP(newValue) {
                 if (codeMirrorEditor) {
                     var currentYaml = codeMirrorEditor.getValue();
-                    var updatedYaml = currentYaml.replace(/renderCubo: \\\".*?\\\"/, 'renderCubo: \"' + newValue + '\"');
+                    var updatedYaml = currentYaml.replace(/renderCP: \\\".*?\\\"/, 'renderCP: \"' + newValue + '\"');
                     codeMirrorEditor.setValue(updatedYaml);
                 }
             }

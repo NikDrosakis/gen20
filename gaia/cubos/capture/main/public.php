@@ -15,7 +15,6 @@
     }
 </style>
 
-
 <h1>Enhanced Book Cover Recognition</h1>
 <div id="container">
     <video id="video" width="1280" height="720" autoplay></video>

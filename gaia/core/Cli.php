@@ -26,12 +26,13 @@ use Core\Traits\Template;
 use Core\Traits\Media;
 use Core\Traits\Filemeta;
 use Core\Traits\My;
+use Core\Traits\Watch;
 use Core\Traits\CuboPublic;
 use Core\Traits\CuboAdmin;
 use Core\Cubo\Book;
 
 class Cli extends Gaia {
-use  Doc, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form,Domain,DomainZone,DomainFS,DomainSSL,DomainDB,DomainHost, Kronos, WS, Action, Template, Media, Filemeta, My, CuboPublic, CuboAdmin, Template,Book;
+use  Watch, Doc, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form,Domain,DomainZone,DomainFS,DomainSSL,DomainDB,DomainHost, Kronos, WS, Action, Template, Media, Filemeta, My, CuboPublic, CuboAdmin, Template,Book;
 
 public $argv=[]; // To store the arguments passed to the script
 public $argc; // Store the argument count

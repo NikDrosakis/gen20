@@ -1,12 +1,9 @@
 #!/bin/bash
 # gaia-watch.sh SINGLE-PROCESS VERSION - To be called directly by gen-daemon or another external trigger
-
 ROOT="/var/www/gs"
 SOURCE_DIR="$ROOT/gaia/core"
 DEST_DIR="$ROOT/gaia/core2"
 LOG_FILE="$ROOT/log/gaia-watch.log"
-
-
 
 # Single-file processing function
 process_file() {

@@ -10,7 +10,7 @@ process_cubo_change() {
 
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Processing: $resource" >> "$LOG_FILE"
 
-    if gen gaia updateCacheCP "$resource"; then
+    if gen gaia cubosFolder "$resource"; then
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] Cache updated: $resource" >> "$LOG_FILE"
     else
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] FAILED: $resource" >> "$LOG_FILE"

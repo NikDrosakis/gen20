@@ -2,7 +2,6 @@
 namespace Core\Traits;
 use Exception;
 
-
 /**
 db gen_admin data received from API
 tables cubo, cubo_default, cuboviews, cubo_ver
@@ -11,6 +10,7 @@ and viewed in layout and manifest Editor
 - delCA
 - addViewCA
 - delViewCA
+- dupViewCA
 - renameViewCA
 - maintainCA
 - backupCA
@@ -21,18 +21,27 @@ fs and db
 */
 trait CuboAdmin {
 
-protected function addViewCA(string $cuboname, int $cuboid, string $viewname) {
-    // Validate $cuboid
-    if (!is_int($cuboid)) {
-        echo "❌ Invalid cuboid: $cuboid (must be an integer)\n";
+protected function addViewCA(string $fullviewname) {
+    // Split full view name into cuboname and viewname
+    $parts = explode('.', $fullviewname, 2);
+    if (count($parts) !== 2) {
+        echo "❌ Invalid view format. Use: gen gaia addViewCA cuboname.viewname\n";
         return false;
     }
+    list($cuboname, $viewname) = $parts;
 
-    // Step 1 - Create main entry in the database
+    // Fetch cuboid from database
+    $cuboidData = $this->db->f("SELECT cuboid FROM gen_admin.cuboview WHERE name LIKE ?", ["$cuboname.%"]);
+    if (empty($cuboidData) || !isset($cuboidData['cuboid'])) {
+        echo "❌ No matching cuboid found for cubo: $cuboname\n";
+        return false;
+    }
+    $cuboid = (int) $cuboidData['cuboid'];
 
-    $viewid = $this->db->f("SELECT name from gen_admin.cuboview WHERE name=? AND cuboid=?",[$cuboname.$viewname,$cuboid])['name'];
-    if(empty($viewid)){
-    $viewid = $this->db->inse("gen_admin.cuboview", ["name" => "$cuboname.$viewname", "cuboid" => $cuboid]);
+    // Step 1 - Check if view already exists in the database
+    $viewid = $this->db->f("SELECT name FROM gen_admin.cuboview WHERE name=? AND cuboid=?", ["$cuboname.$viewname", $cuboid])['name'];
+    if (empty($viewid)) {
+        $viewid = $this->db->inse("gen_admin.cuboview", ["name" => "$cuboname.$viewname", "cuboid" => $cuboid]);
     }
 
     if ($viewid) {
@@ -64,13 +73,79 @@ protected function addViewCA(string $cuboname, int $cuboid, string $viewname) {
     }
 }
 
-
-protected function renameViewCA(string $cuboname, int $cuboid, string $oldname, string $newname) {
-    // Validate $cuboid
-    if (!is_int($cuboid)) {
-        echo "❌ Invalid cuboid: $cuboid (must be an integer)\n";
+protected function dupViewCA(string $fullExistingView, string $newView) {
+    // Split full existing view name into cuboname and existingView
+    $parts = explode('.', $fullExistingView, 2);
+    if (count($parts) !== 2) {
+        echo "❌ Invalid view format. Use: gen gaia dupViewCA cuboname.existingView newView\n";
         return false;
     }
+    list($cuboname, $existingView) = $parts;
+
+    // Fetch cuboid from database
+    $cuboidData = $this->db->f("SELECT cuboid FROM gen_admin.cuboview WHERE name=?", ["$cuboname.$existingView"]);
+    if (empty($cuboidData) || !isset($cuboidData['cuboid'])) {
+        echo "❌ No matching view found in DB for: $fullExistingView\n";
+        return false;
+    }
+    $cuboid = (int) $cuboidData['cuboid'];
+
+    $cuboDir = CUBO_ROOT . $cuboname . '/main';
+    $existingFilePath = $cuboDir . '/' . $existingView . '.php';
+    $newFilePath = $cuboDir . '/' . $newView . '.php';
+
+    // Check if existing file exists
+    if (!file_exists($existingFilePath)) {
+        echo "❌ Source file not found: $existingFilePath\n";
+        return false;
+    }
+
+    // Check if new file already exists
+    if (file_exists($newFilePath)) {
+        echo "❌ Target file already exists: $newFilePath\n";
+        return false;
+    }
+
+    // Duplicate the file
+    if (!copy($existingFilePath, $newFilePath)) {
+        echo "❌ Failed to copy file from $existingFilePath to $newFilePath\n";
+        return false;
+    }
+
+    // Insert new view entry in database
+    $newViewName = "$cuboname.$newView";
+    $existingEntry = $this->db->f("SELECT name FROM gen_admin.cuboview WHERE name=? AND cuboid=?", [$newViewName, $cuboid]);
+
+    if (empty($existingEntry)) {
+        $viewid = $this->db->inse("gen_admin.cuboview", ["name" => $newViewName, "cuboid" => $cuboid]);
+        if (!$viewid) {
+            echo "❌ Failed to insert new view into database\n";
+            unlink($newFilePath); // Rollback file creation
+            return false;
+        }
+    }
+
+    echo "✅ Successfully duplicated $existingView to $newView for cubo: $cuboname\n";
+    return true;
+}
+
+
+protected function renameViewCA(string $fullviewname, string $newname) {
+    // Split full view name into cuboname and oldname
+    $parts = explode('.', $fullviewname, 2);
+    if (count($parts) !== 2) {
+        echo "❌ Invalid view format. Use: gen gaia renameViewCA cuboname.oldview newview\n";
+        return false;
+    }
+    list($cuboname, $oldname) = $parts;
+
+    // Fetch cuboid from database
+    $cuboidData = $this->db->f("SELECT cuboid FROM gen_admin.cuboview WHERE name=?", ["$cuboname.$oldname"]);
+    if (empty($cuboidData) || !isset($cuboidData['cuboid'])) {
+        echo "❌ No matching view found in DB for: $fullviewname\n";
+        return false;
+    }
+    $cuboid = (int) $cuboidData['cuboid'];
 
     $cuboDir = CUBO_ROOT . $cuboname . '/main';
     $oldFilePath = $cuboDir . '/' . $oldname . '.php';
@@ -90,8 +165,9 @@ protected function renameViewCA(string $cuboname, int $cuboid, string $oldname, 
 
     // Update database entry
     $updateResult = $this->db->q("UPDATE gen_admin.cuboview
-                                 SET name = '$cuboname.$newname'
-                                 WHERE name = '$cuboname.$oldname' AND cuboid = $cuboid");
+                                 SET name = ?
+                                 WHERE name = ? AND cuboid = ?",
+                                 ["$cuboname.$newname", "$cuboname.$oldname", $cuboid]);
 
     if (!$updateResult) {
         echo "❌ Failed to update database entry for: $cuboname.$oldname\n";
@@ -104,8 +180,9 @@ protected function renameViewCA(string $cuboname, int $cuboid, string $oldname, 
 
         // Attempt to revert database change if file rename failed
         $this->db->q("UPDATE gen_admin.cuboview
-                     SET name = '$cuboname.$oldname'
-                     WHERE name = '$cuboname.$newname' AND cuboid = $cuboid");
+                     SET name = ?
+                     WHERE name = ? AND cuboid = ?",
+                     ["$cuboname.$oldname", "$cuboname.$newname", $cuboid]);
 
         return false;
     }
@@ -114,21 +191,35 @@ protected function renameViewCA(string $cuboname, int $cuboid, string $oldname, 
     return true;
 }
 
-protected function delViewCA(string $cuboname, int $cuboid, string $viewname) {
-    $cuboDir = CUBO_ROOT . $cuboname . '/main';
-    $publicFilePath = $cuboDir . '/' . $viewname . '.php';
-    // Validate $cuboid
-    if (!is_int($cuboid)) {
-        echo "❌ Invalid cuboid: $cuboid (must be an integer)\n";
+
+protected function delViewCA(string $fullviewname) {
+    // Split the full view name into cuboname and viewname
+    $parts = explode('.', $fullviewname, 2);
+    if (count($parts) !== 2) {
+        echo "❌ Invalid view format. Use: gen gaia delViewCA cuboname.viewname\n";
         return false;
     }
-// Step 1 - Create main entry in the database
-    $delviewid = $this->db->q("DELETE FROM gen_admin.cuboview where name='$cuboname.$viewname' AND cuboid=$cuboid");
-    if(!$delviewid){
-     echo "❌ Failed to delete main: $cuboname\n";
+    list($cuboname, $viewname) = $parts;
+
+    // Fetch cuboid from database
+    $cuboidData = $this->db->f("SELECT cuboid FROM gen_admin.cuboview WHERE name=?", ["$cuboname.$viewname"]);
+    if (empty($cuboidData) || !isset($cuboidData['cuboid'])) {
+        echo "❌ No matching view found in DB for: $fullviewname\n";
+        return false;
+    }
+    $cuboid = (int) $cuboidData['cuboid'];
+
+    $cuboDir = CUBO_ROOT . $cuboname . '/main';
+    $publicFilePath = $cuboDir . '/' . $viewname . '.php';
+
+    // Delete from database
+    $delviewid = $this->db->q("DELETE FROM gen_admin.cuboview WHERE name=? AND cuboid=?", ["$cuboname.$viewname", $cuboid]);
+    if (!$delviewid) {
+        echo "❌ Failed to delete view from DB: $fullviewname\n";
         return false;
     }
 
+    // Delete file
     if (file_exists($publicFilePath)) {
         if (!unlink($publicFilePath)) {
             echo "❌ Failed to delete file: $publicFilePath\n";
@@ -138,7 +229,10 @@ protected function delViewCA(string $cuboname, int $cuboid, string $viewname) {
     } else {
         echo "⚠️ File not found: $publicFilePath\n";
     }
+
+    return true;
 }
+
 
 protected function addCA(string $name, array $mains=[]){
 

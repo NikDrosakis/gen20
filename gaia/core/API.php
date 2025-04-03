@@ -3,13 +3,25 @@ namespace Core;
 use Swagger\Annotations as SWG;
 use ReflectionMethod;
 use Symfony\Component\Security\Core\Security;
+
+use Core\Traits\Action;
+use Core\Traits\My;
+use Core\Traits\Media;
+use Core\Traits\Tree;
+use Core\Traits\Form;
+use Core\Traits\Domain;
+use Core\Traits\CuboAdmin;
+use Core\Traits\CuboPublic;
+use Core\Traits\Lang;
+use Core\Traits\Manifest;
+use Core\Traits\Share;
 /*
  * API CLASS
  TODO Use a library like symfony/rate-limiter or implement a simple counter in Redis.
  * */
 
 class API extends Gaia{
-	 use Action, My, Media, Tree, Form, Domain, CuboAdmin, CuboPublic, Lang, Manifest;
+	 use Action, Share, My, Media, Tree, Form, Domain, CuboAdmin, CuboPublic, Lang, Manifest;
    private $security;
 
    public function __construct() {

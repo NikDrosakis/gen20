@@ -58,6 +58,9 @@ case "$COMMAND" in
     reload|restart|start|stop|status)
       systemctl "$COMMAND" "$FILENAME"
       ;;
+    magento)
+      php "$BIN/magento" "$@"
+      ;;
     wget) wget -r -l 1 -A.html -P $ROOT/$3 https://$FILENAME
       ;;
     ports) netstat -tulnp | grep LISTEN
@@ -249,4 +252,6 @@ esac
 # ==================================================
 END_TIME=$(date +%s%N) # Capture end time
 ELAPSED_TIME=$(( (END_TIME - START_TIME) / 1000000 )) # Convert to milliseconds
-echo "⏱ Execution Time: $ELAPSED_TIME ms"
+# Retrieve the current version
+GEN_VERSION=$(get_current_version)
+echo "Gen20 Cli v.$GEN_VERSION ⏱ Execution Time: $ELAPSED_TIME ms"

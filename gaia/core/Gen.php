@@ -3,6 +3,7 @@ namespace Core;
 use Exception;
 use Wordpress;
 use Core\Traits\Url;
+use Core\Traits\Ads;
 use Core\Traits\System;
 use Core\Traits\Meta;
 use Core\Traits\Manifest;
@@ -44,13 +45,7 @@ protected $layout;
 protected $db_sub;
 protected $db_page;
 protected $default_manifest='h:
-  - renderCubo: "default.menu"
-sl:
-  - renderCubo: "slideshow.public"
-  - renderCubo: "default.media"
-sr:
-  - renderCubo: "default.nbar"
-f:
+  - renderCP: "default.menu"
 ';
 
 protected $layouts=[
@@ -112,6 +107,8 @@ $this->renderHead();
 
 
 //BODY
+    //do not use buildManifest yaml driven but maincubo
+    ;
     echo $this->buildManifest($this->page);
 
 //FOOTER
@@ -152,7 +149,7 @@ protected function defaultManifest($name,$type='file') {
     $manifest['m'][0]= ["buildForm"=> $name];
 
     }elseif(file_exists($sub)){
-    $manifest['m'][0]= ["renderCubo"=>"default.$name"];
+    $manifest['m'][0]= ["renderCP"=>"default.$name"];
     //if table exists insert table
 
     }elseif($type=='table'){
@@ -167,8 +164,9 @@ protected function executeMethod($method, $param) {
             case 'iframe':
                 return '<iframe id="sandbox" src="' . htmlspecialchars($param) . '" width="100%" height="1000px" sandbox="allow-scripts allow-same-origin allow-forms" style="border:1px solid black;"></iframe>';
 
-            case 'renderCubo':
-                $response = $this->renderCubo($param);
+            case 'renderCP':
+                $response = $this->renderAPCuCP($param);
+                //$response = $this->renderCP($param);
                 if (is_array($response)) {
                     return $response['data'];
                 }
@@ -202,10 +200,13 @@ $url = SITE_URL.'api/v1/local/buildTable?table=gen_vivalibrocom.page'
 $this->fetchUrl($url)
 */
 protected function buildManifest($name) {
-    $page = $this->pageplan($name);
+    //$page = $this->pageplan($name);
+    $page = $this->pageCP($name);
+  //  $default = yaml_parse($this->default_manifest) ?: [];
 
-    $default = yaml_parse($this->default_manifest) ?: [];
-    $plan = $page['manifest'] ? yaml_parse($page['manifest']) : $this->defaultManifest($name, $page['type']);
+    //keep yaml for later use and use classic pagecubo table helper
+    //$plan = $page['manifest'] ? yaml_parse($page['manifest']) : $this->defaultManifest($name, $page['type']);
+    $plan = !empty($page) ? $page : $this->defaultManifest($name, $page['type']);
 
 
     // Ensure primary keys exist, fallback to default if missing

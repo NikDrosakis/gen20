@@ -16,6 +16,7 @@ protected $parsedown;
 
 // API
 public $redis;
+public $apc;
 public $publicdb;
 protected $response = [];
 public $verb;
@@ -130,12 +131,13 @@ public $greekMonths;
     public function __construct() {
 	require "_config.php";
 	require "_generic.php";
-   //$this->loadTraits(__DIR__ . '/traits/');
     $this->db = new Mari();
     //mongo db instantiate
     //   $this->mon = new Mon('vox');
     //redis instantiate
     $this->redis=new Gredis("1");
+    //apcu instanatiate
+    $this->apc=new GAPCU();
 
     $this->me = $_COOKIE['GSID'] ?? 0;
     $this->my=[];
@@ -144,6 +146,7 @@ public $greekMonths;
     $this->me = $this->my['id'];
     $this->img = "/media/" . $this->my['img'];
     }
+
     $this->is = $this->db->flist("SELECT name, val from gen_admin.globs");
     $this->set = $this->db->flist("SELECT name, val from {$this->publicdb}.setup");
     $this->usergrps = $this->db->flist("SELECT id, name FROM {$this->publicdb}.usergrp");
@@ -151,7 +154,6 @@ public $greekMonths;
     $this->subparent = $this->db->flist("SELECT page.name, pagegrp.name as parent
     FROM {$this->publicdb}.page
     LEFT JOIN {$this->publicdb}.pagegrp on page.pagegrpid=pagegrp.id");
-
        // Setup exception handler to catch errors in the child classes
         set_exception_handler([$this, 'handleError']);
      // Handle requests (delegated to child classes)
@@ -235,54 +237,6 @@ public $greekMonths;
         // Show error in CLI &  Display suggestion on CLI
         echo $logMessage.$aiSuggestionMessage;
    }
-/**
-Dynamic Trait Use
-*/
-protected function loadTraits(string $dir): void {
-    foreach (glob("$dir*.php") as $file) {
-        $traitName = pathinfo($file, PATHINFO_FILENAME);
-        $this->registerTrait($traitName, $file);
-    }
-}
-
-protected function registerTrait(string $traitName, string $file): void {
-    // 1. Require the trait file
-    require_once $file;
-
-    // 2. Build fully-qualified trait class name
-    $traitClass = $this->getTraitClassName($traitName);
-
-    // 3. Verify trait exists before getting methods
-    if (!trait_exists($traitClass)) {
-        throw new \RuntimeException("Trait $traitClass not found after loading");
-    }
-
-    // 4. Get methods safely
-    $methods = $this->getTraitMethods($traitClass);
-
-    foreach ($methods as $method) {
-        $this->addDynamicMethod($traitClass, $method);
-    }
-}
-
-protected function getTraitClassName(string $traitName): string {
-    // Adjust namespace as needed (e.g., "Core\Traits\")
-    return __NAMESPACE__ . '\\Traits\\' . $traitName;
-}
-
-protected function getTraitMethods(string $traitClass): array {
-    return class_exists($traitClass) ? get_class_methods($traitClass) : [];
-}
-
-protected function addDynamicMethod(string $traitClass, string $method): void {
-    if (!method_exists($this, $method)) {
-        $this->$method = \Closure::fromCallable(
-            function(...$args) use ($traitClass, $method) {
-                return call_user_func_array([$traitClass, $method], $args);
-            }
-        );
-    }
-}
 
     protected function isCuboRequest(): bool {
         return $this->SYSTEM=== 'cubos';
@@ -343,6 +297,7 @@ protected function parse_systems_md($systems_content) {
 
     return $systems;
 }
+
 /**
 add switch-on param
 */
@@ -418,70 +373,65 @@ if
  */
     protected function pageplan($name='') {
        $name = is_array($name) ? $name['key'] : ($name !== '' ? $name : $this->page);
-        if ($this->SYSTEM=='admin'){
          $name = $name!='' ? $name : $this->page;
          $pageplan = $this->db->f("SELECT * FROM {$this->publicdb}.page WHERE name=?",[$name]);
-        } elseif($this->SYSTEM==TEMPLATE || $this->SYSTEM=="api"){
-         $name = $name!='' ? $name : $this->page;
-         $pageplan = $this->db->f("SELECT * FROM {$this->publicdb}.page WHERE name=?",[$name]);
-        }
         if($pageplan){
            return $pageplan;
         }
         return false;
     }
 
-
-protected function getThis() {
-return $this;
-}
-
-protected function getClassMethods() {
+/**
+ * Retrieve methods from the current class, its traits, parent classes, and the database object.
+ * Optionally filter by a specific namespace for classes and traits.
+ *
+ * @param string $namespace The namespace to filter methods (optional).
+ * @return array List of methods and their associated classes/traits.
+ */
+protected function getClassMethods($namespace = '') {
     $methods = [];
 
+    // Function to check if a class or trait is within the specified namespace
+    $isInNamespace = function($name) use ($namespace) {
+        return empty($namespace) || strpos($name, $namespace) === 0;
+    };
+
+    // Function to add methods from a given class or trait
+    $addMethodsFrom = function($reflection) use (&$methods, $isInNamespace) {
+        foreach ($reflection->getMethods() as $method) {
+            $methodName = $method->getName();
+            $declaringClass = $method->getDeclaringClass()->getName();
+            if ($isInNamespace($declaringClass)) {
+               $parts = explode('\\', $declaringClass);
+               $name = end($parts);
+                $methods[$methodName] = $name;
+            }
+        }
+    };
+
     // Get methods from the current class
-    $currentClass = get_class($this);
-    foreach (get_class_methods($currentClass) as $method) {
-        $methods[$method] = "$method ($currentClass)";
-    }
+    $currentClass = new ReflectionClass($this);
+    $addMethodsFrom($currentClass);
 
     // Include methods from traits used in this class
-    $traits = class_uses($this);
-    foreach ($traits as $trait) {
-        foreach (get_class_methods($trait) as $traitMethod) {
-            $methods[$traitMethod] = "$traitMethod ($trait)";
-        }
+    foreach ($currentClass->getTraits() as $trait) {
+        $addMethodsFrom($trait);
     }
 
     // Capture methods from parent classes and their traits
-    $parentClass = get_parent_class($this);
+    $parentClass = $currentClass->getParentClass();
     while ($parentClass) {
-        foreach (get_class_methods($parentClass) as $method) {
-            if (!isset($methods[$method])) {
-                $methods[$method] = "$method ($parentClass)";
-            }
+        $addMethodsFrom($parentClass);
+        foreach ($parentClass->getTraits() as $trait) {
+            $addMethodsFrom($trait);
         }
-
-        // Include methods from traits used in the parent class
-        $parentTraits = class_uses($parentClass);
-        foreach ($parentTraits as $parentTrait) {
-            foreach (get_class_methods($parentTrait) as $traitMethod) {
-                if (!isset($methods[$traitMethod])) {
-                    $methods[$traitMethod] = "$traitMethod ($parentTrait)";
-                }
-            }
-        }
-
-        // Move up to the next parent
-        $parentClass = get_parent_class($parentClass);
+        $parentClass = $parentClass->getParentClass();
     }
 
     // Get methods from the $this->db object if it's an object
     if (isset($this->db) && is_object($this->db)) {
-        $dbClass = get_class($this->db);
-        foreach (get_class_methods($this->db) as $method) {
-            $methods[$method] = "$method ($dbClass)";
-        }
+        $dbClass = new ReflectionClass($this->db);
+        $addMethodsFrom($dbClass);
     }
 
     // Sort methods alphabetically by method name
@@ -489,6 +439,7 @@ protected function getClassMethods() {
 
     return $methods;
 }
+
 
 	protected function delRecordFile(string $query, array $params, string $path): void{
 	$this->db->q($query,$params);
@@ -504,6 +455,7 @@ protected function getClassMethods() {
 			return false;
 		}
 	}
+
 //setup table
 protected function setup($name = '', $value = ''){
    $name = is_array($name) ? $name['key'] : $name;
@@ -531,18 +483,34 @@ protected function setup($name = '', $value = ''){
     }
 
 }
-/**
-Returns the code for the specified method
-*  @param string $methodName The name of the method.
- * @return string The code for the method, or a "Method not found" message.
-* USAGE gen gaia cat buildTable , but
-*/
-protected function cat($methodName)
-{
-    $class = new ReflectionClass($this);
 
-    $method = $class->getMethod($methodName);
-    $method->setAccessible(true); // Ensure private/protected methods can be accessed
+/**
+ * Returns the code for the specified method or view.
+ * @param string $methodName The name of the method or view.
+ * @param string $type Either 'method' (default) or 'view'.
+ * @return string The code for the method or view, or an error message.
+ */
+protected function cat($methodName, $type = 'method')
+{
+    if ($type === 'view') {
+        // Convert methodName format: "cubo.view" -> ["cubo", "view"]
+        [$cubo, $view] = explode('.', $methodName) + [null, null];
+
+        if (!$cubo || !$view) {
+            return "Invalid view format. Use 'cubo.view'.";
+        }
+
+        $filePath = GAIAROOT. "cubos/{$cubo}/main/{$view}.php";
+
+        if (!file_exists($filePath)) {
+            return "View file not found: {$filePath}";
+        }
+
+        return file_get_contents($filePath);
+    }
+
+    // Handle method case
+    $class = new ReflectionClass($this);
 
     if (!$class->hasMethod($methodName)) {
         return "Method not found.";
@@ -550,26 +518,100 @@ protected function cat($methodName)
 
     $method = $class->getMethod($methodName);
     $filePath = $method->getFileName();
+
+    if (!file_exists($filePath)) {
+        return "Method file not found.";
+    }
+
     $lines = file($filePath, FILE_IGNORE_NEW_LINES);
-
-    // Adjusting start & end lines
-    $startLine = $method->getStartLine() - 1; // Convert to 0-based index
+    $startLine = $method->getStartLine() - 1;
     $endLine = $method->getEndLine();
-
-    // Extract method code
-    $methodCode = array_slice($lines, $startLine, $endLine - $startLine);
-
-    // Fix indentation issues
-    $methodCode = implode("\n", $methodCode);
+    $methodCode = implode("\n", array_slice($lines, $startLine, $endLine - $startLine));
 
     return $methodCode;
 }
 
 /**
-returns the top comments of the method selected
-*/
-protected function help($methodName){
+ * Returns the top comments of the selected trait or class.
+ */
+protected function helpClass($classOrTrait) {
+    try {
+        // Define the fully qualified names for trait and class
+        $fqtn = "Core\\Traits\\$classOrTrait";
+        $fqcn = "Core\\$classOrTrait";
 
+        // Determine which FQN exists
+        if (class_exists($fqcn)) {
+            $reflection = new ReflectionClass($fqcn);
+        } elseif (trait_exists($fqtn)) {
+            $reflection = new ReflectionClass($fqtn);
+        } else {
+            return "Error: Class or Trait '$classOrTrait' does not exist.";
+        }
+
+        // Retrieve the doc comment
+        $docComment = $reflection->getDocComment();
+        if ($docComment === false) {
+            return "No doc comment found.";
+        }
+
+        // Clean the doc comment by removing the delimiters and trimming whitespace
+        $cleanDocComment = preg_replace('/^\/\*\*|\*\/$/', '', $docComment);
+        $cleanDocComment = trim($cleanDocComment);
+
+        return $cleanDocComment;
+    } catch (ReflectionException $e) {
+        return "Error: " . $e->getMessage();
+    }
+}
+
+
+
+/**
+ * Returns the top comments of the selected method or view.
+ * @param string $methodName The name of the method or view (formatted as "cubo.view").
+ * @param string $type Either 'method' (default) or 'view'.
+ * @return string The extracted comments or an error message.
+ */
+protected function help($methodName, $type = 'method'){
+    if ($type === 'view') {
+        // Convert methodName format: "cubo.view" -> ["cubo", "view"]
+        [$cubo, $view] = explode('.', $methodName) + [null, null];
+
+        if (!$cubo || !$view) {
+            return "Invalid view format. Use 'cubo.view'.";
+        }
+
+        $filePath = GAIAROOT . "cubos/{$cubo}/main/{$view}.php";
+
+        if (!file_exists($filePath)) {
+            return "View file not found: {$filePath}";
+        }
+
+        $lines = file($filePath, FILE_IGNORE_NEW_LINES);
+
+        // Extract the first block comment (assumed to be at the top)
+        $docLines = [];
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            if (preg_match('/^\/\*\*/', $trimmed)) { // Start of comment
+                $docLines[] = $trimmed;
+            } elseif (!empty($docLines)) { // Inside comment
+                $docLines[] = $trimmed;
+                if (preg_match('/\*\/$/', $trimmed)) { // End of comment
+                    break;
+                }
+            }
+        }
+
+        if (empty($docLines)) {
+            return "No comments found in view: {$filePath}";
+        }
+
+        return implode("\n", array_map(fn($l) => preg_replace('/^\s*\* ?/', '', trim($l, "/* ")), $docLines));
+    }
+
+    // Handle method case
     if ($this instanceof \PDO && property_exists($this, 'db')) {
         $class = new ReflectionClass($this->db);
     } elseif ($this instanceof \Redis && property_exists($this, 'redis')) {
@@ -584,41 +626,32 @@ protected function help($methodName){
 
     $method = $class->getMethod($methodName);
     $filePath = $method->getFileName();
-    $lines = file($filePath, FILE_IGNORE_NEW_LINES);
 
-    // Locate the start of the method
+    if (!file_exists($filePath)) {
+        return "Method file not found.";
+    }
+
+    $lines = file($filePath, FILE_IGNORE_NEW_LINES);
     $startLine = $method->getStartLine() - 1;
 
-    // Start scanning upwards to extract the docblock
+    // Extract docblock
     $docLines = [];
     for ($i = $startLine - 1; $i >= 0; $i--) {
         $line = trim($lines[$i]);
 
-        // Stop scanning when we hit an empty line or another declaration
         if ($line === "" || preg_match('/^(class|function|public|protected|private|#[\w]+)/', $line)) {
             break;
         }
 
-        // Prepend to maintain order
         array_unshift($docLines, $lines[$i]);
     }
 
-    // Strip the /** and */ markers
-    $cleanDoc = [];
-    foreach ($docLines as $line) {
-        $cleanLine = preg_replace('/^\s*\* ?/', '', $line); // Remove leading "* "
-        $cleanLine = trim($cleanLine, "/* "); // Remove possible leading/trailing slashes/stars
-        if ($cleanLine !== "") {
-            $cleanDoc[] = $cleanLine;
-        }
-    }
-
-    return implode("\n", $cleanDoc);
+    return trim(implode("\n", array_map(fn($l) => preg_replace('/^\s*\* ?/', '', trim($l, "/* ")), $docLines)));
 }
 
 
 /**
-navigation
+Gen navigation for the unified public & admin
 */
 protected function getMenu() {
     // Fetch data from the database

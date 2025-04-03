@@ -9,7 +9,7 @@
     </a>
 
     <!-- Static items -->
-    <li class="menu-item">
+   <!----<li class="menu-item">
         <a class="menu-text">View</a>
         <ul class="submenu">
             <li><input style="float:left" type="checkbox" switch="" class="switcher">Short Sidebar</li>
@@ -25,7 +25,7 @@
             <li>Short Navigation<input style="float:left" type="checkbox" switch="" class="switcher"></li>
             <li>Dark<input type="checkbox" style="float:left" switch="" class="switcher"></li>
         </ul>
-    </li>
+    </li>--->
 
     <!-- Dynamic Menu Items -->
     <?php
@@ -66,7 +66,7 @@
     <?php endforeach; ?>
 
     <!-- Static Items -->
-    <li class="menu-item">
+  <!--  <li class="menu-item">
         <a class="menu-text" onclick="openPanel('common/guide.php');gs.coo('openGuideChannel',1)">Question
             <span style="margin:0 4px 0 0" class="glyphicon glyphicon-question-sign"></span>
         </a>
@@ -75,7 +75,7 @@
         <a class="menu-text" onclick="openPanel('common/doc.php');gs.coo('openDocChannel',1)">Info
             <span style="margin:0 4px 0 0" class="glyphicon glyphicon-info-sign bare"></span>
         </a>
-    </li>
+    </li>-->
 
     <div id="indicator" class="red indicator"></div>
     <div id="c_active_users"></div>

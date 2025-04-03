@@ -1,5 +1,10 @@
 <?php
-/** 
+namespace Core\Traits;
+use CKEditor\CKEditor;
+use Pug\Pug;
+use Exception;
+
+/**
 @filemeta.description CRUD Actions from Users & Admins, administers forms and tables, trait form (based in Maria.COMMENT) ADMIN to all page tables - Form class dynamic forms from mysql.comment
 @fm.updatelog
 v1 reusable method buildForm for all admin pages / used in tables for select join [USED IN all PAGEVIEWS where form or table is visible]
@@ -25,14 +30,8 @@ meta added
 sort desc added
 search added on top
 @filemeta.todo
-automatic links to selectjoined table 
+automatic links to selectjoined table
 */
-
-namespace Core\Traits;
-use CKEditor\CKEditor;
-use Pug\Pug;
-use Exception;
-
 trait Form {
 
 use Media;

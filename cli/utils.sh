@@ -70,6 +70,11 @@ mariadb_exec() {
         log "✅ MariaDB query executed: $QUERY"
     fi
 }
+get_current_version() {
+    local query="SELECT val FROM gen_admin.globs WHERE name='GEN_VERSION';"
+    local version=$(mariadb -u "$DB_USER" -p"$DB_PASS" -h "$DB_HOST" -D "$DB_NAME" -N -B -e "$query")
+    echo "$version"
+}
 
 # Ensure a directory exists
 check_dir_exists() {

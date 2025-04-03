@@ -250,7 +250,7 @@ function executionTime(){
     const domProcessingStart = performance.now();
     console.log("DOM processing started...");
     // Example DOM operation (change background color)
-    document.body.style.backgroundColor = "lightblue";
+    //document.body.style.backgroundColor = "lightblue";
     const domProcessingEnd = performance.now();
     console.log("DOM processing completed in " + (domProcessingEnd - domProcessingStart) + "ms");
 
