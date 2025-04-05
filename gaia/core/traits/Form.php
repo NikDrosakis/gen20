@@ -660,6 +660,7 @@ protected function buildFormQuery($tableName): array{
        // @fm.features $this->db=$params['db']=="gen_".TEMPLATE ? $this->db: $this->db;
  // if ($params['form'] !== 'new' && empty($params['res'])) {
         $params['res'] = $this->buildFormQuery($tableName);
+
   //  }
          // @fm.features Access parameters using $params array
          $res = $params['res'];
@@ -670,8 +671,11 @@ protected function buildFormQuery($tableName): array{
          $this->labeled=$labeled;
          $this->formid=$res['id'];
 // @fm.dependent renderFormHead
+if(empty($cols)){
         $formHead=$this->renderFormHead($table);
+        }
 #TODO add metadata links
+if(empty($cols)){
 if ($params['form'] !== 'new' && empty($params['res'])) {
         $return = $formHead.'<div class="pagetitle-container">
                            <span onclick="previd(this)" class="btn btn-secondary">
@@ -684,8 +688,10 @@ if ($params['form'] !== 'new' && empty($params['res'])) {
                            </span>
                    </div>';
                    }
+
 // @fm.dependent validateImg
         $img = $this->validateImg($res['img']);
+        }
         // @fm.features If we are building a form, start with form tags
         //if ($params['form'] === 'new') {
           //  $return .= "<form id='form_$table'><input type='hidden' name='a' value='new'>";
@@ -720,7 +726,12 @@ if ($params['form'] !== 'new' && empty($params['res'])) {
 
 // @fm.description builds dropdown
 //array $options, string $selected="", string $method="", string $name=""
-protected function drop(array $params=[]): string {
+protected function drop($params=[]): string {
+    $params= is_string($params) ? json_decode($params,true) : $params;
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        // Handle JSON parsing error (e.g., invalid JSON)
+        throw new \Exception('Invalid JSON format for params.');
+    }
     extract($params);
     $escapedMethod = $method;
     $escapedName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
@@ -768,7 +779,7 @@ protected function renderFileFormList(array $list, string $title = "File List"):
 // @fm.features Helper function to render select dropdowns
 // @fm.features Helper to render select dropdowns
 #$this->getMariaTree(),$domain,'getMariaTree',"listMariaTables","listMariaTables"
-#$this->drop($this->listMariaTables($domain),'','listMariaTables',"buildTable")
+#$this->drop($this->db->columns($domain),'','listMariaTables',"buildTable")
 protected function renderSelectField($fieldName, $selectedValue, array $options=[], string $func=''): string {
         if($func=='formFilters'){
         $select = "<select class='gs-select sync-$fieldName' data-table='{$this->table}' onchange=\"this.dataset.filter = this.value; gs.form.updateTable(this, 'buildCoreTable')\" name='$fieldName' id='{$fieldName}{$this->formid}'><option value=''>Select</option>";
@@ -1022,7 +1033,7 @@ return "<div class='gs-span'>
               </div>";
         break;
         case 'checkbox':  // @fm.features Boolean input (checkbox)
-            $checked = ($value) ? 'checked' : '';
+            $checked = $value ? 'checked' : '';
             return "<div class='gs-span'><label for='$col'>$col</label><input class='gs-input' "
             .($params['form']!='new' ? "onclick='gs.form.updateRow(this, \"$this->table\")'  ":"").
             " type='checkbox' name='$col' id='$col' $checked></div>";

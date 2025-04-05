@@ -10,5 +10,10 @@
             <directory suffix=".php">src</directory>
         </whitelist>
     </filter>
+    <php>
+        <const name="DOMAIN" value="vivalibro.com"/>
+        <server name="REQUEST_URI" value="/"/>
+        <server name="HTTP_HOST" value="vivalibro.com"/>
+    </php>
 </phpunit>
 

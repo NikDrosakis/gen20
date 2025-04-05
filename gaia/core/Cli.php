@@ -188,9 +188,18 @@ protected function parseParams($params) {
      global $argv, $argc;
      // Debugging: Print arguments
      $this->arrowCli($argv);
+
+    //Check for second argument
+     if(!$argv[2]){
+     echo "❌ Gaia Method not set. Try methods listed by TraiT/Class: \n";
+     $methods = $this->getClassMethods();
+     $this->arrayCli($methods);
+     echo "❌ Or type arg[2] as this to get the whole Gaia Object: \n";
+     exit(1);
+     }
+
      // Extract method from arguments
      $method = $argv[2];
-
       if ($method == 'this') {
           $this->thisCli($argv);
           exit;

@@ -133,7 +133,7 @@ protected function parseRequest() {
 
     return $request;
 }
- protected function response(){
+ public function response(){
         $request = $this->parseRequest();
         //THE RESPONSE
        if (!$request){

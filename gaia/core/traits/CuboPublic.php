@@ -155,7 +155,7 @@ protected function pageCP($link = '') {
         WHERE page.link = ?", [$page]);
     if (!empty($fetch) && is_array($fetch)) {
         foreach ($fetch as $row) {
-            $list[$row['area']][][$row['method']] = $row;
+            $list[$row['area']][]["renderCP"] = $row;
         }
     }
     return $list;

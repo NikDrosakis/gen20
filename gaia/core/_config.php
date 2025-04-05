@@ -1,12 +1,13 @@
 <?php
   // Handle SERVER_NAME in CLI
     if (php_sapi_name() == "cli") {
-        $_SERVER['SERVER_NAME'] = 'localhost';  // or set a default value
+        $template = getenv('TEMPLATE') ?: 'localhost';
+        $_SERVER['SERVER_NAME'] = $template;
         define('DOMAIN', $_SERVER['SERVER_NAME']);
-        $_SERVER['SYSTEM'] = 'cli';  // or set a default value
-        $_SERVER['HTTP_HOST'] = 'localhost';    // or set a default value
-        $_SERVER['HTTPS'] = '';                 // or set to an empty string
-        define('TEMPLATE', "localhost");
+        $_SERVER['SYSTEM'] = 'cli';
+        $_SERVER['HTTP_HOST'] = $template;
+        $_SERVER['HTTPS'] = '';
+        define('TEMPLATE', $template);
     }else{
         define('DOMAIN', $_SERVER['SERVER_NAME']);
         $servernameArray = explode('.', DOMAIN);
@@ -178,18 +179,6 @@
     "groups" => "briefcase",
     "user" => "user"
     );
-
-    $this->sucolors = array(
-    '1' => 'rgba(265,118,267,0.3)',
-    '2' => 'rgba(85,155,195,0.5)',
-    '3' => 'rgba(165,175,95,0.3)',
-    '4' => 'rgba(85,45,95,0.3)',
-    '5' => 'rgba(85,45,95,0.3)',
-    '6' => 'rgba(85,45,95,0.3)',
-    '7' => 'rgba(85,45,95,0.3)',
-    '8' => 'rgba(85,45,95,0.3)'
-    );
-
     $this->action_status = array(
     0 => 'DEPRECATED',
     1 => 'DANGEROUS',
@@ -211,7 +200,6 @@
     );
 
     $this->bool = array('y' => 'YES', 'n' => 'NO');
-    $this->greekMonths = array('Ιανουαρίου', 'Φεβρουαρίου', 'Μαρτίου', 'Απριλίου', 'Μαΐου', 'Ιουνίου', 'Ιουλίου', 'Αυγούστου', 'Σεπτεμβρίου', 'Οκτωβρίου', 'Νοεμβρίου', 'Δεκεμβρίου');
     $this->status_message = array(
     "100" => "Continue",
     "101" => "Switching Protocols",

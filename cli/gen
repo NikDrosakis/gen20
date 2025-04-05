@@ -150,6 +150,12 @@ case "$COMMAND" in
           echo "Checking active SSL certificates..."
           sudo ls -1 /etc/letsencrypt/live/
           ;;
+        db)
+          mariadb -uroot -p"n130177!" -D $FILENAME < "$CLI_DIR/com/$COMMAND/sql/$3.sql"
+          ;;
+        sql)
+               mariadb -uroot -p"n130177!" -e "$FILENAME"
+          ;;
         maria:dump)
             echo "Dumping all MariaDB databases..."
             mysqldump -u root --all-databases > $BACKUP_DIR/mariadb_backup_$(date +%F).sql
@@ -234,17 +240,36 @@ chat|domain|ermis|mars|god|kronos|cubo|ws|ai|git)
             done
         done
           ;;
+export)
+    for arg in "$@"; do
+        # Check if the argument is a valid JSON string
+        if echo "$arg" | jq empty > /dev/null 2>&1; then
+            # It's valid JSON; handle it properly
+            echo "Exporting JSON: $arg"
+            # Exporting as an environment variable, need to assign the argument to a variable
+            export MY_JSON_VAR="$arg"
+        else
+            # Not valid JSON, export it as a string
+            echo "Exporting non-JSON: $arg"
+            export MY_STRING_VAR="$arg"
+        fi
+    done
+    ;;
+  phpunit|test)
+            composer exec phpunit "${@:2}"
+            ;;
     gaia)
-        if [ -n "$FILENAME" ]; then
+      #export TEMPLATE=vivalibrocom DEFAULT is localhost
+    #    if [ -n "$FILENAME" ]; then
             # Pass all arguments to the Gaia PHP script
            # Define the exact path without relying on CLI_DIR
           php "$CLI_DIR/com/gaia/index.php" "$@"
             #ai error logging inside with handleError
             #php "$CLI_DIR/com/gaia/index.php" "$@" 2> >(bash "$COM_DIR/ai/error-handler.sh")
-        else
-            echo "❌ Error: FILENAME is not specified for Gaia."
-            exit 1
-        fi
+     #   else
+      #      echo "❌ Error: FILENAME is not specified for Gaia."
+       #     exit 1
+       # fi
         ;;
 esac
 # ==================================================

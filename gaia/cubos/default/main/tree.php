@@ -1,11 +1,8 @@
 <?php
 $steps=10;
-echo $this->renderCP("default.steps");
+//echo $this->renderCP("default.steps");
 ?>
-
-
 <script>
-
 /*
     async function updateForm(selectElement, method) {
         // Get selected database and table
@@ -101,19 +98,19 @@ plan([
 ])
 ----------------------------------------------->
 
-<?php echo $this->buildTable("gen_admin.plan") ?>
-<?php echo $this->buildTable("gen_admin.actionplan") ?>
+<?php //echo $this->buildTable("gen_admin.plan") ?>
+<?php //echo $this->buildTable("gen_admin.actionplan") ?>
 
 <script>
-document.addEventListener('DOMContentLoaded', async function() {
-        await gs.api.run('tree','runPlan','runPlantree1');
-    });
+//document.addEventListener('DOMContentLoaded', async function() {
+  //      await gs.api.run('tree','runPlan','runPlantree1');
+//    });
 </script>
 <?php //xecho($this->runPlan(["key"=>"tree"]));?>
 <div id="runPlantree1"></div>
 <div id="runActiontree"></div>
 <!---------DATABASE DROP DOWN A) Action A change database to to runAction table drop --------------->
-<?php //echo $this->drop($this->db->show("databases"),$dbtable,'getMariaTree',"listMariaTables") ?>
+<?php echo $this->drop($this->db->show("databases"),$dbtable,'getMariaTree',"listMariaTables") ?>
 
 <!---------DATABASE DROP DOWN B) A) Action B change table drop to runAction $this->compareWithStandard and $this->buildTable  --------------->
 <div id="getBranches"><?php //xecho($this->getBranches($params)) ?></div>
@@ -121,29 +118,15 @@ document.addEventListener('DOMContentLoaded', async function() {
 <!---------TABLESS DROP DOWN
 drop(array $options, $dbtable, string $method="", string $onchangeMethod="")
 --------------->
-<?php //$this->drop($this->db->show("tables",$this->publicdb),$dbtable,'listMariaTables',"buildTable") ?>
+<?=$this->drop($this->db->show("tables",$this->publicdb),$dbtable,'listMariaTables',"buildTable") ?>
 
 <!---------COMPARE WITH STANDARD--------------->
 <div id="compareWithStandardReport">
-<?php
-
-$table=$this->publicdb.".post";
-//xecho($this->buildChart($table,'pie'));
-//xecho($this->buildChart($table,'bar'));
-//xecho($this->buildChart($table,'line'));
-
-?>
-
-<script>
-document.addEventListener('DOMContentLoaded', async function() {
-
-  })
-  </script>
-
+<?php $table=$this->publicdb.".post"; ?>
 </div>
-
 <!---------BUILD SCHEMA--------------->
-<div id="buildSchema"><?php
+<div id="buildSchema">
+<?php
 //$assoc= $this->db->tableMeta($dbtable);
 //echo $this->table($assoc);
 ?>
@@ -151,7 +134,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 <!---------BUILD TABLE--------------->
 <div id="buildTable">
-    <?php //$this->buildTable($dbtable) ?>
+    <?=$this->buildTable($dbtable) ?>
 </div>
 
 <?php

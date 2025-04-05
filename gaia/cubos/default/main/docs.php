@@ -1,5 +1,24 @@
 <style>
 /* Main Layout */
+
+.edit-bar {
+    text-align: right;
+    margin: 10px 20px 0 0;
+}
+
+.edit-bar button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.edit-bar button.editing {
+    background: #28a745;
+}
+
 .doc-container {
     display: flex;
     min-height: 100vh;
@@ -114,6 +133,8 @@ main {
 </style>
 
 <script>
+    let editMode = false;
+
 document.addEventListener('DOMContentLoaded', function() {
     // Collapsible functionality
     const headers = document.querySelectorAll('.nav-header');
@@ -130,9 +151,61 @@ document.addEventListener('DOMContentLoaded', function() {
         header.classList.add('collapsed');
         subMenu.classList.add('collapsed');
     });
+
+    let editMode = false;
 });
+
+function toggleEditMode() {
+    const content = document.querySelector('.post-content');
+    const button = document.getElementById('toggleEdit');
+
+    if (!content) return;
+
+    if (!editMode) {
+        content.contentEditable = true;
+        content.classList.add('editable');
+        content.focus();
+        button.innerText = '💾 Save';
+
+        // ✅ Προσθέτουμε δυναμικά το onkeyup όταν μπαίνεις σε edit mode
+        content.addEventListener('keyup', contentKeyupHandler);
+    } else {
+        content.contentEditable = false;
+        content.classList.remove('editable');
+        button.innerText = '✏️ Edit';
+
+        // Optional save
+        docChanged(content);
+
+        // ✅ Αφαιρούμε τον handler για καθαρότητα
+        content.removeEventListener('keyup', contentKeyupHandler);
+    }
+
+    editMode = !editMode;
+}
+
+// ✅ Χειριστής για το onkeyup
+function contentKeyupHandler(e) {
+    if (editMode) {
+        docChanged(e.target); // ή contentEl
+    }
+}
+
+async function docChanged(contentEl) {
+    const newDoc = contentEl.innerHTML.trim();
+    if (!newDoc) return console.warn("No system name or content to save");
+    try {
+        const update = await gs.api.maria.q(
+            "UPDATE gen_admin.systems SET doc = ? WHERE name = ?",
+            [newDoc,  G.GET.system]
+        );
+        console.log("Doc updated");
+    } catch (err) {
+        console.error("Error updating doc:", err);
+    }
+}
+
 </script>
-        <?php echo $this->formSearch('gen_admin.cubo','buildCoreTable2'); ?>
-<?php
-$this->buildDoc();
-?>
+
+<?php echo $this->buildDoc(); ?>
+

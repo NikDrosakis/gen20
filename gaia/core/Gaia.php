@@ -120,7 +120,6 @@ public $status;
 public $privacy;
 public $colorstatus;
 public $phase;
-public $sucolors;
 public $action_status;
 public $post_status;
 public $bool;
@@ -162,7 +161,6 @@ public $greekMonths;
 
 	abstract protected function handleRequest();
 
-
 // Method to handle exceptions and log AI suggestions
     public function handleError($exception) {
         // Get the error details
@@ -200,10 +198,23 @@ public $greekMonths;
         //file_put_contents("/var/www/gs/log/gen.log", $logMessage, FILE_APPEND);
 
         // Send request to DeepSeek API with the full error context as a JSON payload
-        $PAYLOAD = '{"model": "deepseek-chat", "messages": [{"role": "user", "content": "' . addslashes($ERROR_INPUT) . '"}]}';
+        $payloadArray = [
+            "model" => "deepseek-chat",
+            "messages" => [
+                [
+                    "role" => "user",
+                    "content" => $ERROR_INPUT
+                ]
+            ],
+            "max_tokens" => 50,
+            "temperature" => 0.5
+        ];
+
+        $PAYLOAD = json_encode($payloadArray, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        //$PAYLOAD = '{"model": "deepseek-chat", "messages": [{"role": "user", "content": "' . addslashes($ERROR_INPUT) . '"}],'max_tokens':50,'temperature':0.5 }';
         $escapedPayload = escapeshellarg($PAYLOAD);
-        $escapedAPIUrl = escapeshellarg(DEEPSEEK_API_URL);
-        $escapedApiKey = escapeshellarg(DEEPSEEK_API_KEY);
+        $escapedAPIUrl = $this->is['DEEPSEEK_API_URL'];
+        $escapedApiKey = $this->is['DEEPSEEK_API_KEY'];
         // Ensure the response is captured correctly in the same process
 
         $COMMAND = "curl -s -X POST $escapedAPIUrl -H 'Content-Type: application/json' -H 'Authorization: Bearer $escapedApiKey' -d $escapedPayload";
@@ -226,17 +237,112 @@ public $greekMonths;
         }
         // Extract AI suggestion from the response
        # $AI_SUGGESTION = json_decode($RESPONSE, true)['choices'][0]['message']['content'];
+// Extract token count
+$inputTokens = mb_strlen($PAYLOAD); // Rough estimation
+$outputTokens = isset($decodedResponse['usage']['total_tokens']) ? $decodedResponse['usage']['total_tokens'] - $inputTokens : 0;
+$totalTokens = $inputTokens + $outputTokens;
 
         // Log & display AI suggestion
         if (empty($AI_SUGGESTION)) {
             $aiSuggestionMessage = "💡 AI Suggestion: No suggestion returned or failed to parse response.\n";
         } else {
-            $aiSuggestionMessage = "💡 AI Suggestion: $AI_SUGGESTION\n";
+            $aiSuggestionMessage = "💡 AI Suggestion: $AI_SUGGESTION  | Input: $inputTokens | Output: $outputTokens | Total: $totalTokens\n";
         }
         //File_put_contents("/var/www/gs/log/gen.log", $aiSuggestionMessage, FILE_APPEND);
         // Show error in CLI &  Display suggestion on CLI
         echo $logMessage.$aiSuggestionMessage;
    }
+
+/**
+ * Get AI suggestion (can be used for other purposes too)
+ */
+public function suggest(array $context, array $additionalData = []): ?string
+{
+    try {
+        $payload = [
+            'model' => 'deepseek-chat',
+            'messages' => [
+                [
+                    'role' => 'system',
+                    'content' => 'You are a senior PHP developer analyzing errors.'
+                ],
+                [
+                    'role' => 'user',
+                    'content' => json_encode([
+                        'error_context' => $context,
+                        'debug_data' => $additionalData,
+                        'request' => 'Provide concise solution (max 3 bullet points)'
+                    ])
+                ]
+            ],
+            'max_tokens' => 50,
+            'temperature' => 0.5
+        ];
+
+        // Debug: Print out the payload for validation
+        //error_log("Payload: " . json_encode($payload));
+
+        $cacheKey = "suggest_" . md5(json_encode($payload));
+
+        if ($cachedResponse = $this->redis->get($cacheKey)) {
+            return json_decode($cachedResponse, true)['choices'][0]['message']['content'] ?? null;
+        }
+
+        // Send the API request
+        $response = $this->makeApiRequest(
+            $this->is['DEEPSEEK_API_URL'],
+            $payload,
+            $this->is['DEEPSEEK_API_KEY']
+        );
+
+        if ($response['http_code'] !== 200) {
+            error_log("DeepSeek API error: HTTP " . $response['http_code']);
+            return null;
+        }
+
+        if (isset($response['choices'][0]['message']['content'])) {
+            // Cache the response for future use
+            $this->redis->set($cacheKey, json_encode($response));
+            return $response['choices'][0]['message']['content'];
+        }
+
+        return null;
+    } catch (\Exception $e) {
+        error_log("AI suggestion failed: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Reusable API request method
+ */
+protected function makeApiRequest(string $url, array $payload, string $apiKey=''): array
+{
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $apiKey
+        ],
+        CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_SLASHES),
+        CURLOPT_TIMEOUT => 30
+    ]);
+
+    $response = curl_exec($ch);
+    if (curl_errno($ch)) {
+        throw new \RuntimeException('API request failed: ' . curl_error($ch));
+    }
+
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    if ($httpCode !== 200) {
+        throw new \RuntimeException("API returned HTTP $httpCode: " . $response);
+    }
+
+    return json_decode($response, true) ?? [];
+}
 
     protected function isCuboRequest(): bool {
         return $this->SYSTEM=== 'cubos';
@@ -529,6 +635,14 @@ protected function cat($methodName, $type = 'method')
     $methodCode = implode("\n", array_slice($lines, $startLine, $endLine - $startLine));
 
     return $methodCode;
+}
+
+/**
+ * Runs a Unit Testing in a class or trait
+ */
+protected function test($classOrTrait) {
+
+return "Test $classOrTrait";
 }
 
 /**

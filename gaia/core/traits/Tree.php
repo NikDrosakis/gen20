@@ -1,6 +1,5 @@
 <?php
 namespace Core\Traits;
-use Form;
 /**
  DOC
  ==
@@ -11,9 +10,7 @@ use Form;
 
   Two Trees, the Core of GPM and the core of Public
   systems have action_task and make actions
-
 create prototype of the public based on tree
-
   Ethics
   1) Table has id, sort
   2) Mysql.COMMENTS are properties that Form use, ALSO table format gives building instruction
@@ -31,8 +28,7 @@ child: subscribe
 TODO
 ====
 doc standard to main pagegrp and visible only to TEMPLATE.?grp tables
- */
-
+*/
 trait Tree {
 protected $branches = [];
 protected $standardSchema=[
@@ -45,50 +41,9 @@ protected $standardSchema=[
     "`status` TINYINT(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'selectG-status'",
     "`created` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'readonly'"
 ];
+
 protected $standardPublicTables=[];  //add to integrate other website
 //protected function
-
-protected function listMariaTables($tableName): array {
-   $db = $tableName['table'];
-    // Fetch tables from the specified database
-
-    //$db = explode('.',$table)[0];
-    $query = $this->db->show("tables",$db);
-    return $query;
-}
-
-protected function recognizeDatabases(): array {
-    // Get all databases
-    $databases = $this->db->show("databases");
-
-    // Define a list to hold recognized system databases
-    $systemDatabases = [];
-    $potentialDatabases = [];
-
-    // Example naming conventions (you can customize this)
-    $systemPrefix = 'sys_';  // Prefix for system databases
-    $potentialPrefix = 'pot_';  // Prefix for potential databases
-
-    foreach ($databases as $database) {
-        // Check if the database belongs to the system
-        if (strpos($database, $systemPrefix) === 0) {
-            $systemDatabases[] = $database;
-        } elseif (strpos($database, $potentialPrefix) === 0) {
-            $potentialDatabases[] = $database;
-        }
-    }
-    // Fetch tables for recognized system databases
-    $tables = [];
-    foreach ($systemDatabases as $db) {
-        $tables[$db] = $this->db->show("tables",$db);
-    }
-
-    return [
-        'system_databases' => $systemDatabases,
-        'potential_databases' => $potentialDatabases,
-        'tables' => $tables
-    ];
-}
 
 protected function insertTablesIntoMetadata($database) {
     // Get the list of tables
@@ -381,7 +336,5 @@ protected function createMaria($domainame)
         throw new Exception("Failed to import SQL file into the database for $domain.");
     }
 }
-
-
 
 }
