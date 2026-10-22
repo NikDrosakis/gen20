@@ -1,26 +1,50 @@
-# ERMIS > GEN20
-- Nodejs server API/WebSocket/Integrations
-- running in 
+# 🔱 Ermis WebSocket Server
 
-## v.1 JULY 2024
-1. Rewritten from GaiaCMS nodejs & apijs API with WS as a module
+**Real-time Communication & Dynamic Meta Routing Service for the Gen20 Ecosystem**
 
-## v.2 August - September 2024
-1. Router & Service logic of integration
-2. Generative AIs experimenting with Gemini
-3. Not the main API (PHP API)
-4. Included swagger docs
+Ermis is the central real-time communication layer of the Gen20 platform.  
+It provides WebSocket connectivity, session management, dynamic domain metadata routing, and real-time service communication between Gen20 applications.
 
-## v.3 October 2024
-1. Added Mongo service ok
-2. WS server connected, updated filesystem ok 
-3. auto render onchange with watch & onlayout change "reload"
-4. Generative AIs
-4. Connect with PHP core
-5. updated gen.js
+---
 
-## v.3 November 2024
-1. Resource connection with Ermis through curl
+## 📋 List of Jobs
 
-## v.4 December 2024
-1. Resource 
+# GEN20 PLATFORM ERMIS JOBS
+
+# GEN20 PLATFORM ERMIS JOBS
+
+1. HTTP API Gateway & Static Service
+    - HTTP administration API (`/health`, `/sessions`, `/admin/*` Express routes)
+    - API static resource serving (`express.static("public")`)
+    - Request body size control (`express.json()` and `express.urlencoded({limit:'300mb'})`)
+    - CORS origin control (`cors({...})` middleware configuration)
+
+2. WebSocket Communication Layer
+    - WebSocket connection management (WSServer initialization and HTTP server binding)
+    - Real-time WebSocket communication (WebSocket server handling through `./ws/main`)
+    - Connection heartbeat monitoring (WebSocket `pingInterval` and connection timeout configuration)
+
+3. Session & Connection Management
+    - Client session management (`sessionManager` active sessions handling)
+    - Session creation and cleanup (`sessionManager.getActiveSessions()`, `closeSession()`, `cleanup()`)
+    - Active connection tracking (`wssInstance.getStats()` and global connection counters)
+
+4. Monitoring & Observability
+    - Health status reporting (`GET /health` endpoint)
+    - Runtime statistics collection (`getStats()` interval and global counters)
+    - Logging (`log()` function and `/var/www/gs/log/ermis.log`)
+
+5. Service Lifecycle Management
+    - Graceful shutdown handling (`process.on('SIGTERM')` server termination logic)
+
+6. Runtime Security & Access Control
+    - CORS origin restrictions (`cors({...})`)
+    - Client origin validation layer
+    - Payload size limitation (`express.json()` / `express.urlencoded()`)
+
+7. Dynamic Metadata & Domain Routing
+    - Dynamic metadata routing (`GET /meta/:domain/*` route handler)
+    - MetaServer integration (`services/metaserver/index.js` dynamic import and `metaHandler`)
+    - Multi-domain metadata management (`metaserver.getDomainsList()`)
+    - Domain configuration reload (`metaserver.reloadDomains()`)
+ 

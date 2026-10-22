@@ -7,7 +7,10 @@ import (
 	"net/http"
 	"os"
 	"crypto/md5"
-
+	"context"
+    "crypto/subtle"
+    "time"
+"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/gorilla/websocket"
@@ -25,18 +28,29 @@ func GenerateCacheKey(url string) string {
 	return fmt.Sprintf("%x", hash)
 }
 
-func init() {
-    var err error
-    gredisInstance, err = core.NewGredis()
-    if err != nil {
-        logMessage(fmt.Sprintf("Failed to create Gredis instance: %v", err))
-    }
 
-    logFile, err = os.OpenFile("/var/www/gs/log/god.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-    if err != nil {
-        log.Fatalf("Failed to open log file: %v", err)
-    }
-    logger = log.New(io.MultiWriter(logFile, os.Stdout), "GOD: ", log.LstdFlags)
+func init() {
+	var err error
+
+	logFile, err = os.OpenFile(
+		"/var/www/gs/log/god.log",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+		0644,
+	)
+	if err != nil {
+		log.Fatalf("Failed to open log file: %v", err)
+	}
+
+	logger = log.New(
+		io.MultiWriter(logFile, os.Stdout),
+		"GOD: ",
+		log.LstdFlags,
+	)
+
+	gredisInstance, err = core.NewGredis()
+	if err != nil {
+		logMessage(fmt.Sprintf("Failed to create Gredis instance: %v", err))
+	}
 }
 
 func logMessage(message string) {
@@ -90,12 +104,93 @@ func getUrl(c *gin.Context) {
     c.Data(http.StatusOK, "application/json", []byte(jsonResponse))
 }
 
+func registerMCPRoutes(router *gin.Engine) {
+    token := os.Getenv("GEN20_MCP_TOKEN")
+    if token == "" {
+        logMessage("MCP disabled: GEN20_MCP_TOKEN is not configured")
+        return
+    }
 
+    server := mcp.NewServer(
+        &mcp.Implementation{
+            Name:    "gen20-mcp-bridge",
+            Version: "0.1.0",
+        },
+        nil,
+    )
+
+    mcp.AddTool(
+        server,
+        &mcp.Tool{
+            Name:        "gen20_status",
+            Description: "Checks whether the Gen20 God API is reachable. Read-only.",
+        },
+        func(
+            ctx context.Context,
+            req *mcp.CallToolRequest,
+            input struct{},
+        ) (*mcp.CallToolResult, any, error) {
+            client := &http.Client{Timeout: 3 * time.Second}
+
+            request, err := http.NewRequestWithContext(
+                ctx,
+                http.MethodGet,
+                "http://127.0.0.1:3008/god/v1/",
+                nil,
+            )
+            if err != nil {
+                return nil, nil, err
+            }
+
+            resp, err := client.Do(request)
+            if err != nil {
+                return nil, map[string]any{
+                    "god_reachable": false,
+                    "error":         "God API is unreachable",
+                }, nil
+            }
+            defer resp.Body.Close()
+
+            return nil, map[string]any{
+                "god_reachable": resp.StatusCode >= 200 &&
+                    resp.StatusCode < 500,
+                "http_status": resp.StatusCode,
+            }, nil
+        },
+    )
+
+    handler := mcp.NewStreamableHTTPHandler(
+        func(r *http.Request) *mcp.Server {
+            return server
+        },
+        &mcp.StreamableHTTPOptions{
+            JSONResponse: true,
+        },
+    )
+
+    router.Any("/mcp", func(c *gin.Context) {
+        auth := c.GetHeader("Authorization")
+        expected := "Bearer " + token
+
+        if subtle.ConstantTimeCompare(
+            []byte(auth),
+            []byte(expected),
+        ) != 1 {
+            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+                "error": "Unauthorized",
+            })
+            return
+        }
+
+        handler.ServeHTTP(c.Writer, c.Request)
+    })
+}
 func main() {
     defer logFile.Close()
     godotenv.Load()
 
     router := gin.Default()
+    registerMCPRoutes(router)
     router.LoadHTMLGlob("public/*")
 
     mermaid.RegisterRoutes(router)
@@ -126,7 +221,7 @@ func main() {
             upgrader := websocket.Upgrader{}
             conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
             if err != nil {
-                 logMessage(fmt.Sprintf("Error upgrading connection:", err))
+                logMessage(fmt.Sprintf("Error upgrading connection: %v", err))
                 return
             }
             defer conn.Close()

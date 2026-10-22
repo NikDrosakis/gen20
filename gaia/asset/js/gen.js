@@ -416,15 +416,15 @@ var gs= {
                         if (result == true && data.auth == '4') {
                             gs.coo('GSID', data['id']);
                             gs.coo('GSLIBID', data['libid']);
-                            gs.coo('GSGRP', data['grp']);
+                            gs.coo('GENGRP', data['grp']);
                         }
                     })
                 } else {
                     var gcookies = {
                         GSID: 'id',
-                        GSGRP: 'grp',
-                        GSNAME: 'name',
-                        GSIMG: 'img',
+                        GENGRP: 'grp',
+                        GENNAME: 'name',
+                        GENIMG: 'img',
                         GSLIBID: 'libid',
                         LANG: 'lang',
                         sp: 'sp'
@@ -967,10 +967,10 @@ actions = [
      executes and gets data any core method
      */
     api : {
-        get: async function (method, params, resource='api/v1/local') {
+        get: async function (method, params, resource='local') {
             try {
                 const queryParams = new URLSearchParams(params).toString();
-                const url = `${G.SITE_URL}${resource}/${method}?${queryParams}`;
+                const url = `${G.SITE_URL}api/v1/${resource}/${method}?${queryParams}`;
                 console.log(url);
                 const response = await fetch(url, {
                     method: 'GET',
@@ -996,10 +996,11 @@ actions = [
             }
         },
 
-        post: async function (method, params,resource='api/v1/local') {
+        post: async function (method, params,resource='local') {
             try {
-                const url = `${G.SITE_URL}${resource}/${method}`;
+                const url = `${G.SITE_URL}api/v1/${resource}/${method}`;
                 console.log(url);
+                console.log(params);
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json',},
@@ -1026,6 +1027,83 @@ actions = [
             } catch (error) {
                 console.error("Error updating content:", error);
                 return { error: error.message };
+            }
+        },
+        /*
+* calling named action to run
+* */
+        run:async function (name, func, appendid, params={}) {
+
+            try {
+                const next_state = gs.local("stored_state_"+name) ?? 0;
+                const requestParams = {
+                    key: name,
+                    state: next_state,
+                    ...params
+                };
+
+                // Make the API request to runAction
+                const getResult = await gs.api.get(func, requestParams,'run');
+                console.log("API Result:", getResult);
+
+                // Construct the content to append
+                let content = '';
+                let success = false; // Default to false
+
+                if (getResult) {
+                    if (getResult.data) {
+                        success = true;
+                        content = `✔️ ${gs.clipboard_copy} Action "${name}" completed successfully.`;
+                        if (getResult.data.message) {
+                            content += ` Message: ${getResult.data.message}`;
+                        }
+
+                        if (getResult.data.data) {
+                            try {
+                                content += getResult.data.data; // Formatted JSON
+                                const store_state = getResult.data.sort;
+                                gs.local("stored_state_"+getResult.data.name,store_state+1); //stores the next
+                            } catch (e) {
+                                content += ` getResult.data.data`; // Fallback to string
+                            }
+                        }
+                        console.log(getResult.data)
+                        console.log(`Action "${name}" completed successfully.`);
+                    } else if (getResult.error) {
+                        content = `❌${gs.clipboard_copy} Action "${name}" failed: ${getResult.error}`;
+                        console.error(`Action "${name}" failed:`, getResult.error);
+                    } else if (getResult.rawResponse) {
+                        content = `❌${gs.clipboard_copy} Action "${name}" failed: Raw Response: ${getResult.rawResponse}`;
+                        console.error(`Action "${name}" failed:`, getResult.rawResponse);
+                    }
+                    else {
+                        content = `❌${gs.clipboard_copy} Action "${name}" failed: Unknown error`;
+                        console.error(`Action "${name}" failed: Unknown error`);
+                    }
+                } else {
+                    content = `❌${gs.clipboard_copy} Action "${name}" failed: Unknown error`;
+                    console.error(`Action "${name}" failed: Unknown error`);
+                }
+
+                // Get the target element by ID
+                const targetElement = document.getElementById(`${appendid}`);
+                if (targetElement) {
+                    // Append the content to the target element
+                    targetElement.innerHTML += `${content}`;
+                } else {
+                    console.warn(`Target element with ID '${appendid}' not found.`);
+                }
+                return success; // Return the success status
+            } catch (error) {
+                const content = `❌ Error running action "${name}": ${error.message}`;
+                console.error(`Error running action "${name}":`, error);
+                const targetElement = document.getElementById(`${appendid}`);
+                if (targetElement) {
+                    targetElement.innerHTML += `${content}`;
+                } else {
+                    console.warn(`Target element with ID '${name}' not found.`);
+                }
+                return false; // Indicate failure
             }
         },
         bind: async function (obj, options = { showLabel: true, showSwal: false }) {
@@ -1169,82 +1247,6 @@ actions = [
             console.error("Error updating content:", error);
         }
     },
-    /*
-    * calling named action to run
-    * */
-    run:async function (name, func, appendid, params={}) {
-
-        try {
-            const next_state = gs.local("stored_state_"+name) ?? 0;
-            const requestParams = {
-                key: name,
-                state: next_state,
-                ...params
-            };
-
-            // Make the API request to runAction
-            const getResult = await gs.api.post(func, requestParams,'run');
-            console.log("API Result:", getResult);
-
-            // Construct the content to append
-            let content = '';
-            let success = false; // Default to false
-
-            if (getResult) {
-                if (getResult.data) {
-                    success = true;
-                    content = `✔️ ${gs.clipboard_copy} Action "${name}" completed successfully.`;
-                    if (getResult.data.message) {
-                        content += ` Message: ${getResult.data.message}`;
-                    }
-
-                    if (getResult.data.data) {
-                        try {
-                            content += getResult.data.data; // Formatted JSON
-                            const store_state = getResult.data.sort;
-                            gs.local("stored_state_"+getResult.data.name,store_state+1); //stores the next
-                        } catch (e) {
-                            content += ` getResult.data.data`; // Fallback to string
-                        }
-                    }
-                    console.log(`Action "${name}" completed successfully.`);
-                } else if (getResult.error) {
-                    content = `❌${gs.clipboard_copy} Action "${name}" failed: ${getResult.error}`;
-                    console.error(`Action "${name}" failed:`, getResult.error);
-                } else if (getResult.rawResponse) {
-                    content = `❌${gs.clipboard_copy} Action "${name}" failed: Raw Response: ${getResult.rawResponse}`;
-                    console.error(`Action "${name}" failed:`, getResult.rawResponse);
-                }
-                else {
-                    content = `❌${gs.clipboard_copy} Action "${name}" failed: Unknown error`;
-                    console.error(`Action "${name}" failed: Unknown error`);
-                }
-            } else {
-                content = `❌${gs.clipboard_copy} Action "${name}" failed: Unknown error`;
-                console.error(`Action "${name}" failed: Unknown error`);
-            }
-
-            // Get the target element by ID
-            const targetElement = document.getElementById(`${appendid}`);
-            if (targetElement) {
-                // Append the content to the target element
-                targetElement.innerHTML += `${content}`;
-            } else {
-                console.warn(`Target element with ID '${appendid}' not found.`);
-            }
-            return success; // Return the success status
-        } catch (error) {
-            const content = `❌ Error running action "${name}": ${error.message}`;
-            console.error(`Error running action "${name}":`, error);
-            const targetElement = document.getElementById(`${appendid}`);
-            if (targetElement) {
-                targetElement.innerHTML += `${content}`;
-            } else {
-                console.warn(`Target element with ID '${name}' not found.`);
-            }
-            return false; // Indicate failure
-        }
-    }
 },
    dd : {
         isDragDropEnabled: false,
@@ -2750,8 +2752,8 @@ methods.forEach((method) => {
         const pms = { query, params: params || [] };
         const url = `${G.SITE_URL}api/v1/maria/${method}`;
 
-  //      console.log('Parameters:', pms);
-    //    console.log('Request URL:', url);
+//        console.log('Parameters:', pms);
+  //      console.log('Request URL:', url);
 
         try {
             const response = await fetch(url, {

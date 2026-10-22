@@ -23,12 +23,12 @@ class Mari {
     public function __construct() {
         try {
             // Connect to the server without specifying a database
-            $this->_db = new PDO("mysql:host=$this->dbhost", $this->dbuser, $this->dbpass,
+            $this->_db = new PDO("mysql:host=$this->dbhost;charset=utf8mb4", $this->dbuser, $this->dbpass,
                 array(
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_EMULATE_PREPARES => FALSE,
                     PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true,
-                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'utf8'",
+                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4",
                     PDO::ATTR_PERSISTENT => true
                 ));
         } catch (PDOException $error) {
@@ -68,6 +68,16 @@ class Mari {
                     // Handle database errors
                     echo "Database error: " . $e->getMessage();
                 }
+            case 'columns':
+                $query = "SHOW COLUMNS FROM $var";
+                                        try {
+                                            $stmt = $this->_db->query($query);
+                                            $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                            return $res;
+                                    } catch (PDOException $e) {
+                                        // Handle database errors specifically related to PDO
+                                        echo "Database error: " . $e->getMessage();
+                                   }
             case 'triggers':
                 $query = "SHOW TRIGGERS FROM $var";
                             try {
@@ -174,41 +184,136 @@ class Mari {
 
  $this->alter('main.old_column', 'drop', $columnDetails);
  */
-public function drop(string $dbdottable, string $operation): bool {
-    // Ensure the $dbdottable is in the correct 'database.table' format
+// Στο Mari.php
+
+public function drop($dbdottable, $operation = 'table') {
+    // Ensure the $dbdottable is in the correct format
     $dbTableParts = explode('.', $dbdottable);
-    if (count($dbTableParts) !== 2) {
-        throw new InvalidArgumentException("Invalid table format. Expected 'database.table'.");
+
+    // Check if it's a database only (no table)
+    if ($operation === 'database') {
+        $dbName = $dbdottable;
+        // Clean database name
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $dbName)) {
+            return [
+                'success' => false,
+                'error' => "Invalid database name"
+            ];
+        }
+
+        try {
+            // Check if database exists
+            $checkSql = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '$dbName'";
+            $exists = $this->f($checkSql);
+
+            if (!$exists) {
+                return [
+                    'success' => false,
+                    'error' => "Database `$dbName` does not exist"
+                ];
+            }
+
+            // Drop database
+            $sql = "DROP DATABASE IF EXISTS `$dbName`";
+            $this->_db->exec($sql);
+
+            return [
+                'success' => true,
+                'message' => "Database `$dbName` successfully dropped."
+            ];
+
+        } catch (PDOException $e) {
+            return [
+                'success' => false,
+                'error' => "Database error: " . $e->getMessage()
+            ];
+        }
     }
+
+    // === TABLE OPERATION ===
+    if (count($dbTableParts) !== 2) {
+        return [
+            'success' => false,
+            'error' => "Invalid table format. Expected 'database.table'."
+        ];
+    }
+
     $dbName = $dbTableParts[0];
     $tableName = $dbTableParts[1];
 
-    // Construct the SQL query based on the operation
     try {
-        switch (strtolower($operation)) {
-            case 'table':
-                $sql = "DROP TABLE IF EXISTS `$dbName`.`$tableName`";
-                break;
-            case 'database':
-                $sql = "DROP DATABASE IF EXISTS `$dbName`";
-                break;
-            case 'other':
-                throw new InvalidArgumentException("Unsupported operation: $operation");
-            default:
-                throw new InvalidArgumentException("Invalid operation. Allowed values are 'table', 'database', or 'other'.");
+        // Validate table name (prevent SQL injection)
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $dbName) || !preg_match('/^[a-zA-Z0-9_]+$/', $tableName)) {
+            return [
+                'success' => false,
+                'error' => "Invalid database or table name"
+            ];
         }
 
-        // Execute the query
+        // Check if table exists before dropping
+        $checkSql = "SELECT COUNT(*) as num FROM information_schema.tables
+                     WHERE table_schema = '$dbName' AND table_name = '$tableName'";
+        $result = $this->f($checkSql);
+
+        // ✅ Σωστός έλεγχος του αποτελέσματος
+        $exists = false;
+        if ($result) {
+            if (is_array($result)) {
+                if (isset($result['num']) && $result['num'] > 0) {
+                    $exists = true;
+                } elseif (isset($result[0]['num']) && $result[0]['num'] > 0) {
+                    $exists = true;
+                } elseif (isset($result[0]) && $result[0] > 0) {
+                    $exists = true;
+                }
+            }
+        }
+
+        if (!$exists) {
+            return [
+                'success' => false,
+                'error' => "Table `$dbName`.`$tableName` does not exist"
+            ];
+        }
+
+        // Drop table
+        $sql = "DROP TABLE IF EXISTS `$dbName`.`$tableName`";
         $this->_db->exec($sql);
-        echo ucfirst($operation) . " `$dbdottable` successfully dropped.\n";
-        return true;
+
+        // ✅ Επαλήθευση ότι διαγράφηκε
+        $checkAfter = $this->f($checkSql);
+        $stillExists = false;
+        if ($checkAfter) {
+            if (is_array($checkAfter)) {
+                if (isset($checkAfter['num']) && $checkAfter['num'] > 0) {
+                    $stillExists = true;
+                } elseif (isset($checkAfter[0]['num']) && $checkAfter[0]['num'] > 0) {
+                    $stillExists = true;
+                } elseif (isset($checkAfter[0]) && $checkAfter[0] > 0) {
+                    $stillExists = true;
+                }
+            }
+        }
+
+        if ($stillExists) {
+            return [
+                'success' => false,
+                'error' => "Failed to drop table `$dbName`.`$tableName`"
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => "Table `$dbName`.`$tableName` successfully dropped."
+        ];
+
     } catch (PDOException $e) {
-        // Handle database errors
-        echo "Database error: " . $e->getMessage() . "\n";
-        return false;
+        return [
+            'success' => false,
+            'error' => "Database error: " . $e->getMessage()
+        ];
     }
 }
-
 
 public function alter($dbdottable, $operation, $columnDetails, $afterColumn = null) {
     // Ensure the $dbdottable is sanitized and in the correct format
@@ -376,6 +481,26 @@ public function getDatabasesInfo() {
 addresses the "Duplicate entry" scenario by checking for a PDOException with a specific error code (23000) and extracting the ID of the existing entry from the database rather than throwing an error.
 
  */
+ public function insert(string $table, array $params = []) {
+     try {
+         // Build the insert query
+         $columns = implode(',', array_keys($params));
+         $placeholders = implode(',', array_fill(0, count($params), '?'));
+         $sql = "INSERT INTO $table ($columns) VALUES ($placeholders)";
+         $values = array_values($params);
+
+         $stmt = $this->_db->prepare($sql);
+         $stmt->execute($values);
+
+         // Return the last insert ID
+         return $this->_db->lastInsertId() ?: true;
+     } catch (PDOException $e) {
+         // Handle insert errors
+         echo "Database error during insert: " . $e->getMessage() . "\n";
+         return false;
+     }
+ }
+
 public function inse(string $table, array $params = []) {
     // Check if 'name' exists in $params
     if (isset($params['name'])) {
@@ -446,22 +571,39 @@ public function inse(string $table, array $params = []) {
             return true;
     }
 
-   public function f(string $q, array $params = []): array|string|bool {
-            $res = $this->_db->prepare($q);
-            $res->execute($params);
-            if (!$res) return FALSE;
-            return $res->fetch(PDO::FETCH_ASSOC);
+public function f(string $q, array $params = []): ?array
+{
+    try {
+        $stmt = $this->_db->prepare($q);
+
+        if (!$stmt) {
+            return null; // or throw
+        }
+
+        $stmt->execute($params);
+
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result ?: null;
+
+    } catch (PDOException $e) {
+        return null; // or log + throw
     }
+}
     /*
     *	Fetch MANY result
     *	Updated with memcache
     */
-    public function fa(string $q, array $params = array()){
-  		$res = $this->_db->prepare($q);
-            $res->execute($params);
-		if(!$res) return FALSE;
-            return $res->fetchAll(PDO::FETCH_ASSOC);
+public function fa(string $q, array $params = []){
+    try {
+        $stmt = $this->_db->prepare($q);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?? [];
+    } catch (PDOException $e) {
+        return false;
     }
+}
 /**
 Used only for form records
 */

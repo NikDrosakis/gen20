@@ -20,8 +20,8 @@ DOC
  */
 trait Kronos {
 
-protected $kronos_connection_url='https://vivalibro.com/apy/v1/';
-protected $openapi_url = 'https://vivalibro.com/apy/v1/openapi.json';
+protected $kronos_connection_url='https://gen20.net/apy/v1/';
+protected $openapi_url = 'https://gen20.net/apy/v1/openapi.json';
 protected function runningGPY(): bool {
     //check and return
 return true;

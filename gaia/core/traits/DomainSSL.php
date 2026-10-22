@@ -5,10 +5,11 @@ use Exception;
 
 trait DomainSSL {
 
+
     /**
      * SSL certificate management with Let's Encrypt
      */
-    protected function addSSL(string $domainName = '', array $options = []): array {
+    protected function addSSL($domainName = '', array $options = []): array {
         $domain = $domainName ?: DOMAIN;
         $webrootPath = $options['webroot'] ?? "/var/www/gs/gaia/public/$domain";
         $email = $options['email'] ?? "admin@$domain";
@@ -55,7 +56,7 @@ trait DomainSSL {
 /**
  * Renew SSL certificate management with Let's Encrypt
  */
-    protected function renewSSL(string $domainName = ''): array {
+    protected function renewSSL($domainName = ''): array {
         $domain = $domainName ?: DOMAIN;
 
         // Check if certificate exists
@@ -86,34 +87,85 @@ trait DomainSSL {
 /**
  * Del SSL certificate management with Let's Encrypt
  */
-    protected function delSSL(string $domainName = ''): array {
-        $domain = $domainName ?: DOMAIN;
-
-        // Run certbot to revoke and delete
-        $command = "certbot delete --cert-name $domain --non-interactive 2>&1";
-        $output = shell_exec($command);
-
-        if (strpos($output, 'Deleted') === false) {
-            throw new Exception("❌ Failed to delete SSL certificate for $domain: " . $output);
-        }
-
-        // Verify certificate files are removed
-        $certPath = "/etc/letsencrypt/live/$domain";
-        if (file_exists($certPath)) {
-            throw new Exception("❌ Certificate files still exist in $certPath");
-        }
-
-        return [
-            'status' => 'success',
-            'message' => "✅ SSL certificate removed for $domain",
-            'output' => $output
-        ];
+protected function delSSL($params = ''): array {
+    // Fix: If $domainName is an array, extract the first element
+    if (is_array($params)) {
+        $domainName = $params['key'];
+    }else{
+    $domainName=$params;
+    }
+    // Validate domain name to prevent command injection
+    if (!preg_match('/^[a-z0-9\.\-]+$/i', $domainName)) {
+        throw new Exception("Invalid domain name: $domainName");
     }
 
+    // Check if certificate exists
+    $certPath = "/etc/letsencrypt/live/$domain";
+    if (!file_exists($certPath)) {
+        throw new Exception("No SSL certificate found for $domainName");
+    }
+
+    // Run certbot to revoke and delete
+    $command = "sudo certbot delete --cert-name $domainName --non-interactive 2>&1";
+    $output = shell_exec($command);
+
+    // Also remove the directory from live and archive if certbot didn't
+    if (file_exists($certPath)) {
+        $rmCommand = "sudo rm -rf $certPath";
+        shell_exec($rmCommand);
+    }
+
+    // Remove from archive as well
+    $archivePath = "/etc/letsencrypt/archive/$domainName";
+    if (file_exists($archivePath)) {
+        $rmArchiveCommand = "sudo rm -rf $archivePath";
+        shell_exec($rmArchiveCommand);
+    }
+
+    // Remove renewal configuration
+    $renewalPath = "/etc/letsencrypt/renewal/$domainName.conf";
+    if (file_exists($renewalPath)) {
+        $rmRenewalCommand = "sudo rm -f $renewalPath";
+        shell_exec($rmRenewalCommand);
+    }
+
+    if (strpos($output, 'Deleted') === false && strpos($output, 'successfully deleted') === false) {
+        // Even if certbot failed, if we manually removed files, consider it success
+        if (!file_exists($certPath) && !file_exists($archivePath)) {
+            return [
+                'status' => 'success',
+                'message' => "✅ SSL certificate manually removed for $domainName",
+                'output' => $output,
+                'note' => 'Certbot may have failed but files were removed'
+            ];
+        }
+        throw new Exception("❌ Failed to delete SSL certificate for $domainName: " . $output);
+    }
+
+    // Verify certificate files are completely removed
+    if (file_exists($certPath)) {
+        // Force remove if still exists
+        shell_exec("sudo rm -rf $certPath");
+    }
+
+    // Reload nginx to apply changes
+    shell_exec("sudo systemctl reload nginx");
+
+    return [
+        'status' => 'success',
+        'message' => "✅ SSL certificate removed for $domainName",
+        'output' => $output,
+        'paths_cleaned' => [
+            'live' => $certPath,
+            'archive' => $archivePath,
+            'renewal' => $renewalPath
+        ]
+    ];
+}
 /**
  * Check and fix SSL certificate management with Let's Encrypt
  */
-    protected function checkfixSSL(string $domainName = ''): array {
+    protected function checkfixSSL($domainName = ''): array {
         $domain = $domainName ?: DOMAIN;
         $issues = [];
         $fixed = [];
@@ -147,7 +199,7 @@ trait DomainSSL {
 /**
  * Get SSL certificate expiry date with Let's Encrypt
  */
-    protected function getCertExpiry(string $domain): int {
+    protected function getCertExpiry($domain): int {
         $certFile = "/etc/letsencrypt/live/$domain/fullchain.pem";
         if (!file_exists($certFile)) {
             throw new Exception("❌ Certificate file not found: $certFile");
@@ -164,7 +216,7 @@ trait DomainSSL {
 /**
  * Fix SSL certificate symbolic links with Let's Encrypt
  */
-    protected function fixCertSymlinks(string $domain): void {
+    protected function fixCertSymlinks($domain): void {
         $livePath = "/etc/letsencrypt/live/$domain";
         $archivePath = "/etc/letsencrypt/archive/$domain";
 

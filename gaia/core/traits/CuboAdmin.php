@@ -21,57 +21,89 @@ fs and db
 */
 trait CuboAdmin {
 
-protected function addViewCA(string $fullviewname) {
-    // Split full view name into cuboname and viewname
+protected const TEMPLATE_PHP = <<<PHP
+<?php
+// CuboView: {viewname} for Cubo: {cuboname}
+echo "🧱 Cubo {cuboname} | View: {viewname}";
+PHP;
+
+protected const TEMPLATE_JSX = <<<JSX
+// CuboView: {viewname} for Cubo: {cuboname}
+import React from 'react';
+export default function {ViewComponent}() {
+    return (
+        <div>
+            🧱 Cubo {cuboname} | View: {viewname}
+        </div>
+    );
+}
+JSX;
+
+/**
+Using
+ */
+protected function addViewCA(string $fullviewname, string $type = 'php') {
     $parts = explode('.', $fullviewname, 2);
     if (count($parts) !== 2) {
-        echo "❌ Invalid view format. Use: gen gaia addViewCA cuboname.viewname\n";
+        echo "❌ Invalid view format. Use: gen gaia addViewCA cuboname.viewname [php|jsx]\n";
         return false;
     }
     list($cuboname, $viewname) = $parts;
 
     // Fetch cuboid from database
     $cuboidData = $this->db->f("SELECT cuboid FROM gen_admin.cuboview WHERE name LIKE ?", ["$cuboname.%"]);
-    if (empty($cuboidData) || !isset($cuboidData['cuboid'])) {
+    if (empty($cuboidData['cuboid'])) {
         echo "❌ No matching cuboid found for cubo: $cuboname\n";
         return false;
     }
     $cuboid = (int) $cuboidData['cuboid'];
 
-    // Step 1 - Check if view already exists in the database
+    // Check or insert cuboview
     $viewid = $this->db->f("SELECT name FROM gen_admin.cuboview WHERE name=? AND cuboid=?", ["$cuboname.$viewname", $cuboid])['name'];
     if (empty($viewid)) {
         $viewid = $this->db->inse("gen_admin.cuboview", ["name" => "$cuboname.$viewname", "cuboid" => $cuboid]);
     }
 
-    if ($viewid) {
-        $cuboDir = CUBO_ROOT . $cuboname . '/main';
-        $publicFilePath = $cuboDir . '/' . $viewname . '.php';
-        $publicContent = "<?php\n";
-        $publicContent .= "// Auto-generated $viewname file for cubo: $cuboname\n\n";
-        $publicContent .= "echo 'Welcome to $cuboname cubo main $viewname!';\n";
-
-        // Ensure the directory exists
-        if (!is_dir($cuboDir)) {
-            if (!mkdir($cuboDir, 0777, true)) {
-                echo "❌ Failed to create directory: $cuboDir\n";
-                return false;
-            }
-        }
-
-        // Write content to file
-        if (file_put_contents($publicFilePath, $publicContent) === false) {
-            echo "❌ Failed to write to file: $publicFilePath\n";
-            return false;
-        }
-
-        echo "✅ Created file: $publicFilePath\n";
-        return true;
-    } else {
-        echo "❌ Insert Main of $cuboname not correct\n";
+    if (!$viewid) {
+        echo "❌ Could not insert CuboView $cuboname.$viewname\n";
         return false;
     }
+
+    // Setup directories and content
+    if ($type === 'php') {
+        $dir = CUBO_ROOT . $cuboname . '/main';
+        $filename = $dir . '/' . $viewname . '.php';
+        $content = str_replace(['{cuboname}', '{viewname}'], [$cuboname, $viewname], CUBOVIEW_TEMPLATE_PHP);
+    } elseif ($type === 'jsx') {
+        $dir = JS_CUBO_ROOT . $cuboname . '/main';
+        $componentName = ucfirst($viewname); // simple PascalCase
+        $filename = $dir . '/' . $viewname . '.jsx';
+        $content = str_replace(
+            ['{cuboname}', '{viewname}', '{ViewComponent}'],
+            [$cuboname, $viewname, $componentName],
+            CUBOVIEW_TEMPLATE_JSX
+        );
+    } else {
+        echo "❌ Unsupported type: $type (only php or jsx)\n";
+        return false;
+    }
+
+    // Create directory
+    if (!is_dir($dir) && !mkdir($dir, 0777, true)) {
+        echo "❌ Failed to create directory: $dir\n";
+        return false;
+    }
+
+    // Write file
+    if (file_put_contents($filename, $content) === false) {
+        echo "❌ Failed to write to file: $filename\n";
+        return false;
+    }
+
+    echo "✅ Created $type view: $filename\n";
+    return true;
 }
+
 
 protected function dupViewCA(string $fullExistingView, string $newView) {
     // Split full existing view name into cuboname and existingView

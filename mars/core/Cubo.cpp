@@ -63,7 +63,7 @@ bool Cubo::setupCubo(const std::string& name) {
 
         // Step 2: Insert cubo metadata into `pagegrp`
         std::map<std::string, std::string> pagegrpData = {
-            {"cuboid", std::to_string(maria.lastInsertId())}, // Assuming you have a cubo ID
+            {"cuboviewid", std::to_string(maria.lastInsertId())}, // Assuming you have a cubo ID
             {"name", cuboName},
             {"description", setup["description"] ? setup["description"].as<std::string>() : ""}
         };
@@ -86,9 +86,9 @@ bool Cubo::setupCubo(const std::string& name) {
 
                 // Step 4: Insert into `pagecubo` table
                 std::map<std::string, std::string> pagecuboData = {
-                    {"mainid", std::to_string(insertedMainId)},
+                    {"pageid", std::to_string(insertedMainId)},
                     {"area", "m"},
-                    {"cuboid", std::to_string(insertedGrpId)},
+                    {"cuboviewid", std::to_string(insertedGrpId)},
                     {"name", cuboName}
                 };
                 if (!maria.inse(publicdb + ".pagecubo", pagecuboData)) {

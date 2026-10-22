@@ -1,6 +1,8 @@
 <style>
 /* Main Layout */
-
+a img{width:30px;margin:5px;}
+a span{width:30px;margin:5px;}
+h2 img{width:60px;margin:10px;}
 .edit-bar {
     text-align: right;
     margin: 10px 20px 0 0;
@@ -20,18 +22,17 @@
 }
 
 .doc-container {
-    display: flex;
     min-height: 100vh;
 }
 
 .sidebar {
-    width: 250px;
+min-width: 250px;
     background-color: #f5f5f5;
-    position: fixed;
+    float: left;
     height: 100vh;
     overflow-y: auto;
     border-right: 1px solid #ddd;
-    padding-top: 60px; /* Space for fixed header */
+    padding-top: 60px;
 }
 
 main {
@@ -53,7 +54,7 @@ main {
 
 .nav-menu a {
     display: block;
-    padding: 12px 20px;
+    padding: 8px 20px;
     text-decoration: none;
     transition: all 0.3s;
     border-bottom: 1px solid #e0e0e0;
@@ -101,7 +102,6 @@ main {
 
 /* Content Styling */
 .post-container {
-    max-width: 800px;
     margin: 0 auto;
 }
 
@@ -168,7 +168,7 @@ function toggleEditMode() {
         button.innerText = '💾 Save';
 
         // ✅ Προσθέτουμε δυναμικά το onkeyup όταν μπαίνεις σε edit mode
-        content.addEventListener('keyup', contentKeyupHandler);
+      //  content.addEventListener('keyup', contentKeyupHandler);
     } else {
         content.contentEditable = false;
         content.classList.remove('editable');
@@ -178,9 +178,8 @@ function toggleEditMode() {
         docChanged(content);
 
         // ✅ Αφαιρούμε τον handler για καθαρότητα
-        content.removeEventListener('keyup', contentKeyupHandler);
+        //content.removeEventListener('keyup', contentKeyupHandler);
     }
-
     editMode = !editMode;
 }
 
@@ -193,12 +192,14 @@ function contentKeyupHandler(e) {
 
 async function docChanged(contentEl) {
     const newDoc = contentEl.innerHTML.trim();
+    console.log(newDoc)
     if (!newDoc) return console.warn("No system name or content to save");
+    const newDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
     try {
-        const update = await gs.api.maria.q(
-            "UPDATE gen_admin.systems SET doc = ? WHERE name = ?",
-            [newDoc,  G.GET.system]
-        );
+            const update = await gs.api.maria.q(
+                "UPDATE gen_admin.systems SET doc = ?, modified= ? WHERE name = ?",
+                [newDoc, newDate, G.GET.system]
+            );
         console.log("Doc updated");
     } catch (err) {
         console.error("Error updating doc:", err);

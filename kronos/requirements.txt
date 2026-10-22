@@ -169,3 +169,9 @@ websockets
 PyYAML
 watchdog
 keyboard
+fastapi
+uvicorn[standard]==0.30.6
+python-dotenv==1.0.1
+psutil==5.9.5
+wheel
+gunicorn==22.0.0

@@ -223,7 +223,7 @@ router.post('/:type/:col', async (req, res) => {
      * @type {string}
      * Basic authorization string.
      */
-    const bin = (req.cookies['GSID'] + req.cookies['GSGRP']).toString();
+    const bin = (req.cookies['GSID'] + req.cookies['GENGRP']).toString();
     const authorization = Buffer.from(bin).toString('base64');
     res.header("Authorization", "Basic " + authorization);
     /**

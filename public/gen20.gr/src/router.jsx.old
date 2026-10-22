@@ -1,0 +1,33 @@
+// router.jsx
+import { createBrowserRouter } from "react-router-dom";
+import App from "./App";
+import Land from "./pages/Land";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Contact from "./pages/Contact";
+import Injector from "./pages/Injector";
+import DatasetTable from "./pages/DatasetTable";
+import ErrorBoundary from "./components/ErrorBoundary";
+import TestComponent from "./components/TestComponent";
+
+const ErrorElement = () => <ErrorBoundary><div /></ErrorBoundary>;
+
+const router = createBrowserRouter([
+    {
+        path: "/",
+        element: <App />,
+        errorElement: <ErrorElement />,
+        children: [
+            { index: true, element: <Land /> },
+            { path: "contact", element: <Contact /> },
+            { path: "injector", element: <Injector /> },
+            { path: "dataset", element: <DatasetTable /> },
+            { path: "login", element: <Login /> },
+            { path: "signup", element: <Signup /> },
+            { path: "test", element: <TestComponent /> },
+        ]
+    }
+]);
+
+// Άλλαξε από export const router σε export default
+export default router;

@@ -61,9 +61,34 @@ case "$COMMAND" in
     magento)
       php "$BIN/magento" "$@"
       ;;
+    yarn)
+      TARGET="$FILENAME"  # e.g., domain, market, app
+      shift 2             # shift COMMAND and FILENAME
+      YARN_COMMAND="$*"   # collect the rest (e.g., build, dev)
+
+      if [[ -z "$TARGET" ]]; then
+        echo "❌ Please specify the domain/folder to run yarn in."
+        echo "Usage: gen yarn <folder> <yarn-command>"
+        exit 1
+      fi
+
+      YARN_PATH="/var/www/gs/gaia/public/$TARGET"
+
+      if [[ ! -d "$YARN_PATH" ]]; then
+        echo "❌ Folder does not exist: $YARN_PATH"
+        exit 1
+      fi
+
+      echo "📦 Running: yarn $YARN_COMMAND in $YARN_PATH"
+      cd "$YARN_PATH"
+      yarn $YARN_COMMAND
+      ;;
     wget) wget -r -l 1 -A.html -P $ROOT/$3 https://$FILENAME
       ;;
     ports) netstat -tulnp | grep LISTEN
+      ;;
+    npm)
+      bash "$ROOT/cli/com/npm/publish.sh"
       ;;
     find:large)
       echo "Searching for files >500MB across the system..."
@@ -195,7 +220,8 @@ case "$COMMAND" in
                        echo "Searching history for '$2'..."
                        history | grep --color=auto "$2"
                        ;;
-chat|domain|ermis|mars|god|kronos|cubo|ws|ai|git)
+
+domain|chat|ermis|mars|god|kronos|cubo|ws|ai|git)
     if [ -z "$FILENAME" ]; then
         echo "❌ Error: FILENAME is not specified for $COMMAND."
     else

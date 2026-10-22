@@ -1,0 +1,133 @@
+/* components/content/ContentNavigation.css */
+
+.nav-arrow {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(79, 70, 229, 0.9);
+    backdrop-filter: blur(8px);
+    color: white;
+    border: none;
+    border-radius: 60px;
+    width: 64px;
+    height: 64px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.nav-arrow:hover {
+    background: rgb(79, 70, 229);
+    transform: translateY(-50%) scale(1.05);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+}
+
+.nav-arrow:active {
+    transform: translateY(-50%) scale(0.98);
+}
+
+.nav-arrow-left {
+    left: 24px;
+}
+
+.nav-arrow-right {
+    right: 24px;
+}
+
+.arrow-icon {
+    width: 32px;
+    height: 32px;
+    stroke: white;
+}
+
+.nav-tooltip {
+    position: absolute;
+    background: #1f2937;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.nav-arrow-left .nav-tooltip {
+    left: 80px;
+}
+
+.nav-arrow-right .nav-tooltip {
+    right: 80px;
+}
+
+.nav-arrow:hover .nav-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+    .nav-arrow {
+        width: 48px;
+        height: 48px;
+        background: rgba(79, 70, 229, 0.95);
+    }
+
+    .nav-arrow-left {
+        left: 12px;
+    }
+
+    .nav-arrow-right {
+        right: 12px;
+    }
+
+    .arrow-icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    .nav-tooltip {
+        display: none;
+    }
+}
+
+/* Tablet styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .nav-arrow {
+        width: 56px;
+        height: 56px;
+    }
+
+    .nav-arrow-left {
+        left: 16px;
+    }
+
+    .nav-arrow-right {
+        right: 16px;
+    }
+}
+
+/* Hide on very small screens */
+@media (max-width: 480px) {
+    .nav-arrow {
+        width: 40px;
+        height: 40px;
+    }
+
+    .nav-arrow-left {
+        left: 8px;
+    }
+
+    .nav-arrow-right {
+        right: 8px;
+    }
+}

@@ -33,12 +33,10 @@ trait Tree {
 protected $branches = [];
 protected $standardSchema=[
     "`id` INT UNSIGNED NOT NULL AUTO_INCREMENT",
-    "`sort` INT UNSIGNED NOT NULL DEFAULT 0",
-    "`img` VARCHAR(200) DEFAULT NULL COMMENT 'img-upload'",
-    "`name` VARCHAR(300) NOT NULL",
-    "`title` VARCHAR(200) DEFAULT NULL COMMENT 'loc'",
+    "`img` VARCHAR(500) DEFAULT NULL COMMENT 'img-upload'",
+    "`name` VARCHAR(500) NOT NULL",
+    "`title` VARCHAR(500) DEFAULT NULL COMMENT 'loc'",
     "`description` TEXT DEFAULT NULL COMMENT 'loc'",
-    "`status` TINYINT(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'selectG-status'",
     "`created` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'readonly'"
 ];
 
@@ -139,24 +137,43 @@ protected function compareWithStandard($table) {
 
 // Method to apply schema modifications to the table
 protected function applySchemaStandards($tableName) {
+    $table = is_array($tableName) ? $tableName['table'] : $tableName;
+
+    // Get the full database.table format
+    $fullTable = $this->publicdb . '.' . $table;
+
     // Get the list of modifications
-    $compare = $this->compareWithStandard($tableName);
+    $compare = $this->compareWithStandard($fullTable);
 
     // If there are no modifications, the table is up-to-date
     if (empty($compare['modificationList'])) {
-        echo "Table `$tableName` is already up-to-date.\n";
-        return;
+        return ['success' => true, 'message' => "Table `$fullTable` is already up-to-date."];
     }
-    // Loop through each modification and apply the schema changes
+
+    $results = [];
     foreach ($compare['modificationList'] as $modification) {
         try {
-            // Alter the table by applying each modification
-            $this->db->alter($tableName, $modification);
-            echo "Modification applied successfully to table `$tableName`: $modification.\n";
+            // $modification should be an array with: operation, columnDetails, afterColumn
+            // Example: ['operation' => 'add', 'columnDetails' => [...], 'afterColumn' => 'id']
+
+            $operation = $modification['operation'] ?? null;
+            $columnDetails = $modification['columnDetails'] ?? [];
+            $afterColumn = $modification['afterColumn'] ?? null;
+
+            if (!$operation || empty($columnDetails)) {
+                throw new Exception("Invalid modification format");
+            }
+
+            // Pass the full table name (database.table)
+            $this->db->alter($fullTable, $operation, $columnDetails, $afterColumn);
+            $results[] = "Modification applied successfully: {$operation} on column " . ($columnDetails['COLUMN_NAME'] ?? 'unknown');
+
         } catch (Exception $e) {
-            echo "Error applying modification to table `$tableName`: " . $e->getMessage() . "\n";
+            $results[] = "Error applying modification: " . $e->getMessage();
         }
     }
+
+    return $results;
 }
 
 // Method to generate a report for the table and provide an option to apply the changes
@@ -252,7 +269,23 @@ protected function table(array $assoc): string {
 }
 
 
-protected function buildSchema($table): string {
+protected function getMariaTree($tableName){
+$table = is_array($tableName) ? $tableName['key'] :$tableName;
+return [
+    'compareWithStandardReport' => $this->compareWithStandardReport($table),
+    'buildSchema' => $this->buildSchema($table),
+    'buildTable' => $this->buildTable(["key"=>$table]),
+];
+}
+
+protected function listMariaTables($table){
+$db=is_array($table) ? (is_array($table['key']) ? explode('.',$table['key'])[0] : $table['key']) : $table;
+return $this->buildTable("gen_admin.cubo");
+//return ["key"=>"this is the table"];
+}
+
+protected function buildSchema($tableName): string {
+$table = is_array($tableName) ? $tableName['key'] :$tableName;
   // Fetch column information from information_schema
    try {
     $columns = $this->db->tableMeta($table);

@@ -4,7 +4,7 @@ ROOT="/var/www/gs"
 ENV_FILE="$ROOT/.env"
 BG_DIR="$ROOT/cli/bg"
 LOG_DIR="$ROOT/log"
-CUBO_DIR="$ROOT/gaia/cubos"
+PUBLIC_DIR="$ROOT/gaia/public"
 SOURCE_DIR="$ROOT/gaia/core"
 SERVICES=()  # Stores active service PIDs
 [ -f "$ENV_FILE" ] && source "$ENV_FILE" || { echo "Missing .env file"; exit 1; }
@@ -86,7 +86,7 @@ process_change() {
 
 # Centralized inotify watcher
 watch_files() {
-    inotifywait -m -r -e modify,create,delete "$CUBO_DIR" "$SOURCE_DIR" --format '%w%f' | \
+    inotifywait -m -r -e modify,create,delete "$PUBLIC_DIR" "$SOURCE_DIR" --format '%w%f' | \
     while read -r changed_file; do
         process_change "$changed_file"
     done

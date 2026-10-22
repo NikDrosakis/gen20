@@ -3,7 +3,7 @@
 # Define paths
 LOG_FILE="/var/www/gs/log/gen20.log"  # Adjust if needed
 CLI_DIR="/var/www/gs/cli"
-UTILS="$CLI_DIR/lib/utils.sh"
+UTILS="$CLI_DIR/utils.sh"
 MARS_ROOT="/var/www/gs/mars"  # Path to the Mars application
 
 # Source utils.sh or exit if missing

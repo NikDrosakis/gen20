@@ -1,0 +1,444 @@
+/* Media Manager Styles - Fixed flashing */
+/* Media.css */
+.tab-pane {
+    transition: opacity 0.15s ease;
+}
+
+.tab-pane.active {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+}
+
+.tab-pane.inactive {
+    display: none;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.media-page {
+    padding: 20px;
+    will-change: transform; /* Optimize rendering */
+}
+
+.media-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+    transition: none; /* Remove transitions */
+}
+
+.media-item {
+    position: relative;
+    height: 180px;
+    background: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    text-align: center;
+    opacity: 1;
+    transition: transform 0.2s, box-shadow 0.2s; /* Only hover effects */
+    will-change: transform; /* Optimize animations */
+}
+
+/* Prevent layout shift during loading */
+.media-item img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 4px;
+    background: #f0f0f0; /* Placeholder background */
+}
+/* Add to your CSS */
+.media-page,
+.media-gallery,
+.media-item {
+    contain: layout style paint; /* Isolate rendering */
+}
+
+.media-gallery {
+    contain: layout inline-size;
+}
+
+.media-item {
+    contain: content;
+    background-color: #fff; /* Solid background to prevent transparency repaint */
+}
+/* Skeleton loading animation */
+.loading-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+
+/* Media Manager Styles */
+
+.media-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 8px;
+}
+
+.folder-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.folder-select {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+}
+
+.btn-small {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+.media-stats {
+    color: #666;
+    font-size: 14px;
+}
+
+.media-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.media-item {
+    position: relative;
+    height: 180px;
+    background: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.media-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.media-item.selected {
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.media-item img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.file-icon {
+    font-size: 60px;
+    text-align: center;
+    padding: 30px 0;
+}
+
+.media-name {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #333;
+    word-break: break-all;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px;
+    color: #999;
+}
+
+.empty-state .hint {
+    font-size: 12px;
+    margin-top: 10px;
+}
+
+.loading-spinner {
+    text-align: center;
+    padding: 60px;
+}
+
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #4CAF50;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.image-preview-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.preview-content {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow: auto;
+    position: relative;
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+}
+
+.preview-image {
+    max-width: 100%;
+    max-height: 400px;
+    display: block;
+    margin: 0 auto;
+}
+
+.preview-info {
+    margin: 15px 0;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 4px;
+}
+
+.preview-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.btn-danger {
+    background: #f44336;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #d32f2f;
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    margin-top: 20px;
+}
+
+.page-btn {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.page-btn.active {
+    background: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
+}
+
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.url-preview {
+    margin-top: 15px;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 4px;
+}
+
+.integration-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.coming-soon {
+    text-align: center;
+    padding: 60px;
+    background: #f9f9f9;
+    border-radius: 12px;
+}
+
+.coming-soon h3 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.coming-soon p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.dig-form, .generate-input {
+    display: flex;
+    gap: 10px;
+    max-width: 600px;
+    margin: 20px auto;
+}
+
+.dig-input, .generate-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.note {
+    font-size: 12px;
+    color: #999;
+    margin-top: 15px;
+}
+
+@media (max-width: 768px) {
+    .media-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+    }
+
+    .media-toolbar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .preview-actions {
+        flex-direction: column;
+    }
+}
+/* Additional CSS for Media Manager */
+.folder-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.folder-btn {
+    padding: 6px 12px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.folder-btn.up {
+    background: #48bb78;
+}
+
+.folder-btn:hover {
+    opacity: 0.9;
+}
+
+.current-folder-name {
+    padding: 6px 12px;
+    background: #edf2f7;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.subfolders-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f7fafc;
+    border-radius: 8px;
+}
+
+.subfolders-section h4 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #4a5568;
+}
+
+.subfolders-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.subfolder-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.subfolder-item:hover {
+    background: #edf2f7;
+    border-color: #cbd5e0;
+    transform: translateY(-1px);
+}
+
+.subfolder-icon {
+    font-size: 20px;
+}
+
+.subfolder-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.subfolder-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #2d3748;
+}
+
+.subfolder-stats {
+    font-size: 11px;
+    color: #718096;
+}

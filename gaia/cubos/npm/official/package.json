@@ -1,0 +1,34 @@
+{
+  "name": "@gen20/official",
+  "version": "0.1.5",
+  "description": "React Cuboviews for the 'official' domain of Gen20",
+  "keywords": [
+    "gen20",
+    "cuboview",
+    "react",
+    "component",
+    "official"
+  ],
+  "author": "Gen20 <info@gen20.net>",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "babel src --out-dir dist --extensions \".js,.jsx\""
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.24.0",
+    "@babel/core": "^7.24.0",
+    "@babel/preset-env": "^7.24.0",
+    "@babel/preset-react": "^7.24.0"
+  },
+  "babel": {
+    "presets": ["@babel/preset-env", "@babel/preset-react"]
+  }
+}

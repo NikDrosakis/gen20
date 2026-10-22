@@ -3,7 +3,7 @@
 ROOT="/var/www/gs"
 LOG_FILE="$ROOT/log/god.log"  # Adjust if needed
 CLI_DIR="$ROOT/cli"
-UTILS="$ROOT/utils.sh"
+UTILS="$CLI_DIR/utils.sh"
 GOD_ROOT="$ROOT/god"  # Path to the GoGin application
 
 # Source utils.sh if exists
@@ -17,7 +17,7 @@ fi
 # Function to check if the GoGin process is already running
 is_god_running() {
     # First try to find the exact running process
-    local exact_match=$(pgrep -f "^go run $(pwd)/main\.go$|^$(pwd)/god$")
+    local exact_match=$(pgrep -f "^go run $GOD_ROOT/main\.go$|^$(pwd)/god$")
 
     # If no exact match, try broader match (with path handling)
     if [ -z "$exact_match" ]; then
@@ -50,7 +50,8 @@ check_god_status() {
     fi
 
     # Check if GoGin process is running
-    if ! GO_PROCESS=$(pgrep -f "$GOD_ROOT/main.go"); then
+GO_PROCESS=$(pgrep -f "go run.*main.go")
+if [ -z "$GO_PROCESS" ]; then
         error "❌ GoGin process is NOT running (main.go not found)"
         return 1
     fi

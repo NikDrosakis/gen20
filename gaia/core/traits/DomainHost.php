@@ -6,38 +6,71 @@ trait DomainHost {
     /**
      * Nginx Host configuration with support for both PHP and ReactJS templates
      */
-    protected function addHost(string $domainName = '', string $appType = 'php'): array {
-        $domain = $domainName ?: DOMAIN;
-        $config = "/etc/nginx/conf.d/$domain";
+protected function addHost($params): array {
+    // Handle array parameter
+    if (is_array($params)) {
+        $domainName = $params['domain'] ?? $params[0] ?? null;
+        $appType = $params['appType'] ?? $params['type'] ?? 'vite';
+    } else {
+        $domainName = $params;
+        $appType = 'vite';
+    }
 
-        // Generate configuration based on app type
-        switch ($appType) {
-            case 'php':
-                $configContent = $this->genPhpConf($domain);
-                break;
-            case 'react':
-                $configContent = $this->genReactConf($domain);
-                break;
-            default:
-                throw new Exception("❌ Unsupported application type: $appType");
-        }
+    $domain = $domainName ?: DOMAIN;
 
-        // Write configuration file
-        file_put_contents($config, $configContent);
+    if (!$domain) {
+        return ['success' => false, 'error' => 'Domain parameter required'];
+    }
 
-        // Enable site
-        symlink($config, "/etc/nginx/sites-enabled/$domain");
+    // Configuration file in conf.d (auto-loaded)
+    $configFile = "/etc/nginx/conf.d/{$domain}.conf";
 
-        // Reload nginx
-        shell_exec('systemctl reload nginx');
+    // Generate configuration based on app type
+    switch ($appType) {
+        case 'php':
+            $configContent = $this->genPhpConf($domain);
+            break;
+        case 'vite':
+            $configContent = $this->genReactConf($domain);
+            break;
+        default:
+            return ['success' => false, 'error' => "Unsupported application type: {$appType}"];
+    }
 
+    // Write configuration file
+    if (file_put_contents($configFile, $configContent) === false) {
+        return ['success' => false, 'error' => 'Failed to write config file'];
+    }
+
+    // Test nginx configuration
+    exec('nginx -t 2>&1', $testOutput, $testCode);
+    if ($testCode !== 0) {
+        // Rollback - delete the bad config
+        unlink($configFile);
         return [
-            'status' => 'success',
-            'message' => "✅ Nginx Host configuration created for $domain ($appType)",
-            'config_file' => $config,
-            'app_type' => $appType
+            'success' => false,
+            'error' => 'Nginx config test failed',
+            'output' => implode("\n", $testOutput)
         ];
     }
+
+    // Reload nginx
+    exec('systemctl reload nginx 2>&1', $reloadOutput, $reloadCode);
+
+    if ($reloadCode !== 0) {
+        return [
+            'success' => false,
+            'error' => 'Failed to reload nginx',
+            'output' => implode("\n", $reloadOutput)
+        ];
+    }
+
+    return [
+        'success' => true,
+        'message' => "✅ Nginx host configuration created for {$domain} ({$appType})",
+        'config_file' => $configFile
+    ];
+}
 
     protected function genPhpConf(string $domain): string {
         $rootPath = GSROOT."gaia/public/$domain";
@@ -117,64 +150,61 @@ Host {
 EOF;
     }
 
-    protected function genReactConf(string $domain): string {
-        $rootPath = GSROOT."public/$domain/build";
-        $logPath = GSROOT."log/$domain.log";
+    protected function genReactConf($domain): string {
+        $rootPath = "/var/www/gs/public/{$domain}/dist";
+        $logPath = "/var/www/gs/log/{$domain}.log";
 
         return <<<EOF
-Host {
-    Host_name $domain www.$domain;
-    listen 443 ssl http2;
-    ssl_certificate /etc/letsencrypt/live/$domain/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/$domain/privkey.pem;
-    include /etc/letsencrypt/options-ssl-nginx.conf;
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-    root $rootPath;
-    index index.html;
-    access_log off;
-    error_log $logPath;
+    server {
+        server_name {$domain} www.{$domain};
+        listen 443 ssl http2;
+        ssl_certificate /etc/letsencrypt/live/{$domain}/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/{$domain}/privkey.pem;
+        include /etc/letsencrypt/options-ssl-nginx.conf;
+        ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
-    include /var/www/gs/setup/nginx/gen_shared.conf;
-
-    location = /favicon.ico {
-        log_not_found off;
+        root {$rootPath};
+        index index.html;
         access_log off;
-        try_files /favicon.ico =204;
-    }
+        error_log {$logPath};
 
-    location / {
-        try_files \$uri /index.html;
+        include /var/www/gs/setup/nginx/gen_shared.conf;
 
-        # Static files location
-        location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg)$ {
+        # Add HSTS header
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+        location = /favicon.ico {
+            log_not_found off;
+            access_log off;
+            try_files /favicon.ico =204;
+        }
+
+        location / {
+            try_files \$uri \$uri/ /index.html;
+
+            add_header 'Access-Control-Allow-Origin' '*';
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
+        }
+
+        # Static files caching
+        location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|webp)$ {
             expires 30d;
             access_log off;
+            add_header Cache-Control "public, immutable";
         }
 
-        # CORS setup
-        if (\$request_method = 'OPTIONS') {
-            add_header 'Access-Control-Allow-Origin' '*';
-            add_header X-Frame-Options "";
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
-            add_header 'Access-Control-Allow-Headers' 'Origin, Authorization, Accept, Content-Type, X-Requested-With';
-            add_header 'Access-Control-Max-Age' 1728000;
-            add_header 'Content-Type' 'text/plain charset=UTF-8';
-            add_header 'Content-Length' 0;
-            return 204;
-        }
+        # Custom header for debugging
+        add_header X-Gaia-System "GEN20";
     }
 
-    # Custom header for debugging
-    add_header X-Gaia-System SYSTEM;
-}
-
-# HTTP redirect to HTTPS
-Host {
-    listen 80;
-    Host_name $domain www.$domain;
-    return 301 https://\$host\$request_uri;
-}
-EOF;
+    # HTTP redirect to HTTPS
+    server {
+        listen 80;
+        server_name {$domain} www.{$domain};
+        return 301 https://\$host\$request_uri;
+    }
+    EOF;
     }
 
     protected function detectPhpSock(): string {
@@ -191,29 +221,37 @@ EOF;
         throw new Exception("❌ No PHP-FPM socket found");
     }
 
-    protected function delHost(string $domainName = ''): array {
-        $domain = $domainName ?: DOMAIN;
-
-        // Remove config
-        $config = "/etc/nginx/sites-available/$domain";
-        if (file_exists($config)) {
-            unlink($config);
-        }
-
-        // Remove symlink
-        $enabled = "/etc/nginx/sites-enabled/$domain";
-        if (file_exists($enabled)) {
-            unlink($enabled);
-        }
-
-        // Reload nginx
-        shell_exec('systemctl reload nginx');
-
-        return [
-            'status' => 'success',
-            'message' => "✅ Nginx Host configuration removed for $domain"
-        ];
+protected function delHost($params): array {
+    // Handle array parameter
+    if (is_array($params)) {
+        $domainName = $params['domain'] ?? $params[0] ?? null;
+    } else {
+        $domainName = $params;
     }
+
+    $domain = $domainName ?: DOMAIN;
+
+    if (!$domain) {
+        return ['success' => false, 'error' => 'Domain parameter required'];
+    }
+
+    // Remove config from sites-available
+    $configFile = "/etc/nginx/conf.d/{$domain}";
+    if (file_exists($configFile)) {
+        unlink($configFile);
+    }
+
+    // Test and reload nginx
+    exec('nginx -t 2>&1', $testOutput, $testCode);
+    if ($testCode === 0) {
+        exec('systemctl reload nginx 2>&1');
+    }
+
+    return [
+        'success' => true,
+        'message' => "✅ Nginx host configuration removed for {$domain}"
+    ];
+}
 
     protected function checkfixHost(string $domainName = '', string $appType = 'php'): array {
         $domain = $domainName ?: DOMAIN;

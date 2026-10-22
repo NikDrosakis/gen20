@@ -16,16 +16,53 @@ custom domain: gen_localhost
 2) delCP
 3) renderCP
 4) genpagecubo
-- addPageCA
-- delPageCA
+TODO addPageCA
+TODO delPageCA
 - maintainCA
 - backupCA
 
+CREATE TABLE `page` (
+  `id` int(11) UNSIGNED NOT NULL COMMENT 'auto',
+  `cuboviewid` int(10) UNSIGNED DEFAULT NULL,
+  `pagegrpid` int(10) UNSIGNED NOT NULL COMMENT 'selectjoin-gen_vivalibrocom.maingrp.name',
+  `sort` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `name` varchar(300) NOT NULL,
+  `link` varchar(255) DEFAULT NULL,
+  `title` varchar(200) DEFAULT NULL,
+  `img` varchar(200) DEFAULT NULL COMMENT 'img-upload',
+  `description` text DEFAULT NULL COMMENT 'loc-default',
+  `status` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'selectG-status',
+  `created` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'readonly',
+  `modified` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'readonly',
+  `meta` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 */
 
 
-protected function addPagegrpCP($domain='', $name = '') {
-echo "add cubo to pagegrp, copies cubo to ";
+protected function addPageCP(string $name): bool {
+    if (empty($name)) {
+        echo "Error: Page name is required.\n";
+        return false;
+    }
+    $db = $this->publicdb;
+    $data = [
+        'name'        => $name,
+        'sort'        => 0,
+        'link'        => "/$name",
+        'title'       => ucfirst($name),
+        'status'      => 1,
+        'created'     => date('Y-m-d H:i:s'),
+        'modified'    => date('Y-m-d H:i:s')
+    ];
+
+    try {
+        $this->db->insert("{$db}.page", $data);
+        echo "Cubo page `$name` added to `$db.page` .\n";
+        return true;
+    } catch (Exception $e) {
+        echo "Error adding page `$name`: " . $e->getMessage() . "\n";
+        return false;
+    }
 }
 
 protected function delCP(string $domain,string $name): bool {
@@ -38,7 +75,6 @@ protected function delCP(string $domain,string $name): bool {
 
     // Step 1: Delete related database entries
     try {
-        $this->db->q("DELETE FROM {$this->publicdb}.pagegrp WHERE name = ?", [$name]);
         $this->db->q("DELETE FROM {$this->publicdb}.page WHERE name = ?", [$name]);
 
         echo "Database entries for `$name` deleted successfully.\n";
@@ -110,23 +146,27 @@ a) update cubo_ cache saved in Redis
 */
 protected function renderCP($cuboview) {
 
+$cuboview=is_array($cuboview) ? $cuboview['name']: $cuboview;
     try {
         // Split the cuboview into cubo and view parts
         list($cubo, $view) = explode('.', $cuboview);
         // Construct the URL to fetch data
         $url = SITE_URL . "cubos/index.php?cubo=$cubo&file=$view.php";
-
+       
         // Check for cache first
-        $cache = $this->redis->get("cubo_" . $cuboview);
+     //   $cache = $this->redis->get("cubo_" . $cuboview);
 
-        if ($cache) {
+       // if ($cache) {
             // Use cached response if available
-            $response = $cache;
-        } else {
+         //   $response = $cache;
+        //} else {
             // If no cache found, fetch the data and set the cache
-            $response = $this->fetchUrl($url);
-            $this->redis->set("cubo_" . $cuboview, $response);
-        }
+
+            //$response = $this->fetchUrl($url);
+            $response = $this->include_buffer($url);
+
+          //  $this->redis->set("cubo_" . $cuboview, $response);
+        //}
 
         // If the response is an array, return the 'data' key
         if (is_array($response) && isset($response['data'])) {
@@ -148,16 +188,29 @@ protected function renderCP($cuboview) {
 
 protected function pageCP($link = '') {
     $page = $link !== '' ? $link : $this->page;
-    $list = [];
-    // Ensure we fetch multiple rows
-    $fetch = $this->db->fa("SELECT pagecubo.*,page.* FROM {$this->publicdb}.pagecubo
+    $list = ['m'=>[],'f'=>[],'h'=>[],'sl'=>[],'sr'=>[]];
+    $fetchM = $this->db->f("SELECT name,menu FROM {$this->pagetable} WHERE link = ? ",[$link]);
+    $fetch = $this->db->fa("
+        SELECT pagecubo.area, pagecubo.cuboviewid, cuboview.name AS cuboname FROM {$this->publicdb}.pagecubo
         LEFT JOIN {$this->publicdb}.page ON page.id = pagecubo.pageid
-        WHERE page.link = ?", [$page]);
+        LEFT JOIN gen_admin.cuboview ON cuboview.id = pagecubo.cuboviewid
+        WHERE page.link = ?
+    ", [$page]);
+
     if (!empty($fetch) && is_array($fetch)) {
         foreach ($fetch as $row) {
-            $list[$row['area']][]["renderCP"] = $row;
+            if (!empty($row['cuboviewid'])) {
+                $list[$row['area']][]["renderCP"] = $row['cuboname'];
+            }
         }
     }
+        //add default main in m area
+        if(!empty($fetchM)){
+        if($fetchM['menu']){
+        $list['h'][0]["renderCP"]= "default.menu";
+        }
+        $list['m'][0]["renderCP"]= $fetchM['name'];
+        }
     return $list;
 }
 
@@ -165,16 +218,29 @@ protected function pageCP($link = '') {
 protected function getpagecubo($pageName = '') {
     $page = is_array($pageName) ? $pageName['key'] : ($pageName !== '' ? $pageName : $this->page);
     $list = [];
+    $list['m'] = [];
     // Ensure we fetch multiple rows
-    $fetch = $this->db->fa("SELECT pagecubo.area,page.link,page.name as cubo
+$likePattern = '%.' . $pageName;
+$exactPattern = $pageName . '.public';
+$fetchM = $this->db->f("SELECT name FROM {$this->publicdb}.page WHERE link = ? ",[$pageName]);
+
+    $fetch = $this->db->fa("SELECT pagecubo.area,page.link,page.name
         FROM {$this->publicdb}.pagecubo
         LEFT JOIN {$this->publicdb}.page ON page.id = pagecubo.pageid
         WHERE page.name = ?", [$page]);
+
     if (!empty($fetch) && is_array($fetch)) {
         foreach ($fetch as $row) {
-            $list[$row['area']]["renderCubo"] = $row['link'];
+        //if link does not exist set name[1] or name[0]
+        $exploded_name = explode('.',$row['name']);
+        $alterlink = $exploded_name[1] === 'public' ? $exploded_name[0] : $exploded_name[1];
+        $list[$row['area']]["renderCP"] = $row['link'] ?? $alterlink;
         }
-    }
+            }
+        //add default main in m area
+        if(!empty($fetchM)){
+        $list['m'][0]["renderCP"]= $fetchM['name'];
+        }
     return $list;
 }
 

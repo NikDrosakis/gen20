@@ -28,6 +28,74 @@ protected $os;
   protected $vhostfile;
   protected $hostfile;
 
+protected function createDomain($params) {
+    $domain = $params['domain'] ?? null;
+    $type = $params['type'] ?? 'public';
+    $options = $params['options'] ?? [];
+
+    if (!$domain) {
+        return ['success' => false, 'error' => 'Domain is required'];
+    }
+
+    // Validate domain
+    if ($type === 'tor') {
+        if (!preg_match('/^[a-z2-7]{16,56}\.onion$/', $domain)) {
+            return ['success' => false, 'error' => 'Invalid .onion domain'];
+        }
+    } else {
+        if (!preg_match('/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/', $domain)) {
+            return ['success' => false, 'error' => 'Invalid domain format'];
+        }
+    }
+
+    $results = [];
+
+    // 1. Create filesystem
+    if ($options['filesystem'] ?? true) {
+        $path = "/var/www/gs/public/{$domain}";
+        mkdir($path, 0755, true);
+        $results['filesystem'] = ['path' => $path, 'created' => true];
+    }
+
+    // 2. Create database
+    if ($options['database'] ?? true) {
+        $dbName = "gen_" . str_replace('.', '', $domain);
+        // Create database
+        $this->db->q("CREATE DATABASE IF NOT EXISTS `$dbName`");
+        // Import template
+        $template = file_get_contents('/var/www/gs/setup/maria/schema/template.sql');
+        $this->db->q("USE `$dbName`");
+        $this->db->q($template);
+        $results['database'] = ['name' => $dbName, 'created' => true];
+    }
+
+    // 3. Configure Nginx
+    if ($options['nginx'] ?? true) {
+        $nginxConfig = $this->addHost($domain);
+        file_put_contents("/etc/nginx/conf.d/{$domain}.conf", $nginxConfig);
+        $results['nginx'] = ['path' => "/etc/nginx/conf.d/{$domain}.conf", 'created' => true];
+    }
+
+    // 4. Configure DNS
+    if ($options['dns'] ?? true) {
+        $dnsConfig = $this->addZone($domain);
+        file_put_contents("/etc/bind/zones/db.{$domain}", $dnsConfig);
+        $results['dns'] = ['path' => "/etc/bind/zones/db.{$domain}", 'created' => true];
+    }
+
+    // 5. SSL
+    if ($options['ssl'] ?? false) {
+        // Install Let's Encrypt
+        shell_exec("certbot certonly --nginx -d {$domain} -d www.{$domain} --noninteractive --agree-tos --email admin@{$domain}");
+        $results['ssl'] = ['created' => true];
+    }
+
+    return [
+        'success' => true,
+        'message' => "Domain {$domain} created successfully",
+        'data' => $results
+    ];
+}
 /**
  Looping all traits with add* methods to add a new domain
  */
@@ -200,9 +268,9 @@ protected function synchronizeDomains(): array{
        *
        * @return array An associative array of domain names and their corresponding paths.
        */
-  protected function getPublicFilesystem(string $domain=''): array
+  protected function getPublicFilesystem(): array
     {
-        $baseDir = GAIAROOT . 'public/';
+        $baseDir = '/var/www/gs/public/';
         $domains = [];
 
         if (is_dir($baseDir)) {
@@ -244,8 +312,103 @@ protected function synchronizeDomains(): array{
              return $nginxSites; // Return the list of zones
     }
 
+protected function getSSLs(): array
+{
+    $sslInfo = [];
+
+    // Define the Let's Encrypt SSL directories
+    $liveDir = '/etc/letsencrypt/live/';
+    $archiveDir = '/etc/letsencrypt/archive/';
+
+    // Check if the live directory exists
+    if (!is_dir($liveDir)) {
+        error_log("Let's Encrypt live directory not found: " . $liveDir);
+        return ['error' => "SSL directory not found"];
+    }
+
+    // Get all directories in /etc/letsencrypt/live/
+    $certDirs = glob($liveDir . '*', GLOB_ONLYDIR);
+
+    foreach ($certDirs as $certDir) {
+        $domain = basename($certDir);
+
+        // Skip special directories
+        if ($domain === '.' || $domain === '..' || $domain === 'README') {
+            continue;
+        }
+
+        // Check for certificate files
+        $certPath = $certDir . '/fullchain.pem';
+        $privKeyPath = $certDir . '/privkey.pem';
+
+        if (file_exists($certPath) && file_exists($privKeyPath)) {
+            // Get certificate expiry date
+            $expiryDate = null;
+            $serialNumber = null;
+
+            try {
+                // Parse certificate to get expiry date
+                $certContent = file_get_contents($certPath);
+                if ($certContent !== false) {
+                    // Use openssl to parse certificate
+                    $parsedCert = openssl_x509_parse($certContent);
+                    if ($parsedCert !== false) {
+                        $expiryDate = date('Y-m-d H:i:s', $parsedCert['validTo_time_t']);
+                        $serialNumber = isset($parsedCert['serialNumber']) ? $parsedCert['serialNumber'] : null;
+                    }
+                }
+            } catch (Exception $e) {
+                error_log("Error parsing certificate for {$domain}: " . $e->getMessage());
+            }
+
+            // Determine key type from certificate
+            $keyType = 'RSA'; // Default
+            try {
+                $keyContent = file_get_contents($privKeyPath);
+                if ($keyContent !== false) {
+                    if (strpos($keyContent, 'BEGIN EC PRIVATE KEY') !== false) {
+                        $keyType = 'ECC';
+                    } elseif (strpos($keyContent, 'BEGIN RSA PRIVATE KEY') !== false) {
+                        $keyType = 'RSA';
+                    }
+                }
+            } catch (Exception $e) {
+                error_log("Error determining key type for {$domain}: " . $e->getMessage());
+            }
+
+            $sslInfo[$domain] = [
+                'exists' => true,
+                'expires' => $expiryDate,
+                'serial_number' => $serialNumber,
+                'key_type' => $keyType,
+                'certificate_path' => $certPath,
+                'private_key_path' => $privKeyPath,
+                'directory' => $certDir,
+                'fullchain_exists' => file_exists($certPath),
+                'privkey_exists' => file_exists($privKeyPath),
+                'cert_files' => $this->getSSLCertFiles($domain, $archiveDir)
+            ];
+        } else {
+            // Certificate exists but maybe missing files
+            $sslInfo[$domain] = [
+                'exists' => false,
+                'error' => 'Missing certificate files',
+                'certificate_path' => $certPath,
+                'private_key_path' => $privKeyPath,
+                'cert_file_exists' => file_exists($certPath),
+                'privkey_file_exists' => file_exists($privKeyPath)
+            ];
+        }
+    }
+
+    return $sslInfo;
+}
 protected function createSSL($domainame) {
-$domain = is_array($domainame) ? $domainame['key'] : $domainame;
+if(is_array($domainame)){
+ $domain = $domainame['key'];
+ }else{
+ $domain = $domainame;
+ }
     // Command to generate SSL certificate using Certbot
     $command = "sudo certbot --certonly --non-interactive --agree-tos -d $domain";
 
@@ -281,44 +444,23 @@ $domain = is_array($domainame) ? $domainame['key'] : $domainame;
     }
 }
 
-protected function getSSLs(): array
+/**
+ * Get additional certificate files from archive (optional enhancement)
+ */
+protected function getSSLCertFiles($domain, $archiveDir): array
 {
-    $sslInfo = [];
-    $api_url = SITE_URL."apy/v1/gaia/certificates"; // Adjust the URL if necessary
+    $files = [];
 
-    $client = new Client();
-
-    try {
-        $response = $client->request('GET', $api_url);
-        $statusCode = $response->getStatusCode();
-
-        if ($statusCode == 200) {
-            $json_data = $response->getBody()->getContents();
-            $data = json_decode($json_data, true);
-
-            if (is_array($data) && isset($data['certificates'])) {
-                foreach ($data['certificates'] as $cert) {
-                    $domainName = $cert['domains'][0]; // Assuming the first domain is the primary
-                    $sslInfo[$domainName] = [
-                        'exists' => true,
-                        'expires' => $cert['expiry_date'],  // Corrected key
-                        'serial_number' => $cert['serial'], // Corrected key
-                        'key_type' => $cert['key_type'],
-                        'certificate_path' => $cert['cert_path'], // Corrected key
-                        'private_key_path' => $cert['key_path'], // Corrected key
-                    ];
-                }
-            }
-        } else {
-            error_log("FastAPI endpoint returned status code: " . $statusCode);
-            return ['error' => "FastAPI response error"];
+    // Check archive directory for certificate files
+    $archiveDomainDir = $archiveDir . $domain;
+    if (is_dir($archiveDomainDir)) {
+        $certFiles = glob($archiveDomainDir . '/*.pem');
+        foreach ($certFiles as $file) {
+            $files[] = basename($file);
         }
-    } catch (\Exception $e) {
-        error_log("Error fetching SSL certificates: " . $e->getMessage());
-        return ['error' => "Exception occurred"];
     }
 
-    return $sslInfo;
+    return $files;
 }
 
 
@@ -326,7 +468,7 @@ protected function getZones(): array {
         $directory = '/etc/bind/zones/';
         $localDir = GSROOT.'setup/zone/zones/';
     // Use glob to get an array of all files in the specified directory
-        $zones = glob($localDir . '*');
+        $zones = glob($directory . '*');
         return $zones; // Return the list of zones
     }
 

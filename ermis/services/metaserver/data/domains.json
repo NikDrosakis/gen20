@@ -1,0 +1,37 @@
+{
+  "nikimourtzi.com": {
+    "distPath": "/var/www/gs/public/nikimourtzi.com/dist",
+    "configPath": "/var/www/gs/public/nikimourtzi.com/headify.config.js",
+    "siteName": "Niki Mourtzi"
+  },
+  "gen20.net": {
+    "distPath": "/var/www/gs/public/gen20.net/dist",
+    "configPath": "/var/www/gs/public/gen20.net/headify.config.js",
+    "siteName": "GEN20 NET"
+  },
+  "gen20.art": {
+    "distPath": "/var/www/gs/public/gen20.art/dist",
+    "configPath": "/var/www/gs/public/gen20.art/headify.config.js",
+    "siteName": "GEN20 ART"
+  },
+  "gen20.dev": {
+    "distPath": "/var/www/gs/public/gen20.dev/dist",
+    "configPath": "/var/www/gs/public/gen20.dev/headify.config.js",
+    "siteName": "GEN20 ART"
+  },
+  "directorsunion.gr": {
+    "distPath": "/var/www/gs/public/directorsunion.gr/dist",
+    "configPath": "/var/www/gs/public/directorsunion.gr/headify.config.js",
+    "siteName": "Directors Union"
+  },
+  "gen20.gr": {
+    "distPath": "/var/www/gs/public/gen20.gr/dist",
+    "configPath": "/var/www/gs/public/gen20.gr/headify.config.js",
+    "siteName": "GEN20 GR"
+  },
+  "poetabook.com": {
+    "distPath": "/var/www/gs/public/poetabook.com/dist",
+    "configPath": "/var/www/gs/public/poetabook.com/headify.config.js",
+    "siteName": "POETABOOK"
+  }
+}

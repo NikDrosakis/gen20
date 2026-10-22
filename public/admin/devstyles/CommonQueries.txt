@@ -1,0 +1,75 @@
+// Content
+const contentQuery = `SELECT * FROM ${publicdb}.content WHERE status = 1 ORDER BY created DESC`;
+
+// Users
+const userQuery = `SELECT * FROM ${publicdb}.user WHERE status = 1 ORDER BY name ASC`;
+
+// Categories
+const categoryQuery = `SELECT * FROM ${publicdb}.classification ORDER BY sort ASC`;
+
+// Slides
+const slidesQuery = `SELECT * FROM ${publicdb}.c_slides ORDER BY sort ASC`;
+
+// Links
+const linksQuery = `SELECT * FROM ${publicdb}.links ORDER BY sort ASC`;
+
+// Components
+const componentsQuery = `SELECT * FROM ${publicdb}.components ORDER BY name ASC`;
+
+
+
+// SELECT
+const fetchData = async () => {
+    const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
+    const response = await fetch(`/api/v1/maria/fa?folder=SELECT * FROM ${publicdb}.your_table WHERE status = 1 ORDER BY sort ASC`);
+    const result = await response.json();
+    if (result.success) {
+        setData(result.data || []);
+    }
+};
+
+// INSERT
+const insertData = async (item) => {
+    const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
+    const query = `INSERT INTO ${publicdb}.your_table (name, sort, status) VALUES ('${item.name}', 0, 1)`;
+    const response = await fetch('/api/v1/maria/q', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify([query, []])
+    });
+    const result = await response.json();
+    if (result.success) {
+        await fetchData();
+    }
+};
+
+// UPDATE
+const updateData = async (id, data) => {
+    const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
+    const query = `UPDATE ${publicdb}.your_table SET name = '${data.name}', sort = ${data.sort} WHERE id = ${id}`;
+    const response = await fetch('/api/v1/maria/q', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify([query, []])
+    });
+    const result = await response.json();
+    if (result.success) {
+        await fetchData();
+    }
+};
+
+// DELETE
+const deleteData = async (id) => {
+    if (!window.confirm('Are you sure?')) return;
+    const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
+    const query = `DELETE FROM ${publicdb}.your_table WHERE id = ${id}`;
+    const response = await fetch('/api/v1/maria/q', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify([query, []])
+    });
+    const result = await response.json();
+    if (result.success) {
+        await fetchData();
+    }
+};

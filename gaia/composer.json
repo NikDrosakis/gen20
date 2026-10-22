@@ -16,7 +16,8 @@
         "symfony/yaml": "^5.4",
         "johnpbloch/wordpress": "^6.7",
         "guzzlehttp/guzzle": "^7.9",
-        "abraham/twitteroauth": "^7.0"
+        "abraham/twitteroauth": "^7.0",
+        "phpmailer/phpmailer": "^7.1"
     },
     "autoload": {
         "psr-4": {

@@ -20,6 +20,7 @@ use Core\Traits\DomainSSL;
 use Core\Traits\DomainDB;
 use Core\Traits\DomainHost;
 use Core\Traits\Kronos;
+use Core\Traits\Sketch;
 use Core\Traits\WS;
 use Core\Traits\Action;
 use Core\Traits\Template;
@@ -32,7 +33,7 @@ use Core\Traits\CuboAdmin;
 use Core\Cubo\Book;
 
 class Cli extends Gaia {
-use  Watch, Doc, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form,Domain,DomainZone,DomainFS,DomainSSL,DomainDB,DomainHost, Kronos, WS, Action, Template, Media, Filemeta, My, CuboPublic, CuboAdmin, Template,Book;
+use  Watch, Doc, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form,Domain,DomainZone,DomainFS,DomainSSL,DomainDB,DomainHost, Kronos, Sketch, WS, Action, Template, Media, Filemeta, My, CuboPublic, CuboAdmin, Template,Book;
 
 public $argv=[]; // To store the arguments passed to the script
 public $argc; // Store the argument count
@@ -247,27 +248,23 @@ protected function thisCli($argv) {
     $target = $this;
     $params = [];
 
-    // Traverse through arguments
     for ($i = 3; $i < count($argv); $i++) {
         $key = $argv[$i];
 
         if (is_object($target) && property_exists($target, $key)) {
-            $target = $target->{$key};  // Access property
+            $target = $target->{$key};
         } elseif (is_array($target) && array_key_exists($key, $target)) {
-            $target = $target[$key];  // Access array value
+            $target = $target[$key];
         } elseif (is_object($target) && method_exists($target, $key)) {
-            // Next argument is a method, remaining args are parameters
             $method = $key;
 
-            // Extract the table name (first argument after the method)
-            $tableName = $argv[$i + 1] ?? null;
-            if (!$tableName) {
-                echo "❌ Table name is required for '{$method}' method.\n";
-                exit(1);
-            }
+            // Grab remaining args
+            $remaining = array_slice($argv, $i + 1);
 
-            // Parse the remaining arguments into an associative array
-            $params = $this->parseArgs(array_slice($argv, $i + 2));
+            // Optional tableName and params (depends on method signature)
+            $tableName = $remaining[0] ?? null;
+            $params = $this->parseArgs(array_slice($remaining, 1));
+
             break;
         } else {
             echo "❌ No such property or method: '{$key}'\n";
@@ -275,23 +272,28 @@ protected function thisCli($argv) {
         }
     }
 
-    // If it's a method, execute it
     if (isset($method) && method_exists($target, $method)) {
-        // Debug: Print the method name, table name, and parsed params
-      //  echo "Method: {$method}\n";
-       // echo "Table Name: {$tableName}\n";
-       // echo "Params: " . print_r($params, true) . "\n";
+        // Try to call with or without arguments depending on method arity
+        try {
+            $ref = new \ReflectionMethod($target, $method);
+            $arity = $ref->getNumberOfParameters();
 
-        // Call the method with the table name and params
-        $result = $target->{$method}($tableName, $params);
+            $result = match ($arity) {
+                0 => $target->{$method}(),
+                1 => $target->{$method}($tableName),
+                default => $target->{$method}($tableName, $params)
+            };
+        } catch (\ReflectionException $e) {
+            echo "❌ Reflection failed: {$e->getMessage()}\n";
+            exit(1);
+        }
 
         if (is_array($result) || is_object($result)) {
-            $this->arrayCli($result);  // Format structured output
+            $this->arrayCli($result);
         } else {
             echo $result . "\n";
         }
     } else {
-        // Otherwise, just output the final value
         if (is_array($target) || is_object($target)) {
             $this->arrayCli($target);
         } else {

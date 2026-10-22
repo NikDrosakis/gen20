@@ -72,26 +72,21 @@ if (!empty($setup['main'])) {
         'name' => $cuboName,
         'description' => $setup['description'] ?? ''
     ];
-    $pagegrpGrpId = $this->db->inse("$this->publicdb.pagegrp", $pagegrpData);
-    if($pagegrpGrpId){
-    echo "Inserted pagecubo $pagegrpGrpId";
-    }
 
     // Step 5: Insert `mains` components into `main` table
     if (!empty($setup['mains'])) {
         foreach ($setup['mains'] as $main) {
             $mainData = [
-                'pagegrpid' => $pagegrpGrpId,
              'manifest' => "m:\\n -\"$main\"",
                 'name' => $main
             ];
-            $insertedMainId = $this->db->inse("$this->publicdb.main", $mainData);
+            $insertedMainId = $this->db->inse("$this->publicdb.page", $mainData);
 
             // Step 4: Insert into `pagecubo` table for each main
             $pagecuboData = [
-                'mainid' => $insertedMainId,
+                'pageid' => $insertedMainId,
                 'area' => 'm',
-                'cuboid' => $insertedGrpId,
+                'cuboviewid' => $insertedGrpId,
                 'name' => $cuboName
             ];
             $insertedpagecuboId = $this->db->inse("$this->publicdb.pagecubo", $pagecuboData);
@@ -106,12 +101,11 @@ if (!empty($setup['main'])) {
     if (file_exists($adminFilePath)) {
     // Step 5: Insert links for admin.php if it exists
         $linksData = [
-            'pagegrpid' => 5,
             'name' => $name,
             'title' => ucfirst($name),
             'manifest' => "m:\\n -renderCP:\"$name./admin.php\"",
         ];
-        $mainId = $this->db->inse("{$this->publicdb}.main", $linksData);
+        $mainId = $this->db->inse("{$this->publicdb}.page", $linksData);
             if($mainId){
                     echo "Inserted main $mainId";
                     }

@@ -175,7 +175,7 @@ router.post('/:type/:col', async (req, res) => {
     res.header('Access-Control-Allow-Origin', req.get('origin'));
     res.header("Access-Control-Allow-Credentials", true);
 
-    const bin = (req.cookies['GSID'] + req.cookies['GSGRP']).toString();
+    const bin = (req.cookies['GENUID'] + req.cookies['GENGRP']).toString();
     const authorization = Buffer.from(bin).toString('base64');
     res.header("Authorization", "Basic " + authorization);
     const type = req.params.type || '';

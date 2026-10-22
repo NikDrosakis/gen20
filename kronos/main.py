@@ -41,6 +41,8 @@ def log(message, level=logging.INFO):
 # Integrations
 from services.deepseek.routes import router as deepseek_route
 from services.gaia.routes import router as gaia_route
+from services.sketch.routes import router as sketch_route
+from services.bio.injection import router as inject_router
 
 # Start FastAPI
 app = FastAPI(
@@ -62,6 +64,8 @@ app.add_middleware(
 # Includes
 app.include_router(deepseek_route, prefix="/apy/v1/deepseek")
 app.include_router(gaia_route, prefix="/apy/v1/gaia")
+app.include_router(sketch_route, prefix="/apy/v1/sketch")
+app.include_router(inject_router, prefix="/apy/v1/injector")
 
 # WSManager Initialize
 async def wsinit():

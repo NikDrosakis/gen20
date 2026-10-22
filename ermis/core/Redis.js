@@ -1,19 +1,19 @@
-// core.Redis.js
+// /var/www/gs/public/ermis/core/Redis.js
 const Redis = require('ioredis');
 require('dotenv').config();
 
 const config = {
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
-    password: process.env.REDIS_PASS
+    host: process.env.REDIS_HOST || 'localhost',
+    port: process.env.REDIS_PORT || 6379,
+    password: process.env.REDIS_PASS || "yjF1f7uiHttcp"
 };
 
-class Redis {
+class RedisService {
     constructor() {
         this.redisClient = new Redis(config);
         this.redisSubscriber = new Redis(config);
 
-        // Error handling for Redis connections
+        // Error handling
         this.redisClient.on('error', (err) => {
             console.error('Redis Client Error:', err);
         });
@@ -37,12 +37,10 @@ class Redis {
         });
     }
 
-    // Publish a message to a Redis channel
     publish(channel, message) {
         this.redisClient.publish(channel, JSON.stringify(message));
     }
 
-    // Subscribe to a Redis channel and handle messages with the provided callback
     subscribe(channel, onMessage) {
         this.redisSubscriber.subscribe(channel, (err) => {
             if (err) {
@@ -52,12 +50,15 @@ class Redis {
 
         this.redisSubscriber.on('message', (subscribedChannel, message) => {
             if (subscribedChannel === channel) {
-                onMessage(message);
+                try {
+                    onMessage(JSON.parse(message));
+                } catch (e) {
+                    onMessage(message);
+                }
             }
         });
     }
 
-    // Set a value in Redis
     async set(key, value) {
         try {
             await this.redisClient.set(key, JSON.stringify(value));
@@ -66,26 +67,41 @@ class Redis {
         }
     }
 
-    // Get a value from Redis
     async get(key) {
         try {
             const value = await this.redisClient.get(key);
             return JSON.parse(value);
         } catch (err) {
             console.error('Redis Get Error:', err);
+            return null;
         }
     }
 
-    // Get all keys matching a pattern
+    async del(key) {
+        try {
+            await this.redisClient.del(key);
+        } catch (err) {
+            console.error('Redis Del Error:', err);
+        }
+    }
+
+    async expire(key, seconds) {
+        try {
+            await this.redisClient.expire(key, seconds);
+        } catch (err) {
+            console.error('Redis Expire Error:', err);
+        }
+    }
+
     async keys(pattern = '*') {
         try {
             return await this.redisClient.keys(pattern);
         } catch (err) {
             console.error('Redis Keys Error:', err);
+            return [];
         }
     }
 
-    // Get a list of values for multiple keys
     async list(keys) {
         try {
             const pipeline = this.redisClient.pipeline();
@@ -94,6 +110,7 @@ class Redis {
             return results.map(([err, value]) => (err ? null : JSON.parse(value)));
         } catch (err) {
             console.error('Redis List Error:', err);
+            return [];
         }
     }
 }

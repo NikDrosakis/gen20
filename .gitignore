@@ -18,7 +18,11 @@ log/
 media/
 backup/
 core2/
-
+kronos/data/
+kronos/services/sketch/video/
+node_modules/
+dist/
+.yarn/
 # Ignore everything in public/
 gaia/public/*
 gaia/wordpress
@@ -53,7 +57,6 @@ mars/tmp2
 /.env.local.php
 /.env.*.local
 /config/secrets/prod/prod.decrypt.private.php
-/public/bundles/
 /vendor/
 ###< symfony/framework-bundle ###
 ###> phpunit/phpunit ###

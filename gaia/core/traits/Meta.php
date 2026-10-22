@@ -29,12 +29,6 @@ protected function getPageMetatags(): array {
             if ($meta) {
                 $metaString .= ',' . $meta['meta'];
             }
-        } else {
-            // page ADMIN PAGE
-            $meta = $this->db->f("SELECT meta FROM {$this->publicdb}.pagegrp WHERE name = ?", [$this->page]);
-            if ($meta) {
-                $metaString .= ',' . $meta['meta'];
-            }
         }
     } else {
         // PUBLIC SYSTEM

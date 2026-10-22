@@ -1,27 +1,46 @@
 <?php
 namespace Core;
 use Swagger\Annotations as SWG;
+use ReflectionClass;
 use ReflectionMethod;
 use Symfony\Component\Security\Core\Security;
 
+use Core\Traits\Kronos;
+use Core\Traits\Sketch;
 use Core\Traits\Action;
+use Core\Traits\Deepseek;
+use Core\Traits\Email;
+use Core\Traits\Mail;
 use Core\Traits\My;
 use Core\Traits\Media;
 use Core\Traits\Tree;
 use Core\Traits\Form;
 use Core\Traits\Domain;
+use Core\Traits\DomainFS;
+use Core\Traits\DomainSSL;
+use Core\Traits\DomainHost;
 use Core\Traits\CuboAdmin;
 use Core\Traits\CuboPublic;
 use Core\Traits\Lang;
 use Core\Traits\Manifest;
 use Core\Traits\Share;
+use Core\Traits\Oxygen;
+use Core\Traits\Url;
+use Core\Traits\Content;
+use Core\Traits\GA;
+use Core\Traits\Xml;
+use Core\Traits\Filesystem;
+use Core\Traits\Filemeta;
+use Core\Traits\Poeta;
+
+
 /*
  * API CLASS
  TODO Use a library like symfony/rate-limiter or implement a simple counter in Redis.
  * */
 
 class API extends Gaia{
-	 use Action, Share, My, Media, Tree, Form, Domain, CuboAdmin, CuboPublic, Lang, Manifest;
+	 use Action, Share,Content, Poeta, Deepseek, My, Xml, GA,Filesystem,Filemeta, Media, Email, Mail, Tree,Form, Domain, DomainFS, DomainHost, DomainSSL, CuboAdmin, CuboPublic, Lang, Manifest, Kronos, Sketch, Oxygen, Url;
    private $security;
 
    public function __construct() {
@@ -41,7 +60,87 @@ class API extends Gaia{
     }
     }
 
-  protected function startAPI() {
+// Core/API.php
+
+public function executeTraitMethod($request = []) {
+    $result = [];
+    $allMethods = [];
+
+    try {
+        $class = new \ReflectionClass($this);
+
+        foreach ($class->getTraits() as $trait) {
+            $traitName = basename(str_replace('\\', '/', $trait->getName()));
+            $result[$traitName] = [];
+
+            // Πάρε ΟΛΕΣ τις μεθόδους (public, protected, private)
+            foreach ($trait->getMethods() as $method) {
+                $methodName = $method->getName();
+                $visibility = $method->isPublic() ? 'public' : ($method->isProtected() ? 'protected' : 'private');
+
+                // Μην αποκλείεις καμία μέθοδο - πάρε τες όλες
+                $result[$traitName][] = [
+                    'name' => $methodName,
+                    'visibility' => $visibility,
+                    'params' => $method->getNumberOfParameters(),
+                    'isApi' => strpos($methodName, 'api') === 0
+                ];
+
+                $allMethods[] = $methodName;
+            }
+        }
+
+        // Επίσης πάρε μεθόδους από την κλάση API
+        $result['_api_class'] = [];
+        foreach ($class->getMethods() as $method) {
+            $methodName = $method->getName();
+            if (!in_array($methodName, ['__construct', 'handleRequest', 'response', 'log', 'sanitizeInput', 'parseRequest', 'executeAPI', 'formatErrorResponse', 'executeTraitMethod'])) {
+                $result['_api_class'][] = [
+                    'name' => $methodName,
+                    'visibility' => $method->isPublic() ? 'public' : 'protected',
+                    'params' => $method->getNumberOfParameters(),
+                    'isApi' => strpos($methodName, 'api') === 0
+                ];
+            }
+        }
+
+        $response = [
+            "status" => 200,
+            "success" => true,
+            "code" => "EXECUTED",
+            "data" => [
+                "traits" => $result,
+                "all_methods" => array_unique($allMethods),
+                "total_traits" => count($result),
+                "total_methods" => count(array_unique($allMethods))
+            ],
+            "error" => null,
+            "status_message" => "Success",
+            "method" => $this->method ?? 'GET',
+            "resource" => $this->resource ?? 'trait',
+            "id" => $this->id ?? '',
+            "request" => $request
+        ];
+
+    } catch (\Exception $e) {
+        $response = [
+            "status" => 500,
+            "success" => false,
+            "code" => "EXCEPTION",
+            "data" => [],
+            "error" => $e->getMessage(),
+            "status_message" => "Internal Server Error",
+            "method" => $this->method ?? 'GET',
+            "resource" => $this->resource ?? 'trait',
+            "id" => $this->id ?? '',
+            "request" => $request
+        ];
+    }
+
+    return $response;
+}
+
+ protected function startAPI() {
          $response = $this->response();
         echo json_encode($response, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT);
      }
@@ -98,9 +197,13 @@ class API extends Gaia{
       return $response;
  }
 
- protected function log($message, $level = 'info') {
-     error_log("[$level] $message");
- }
+protected function log($message, $level = 'info') {
+    // Only log errors and warnings to stderr
+    if ($level === 'error' || $level === 'warning') {
+        error_log("[$level] $message");
+    }
+    // For info, do nothing (or write to a separate file)
+}
 protected function sanitizeInput($input) {
     if (is_array($input)) {
         // Recursively sanitize arrays
@@ -121,8 +224,16 @@ protected function parseRequest() {
         case 'POST':
         case 'PUT':
         case 'PATCH':
-            $rawInput = file_get_contents('php://input');
-            $request = $this->sanitizeInput(json_decode($rawInput, true) ?? []);
+            // Check if this is a file upload (multipart/form-data)
+            if (!empty($_FILES)) {
+                // For file uploads, merge POST and FILES
+                $request = array_merge($this->sanitizeInput($_POST), ['_FILES' => $_FILES]);
+            } else {
+                // For JSON requests
+                $rawInput = file_get_contents('php://input');
+                $decoded = json_decode($rawInput, true);
+                $request = $this->sanitizeInput($decoded ?? []);
+            }
             break;
         case 'DELETE':
             $request = $this->sanitizeInput($_GET);
@@ -131,34 +242,83 @@ protected function parseRequest() {
             $request = false;
     }
 
+    // Always return an array (never false)
+    if ($request === false) {
+        $request = [];
+    }
+
     return $request;
 }
- public function response(){
-        $request = $this->parseRequest();
-        //THE RESPONSE
-       if (!$request){
-            $execute=["status"=>418,"code"=>'M01'];
-            $execute['success']=false;
-       }elseif (empty($this->resource)){
-            $execute['status']=200;
-            $execute['success']=true;
-            $execute['data']=["Welcome to API!"];
-         } else {
-            $token=base64_encode('nikos:130177'); //read token from db bXlzZWNyZXR0b2tlbjE3
-            $executed= $this->executeAPI($request);
-           }
-            header("HTTP/2 $status $status_message");
-            header("Content-Type: application/json; charset=UTF-8");
-            $response = $executed;
-            $response['status_message'] = $this->status_message[$response['status']];
-            $response['method'] = $this->method;
-            $response['code'] =$executed['code'];
-            $response['resource'] =$this->resource;
-            $response['id'] =$this->id;
-            $response['request'] =$request;
-            $response['data']=$executed['data'];
-            return $response;
+
+public function response(){
+    $request = $this->parseRequest();
+
+    // Initialize default values
+    $status = 200;
+    $status_message = 'OK';
+    $executed = ['data' => [], 'code' => 'EMPTY'];
+
+    //THE RESPONSE
+    if (!$request){
+        $executed = ["status"=>418, "code"=>'M01', "success"=>false, "data"=>[]];
+        $status = 418;
+        $status_message = 'Bad Request';
+    } elseif (empty($this->resource)){
+        $executed = ["status"=>200, "success"=>true, "data"=>["Welcome to API!"]];
+        $status = 200;
+        $status_message = 'OK';
+    } else {
+        $executed = $this->executeAPI($request);
+        // Extract status from executed result if exists
+        if (isset($executed['status'])) {
+            $status = $executed['status'];
+        }
+        $status_message = $this->status_message[$status] ?? 'OK';
     }
+
+    // Send headers
+    header("HTTP/2 $status $status_message");
+    header("Content-Type: application/json; charset=UTF-8");
+
+    // Build response array
+    $response = [
+        "status" => $status,
+        "success" => $executed['success'] ?? ($status === 200),
+        "code" => $executed['code'] ?? 'EXECUTED',
+        "data" => $executed['data'] ?? [],
+        "error" => $executed['error'] ?? null,
+        "status_message" => $status_message,
+        "method" => $this->method,
+        "resource" => $this->resource,
+        "id" => $this->id,
+        "request" => $request
+    ];
+
+    return $response;
+}
+
+protected function exportThis(): array {
+    $reflection = new \ReflectionClass($this);
+    $props = $reflection->getProperties();
+
+    $result = [];
+    foreach ($props as $prop) {
+        $prop->setAccessible(true);
+        $name = $prop->getName();
+        try {
+            $result[$name] = $prop->getValue($this);
+        } catch (\Throwable $e) {
+            $result[$name] = '**ERROR**: ' . $e->getMessage();
+        }
+    }
+
+    $result['_class'] = $reflection->getName();
+    $result['_methods'] = array_map(fn($m) => $m->name, $reflection->getMethods(\ReflectionMethod::IS_PUBLIC));
+
+    return $result;
+}
+
+
 /**
 LOCAL METHOD - GET THE EXPECTED TYPEOF
             if (method_exists($this, $this->id)) {
@@ -176,27 +336,40 @@ LOCAL METHOD - GET THE EXPECTED TYPEOF
             }
  */
 protected function executeLocalMethod($request): array {
-        // Use reflection to get method signature
-        $reflection = new ReflectionMethod($this, $this->id);
+    if ($this->id) {
+        $reflection = new \ReflectionMethod($this, $this->id);
         $parameters = $reflection->getParameters();
 
-        // Determine how to pass arguments based on method signature
-        if ($this->method === 'POST' && count($parameters) == 1 && $parameters[0]->getType() && $parameters[0]->getType()->getName() === 'array') {
-            // If method expects a single array parameter
+        if ($this->method === 'GET' && count($parameters) === 0) {
+            $execute = $this->{$this->id}();
+        } elseif ($this->method === 'POST' && count($parameters) === 1 && $parameters[0]->getType()?->getName() === 'array') {
             $execute = $this->{$this->id}($request);
         } else {
-            // Otherwise, pass the request as a single argument
             $execute = $this->{$this->id}($request);
         }
+    } else {
+        $execute = $this->exportThis();
+    }
 
-        return [
-            "status" => 200,
-            "success" => true,
-            "code" => 'EXECUTED',
-            "data" => $execute,
-            "error" => $execute['error'] ?? null
+    // Defensive normalization — if $execute is null or non-array, wrap it properly
+    if (!is_array($execute)) {
+        $execute = [
+            'result' => $execute,
+            'error' => null,
+            'status' => 500,
+            'code' => 'LOCAL_ERROR'
         ];
+    }
+
+    return [
+        "status" => 200,
+        "success" => true,
+        "code" => 'EXECUTED',
+        "data" => $execute,
+        "error" => $execute['error'] ?? null,
+    ];
 }
+
 
 /**
  Plan Actionplan Action
@@ -229,6 +402,7 @@ protected function executeBinMethod($request): array {
 
 protected function executeMariaMethod($request): array {
   $response=[];
+
             if($this->method=='POST'){
                 $database = $this->db;
                 if ($database && method_exists($database,$this->id)) {  //id is the method of the class
@@ -243,6 +417,7 @@ protected function executeMariaMethod($request): array {
                 } else {
                   $response =["status"=>419,"success"=>false,"code"=>'M2',"error"=>""];
                  }
+
              }elseif($this->method=='GET'){
 
                 $database = $this->db;
@@ -254,10 +429,15 @@ protected function executeMariaMethod($request): array {
                                 unset($params['action']);
                      //                       error_log(print_r($params, true));
                                 $execute=$database->{$this->id}(...array_values($params));
-                                if(!$execute){
-                                $response =["status"=>400,"success"=>false,"code"=>'M01','error'=>"Method not executed"];
+                               if ($execute === false) {
+                                   $response = [
+                                        "status" => 500,
+                                        "success" => false,
+                                        "code" => "M01",
+                                        "error" => "Database execution failed"
+                                    ];
                                 }else{
-                                $response =["status"=>200,"success"=>true,"code"=>'M1',"data"=> $execute,'error'=>""];
+                                $response =["status"=>200,"success"=>true,"code"=>'M1', "data" => $execute ?? [],'error'=>""];
                                 }
                             } else {
                                 $methods=[];
@@ -278,6 +458,7 @@ protected function executeMariaMethod($request): array {
             'maria' => 'executeMariaMethod',
             'run' => 'executeActionMethod',
             'local' => 'executeLocalMethod',
+            'trait' => 'executeTraitMethod',
             'bin' => 'executeBinMethod'
         ];
 

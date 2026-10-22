@@ -22,6 +22,7 @@ if [ -d "$LETSENCRYPT_LIVE_DIR/$DOMAIN" ]; then
         echo "🔒 Certificate expiration date: $EXPIRY_DATE"
     else
         echo "❌ Certificate file (fullchain.pem) not found for $DOMAIN."
+        certbot certonly --nginx -d "$DOMAIN"
     fi
 else
     echo "❌ No SSL certificate found for $DOMAIN in $LETSENCRYPT_LIVE_DIR."

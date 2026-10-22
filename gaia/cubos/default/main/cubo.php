@@ -1,5 +1,5 @@
 <div>
-    <h3>Update Cubo Images</h3>
+    <label>Update Cubo Images</label>
     <?php
     echo $this->buildTable(["key"=>"gen_admin.cubo","cols"=>["id","img","name","mains","description","meta"]]);
     if($this->id!=''){

@@ -5,7 +5,7 @@
         </div>
     </div>
     <a href="/user?id=<?=$this->me?>" class="logo_image_id">
-        <img src="<?=isset($_COOKIE['GSIMG']) ? MEDIA_URL.$_COOKIE['GSIMG'] : '/asset/img/user.png'?>" width="48" height="48" style="margin-top: 3px;border-radius:50px">
+        <img src="<?=isset($_COOKIE['GENIMG']) ? MEDIA_URL.$_COOKIE['GENIMG'] : '/asset/img/user.png'?>" width="48" height="48" style="margin-top: 3px;border-radius:50px">
     </a>
 
     <!-- Static items -->
@@ -30,11 +30,13 @@
     <!-- Dynamic Menu Items -->
     <?php
     $pages = $this->getMenu();
+
     foreach ($pages as $pagegrpname => $vals):
+        $link = "/admin/$pagegrpname";
         $targ = $pagegrpname == $this->page ? 'style="color:darkred;"' : '';
     ?>
         <li class="menu-item" <?=$targ?>>
-            <a class="menu-text" style="border:none;background:transparent;" onclick="location.href='/<?=$pagegrpname?>'" id="<?=$pagegrpname?>_page">
+            <a class="menu-text" style="border:none;background:transparent;" onclick="location.href='<?=$link?>'" id="<?=$pagegrpname?>_page">
                 <span style="margin:0 4px 0 0" class="glyphicon glyphicon-<?=$vals['icon']?>" aria-hidden="true"></span>
                 <?=$vals['title']?>
             </a>
@@ -44,7 +46,7 @@
                     <?php foreach ($vals['subs'] as $subvals):
                         $view= $subvals['view'];
                         if($subvals['view']!='public'){
-                        $sublinkhref = $subvals['mode'] == "iframe" ? "/$mainpage?mode=iframe&page=$pagegrpname&view={$view}" : "/$view";
+                        $sublinkhref = $subvals['mode'] == "iframe" ? "/$mainpage?mode=iframe&page=$pagegrpname&view={$view}" : ($_SERVER['SYSTEM']=="admin" ? "/admin/$view" : "/$view");
 
                     ?>
                         <li>

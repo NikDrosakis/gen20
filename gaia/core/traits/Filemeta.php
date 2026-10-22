@@ -43,6 +43,106 @@ CREATE TABLE `filemetacore` (
 namespace Core\Traits;
 
 trait Filemeta {
+
+
+protected function getFileContent($params) {
+    $path = $params['path'] ?? null;
+
+    if (!$path) {
+        return ['success' => false, 'error' => 'Path is required'];
+    }
+
+    $allowedPaths = ['/etc/nginx/conf.d/', '/etc/nginx/sites-available/', '/var/www/gs/public/', '/etc/bind/zones/', '/var/www/gs/setup/' ];
+    $isAllowed = false;
+    foreach ($allowedPaths as $allowedPath) {
+        if (strpos($path, $allowedPath) === 0) {
+            $isAllowed = true;
+            break;
+        }
+    }
+
+    if (!$isAllowed) {
+        return ['success' => false, 'error' => 'Access denied. Path not allowed.'];
+    }
+
+    // ✅ Έλεγχος αν το αρχείο υπάρχει
+    if (!file_exists($path)) {
+        return ['success' => false, 'error' => 'File does not exist: ' . $path];
+    }
+
+    // ✅ Έλεγχος αν είναι αναγνώσιμο
+    if (!is_readable($path)) {
+        return ['success' => false, 'error' => 'File is not readable: ' . $path];
+    }
+
+    // ✅ Διάβασε το περιεχόμενο
+    $content = file_get_contents($path);
+    if ($content === false) {
+        return ['success' => false, 'error' => 'Failed to read file'];
+    }
+
+    return [
+        'success' => true,
+        'data' => $content,
+        'path' => $path,
+        'size' => strlen($content)
+    ];
+}
+
+/**
+ * Save file content
+ * POST /api/v1/local/saveFileContent
+ * Body: { "path": "/path/to/file", "content": "file content" }
+ */
+protected function saveFileContent($params) {
+    $path = $params['path'] ?? null;
+    $content = $params['content'] ?? null;
+
+    if (!$path) {
+        return ['success' => false, 'error' => 'Path is required'];
+    }
+
+    if ($content === null) {
+        return ['success' => false, 'error' => 'Content is required'];
+    }
+
+    // ✅ Έλεγχος ασφαλείας
+    $allowedPaths = ['/etc/nginx/conf.d/', '/etc/nginx/sites-available/'];
+    $isAllowed = false;
+    foreach ($allowedPaths as $allowedPath) {
+        if (strpos($path, $allowedPath) === 0) {
+            $isAllowed = true;
+            break;
+        }
+    }
+
+    if (!$isAllowed) {
+        return ['success' => false, 'error' => 'Access denied. Path not allowed.'];
+    }
+
+    // ✅ Έλεγχος αν το αρχείο υπάρχει
+    if (!file_exists($path)) {
+        return ['success' => false, 'error' => 'File does not exist: ' . $path];
+    }
+
+    // ✅ Έλεγχος αν είναι εγγράψιμο
+    if (!is_writable($path)) {
+        return ['success' => false, 'error' => 'File is not writable: ' . $path];
+    }
+
+    // ✅ Αποθήκευση περιεχομένου
+    $result = file_put_contents($path, $content);
+    if ($result === false) {
+        return ['success' => false, 'error' => 'Failed to write file'];
+    }
+
+    return [
+        'success' => true,
+        'message' => 'File saved successfully',
+        'path' => $path,
+        'bytes_written' => $result
+    ];
+}
     // @filemetacore.description Extract dependent classes (from `use` statements)
     protected function extractDependencies($content) {
         preg_match_all('/^use\s+(.+);$/m', $content, $matches);

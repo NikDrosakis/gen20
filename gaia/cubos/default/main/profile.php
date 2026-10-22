@@ -441,8 +441,8 @@
     <div class="user-info">
       <h1>Nik Drosakis</h1>
       <p>
-<?=!isset($_COOKIE['GSGRP']) ? '' : $this->usergrps[$_COOKIE['GSGRP']]?>
- - <?=isset($_COOKIE['GSNAME']) ?  $_COOKIE['GSNAME'] : ''?>
+<?=!isset($_COOKIE['GENGRP']) ? '' : $this->usergrps[$_COOKIE['GENGRP']]?>
+ - <?=isset($_COOKIE['GENNAME']) ?  $_COOKIE['GENNAME'] : ''?>
       </p>
       <p>Joined: 11 years, 11 months</p>
     </div>

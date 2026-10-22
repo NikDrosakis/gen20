@@ -82,6 +82,44 @@ protected function loadDynamicActions($libraries) {
         return $html;
     }
 
+protected function renderHeadArray() {
+    $head = [];
+
+    // 1. Meta
+    $meta = $this->buildMeta(); // Πρέπει να είναι structured ή να το σπάσεις
+    // Αν επιστρέφει HTML, κάνε parsing ή κάντο πιο σωστά structured εξ αρχής
+
+    // 2. Title
+    $head[] = ["type" => "title", "content" => "Admin GEN20"];
+
+    // 3. Favicon & Styles
+    $head[] = ["type" => "link", "attrs" => ["rel" => "icon", "href" => "/asset/img/icon.png"]];
+    $head[] = ["type" => "link", "attrs" => ["rel" => "stylesheet", "href" => "/asset/css/core.css"]];
+
+    // 4. Dynamic scripts from PHP
+    $scripts = $this->loadHeadSetup();
+    if (!empty($scripts)) {
+        foreach ($scripts as $scriptTag) {
+            // Κάνε extract src ή εσωτερικό κώδικα αν χρειάζεται
+            if (preg_match('/<script\s+.*?src=["\'](.+?)["\'].*?><\/script>/', $scriptTag, $m)) {
+                $head[] = ["type" => "script", "attrs" => ["src" => $m[1]]];
+            }
+        }
+    }
+
+    // 5. External CDNs
+    $cdnScripts = [
+        "https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.3/Sortable.min.js",
+        "https://apis.google.com/js/api.js",
+        "https://cdn.jsdelivr.net/npm/sweetalert2@11",
+        "https://cdn.jsdelivr.net/npm/chart.js"
+    ];
+    foreach ($cdnScripts as $src) {
+        $head[] = ["type" => "script", "attrs" => ["src" => $src]];
+    }
+
+    return $head;
+}
 
 protected function renderHead() {
     ?>

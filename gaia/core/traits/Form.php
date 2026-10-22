@@ -115,7 +115,7 @@ $columns = $this->db->tableMeta($table,$cols);
                 $htmlType = 'select';
                 $createList= explode('-',$colComment)[1];
                 if($list!=null){
-                $list=$this->G[$createList];
+                $list=$this->$createList;
                 }
 
                }elseif (strpos($colComment, 'exe') !== false) {
@@ -489,21 +489,26 @@ THAT'S ONLY OF THE TOP OF THE TABLES outside loop
  @fm.description filters on top of the table from selectjoin or selectG
  */
 protected function formFilters($colData,$row=[],$table='') {
-        $rowtable = str_replace('selectjoin-', '', $colData['comment']);
-        $tableName = explode('.', $rowtable)[1];
-        $colName = explode('.', $rowtable)[2];
-        //page should not be included like that
-        $link=$this->page==$tableName ? $tableName.'?id=' . $row["id"] : $this->page.'/'.$tableName.'?id=';
-        //link goto page
-        $tableHtml .= '<a href="/' . $link . '"><span class="glyphicon glyphicon-link"></span></a> ';
-        //drop down options
-        $options = $this->getSelectOptions($colData['comment'], $row[$colName]);
-        //drop down UI,
-        if($options){
-        $fieldName=explode('-',$colData['comment'])[1];
-        return $this->renderSelectField($fieldName, "", $options,__FUNCTION__);
-        }
-        return '';
+$rowtable = str_replace('selectjoin-', '', $colData['comment']);
+$parts = explode('.', $rowtable);
+if (count($parts) < 3) return ''; // Fail-safe
+
+$tableName = $parts[1] ?? '';
+$colName = $parts[2] ?? '';
+
+if (!$colName || !isset($row[$colName])) return ''; // Skip if missing
+
+$link = $this->page == $tableName ? $tableName . '?id=' . $row["id"] : $this->page . '/' . $tableName . '?id=';
+$tableHtml = '<a href="/' . $link . '"><span class="glyphicon glyphicon-link"></span></a> ';
+
+$options = $this->getSelectOptions($colData['comment'], $row[$colName]);
+
+if ($options) {
+    $fieldName = explode('-', $colData['comment'])[1] ?? '';
+    return $this->renderSelectField($fieldName, "", $options, __FUNCTION__);
+}
+
+return '';
 }
 
 // @fm.description form search bar
@@ -591,7 +596,8 @@ return $html;
   works on tables in form           gen_admin.systems (with dot)
   and for files in this in format   developer/schema  (with slash)
  */
-protected function renderFormHead($table){
+protected function renderFormHead($tableName){
+  $table=is_array($tableName) ? $tableName['key'] : $tableName;
 if (strpos($table, "/") !== false) {
     $parts = explode('/', $table);
     $subpage = $parts[1];
@@ -602,7 +608,7 @@ if (strpos($table, "/") !== false) {
    $page =$this->subparent[$subpage];
 }
  #gs.form.handleNewRow(event, \'' . $table . '\', {0: {row: \'name\', placeholder: \'Give a Name\'}, 1: {row: \'created\', type: \'hidden\', value: gs.date(\'Y-m-d H:i:s\')}})
-return '<h3>
+return '<h4>
             <input id="cms_panel" class="red indicator">
            <button class="bare" onclick="openPanel(\'common/doc.php\')"><span class="glyphicon glyphicon-info-sign bare"></span></button>
            <button class="bare" onclick="openPanel(\'common/guide.php\')"><span class="glyphicon glyphicon-question-sign"></span></button>
@@ -619,7 +625,7 @@ return '<h3>
                 <input class="gs-input" name="name" placeholder="Give a Name" id="' . $subpage . '_name" type="text" value=""></div>
                     <button class="button save-button" name="' . $table . '" onclick="gs.form.insertNewRow(event)">DO</button>
                 </div></div>
-  </h3>';
+  </h4>';
 }
 
 protected function buildFormQuery($tableName): array{
@@ -778,8 +784,8 @@ protected function renderFileFormList(array $list, string $title = "File List"):
 
 // @fm.features Helper function to render select dropdowns
 // @fm.features Helper to render select dropdowns
-#$this->getMariaTree(),$domain,'getMariaTree',"listMariaTables","listMariaTables"
-#$this->drop($this->db->columns($domain),'','listMariaTables',"buildTable")
+//$this->getMariaTree(),$domain,'getMariaTree',"listMariaTables","listMariaTables"
+//$this->drop($this->db->columns($domain),'','listMariaTables',"buildTable")
 protected function renderSelectField($fieldName, $selectedValue, array $options=[], string $func=''): string {
         if($func=='formFilters'){
         $select = "<select class='gs-select sync-$fieldName' data-table='{$this->table}' onchange=\"this.dataset.filter = this.value; gs.form.updateTable(this, 'buildCoreTable')\" name='$fieldName' id='{$fieldName}{$this->formid}'><option value=''>Select</option>";
@@ -829,7 +835,7 @@ protected function getSelectOptions(string $comment,$value): array|false {
     if (strpos($comment, 'selectG') !== false) {
         // @fm.features Handle logic to fetch dynamic options from a table or predefined array
         $list=str_replace('selectG-','',$comment);
-        return $this->G[$list]; // @fm.features Example static options
+        return $this->$list; // @fm.features Example static options
     }elseif(strpos($comment, 'selectjoin') !== false){
         $dbqueryrow=explode('.',str_replace('selectjoin-','',$comment));
         $table=$dbqueryrow[0].'.'.$dbqueryrow[1];

@@ -1,0 +1,331 @@
+/* /pages/Reels.css */
+
+.reels-container {
+    min-height: 100vh;
+    background: var(--bg-color);
+    overflow-x: hidden;
+}
+
+/* Header */
+.reels-header {
+    text-align: center;
+    padding: 40px 20px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.reels-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.reels-header p {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+/* Reels Feed */
+.reels-feed {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 0;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Reel Wrapper */
+.reel-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #000;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.reel-container {
+    position: relative;
+    width: 100%;
+    padding-bottom: 177.78%; /* 9:16 Aspect Ratio */
+}
+
+/* Video Container */
+.reel-video-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.reel-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Play Overlay */
+.play-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s ease;
+}
+
+.play-icon {
+    font-size: 3rem;
+    color: white;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
+}
+
+/* Volume Control */
+.volume-control {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: white;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    z-index: 10;
+}
+
+.volume-control:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+/* Side Actions */
+.reel-actions {
+    position: absolute;
+    bottom: 100px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 10;
+}
+
+.action-btn {
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: white;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+}
+
+.action-btn span {
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.action-btn:hover {
+    background: rgba(0, 0, 0, 0.7);
+    transform: scale(1.05);
+}
+
+.like-btn.liked {
+    color: #ff3040;
+}
+
+.like-btn.liked svg {
+    animation: heartBeat 0.3s ease;
+}
+
+@keyframes heartBeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+}
+
+/* Info Section */
+.reel-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+    color: white;
+    z-index: 10;
+}
+
+.reel-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.user-role {
+    font-size: 0.7rem;
+    opacity: 0.8;
+}
+
+.reel-description {
+    margin-bottom: 10px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.reel-music {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    opacity: 0.8;
+    margin-bottom: 5px;
+}
+
+.reel-timestamp {
+    font-size: 0.7rem;
+    opacity: 0.6;
+}
+
+/* Loading State */
+.reels-loading {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+.reels-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Footer */
+.reels-footer {
+    text-align: center;
+    padding: 40px 20px;
+    border-top: 1px solid var(--border-color);
+    margin-top: 20px;
+}
+
+.instagram-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(45deg, #f09433, #d62976, #962fbf);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: transform 0.3s ease;
+}
+
+.instagram-link:hover {
+    transform: scale(1.05);
+}
+
+
+/* Responsive */
+@media (max-width: 768px) {
+    .reels-header h1 {
+        font-size: 1.8rem;
+    }
+
+    .reel-actions {
+        bottom: 80px;
+        right: 8px;
+    }
+
+    .action-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 1rem;
+    }
+
+    .action-btn span {
+        font-size: 0.6rem;
+    }
+
+    .reel-info {
+        padding: 15px;
+    }
+
+    .user-avatar {
+        width: 35px;
+        height: 35px;
+    }
+
+    .user-name {
+        font-size: 0.8rem;
+    }
+
+    .reel-description {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .reel-actions {
+        bottom: 70px;
+        right: 6px;
+        gap: 12px;
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+    }
+}

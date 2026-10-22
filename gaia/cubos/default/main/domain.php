@@ -63,27 +63,23 @@
 
 </style>
 
-<h3>Custom Domain</h3>
+<?php echo $this->buildTable(["key"=>"gen_admin.domain"]);?>
+
+<?php echo $this->renderFileFormList($this->getPublicFilesystem(),"File System"); ?>
+
+<?php echo $this->renderFileFormList($this->getActiveNginx(),"Nginx"); ?>
 
 
-<h3>Domains installed on this system</h3>
-
-
-<?php //echo $this->renderFileFormList($this->getPublicFilesystem(),"File System"); ?>
-
-<?php //echo $this->renderFileFormList($this->getActiveNginx(),"Nginx"); ?>
-
-
-<?php //xecho($this->getSSLs())?>
+<?php xecho($this->getSSLs())?>
 <?php
 echo "Current User: " . get_current_user() . "\n";
 echo "User ID: " . posix_getuid() . "\n";
-//echo $this->renderFileFormList($this->getZones(),"Get Zones")
+echo $this->renderFileFormList($this->getZones(),"Get Zones")
 ?>
 
 
 <?php //echo $this->synchronizeDomains(); ?>
-<?php //echo $this->renderFileFormList($this->getSSLs(),"GET SSLS")?>
+<?php echo $this->renderFileFormList($this->getSSLs(),"GET SSLS")?>
 
 <h3>Integrate existing domain</h3>
 
