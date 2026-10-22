@@ -1,0 +1,556 @@
+/* /pages/Radio.css */
+
+.radio-page {
+    min-height: 100vh;
+}
+
+/* Hero Section */
+.radio-hero {
+    background: linear-gradient(135deg, #000000 0%, #ff0056 100%);
+    color: white;
+    padding: 80px 20px;
+    text-align: center;
+}
+
+[data-theme="dark"] .radio-hero {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.radio-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+.radio-logo h1 {
+    font-size: 2.5rem;
+    margin: 0;
+}
+
+.hero-tagline {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    opacity: 0.95;
+}
+
+.hero-description {
+    max-width: 800px;
+    margin: 0 auto;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+/* Player Section */
+.player-section {
+    padding: 40px 20px;
+    background: #f8f9fa;
+}
+
+[data-theme="dark"] .player-section {
+    background: #0f0f1a;
+}
+
+.player-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .player-container {
+    background: #2d2d44;
+}
+
+.player-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.live-badge {
+    background: #dc3545;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.live-dot {
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.player-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.play-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #667eea;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.play-btn:hover {
+    transform: scale(1.05);
+    background: #5a67d8;
+}
+
+.player-info {
+    flex: 1;
+    min-width: 200px;
+}
+
+.now-playing {
+    margin-bottom: 10px;
+}
+
+.label {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.track {
+    font-weight: bold;
+    color: #333;
+    margin-left: 8px;
+}
+
+[data-theme="dark"] .track {
+    color: #f0f0f0;
+}
+
+.progress-bar {
+    height: 4px;
+    background: #e0e0e0;
+    border-radius: 2px;
+    cursor: pointer;
+    margin: 10px 0;
+}
+
+.progress {
+    height: 100%;
+    background: #667eea;
+    border-radius: 2px;
+    transition: width 0.1s linear;
+}
+
+.time-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.volume-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #667eea;
+}
+
+.volume-slider {
+    width: 80px;
+    cursor: pointer;
+}
+
+/* Schedule Section */
+.schedule-section {
+    padding: 60px 20px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 40px;
+    font-size: 1.8rem;
+    color: #667eea;
+}
+
+.section-header h2 {
+    margin: 0;
+    color: #333;
+}
+
+[data-theme="dark"] .section-header h2 {
+    color: #f0f0f0;
+}
+
+.schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.schedule-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    background: white;
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .schedule-card {
+    background: #2d2d44;
+}
+
+.schedule-card:hover {
+    transform: translateY(-3px);
+}
+
+.schedule-time {
+    font-weight: bold;
+    color: #667eea;
+    font-size: 1.1rem;
+    min-width: 120px;
+}
+
+.schedule-info h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.1rem;
+}
+
+.schedule-host {
+    font-size: 0.85rem;
+    color: #888;
+    margin: 5px 0;
+}
+
+.schedule-genre {
+    display: inline-block;
+    background: #667eea20;
+    color: #667eea;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+}
+
+/* Podcast Section */
+.podcast-section {
+    padding: 60px 20px;
+    background: #f8f9fa;
+}
+
+[data-theme="dark"] .podcast-section {
+    background: #0f0f1a;
+}
+
+.podcast-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.podcast-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+[data-theme="dark"] .podcast-card {
+    background: #2d2d44;
+}
+
+.podcast-card:hover {
+    transform: translateY(-5px);
+}
+
+.podcast-image {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.podcast-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.podcast-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.podcast-card:hover .podcast-overlay {
+    opacity: 1;
+}
+
+.listen-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.podcast-info {
+    padding: 20px;
+}
+
+.podcast-info h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.1rem;
+}
+
+.podcast-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 15px;
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.podcast-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.podcast-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.action-btn {
+    background: #e4e6eb;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: background 0.2s ease;
+}
+
+[data-theme="dark"] .action-btn {
+    background: #1a1a2e;
+    color: #ccc;
+}
+
+.action-btn:hover {
+    background: #d0d3d9;
+}
+
+/* Playlist Section */
+.playlist-section {
+    padding: 60px 20px;
+}
+
+.playlist {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .playlist {
+    background: #2d2d44;
+}
+
+.playlist-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    transition: background 0.2s ease;
+}
+
+[data-theme="dark"] .playlist-item {
+    border-bottom-color: #1a1a2e;
+}
+
+.playlist-item:hover {
+    background: #f8f9fa;
+}
+
+[data-theme="dark"] .playlist-item:hover {
+    background: #1a1a2e;
+}
+
+.playlist-number {
+    font-weight: bold;
+    color: #667eea;
+    width: 30px;
+}
+
+.playlist-info {
+    flex: 1;
+}
+
+.playlist-info h4 {
+    margin: 0 0 3px 0;
+    font-size: 0.95rem;
+}
+
+.playlist-info p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.playlist-duration {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.playlist-play {
+    background: #667eea;
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.playlist-play:hover {
+    transform: scale(1.05);
+}
+
+/* CTA Section */
+.radio-cta {
+    padding: 80px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    text-align: center;
+    color: white;
+}
+
+[data-theme="dark"] .radio-cta {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.cta-content h2 {
+    font-size: 2rem;
+    margin-bottom: 15px;
+}
+
+.cta-content p {
+    max-width: 600px;
+    margin: 0 auto 30px;
+    font-size: 1.1rem;
+    opacity: 0.95;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.cta-buttons .btn-primary {
+    background: white;
+    color: #667eea;
+}
+
+.cta-buttons .btn-secondary {
+    background: transparent;
+    border: 2px solid white;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .radio-logo {
+        font-size: 2rem;
+    }
+
+    .radio-logo h1 {
+        font-size: 1.8rem;
+    }
+
+    .player-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .play-btn {
+        align-self: center;
+    }
+
+    .volume-control {
+        justify-content: center;
+    }
+
+    .schedule-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .schedule-time {
+        min-width: auto;
+    }
+
+    .podcast-meta {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .cta-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .playlist-item {
+        flex-wrap: wrap;
+    }
+
+    .playlist-play {
+        margin-left: auto;
+    }
+}

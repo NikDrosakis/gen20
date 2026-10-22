@@ -1,0 +1,355 @@
+/* pages/Arxeio.css */
+
+/* ===== Base Container ===== */
+.arxeio-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+/* ===== Header ===== */
+.arxeio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.arxeio-header h1 {
+    margin: 0;
+}
+
+/* ===== Controls ===== */
+.arxeio-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.year-select {
+    padding: 10px 16px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    min-width: 120px;
+    transition: all 0.2s;
+}
+
+.year-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.pdf-button {
+    padding: 10px 20px;
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pdf-button:hover:not(:disabled) {
+    background: #b91c1c;
+    transform: translateY(-1px);
+}
+
+.pdf-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ===== Stats ===== */
+.arxeio-stats {
+    background: var(--bg-secondary, #f8fafc);
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    color: var(--text-secondary, #475569);
+    border: 1px solid var(--border-color, #e2e8f0);
+}
+
+/* ===== Posts List ===== */
+.arxeio-posts {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.arxeio-post {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    background: var(--bg-secondary, #ffffff);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color, #e2e8f0);
+    transition: all 0.2s;
+}
+
+.arxeio-post:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+/* ===== Calendar ===== */
+.post-calendar {
+    flex-shrink: 0;
+    width: 56px;
+    background: var(--bg-secondary, #f8fafc);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-color, #e2e8f0);
+    text-align: center;
+}
+
+.calendar-day {
+    font-size: 22px;
+    font-weight: 700;
+    padding: 6px 0 2px;
+    line-height: 1.2;
+}
+
+.calendar-month {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 2px 0 4px;
+    background: #dc2626;
+    color: white;
+    letter-spacing: 0.5px;
+}
+
+.calendar-year {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 0 5px;
+    background: var(--bg-tertiary, #f1f5f9);
+    color: var(--text-secondary, #64748b);
+    border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+/* ===== Post Content ===== */
+.post-content {
+    flex: 1;
+}
+
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.post-header h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.post-date {
+    font-size: 13px;
+    color: var(--text-secondary, #64748b);
+}
+
+.post-excerpt {
+    color: var(--text-secondary, #475569);
+    margin: 8px 0 12px;
+    line-height: 1.6;
+}
+
+.post-link {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.post-link:hover {
+    text-decoration: underline;
+}
+
+.no-posts {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary, #64748b);
+}
+
+.loading-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary, #64748b);
+}
+
+/* ======================================== */
+/* ===== DARK MODE ===== */
+/* ======================================== */
+body.dark-mode .arxeio-post {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+body.dark-mode .arxeio-post:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .year-select {
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+body.dark-mode .year-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+body.dark-mode .arxeio-stats {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+body.dark-mode .post-header h3 {
+    color: #f1f5f9;
+}
+
+body.dark-mode .post-excerpt {
+    color: #94a3b8;
+}
+
+body.dark-mode .post-date {
+    color: #94a3b8;
+}
+
+body.dark-mode .calendar-day {
+    color: #f1f5f9;
+}
+
+body.dark-mode .calendar-year {
+    background: #0f172a;
+    color: #94a3b8;
+    border-top-color: #334155;
+}
+
+body.dark-mode .post-calendar {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+body.dark-mode .no-posts,
+body.dark-mode .loading-state {
+    color: #94a3b8;
+}
+
+/* ======================================== */
+/* ===== PDF CONTENT (Hidden) ===== */
+/* ======================================== */
+.pdf-content {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+    width: 100%;
+    background: white;
+    padding: 40px;
+    font-family: Arial, sans-serif;
+    z-index: -1;
+    opacity: 0;
+    pointer-events: none;
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* PDF specific styles for print */
+@media print {
+    .pdf-content {
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        z-index: auto !important;
+        display: block !important;
+        visibility: visible !important;
+        padding: 20px !important;
+    }
+
+    .arxeio-header,
+    .arxeio-controls,
+    .arxeio-stats,
+    .arxeio-posts,
+    .no-posts,
+    .loading-state {
+        display: none !important;
+    }
+
+    .pdf-content .pdf-post {
+        page-break-inside: avoid;
+        margin-bottom: 20px;
+    }
+}
+
+/* ======================================== */
+/* ===== RESPONSIVE ===== */
+/* ======================================== */
+@media (max-width: 768px) {
+    .arxeio-container {
+        padding: 20px 12px;
+    }
+
+    .arxeio-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .arxeio-controls {
+        flex-direction: column;
+    }
+
+    .year-select,
+    .pdf-button {
+        width: 100%;
+    }
+
+    .arxeio-post {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16px;
+    }
+
+    .post-calendar {
+        width: 48px;
+        align-self: flex-start;
+    }
+
+    .calendar-day {
+        font-size: 18px;
+        padding: 4px 0 0;
+    }
+
+    .calendar-month {
+        font-size: 9px;
+        padding: 2px 0 3px;
+    }
+
+    .calendar-year {
+        font-size: 8px;
+        padding: 2px 0 4px;
+    }
+
+    .post-header h3 {
+        font-size: 16px;
+    }
+}
