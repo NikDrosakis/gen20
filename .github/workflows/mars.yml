@@ -1,28 +1,38 @@
-name: Mars
+name: Mars C++ CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+    paths:
+      - "mars/**"
+      - ".github/workflows/mars.yml"
   pull_request:
-    branches:
-      - main
+    paths:
+      - "mars/**"
+      - ".github/workflows/mars.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mars-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-    runs-on: debian-latest  # Change this to 'debian-latest'
-
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-
-      - name: Build Docker image
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install build dependencies
         run: |
-          docker build -t my-cpp-project .
-
-      - name: Run Docker container
-        run: |
-          docker run my-cpp-project plan
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential libmariadb-dev libmariadbcpp-dev \
+            libyaml-cpp-dev libhiredis-dev libssl-dev \
+            libboost-all-dev libwebsocketpp-dev nlohmann-json3-dev
+      - name: Clean build artifacts
+        run: make -C mars clean
+      - name: Build Mars
+        run: make -C mars
