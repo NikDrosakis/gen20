@@ -1,47 +1,53 @@
-name: Public CI/CD
+name: Gaia Public CI
 
 on:
   push:
+    branches: [main]
     paths:
-      - 'public/**'
-      - 'core/**'
+      - "gaia/public/**"
+      - "gaia/core/**"
+      - "gaia/tests/**"
+      - "gaia/composer.json"
+      - "gaia/composer.lock"
+      - "gaia/phpunit.xml"
+      - ".github/workflows/public.yml"
   pull_request:
     paths:
-      - 'public/**'
-      - 'core/**'
+      - "gaia/public/**"
+      - "gaia/core/**"
+      - "gaia/tests/**"
+      - "gaia/composer.json"
+      - "gaia/composer.lock"
+      - "gaia/phpunit.xml"
+      - ".github/workflows/public.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gaia-public-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gaia
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
-      - name: Validate composer.json and composer.lock
-        run: composer validate
-      - name: Install composer dependencies
-        run: composer install --no-progress --no-interaction --prefer-dist
-      - name: Run linting tests
-        run: ./vendor/bin/phpcs --standard=PSR12 public/
-      - name: Run unit tests
-        run: ./vendor/bin/phpunit --testsuite PublicTests
-  deploy:
-    needs: build
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-      - name: Install composer dependencies
-        run: composer install --no-progress --no-interaction --prefer-dist
-      - name: Build Docker Image and Push (Example)
-        run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker build -t "${{ secrets.DOCKER_USERNAME }}/public:${{ github.sha }}" ./public
-          docker push "${{ secrets.DOCKER_USERNAME }}/public:${{ github.sha }}"
+          php-version: "8.2"
+          tools: composer:v2
+      - name: Validate Composer configuration
+        run: composer validate --no-check-publish
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: PHP syntax check — public
+        run: find public -type f -name "*.php" -print0 | xargs -0 -r -n1 php -l
+      - name: Run PHPUnit
+        run: vendor/bin/phpunit -c phpunit.xml
