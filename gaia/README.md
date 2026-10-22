@@ -148,3 +148,128 @@ Run tests in a development environment with non-production configuration. A succ
 ---
 
 **Gaia is a core Gen20 subsystem.** Keep this README aligned with the actual entry points and runtime configuration as the architecture evolves.
+
+## 11. Trait inventory — `core/traits/`
+
+This section is a source-derived map of the trait files found under `core/traits/` on `main`. Descriptions summarize names, docblocks, and method names; they are not a claim that every method is complete, safe to run, or active in production. A trait can call other traits or depend on database tables, environment values, or external services.
+
+### 11.1 Rendering, metadata and UI
+
+| Trait | Main responsibility | Representative methods |
+|---|---|---|
+| `Head` | Builds page-head content and loads dynamic head/action configuration. | `renderHead`, `renderPublicHead`, `loadHeadSetup`, `loadDynamicActions` |
+| `Meta` | Reads and renders page/subpage metadata. | `getPageMetatags`, `renderMetadata` |
+| `Template` | Lists, reads, archives and renders templates using supported template engines. | `listTemplates`, `renderTemplate`, `renderTemplateTwig`, `renderTemplatePug` |
+| `Form` | Shared form/table rendering, filters, search, pagination, fields and cron editor UI. | `buildForm`, `buildTable`, `formSearch`, `formPagination`, `renderFormField` |
+| `Tree` | Database schema/table metadata and schema-standard comparison/creation helpers. | `getBranches`, `compareWithStandard`, `buildSchema`, `createMaria` |
+| `Doc` | Method-oriented documentation and help/menu generation. | `addMethodDoc`, `menuDoc`, `buildDoc` |
+| `Bundle` | Bundles PHP, CSS and JavaScript assets and runs bundling steps. | `bundlePHPFile`, `outputBundledCSS`, `outputBundledJS`, `runBundler` |
+| `Manifest` | Reads/writes YAML manifests associated with actions, action groups and Cubos; syncs manifest data with DB. | `manifestEditor`, `yamlParseFile`, `yamlUpdateDB`, `manifestFromDB` |
+| `CuboYaml` | Creates Cubo definitions from YAML input. | `createYaml2Cubo` |
+| `CuboPublic` | Builds public domain UI from page/page-group/Cubo data. | `renderCP`, `pageCP`, `getpagecubo`, `getLinks` |
+| `CuboAdmin` | Manages admin Cubos and views, including maintenance and backup operations. | `addCA`, `addViewCA`, `dupViewCA`, `maintainCA`, `backupCA` |
+| `CuboAction` | Loads Cubo action configuration, executes actions and can send WebSocket notifications. | `loadConfig`, `executeCuboAction`, `sendWsNotification` |
+| `CuboLog` | Retrieves Cubo and system log data. | `getCuboLogs`, `getSystemLogsBuffer` |
+| `Filemeta` | Extracts metadata/dependencies from source files and supports file metadata operations. | `extractDependencies`, `extractPHP`, `extractJS`, `insertFile`, `runFilemeta` |
+| `PWA` | Provides a helper for syncing data to IndexedDB for offline/PWA use. | `syncToIndexedDB` |
+| `SEO` | Generates SEO data and feed/sitemap outputs. | `buildMeta`, `sitemap`, `atom`, `rss` |
+| `Lang` | Language/localisation administration and language-schema operations. | `buildNewLangUI`, `buildNewLang`, `dropLang` |
+| `Url` | Stores, updates and fetches URL records or external URL data. | `getUrl`, `fetchUrl`, `insertUrl`, `updateUrl`, `deleteUrl` |
+
+### 11.2 Actions, identity and integrations
+
+| Trait | Main responsibility | Representative methods |
+|---|---|---|
+| `Action` | Action execution/plans, status tracking, route parsing/building and resource dispatch. | `runAction`, `runPlan`, `processActions`, `executeAction`, `scanRoutes` |
+| `My` | User/session-oriented helpers, login/logout, role lookup and cookie handling. | `login`, `logout`, `getRoles`, `islogged`, `setCookies` |
+| `Share` | Sharing/publishing helpers for social platforms. | `shareTo`, `shareToFacebook`, `shareToTwitter`, `shareToInstagram`, `shareToTikTok` |
+| `WS` | WebSocket connection and message lifecycle helpers. | `connectToWebSocket`, `sendMessage`, `handleWebSocketMessage`, `disconnect` |
+| `Ermis` | Connects to the Ermis/WebSocket API and queries or tests available routes. | `runningErmis`, `getListErmis`, `testErmisRoutes`, `requestErmis` |
+| `Kronos` | Connects to the Kronos service, prepares requests and tests service routes. | `runningGPY`, `getListKronos`, `requestKronos`, `sendRequest` |
+| `GSolr` | Solr indexing, search, collection listing and document deletion. | `indexDocument`, `search`, `listCollections`, `deleteDocument` |
+| `Arango` | Basic ArangoDB document CRUD and query execution. | `createDocument`, `readDocument`, `updateDocument`, `deleteDocument`, `executeQuery` |
+| `Ad` | Advertising/report integrations and ad-unit reporting helpers. | `getReport`, `fetchAdSenseReport`, `fetchAdMobReport`, `getAdUnits` |
+| `Metric` | Metric recording helper. | `addMetric` |
+| `Taxonomy` | Category/tag and parent-child taxonomy operations. | `cat`, `get_category`, `set_category_insert`, `parents_ofselected_children`, `tree` |
+| `Task` | Task/cron-oriented trait file; current source describes planned task levels but exposes no named methods detected by the inventory scan. | No public/protected/private methods detected by the simple method scan |
+| `System` | System metrics parsing and collection helpers. | `parseCpuUsage`, `getSystemMetrics`, `parseMemInfo` |
+| `Watch` | Filesystem-watch callbacks used by the Gen daemon/CLI workflow. | `cubosFolder`, `coreFolder` |
+
+### 11.3 Domain provisioning and infrastructure
+
+| Trait | Main responsibility | Representative methods |
+|---|---|---|
+| `Domain` | Higher-level domain lifecycle, synchronisation, provisioning and backup helpers. | `addDomain`, `delDomain`, `syncDom`, `setupDomain`, `domainBackup`, `sysBackup` |
+| `DomainFS` | Creates/removes/repairs domain filesystem structure under the Gaia public tree. | `addFS`, `delFS`, `checkfixFS` |
+| `DomainDB` | Creates/removes/repairs domain database resources and tables. | `addDomainDB`, `delDomainDB`, `checkfixDomainDB`, `createDomainTables` |
+| `DomainHost` | Generates and manages Nginx host configuration for PHP and React domains. | `addHost`, `genPhpConf`, `genReactConf`, `checkfixHost` |
+| `DomainSSL` | Let's Encrypt certificate lifecycle and certificate-path repair helpers. | `addSSL`, `renewSSL`, `delSSL`, `getCertExpiry`, `setupCertbot` |
+| `DomainZone` | DNS zone lifecycle helpers. | `addZone`, `delZone`, `checkfixZone` |
+
+### 11.4 Class-to-trait composition
+
+The following matrix reflects the `use` declarations inspected in `core/Gen.php`, `core/API.php`, and `core/Cli.php`. It indicates that the class composes a trait, not that every method is used on every request.
+
+| Trait | `Core\\Gen` | `Core\\API` | `Core\\Cli` |
+|---|:---:|:---:|:---:|
+| `Action` | Yes | Yes | Yes |
+| `Arango` | — | — | — |
+| `Ad` | — | — | — |
+| `Bundle` | — | — | — |
+| `CuboAction` | — | — | — |
+| `CuboAdmin` | Yes | Yes | Yes |
+| `CuboLog` | — | — | — |
+| `CuboPublic` | Yes | Yes | Yes |
+| `CuboYaml` | — | — | — |
+| `Doc` | — | — | Yes |
+| `Domain` | — | Yes | Yes |
+| `DomainDB` | Yes | — | Yes |
+| `DomainFS` | Yes | — | Yes |
+| `DomainHost` | Yes | — | Yes |
+| `DomainSSL` | — | — | Yes |
+| `DomainZone` | Yes | — | Yes |
+| `Ermis` | Yes | — | Yes |
+| `Filemeta` | Yes | — | Yes |
+| `Form` | Yes | Yes | Yes |
+| `GSolr` | — | — | — |
+| `Head` | Yes | — | Yes |
+| `Kronos` | Yes | — | Yes |
+| `Lang` | Yes | Yes | Yes |
+| `Manifest` | Yes | Yes | Yes |
+| `Media` | Yes | Yes | Yes |
+| `Meta` | Yes | — | Yes |
+| `Metric` | — | — | — |
+| `My` | Yes | Yes | Yes |
+| `PWA` | — | — | — |
+| `SEO` | — | — | — |
+| `Share` | — | Yes | — |
+| `System` | Yes | — | Yes |
+| `Task` | — | — | — |
+| `Taxonomy` | — | — | — |
+| `Template` | Yes | — | Yes |
+| `Tree` | Yes | Yes | Yes |
+| `Url` | Yes | — | Yes |
+| `Watch` | — | — | Yes |
+| `WS` | Yes | — | Yes |
+
+**Important:** `Book` is a class imported from `Core\\Cubo\\Book`, not a trait in `core/traits/`. The `Arango`, `GSolr`, `Bundle`, `Ad`, `PWA`, `SEO`, `Metric`, `Task`, `Taxonomy`, `CuboAction`, `CuboLog`, and `CuboYaml` files were found in the trait directory, but are not listed in the `use` declarations of these three primary classes. They may be used elsewhere or remain standalone/experimental; check call sites before classifying them as unused.
+
+### 11.5 Reading and changing a trait
+
+1. Find the trait file under `core/traits/`.
+2. Read its namespace, class/trait-level docblock, method signatures, and any `use OtherTrait` declarations.
+3. Search for its method names to identify callers and entry points.
+4. Check database tables, environment variables, and service clients used by those methods.
+5. Prefer documenting real parameters, return shapes, side effects, and required privileges from the implementation.
+6. For methods that alter domains, databases, Nginx, certificates, or files, test in development/staging before invoking them on a live server.
+
+Useful commands from the repository root:
+
+```bash
+find gaia/core/traits -maxdepth 1 -type f -name '*.php' -print | sort
+grep -RInE '\\btrait[[:space:]]+[A-Za-z_][A-Za-z0-9_]*|function[[:space:]]+' gaia/core/traits
+grep -RIn 'TraitMethodName' gaia/core
+```
+
+The inventory is a map for navigation, not an API contract. Method signatures, dependencies and class composition should be rechecked when code changes.
+
