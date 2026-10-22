@@ -1,0 +1,424 @@
+/* pages/Film.css */
+
+.film-page {
+    min-height: 100vh;
+    background: #f5f5f5;
+}
+
+/* Hero Section */
+.film-hero {
+    position: relative;
+    height: 300px;
+    background-size: cover;
+    background-position: center;
+}
+
+.film-hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 100%);
+    padding: 20px;
+}
+
+/* Container */
+.film-container {
+    max-width: 1200px;
+    margin: -60px auto 0;
+    padding: 0 20px 40px;
+    position: relative;
+    z-index: 10;
+    box-shadow: var(--shadow);
+}
+
+/* Profile Header */
+.film-profile-header {
+    display: flex;
+    gap: 30px;
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.film-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #667eea;
+}
+
+.film-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.film-profile-info {
+    flex: 1;
+}
+
+.film-profile-info h1 {
+    margin: 0 0 5px;
+    font-size: 28px;
+    color: #333;
+}
+
+.film-title {
+    color: #667eea;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.film-intro {
+    color: #666;
+    font-style: italic;
+}
+
+/* Tabs */
+.film-tabs {
+    display: flex;
+    gap: 5px;
+    background: white;
+    border-radius: 8px;
+    padding: 5px;
+    margin-bottom: 30px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.film-tab {
+    flex: 1;
+    padding: 12px 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.3s;
+    border-radius: 6px;
+}
+
+.film-tab:hover {
+    background: #f0f0f0;
+}
+
+.film-tab.active {
+    background: #667eea;
+    color: white;
+}
+
+/* Content Layout */
+.film-content {
+    display: flex;
+    gap: 30px;
+}
+
+.film-main {
+    flex: 2;
+}
+
+.film-sidebar {
+    flex: 1;
+}
+
+/* Bio Section */
+.film-photos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.film-photo {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.film-photo img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+}
+
+.film-bio-text {
+    line-height: 1.8;
+    color: #444;
+    margin-bottom: 30px;
+}
+
+/* Quotes */
+.film-quotes {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.film-quotes h3 {
+    margin: 0 0 15px;
+    color: #333;
+}
+
+.film-quotes blockquote {
+    margin: 0 0 15px;
+    padding: 0;
+    font-style: italic;
+    color: #555;
+}
+
+/* Filmography */
+.film-filmography {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.film-project {
+    display: flex;
+    gap: 20px;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s;
+}
+
+.film-project:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.film-project-poster {
+    width: 100px;
+    flex-shrink: 0;
+}
+
+.film-project-poster img {
+    width: 100%;
+    border-radius: 6px;
+}
+
+.film-project-info {
+    flex: 1;
+}
+
+.film-project-info h3 {
+    margin: 0 0 5px;
+    font-size: 18px;
+    color: #333;
+}
+
+.film-project-genre {
+    color: #667eea;
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+.film-project-year {
+    color: #999;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.film-project-role {
+    color: #666;
+    font-size: 14px;
+}
+
+/* Awards */
+.film-awards {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.film-award {
+    display: flex;
+    gap: 20px;
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.film-award:last-child {
+    border-bottom: none;
+}
+
+.film-award-year {
+    min-width: 60px;
+    font-weight: bold;
+    color: #667eea;
+}
+
+.film-award-content {
+    flex: 1;
+}
+
+.film-award-content h4 {
+    margin: 0 0 5px;
+    font-size: 16px;
+    color: #333;
+}
+
+.film-award-project {
+    font-style: italic;
+    color: #666;
+    margin-bottom: 3px;
+}
+
+.film-award-festival {
+    color: #555;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.film-award-location {
+    color: #999;
+    font-size: 12px;
+}
+
+.film-show-more {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 14px;
+}
+
+.film-show-more:hover {
+    background: #5a67d8;
+}
+
+/* Details */
+.film-details-section {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.film-details-section h3 {
+    margin: 0 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #667eea;
+}
+
+.film-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.film-detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.film-detail-label {
+    font-weight: 500;
+    color: #555;
+}
+
+.film-detail-value {
+    color: #333;
+}
+
+/* Sidebar Contact */
+.film-contact {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    position: sticky;
+    top: 20px;
+}
+
+.film-contact h3 {
+    margin: 0 0 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #667eea;
+}
+
+.film-contact ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.film-contact li {
+    margin-bottom: 12px;
+}
+
+.film-contact a {
+    color: #333;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: color 0.2s;
+}
+
+.film-contact a:hover {
+    color: #667eea;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .film-profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .film-avatar {
+        margin: 0 auto;
+    }
+
+    .film-content {
+        flex-direction: column;
+    }
+
+    .film-tabs {
+        flex-wrap: wrap;
+    }
+
+    .film-tab {
+        flex: auto;
+    }
+
+    .film-project {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .film-project-poster {
+        margin: 0 auto;
+    }
+
+    .film-details-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .film-award {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .film-hero {
+        height: 200px;
+    }
+
+    .film-container {
+        margin-top: -40px;
+    }
+}

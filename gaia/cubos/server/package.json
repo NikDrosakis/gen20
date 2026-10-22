@@ -1,0 +1,20 @@
+{
+  "name": "cubo-lib",
+  "version": "0.1.0",
+  "main": "dist/cubo.cjs.js",
+  "module": "dist/cubo.esm.js",
+  "browser": "dist/cubo.umd.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "vite": "^6.1.1"
+  },
+  "dependencies": {
+    "vue": "^3.5.13"
+  }
+}

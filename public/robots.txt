@@ -1,0 +1,17 @@
+# public/robots.txt
+User-agent: *
+Allow: /
+
+Sitemap: https://directorsunion.gr/sitemap.xml
+
+# Disallow admin & api
+Disallow: /api/
+Disallow: /admin/
+Disallow: /login
+Disallow: /signup
+
+# Crawl-delay
+Crawl-delay: 1
+
+# Host
+Host: https://directorsunion.gr

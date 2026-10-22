@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gantt Chart</title>
+    <!-- Include DHTMLX Gantt CSS from CDN -->
+    <link rel="stylesheet" href="https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.css">
+</head>
+<body>
+    <div id="gantt_here" style="width:100%; height:600px;"></div>
+
+    <!-- Include DHTMLX Gantt JS from CDN -->
+    <script src="https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.js"></script>
+    <script>
+        gantt.init("gantt_here");
+        gantt.load("/api/v1/gaia/timetable/gantt/tasks");
+    </script>
+</body>
+</html>

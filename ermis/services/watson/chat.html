@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watson Chat</title>
+    <style>
+        #chat-container {
+            width: 300px;
+            height: 400px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            overflow-y: auto;
+            position: relative;
+        }
+        #chat-input {
+            position: absolute;
+            bottom: 10px;
+            width: calc(100% - 20px);
+        }
+        #messages {
+            margin-bottom: 40px;
+        }
+        .message {
+            padding: 5px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+        .user-message {
+            background-color: #d1e7dd;
+            text-align: right;
+        }
+        .bot-message {
+            background-color: #f8d7da;
+        }
+    </style>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Chat with Watson</title>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    </head>
+<body>
+<div id="chat-container">
+    <div id="messages"></div>
+    <input type="text" id="chat-input" placeholder="Type your message..." />
+</div>
+<script>
+    $(document).ready(function () {
+        $('#sendMessage').click(function () {
+            const message = $('#userMessage').val();
+            $.post('/api/v1/watson/chat', { message }, function (data) {
+                $('#messages').append('<div>User: ' + message + '</div>');
+                $('#messages').append('<div>Watson: ' + data.text + '</div>');
+                $('#userMessage').val('');
+            }).fail(function () {
+                $('#messages').append('<div>Error: Unable to get response from Watson.</div>');
+            });
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,2 @@
+<?php
+xecho($_COOKIE);

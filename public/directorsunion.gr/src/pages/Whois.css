@@ -1,0 +1,493 @@
+/* Whois Page Styles */
+.whois-page {
+
+}
+
+/* Hero Section */
+.whois-hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.whois-page.dark .whois-hero {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.whois-hero h1 {
+    margin-bottom: 20px;
+}
+
+.whois-hero p {
+    font-size: 1.2rem;
+    max-width: 700px;
+    margin: 0 auto 30px;
+    opacity: 0.95;
+}
+
+.hero-badges {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    backdrop-filter: blur(10px);
+}
+
+/* Mission Section */
+.mission-section {
+    padding: 60px 0;
+}
+
+.mission-content {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 50px;
+    align-items: center;
+}
+
+.mission-text h2 {
+    font-size: 2.2rem;
+    margin-bottom: 25px;
+    color: #333;
+}
+
+.whois-page.dark .mission-text h2 {
+    color: #f0f0f0;
+}
+
+.mission-text p {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    margin-bottom: 20px;
+    color: #555;
+}
+
+.whois-page.dark .mission-text p {
+    color: #bbb;
+}
+
+.contact-info {
+    margin-top: 25px;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 10px;
+    display: inline-block;
+}
+
+.whois-page.dark .contact-info {
+    background: #2d2d44;
+}
+
+.contact-email {
+    font-size: 1rem;
+    color: #667eea;
+    font-weight: 500;
+}
+
+.mission-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    min-width: 200px;
+}
+
+.stat {
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 15px;
+}
+
+.whois-page.dark .stat {
+    background: #2d2d44;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: 5px;
+}
+
+/* Tabs Section */
+.tabs-section {
+    padding: 40px 0 60px;
+    background: #fafafa;
+}
+
+.whois-page.dark .tabs-section {
+    background: #0f0f1a;
+}
+
+.tabs-nav {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 12px 28px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 40px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #555;
+}
+
+.whois-page.dark .tab-btn {
+    background: #2d2d44;
+    border-color: #444;
+    color: #ccc;
+}
+
+.tab-btn.active {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+}
+
+.tab-btn:hover:not(.active) {
+    border-color: #667eea;
+    transform: translateY(-2px);
+}
+
+/* Board Grid */
+.board-note {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 12px;
+    background: #e8f0fe;
+    border-radius: 10px;
+}
+
+.whois-page.dark .board-note {
+    background: #1a1a2e;
+}
+
+.board-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 30px;
+}
+
+.board-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease;
+}
+
+.whois-page.dark .board-card {
+    background: #2d2d44;
+}
+
+.board-card:hover {
+    transform: translateY(-5px);
+}
+
+.board-image {
+    height: 200px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-placeholder span {
+    font-size: 5rem;
+    opacity: 0.6;
+}
+
+.board-info {
+    padding: 25px;
+}
+
+.board-info h3 {
+    font-size: 1.3rem;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.whois-page.dark .board-info h3 {
+    color: #f0f0f0;
+}
+
+.position {
+    display: inline-block;
+    background: #667eea20;
+    color: #667eea;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    margin-bottom: 15px;
+}
+
+.board-info p {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.whois-page.dark .board-info p {
+    color: #bbb;
+}
+
+.email-link {
+    color: #667eea;
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+
+/* Founding Members */
+.founding-members {
+    padding: 20px 0;
+}
+
+.founding-intro {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 20px;
+    background: white;
+    border-radius: 15px;
+}
+
+.whois-page.dark .founding-intro {
+    background: #2d2d44;
+}
+
+.founding-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.founding-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    background: white;
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+}
+
+.whois-page.dark .founding-card {
+    background: #2d2d44;
+}
+
+.founding-card:hover {
+    transform: translateX(5px);
+}
+
+.founding-icon {
+    font-size: 2rem;
+}
+
+.founding-info h4 {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.whois-page.dark .founding-info h4 {
+    color: #f0f0f0;
+}
+
+.founding-role {
+    font-size: 0.8rem;
+    color: #667eea;
+}
+
+/* Actions Grid */
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.action-card {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    border-left: 4px solid #667eea;
+}
+
+.whois-page.dark .action-card {
+    background: #2d2d44;
+}
+
+.action-date {
+    display: inline-block;
+    background: #667eea20;
+    color: #667eea;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    margin-bottom: 15px;
+}
+
+.action-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.whois-page.dark .action-card h3 {
+    color: #f0f0f0;
+}
+
+.action-card p {
+    color: #666;
+    line-height: 1.6;
+}
+
+.whois-page.dark .action-card p {
+    color: #bbb;
+}
+
+.actions-more {
+    text-align: center;
+    padding: 30px;
+    background: #e8f0fe;
+    border-radius: 15px;
+}
+
+.whois-page.dark .actions-more {
+    background: #1a1a2e;
+}
+
+/* About Content */
+.about-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+}
+
+.about-history h3, .about-goals h3 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.whois-page.dark .about-history h3,
+.whois-page.dark .about-goals h3 {
+    color: #f0f0f0;
+}
+
+.about-history p {
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 15px;
+}
+
+.whois-page.dark .about-history p {
+    color: #bbb;
+}
+
+.about-goals ul {
+    list-style: none;
+    padding: 0;
+}
+
+.about-goals li {
+    padding: 10px 0;
+    color: #555;
+}
+
+.whois-page.dark .about-goals li {
+    color: #bbb;
+}
+
+/* Join CTA */
+.join-cta-section {
+    padding: 80px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    text-align: center;
+}
+
+.whois-page.dark .join-cta-section {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.join-content h2 {
+    font-size: 2rem;
+    margin-bottom: 15px;
+    color: white;
+}
+
+.join-content p {
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.join-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.join-buttons .btn-primary {
+    background: white;
+    color: #667eea;
+}
+
+.join-buttons .btn-secondary {
+    background: transparent;
+    border: 2px solid white;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .whois-hero h1 {
+        font-size: 2rem;
+    }
+
+    .mission-content {
+        grid-template-columns: 1fr;
+    }
+
+    .mission-stats {
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .about-content {
+        grid-template-columns: 1fr;
+    }
+
+    .join-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .tabs-nav {
+        gap: 8px;
+    }
+
+    .tab-btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+}

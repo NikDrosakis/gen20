@@ -1,0 +1,345 @@
+/* TeamSection.css */
+
+/* Section Container */
+.team-section {
+    padding: 60px 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+}
+
+.team-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1;
+}
+
+.team-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+    position: relative;
+    z-index: 2;
+}
+
+/* Row System */
+.team-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -15px;
+}
+
+.team-col-full {
+    flex: 0 0 100%;
+    max-width: 100%;
+    padding: 0 15px;
+}
+
+/* Title */
+.team-title-wrapper {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.team-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    position: relative;
+    display: inline-block;
+    padding-bottom: 15px;
+}
+
+.team-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: #e74c3c;
+}
+
+/* Team Grid */
+.team-grid {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -15px;
+}
+
+.team-col {
+    flex: 0 0 25%;
+    max-width: 25%;
+    padding: 0;
+    margin-bottom: 30px;
+}
+
+/* Team Member Card */
+.team-member {
+    position: relative;
+    height: 380px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+/* Different styles for different positions */
+.team-member--second {
+    margin-top: 30px;
+}
+
+.team-member--third {
+    margin-top: 60px;
+}
+
+.team-member:hover {
+    transform: scale(1.05);
+    z-index: 10;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Overlay */
+.team-member-overlay {
+    position: absolute;
+    bottom: -100%;
+    left: 0;
+    right: 0;
+    padding: 30px 20px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+    transition: all 0.4s ease;
+    text-align: center;
+}
+
+.team-member:hover .team-member-overlay {
+    bottom: 0;
+}
+
+.team-member-name {
+    color: #ffffff;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.4s ease 0.1s;
+}
+
+.team-member-title {
+    color: #e74c3c;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.4s ease 0.2s;
+}
+
+.team-member:hover .team-member-name,
+.team-member:hover .team-member-title {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Profile Button */
+.team-member-profile-btn {
+    display: inline-block;
+    padding: 8px 25px;
+    background: #e74c3c;
+    color: #ffffff;
+    border: none;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.4s ease 0.3s;
+    margin-top: 10px;
+}
+
+.team-member:hover .team-member-profile-btn {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.team-member-profile-btn:hover {
+    background: #c0392b;
+    color: #ffffff;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+}
+
+/* Footer / More Button */
+.team-footer {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -15px;
+    margin-top: 30px;
+}
+
+.team-footer-col {
+    flex: 0 0 100%;
+    max-width: 100%;
+    padding: 0 15px;
+}
+
+.team-footer-btn-wrapper {
+    text-align: center;
+}
+
+.team-footer-btn {
+    display: inline-block;
+    padding: 12px 40px;
+    background: #e74c3c;
+    color: #ffffff;
+    border: 2px solid #e74c3c;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    letter-spacing: 1px;
+}
+
+.team-footer-btn:hover {
+    background: transparent;
+    color: #e74c3c;
+    text-decoration: none;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 20px rgba(231, 76, 60, 0.3);
+}
+
+/* Loading State */
+.team-loading-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: #ffffff;
+    font-size: 1.2rem;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .team-col {
+        flex: 0 0 33.333%;
+        max-width: 33.333%;
+    }
+
+    .team-member--second {
+        margin-top: 20px;
+    }
+
+    .team-member--third {
+        margin-top: 40px;
+    }
+}
+
+@media (max-width: 768px) {
+    .team-section {
+        padding: 40px 0;
+    }
+
+    .team-col {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+
+    .team-member {
+        height: 300px;
+    }
+
+    .team-member--second,
+    .team-member--third {
+        margin-top: 0;
+    }
+
+    .team-title {
+        font-size: 2rem;
+    }
+
+    .team-member-overlay {
+        bottom: 0;
+        padding: 20px 15px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+    }
+
+    .team-member-name {
+        font-size: 1rem;
+    }
+
+    .team-member-title {
+        font-size: 0.8rem;
+    }
+
+    .team-member-profile-btn {
+        padding: 6px 20px;
+        font-size: 0.8rem;
+    }
+
+    /* Always show overlay on mobile */
+    .team-member .team-member-overlay {
+        bottom: 0;
+    }
+
+    .team-member .team-member-name,
+    .team-member .team-member-title,
+    .team-member .team-member-profile-btn {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 576px) {
+    .team-col {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .team-member {
+        height: 350px;
+    }
+
+    .team-title {
+        font-size: 1.8rem;
+    }
+
+    .team-footer-btn {
+        padding: 10px 30px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Animation for cards on load */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.team-col {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.team-col:nth-child(1) { animation-delay: 0.1s; }
+.team-col:nth-child(2) { animation-delay: 0.2s; }
+.team-col:nth-child(3) { animation-delay: 0.3s; }
+.team-col:nth-child(4) { animation-delay: 0.4s; }
+.team-col:nth-child(5) { animation-delay: 0.5s; }
+.team-col:nth-child(6) { animation-delay: 0.6s; }

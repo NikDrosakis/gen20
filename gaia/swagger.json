@@ -1,0 +1,17 @@
+use OpenApi\Attributes as OA;
+use Core\Cubo;
+
+@[OA\Info(title: "PHP API Gateway", version: "0.40")]
+class OpenApi
+{
+}
+use Swagger\Annotations as SWG;
+@OA\Get(
+     path="/apiv1/user",
+     summary="Get list of users",
+     @OA\Response(response="200", description="A list of users")
+)
+function getUsers() {
+  $data= $this->getUsers();
+  return $data;
+}

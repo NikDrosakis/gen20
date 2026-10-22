@@ -1,0 +1,102 @@
+const r = require('rethinkdb');
+
+class RethinkDB {
+    constructor(host, port, dbName, tableName) {
+        this.host = host;
+        this.port = port;
+        this.dbName = dbName;
+        this.tableName = tableName;
+        this.conn = null;
+    }
+
+    async connect() {
+        try {
+            this.conn = await r.connect({
+                host: this.host,
+                port: this.port,
+            });
+            console.log('Connected to RethinkDB');
+            return true;
+        } catch (error) {
+            console.error('Error connecting to RethinkDB:', error);
+            return false;
+        }
+    }
+
+    async close() {
+        if (this.conn) {
+            try {
+                await this.conn.close();
+                console.log('RethinkDB connection closed');
+            } catch (error) {
+                console.error('Error closing RethinkDB connection:', error);
+            }
+        }
+    }
+
+    async createDatabaseAndTable() {
+        try {
+            const dbList = await r.dbList().run(this.conn);
+            if (!dbList.includes(this.dbName)) {
+                await r.dbCreate(this.dbName).run(this.conn);
+                console.log(`Database '${this.dbName}' created.`);
+            }
+
+            const tableList = await r.db(this.dbName).tableList().run(this.conn);
+            if (!tableList.includes(this.tableName)) {
+                await r.db(this.dbName).tableCreate(this.tableName).run(this.conn);
+                console.log(`Table '${this.tableName}' created.`);
+            }
+            return true;
+        } catch (error) {
+            console.error('Error creating database or table:', error);
+            return false;
+        }
+    }
+
+    async upsertMessage(message) {
+        if (!this.conn) {
+            console.error('Not connected to RethinkDB.');
+            return false;
+        }
+        try {
+            const result = await r.db(this.dbName)
+                .table(this.tableName)
+                .insert(message, { conflict: 'replace' })
+                .run(this.conn);
+            console.log('Message upserted:', result);
+            return true;
+        } catch (error) {
+            console.error('Error upserting message:', error);
+            return false;
+        }
+    }
+
+
+    async startChangefeed(callback) {
+        if (!this.conn) {
+            console.error('Not connected to RethinkDB.');
+            return false;
+        }
+        try {
+            const cursor = await r.db(this.dbName)
+                .table(this.tableName)
+                .changes()
+                .run(this.conn);
+            cursor.each((err, change) => {
+                if (err) {
+                    console.error('Error in changefeed:', err);
+                } else {
+                    callback(change);
+                }
+            });
+            console.log('Changefeed started.');
+            return true;
+        } catch (error) {
+            console.error('Error starting changefeed:', error);
+            return false;
+        }
+    }
+}
+
+module.exports = RethinkDB;

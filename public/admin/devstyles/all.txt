@@ -1,0 +1,197 @@
+// Content
+const contentQuery = `SELECT * FROM ${publicdb}.content WHERE status = 1 ORDER BY created DESC`;
+
+// Users
+const userQuery = `SELECT * FROM ${publicdb}.user WHERE status = 1 ORDER BY name ASC`;
+
+// Categories
+const categoryQuery = `SELECT * FROM ${publicdb}.classification ORDER BY sort ASC`;
+
+// Slides
+const slidesQuery = `SELECT * FROM ${publicdb}.c_slides ORDER BY sort ASC`;
+
+// Links
+const linksQuery = `SELECT * FROM ${publicdb}.links ORDER BY sort ASC`;
+
+// Components
+const componentsQuery = `SELECT * FROM ${publicdb}.components ORDER BY name ASC`;
+
+
+
+// SELECT
+const fetchData = async () => {
+    const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
+    const response = await fetch(`/api/v1/maria/fa?folder=SELECT * FROM ${publicdb}.your_table WHERE status = 1 ORDER BY sort ASC`);
+    const result = await response.json();
+    if (result.success) {
+        setData(result.data || []);
+    }
+};
+
+// INSERT
+const insertData = async (item) => {
+    const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
+    const query = `INSERT INTO ${publicdb}.your_table (name, sort, status) VALUES ('${item.name}', 0, 1)`;
+    const response = await fetch('/api/v1/maria/q', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify([query, []])
+    });
+    const result = await response.json();
+    if (result.success) {
+        await fetchData();
+    }
+};
+
+// UPDATE
+const updateData = async (id, data) => {
+    const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
+    const query = `UPDATE ${publicdb}.your_table SET name = '${data.name}', sort = ${data.sort} WHERE id = ${id}`;
+    const response = await fetch('/api/v1/maria/q', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify([query, []])
+    });
+    const result = await response.json();
+    if (result.success) {
+        await fetchData();
+    }
+};
+
+// DELETE
+const deleteData = async (id) => {
+    if (!window.confirm('Are you sure?')) return;
+    const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
+    const query = `DELETE FROM ${publicdb}.your_table WHERE id = ${id}`;
+    const response = await fetch('/api/v1/maria/q', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify([query, []])
+    });
+    const result = await response.json();
+    if (result.success) {
+        await fetchData();
+    }
+};
+
+// src/components/YourForm.jsx
+import React, { useState } from 'react';
+import './YourForm.css';
+
+const YourForm = ({ onSuccess, onCancel, initialData = null, editId = null }) => {
+    const [formData, setFormData] = useState(initialData || {
+        name: '',
+        description: '',
+        status: 1,
+        sort: 0
+    });
+    const [saving, setSaving] = useState(false);
+
+    const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
+
+    const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+
+        try {
+            let query;
+            if (editId) {
+                // UPDATE
+                query = `UPDATE ${publicdb}.your_table SET
+                         name = '${formData.name}',
+                         description = '${formData.description}',
+                         status = ${formData.status},
+                         sort = ${formData.sort}
+                         WHERE id = ${editId}`;
+            } else {
+                // INSERT
+                query = `INSERT INTO ${publicdb}.your_table (name, description, status, sort)
+                         VALUES ('${formData.name}', '${formData.description}', ${formData.status}, ${formData.sort})`;
+            }
+
+            const response = await fetch('/api/v1/maria/q', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify([query, []])
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                if (onSuccess) onSuccess();
+            }
+        } catch (error) {
+            console.error('Error saving:', error);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <form className="your-form" onSubmit={handleSubmit}>
+            <div className="form-group">
+                <label>Name <span className="required">*</span></label>
+                <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="form-input"
+                    required
+                />
+            </div>
+            <div className="form-group">
+                <label>Description</label>
+                <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    className="form-textarea"
+                    rows="4"
+                />
+            </div>
+            <div className="form-row">
+                <div className="form-group">
+                    <label>Status</label>
+                    <select
+                        name="status"
+                        value={formData.status}
+                        onChange={handleChange}
+                        className="form-select"
+                    >
+                        <option value={1}>Active</option>
+                        <option value={0}>Inactive</option>
+                    </select>
+                </div>
+                <div className="form-group">
+                    <label>Sort</label>
+                    <input
+                        type="number"
+                        name="sort"
+                        value={formData.sort}
+                        onChange={handleChange}
+                        className="form-input"
+                    />
+                </div>
+            </div>
+            <div className="form-actions">
+                <button type="button" className="btn-secondary" onClick={onCancel}>
+                    Cancel
+                </button>
+                <button type="submit" className="btn-primary" disabled={saving}>
+                    {saving ? 'Saving...' : (editId ? 'Update' : 'Create')}
+                </button>
+            </div>
+        </form>
+    );
+};
+
+export default YourForm;
+

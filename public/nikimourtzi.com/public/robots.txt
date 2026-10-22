@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Sitemap: https://nikimourtzi.com/sitemap.xml
+
+# Disallow admin & api
+Disallow: /api/
+Disallow: /admin/
+Disallow: /login
+Disallow: /signup
+
+# Crawl-delay
+Crawl-delay: 1
+
+Host: https://nikimourtzi.com

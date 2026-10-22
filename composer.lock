@@ -1,0 +1,121 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "a586940823e844fb351aa8ca71503a2e",
+    "packages": [
+        {
+            "name": "theseer/fxsl",
+            "version": "1.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/theseer/fXSL.git",
+                "reference": "a9246376c713156e55c080782d4104bb07d4b899"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/theseer/fXSL/zipball/a9246376c713156e55c080782d4104bb07d4b899",
+                "reference": "a9246376c713156e55c080782d4104bb07d4b899",
+                "shasum": ""
+            },
+            "require": {
+                "ext-dom": "*",
+                "ext-libxml": "*",
+                "ext-xsl": "*",
+                "php": ">=5.3.3"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "classmap": [
+                    "src/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-2-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Arne Blankerts",
+                    "email": "arne@blankerts.de",
+                    "role": "Developer"
+                }
+            ],
+            "description": "An XSL wrapper / extension to the PHP 5.x XSLTProcessor with Exception and extended Callback support",
+            "support": {
+                "issues": "https://github.com/theseer/fXSL/issues",
+                "source": "https://github.com/theseer/fXSL/tree/master"
+            },
+            "abandoned": true,
+            "time": "2014-11-27T20:08:52+00:00"
+        },
+        {
+            "name": "zjkal/mysql-helper",
+            "version": "v1.0.9",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zjkal/mysql-helper.git",
+                "reference": "9cfe762ec8d74e0a886562ccb59f2e2ac34b0918"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zjkal/mysql-helper/zipball/9cfe762ec8d74e0a886562ccb59f2e2ac34b0918",
+                "reference": "9cfe762ec8d74e0a886562ccb59f2e2ac34b0918",
+                "shasum": ""
+            },
+            "require": {
+                "ext-mysqli": "*",
+                "php": ">=7.1"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "@stable"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "zjkal\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "zjkal",
+                    "email": "zjkal@qq.com"
+                }
+            ],
+            "description": "一个便捷的MySQL导入导出的助手类库。 a mysql import and export helper library.",
+            "keywords": [
+                "export",
+                "helper",
+                "import",
+                "mysql",
+                "php",
+                "zjkal"
+            ],
+            "support": {
+                "issues": "https://github.com/zjkal/mysql-helper/issues",
+                "source": "https://github.com/zjkal/mysql-helper/tree/v1.0.9"
+            },
+            "time": "2024-12-05T11:51:10+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {},
+    "platform-dev": {},
+    "plugin-api-version": "2.6.0"
+}

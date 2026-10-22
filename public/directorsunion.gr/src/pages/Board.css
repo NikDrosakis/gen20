@@ -1,0 +1,337 @@
+/* Board.css */
+.board-page {
+    background: #f5f3ef;
+    min-height: 100vh;
+}
+
+.board-page.dark {
+    background: #1a1a1a;
+}
+
+/* Header */
+.board-header {
+    background: linear-gradient(135deg, #2c1810 0%, #1a0f0a 100%);
+    color: #e8e0d5;
+    padding: 60px 0 40px;
+    text-align: center;
+}
+
+.board-header h1 {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+    font-weight: normal;
+    letter-spacing: 1px;
+}
+
+.board-header p {
+    font-size: 1rem;
+    opacity: 0.8;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Container */
+.board-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+/* Tabs */
+.board-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 40px;
+    border-bottom: 1px solid #d4c9bc;
+}
+
+.board-tabs .tab-btn {
+    background: none;
+    border: none;
+    padding: 12px 28px;
+    font-size: 1rem;
+    font-family: 'Georgia', serif;
+    cursor: pointer;
+    color: #4a3a2a;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.board-tabs .tab-btn:hover {
+    color: #8b4513;
+}
+
+.board-tabs .tab-btn.active {
+    color: #8b4513;
+}
+
+.board-tabs .tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #8b4513;
+}
+
+.dark .board-tabs {
+    border-bottom-color: #3a3a3a;
+}
+
+.dark .board-tabs .tab-btn {
+    color: #b0a090;
+}
+
+.dark .board-tabs .tab-btn.active {
+    color: #c9a87b;
+}
+
+/* Board Note */
+.board-note {
+    background: #e8e0d5;
+    padding: 12px 20px;
+    margin-bottom: 32px;
+    text-align: center;
+    font-size: 0.9rem;
+    border-left: 3px solid #8b4513;
+}
+
+.dark .board-note {
+    background: #2a2a2a;
+    color: #c0b0a0;
+}
+
+/* Board Grid */
+.board-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+.board-card {
+    background: white;
+    border: 1px solid #e0d5c8;
+    padding: 24px;
+    transition: all 0.2s ease;
+}
+
+.board-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.dark .board-card {
+    background: #252525;
+    border-color: #3a3a3a;
+}
+
+.board-avatar {
+    width: 80px;
+    height: 80px;
+    background: #2c1810;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.avatar-icon {
+    font-size: 2.5rem;
+}
+
+.board-details h3 {
+    font-family: 'Georgia', serif;
+    font-size: 1.25rem;
+    margin-bottom: 6px;
+    color: #2c1810;
+}
+
+.dark .board-details h3 {
+    color: #e0d0c0;
+}
+
+.board-position {
+    display: inline-block;
+    font-size: 0.8rem;
+    color: #8b4513;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.dark .board-position {
+    color: #c9a87b;
+}
+
+.board-bio {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #4a4a4a;
+    margin-bottom: 16px;
+}
+
+.dark .board-bio {
+    color: #a0a0a0;
+}
+
+.board-email {
+    font-size: 0.8rem;
+    color: #6b6b6b;
+    text-decoration: none;
+    font-family: monospace;
+}
+
+.board-email:hover {
+    color: #8b4513;
+}
+
+/* Founding Members */
+.founding-intro {
+    background: #e8e0d5;
+    padding: 20px;
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.dark .founding-intro {
+    background: #2a2a2a;
+    color: #c0b0a0;
+}
+
+.founding-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.founding-card {
+    background: white;
+    border: 1px solid #e0d5c8;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.dark .founding-card {
+    background: #252525;
+    border-color: #3a3a3a;
+}
+
+.founding-icon {
+    font-size: 2rem;
+}
+
+.founding-info h4 {
+    font-family: 'Georgia', serif;
+    font-size: 1rem;
+    margin-bottom: 4px;
+    color: #2c1810;
+}
+
+.dark .founding-info h4 {
+    color: #e0d0c0;
+}
+
+.founding-role {
+    font-size: 0.75rem;
+    color: #8b4513;
+}
+
+.dark .founding-role {
+    color: #c9a87b;
+}
+
+/* Actions */
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.action-card {
+    background: white;
+    border: 1px solid #e0d5c8;
+    padding: 24px;
+}
+
+.dark .action-card {
+    background: #252525;
+    border-color: #3a3a3a;
+}
+
+.action-date {
+    font-size: 0.75rem;
+    color: #8b4513;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.dark .action-date {
+    color: #c9a87b;
+}
+
+.action-card h3 {
+    font-family: 'Georgia', serif;
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    color: #2c1810;
+}
+
+.dark .action-card h3 {
+    color: #e0d0c0;
+}
+
+.action-card p {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #4a4a4a;
+}
+
+.dark .action-card p {
+    color: #a0a0a0;
+}
+
+.actions-more {
+    background: #e8e0d5;
+    padding: 20px;
+    text-align: center;
+    font-style: italic;
+}
+
+.dark .actions-more {
+    background: #2a2a2a;
+    color: #c0b0a0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .board-header {
+        padding: 40px 0 30px;
+    }
+
+    .board-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .board-tabs .tab-btn {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+    }
+
+    .board-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .founding-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .actions-grid {
+        grid-template-columns: 1fr;
+    }
+}

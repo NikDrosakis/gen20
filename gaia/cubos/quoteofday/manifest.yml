@@ -1,0 +1,34 @@
+---
+quoteofday_cubo:
+  id: 12
+  sort: 0
+  img: ~
+  name: quoteofday
+  path: cubos/quoteofday
+  pages: ~
+  description: hightlight a quote of saying based on the main area content
+  template: ~
+  query: ~
+  todo: connect with api or generatives
+  version: "0.00"
+  status: 0
+  tables: ~
+  actions: ~
+  has_maria: ~
+  has_admin: 0
+  valuability: 0
+  flag: 0
+  ideally: ~
+  layout_views: 0
+  total_duration: 0
+  created: "2024-10-27 23:41:21"
+  modified: "2025-01-07 11:23:35"
+  hasPage: 0
+  isSub: 0
+  branch: ~
+  doc: ~
+  meta:
+  - saying
+  - famous
+  manifest: ~
+...

@@ -1,0 +1,12 @@
+{
+    "SmallImage": "<div class='item SmallImage'><div class='item-media'><a href='{{uri}}'><img src='{{img}}' alt='{{title}}'></a></div><div class='item-content'><h4>{{title}}</h4><span>{{published}}</span><p>{{excerpt}}</p></div></div>",
+    "LargeImage": "<div class='item LargeImage'><div class='item-media'><a href='{{uri}}'><img src='{{img}}' alt='{{title}}'></a></div><div class='item-content'><h3>{{title}}</h3><h5>{{subtitle}}</h5><span>{{published}}</span></div></div>",
+    "SmallImageDetail": "<div class='item SmallImageDetail'><div class='item-media'><a href='{{uri}}'><img src='{{img}}' alt='{{title}}'></a></div><div class='item-content'><h4>{{title}}</h4><span>{{published}}</span><p>{{excerpt}}</p></div></div>",
+    "Blockquote": "<blockquote class='item Blockquote'><p>{{excerpt}}</p><footer>{{author}}</footer></blockquote>",
+    "SmallImageFacts": "<div class='item SmallImageFacts'><div class='item-media'><a href='{{uri}}'><img src='{{img}}' alt='{{title}}'></a></div><div class='item-content'><h4>{{title}}</h4><span>{{published}}</span><p>{{excerpt}}</p></div></div>",
+    "VideoThumbnail": "<div class='item VideoThumbnail'><div class='item-media'><a href='{{uri}}'><img src='{{img}}' alt='{{title}}'></a></div><div class='item-content'><h4>{{title}}</h4><span>{{published}}</span><p>{{excerpt}}</p></div></div>",
+    "Gallery": "<div class='item Gallery'><h3>{{title}}</h3></div>",
+    "Recommendations": "<div class='item Recommendations'><h3>{{title}}</h3><ul>{{excerpt}}</ul></div>",
+    "Opinion": "<div class='item Opinion'><h3>{{title}}</h3><h4>{{author}}</h4><p>{{excerpt}}</p></div>",
+    "Event": "<div class='item Event'><h3>{{title}}</h3><span>{{published}}</span><p>{{excerpt}}</p></div>"
+}

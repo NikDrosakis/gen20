@@ -1,0 +1,115 @@
+---
+journal_cubo:
+  id: 18
+  sort: 0
+  img: ~
+  name: journal
+  path: cubos/journal
+  pages: ~
+  description: ~
+  template:
+  - name: SmallImage
+    template: |-
+      .item.SmallImage
+        .item-media
+          a(href=uri)
+            img(src=img, alt=title)
+        .item-content
+          h4= title
+          span= published
+          p= excerpt
+  - name: LargeImage
+    template: |-
+      .item.LargeImage
+        .item-media
+          a(href=uri)
+            img(src=img, alt=title)
+        .item-content
+          h3= title
+          h5= subtitle
+          span= published
+  - name: SmallImageDetail
+    template: |-
+      .item.SmallImageDetail
+        .item-media
+          a(href=uri)
+            img(src=img, alt=title)
+        .item-content
+          h4= title
+          span= published
+          p= excerpt
+  - name: Blockquote
+    template: |-
+      blockquote.item.Blockquote
+        p= excerpt
+        footer= author
+  - name: SmallImageFacts
+    template: |
+      div.item.SmallImageFacts
+        div.item-media
+          a(href=uri)
+            img(src=img, alt=title)
+        div.item-content
+          h4= title
+          span= published
+          p= excerpt
+  - name: VideoThumbnail
+    template: |
+      div.item.VideoThumbnail
+        div.item-media
+          a(href=uri)
+            img(src=img, alt=title)
+        div.item-content
+          h4= title
+          span= published
+          p= excerpt
+  - name: Gallery
+    template: |-
+      div.item.Gallery
+        h3= title
+  - name: Recommendations
+    template: |-
+      div.item.Recommendations
+        h3= title
+        ul= excerpt
+  - name: Opinion
+    template: |-
+      div.item.Opinion
+        h3= title
+        h4= author
+        p= excerpt
+  - name: Event
+    template: |-
+      div.item.Event
+        h3= title
+        span= published
+        p= excerpt
+  query: |-
+    {
+      "query": "SELECT * FROM cubo WHERE id = 18",
+      "params": []
+    }
+  todo: ~
+  version: "0.00"
+  status: 0
+  tables:
+  - journal
+  actions: ~
+  has_maria: ~
+  has_admin: 0
+  valuability: 0
+  flag: 0
+  ideally: ~
+  layout_views: 0
+  total_duration: 0
+  created: "2024-10-28 01:59:37"
+  modified: "2025-01-07 11:23:35"
+  hasPage: 0
+  isSub: 0
+  branch: ~
+  doc: ~
+  meta:
+  - news
+  - feed
+  manifest: ~
+...

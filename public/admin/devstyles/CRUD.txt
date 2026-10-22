@@ -1,0 +1,11 @@
+// SELECT
+`/api/v1/maria/fa?folder=SELECT * FROM ${publicdb}.your_table`
+
+// INSERT (POST)
+`/api/v1/maria/q` - body: [query, []]
+
+// UPDATE (POST)
+`/api/v1/maria/q` - body: [query, []]
+
+// DELETE (POST)
+`/api/v1/maria/q` - body: [query, []]

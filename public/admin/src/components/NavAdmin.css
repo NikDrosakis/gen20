@@ -1,0 +1,481 @@
+/* Public Languages Flags - απλή εμφάνιση flags */
+.admin-languages-flags {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    color: white;
+    font-size: 14px;
+    border: 1px solid #334155;
+    border-radius: 40px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.lang-flag-item {
+    cursor: help;
+    transition: all 0.2s ease;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
+    position: relative;
+}
+
+.lang-flag-item:hover {
+    transform: scale(1.2);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+/* Tooltip style για τα flags */
+.lang-flag-item::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(5px);
+    background: #1e293b;
+    color: #f1f5f9;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    z-index: 1000;
+    border: 1px solid #475569;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.lang-flag-item:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Active language indicator - optional */
+.lang-flag-item.active {
+    position: relative;
+}
+
+.lang-flag-item.active::before {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background: #10b981;
+    border-radius: 50%;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .admin-languages-flags {
+        padding: 4px 8px;
+        gap: 6px;
+    }
+
+    .lang-flag-item {
+        font-size: 18px;
+    }
+
+    .lang-flag-item::after {
+        display: none; /* Hide tooltip on mobile */
+    }
+}
+
+@media (max-width: 640px) {
+    .admin-languages-flags {
+        padding: 4px 6px;
+        gap: 4px;
+    }
+
+    .lang-flag-item {
+        font-size: 16px;
+    }
+}
+/* Navbar.css */
+.admin-navbar {
+    background: #0f172a;
+    border-bottom: 1px solid #1e293b;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 8px;
+}
+
+.admin-navbar-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.admin-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.admin-brand-icon {
+    font-size: 1.5rem;
+}
+
+.admin-brand-text {
+    background: linear-gradient(135deg, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.admin-nav-list {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 4px;
+    flex-wrap: wrap;
+    flex: 1;
+    justify-content: center;
+}
+
+.admin-nav-item {
+    margin: 0;
+}
+
+.admin-nav-link {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 10px 14px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.admin-nav-link:hover {
+    background: #1e293b;
+    color: #f1f5f9;
+}
+
+.admin-nav-link.active {
+    background: #3b82f6;
+    color: white;
+}
+
+.admin-nav-link.active:hover {
+    background: #2563eb;
+}
+
+.admin-nav-icon {
+    font-size: 20px;
+}
+
+.admin-nav-label {
+    font-size: 16px;
+}
+
+/* Public Home button */
+.admin-nav-link.public-home {
+    background: #10b981;
+    color: white;
+    margin-left: 8px;
+}
+
+.admin-nav-link.public-home:hover {
+    background: #059669;
+}
+
+/* Right side - Languages & User Menu */
+.admin-nav-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Languages Dropdown */
+.admin-languages {
+    position: relative;
+}
+
+.admin-lang-btn {
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #f1f5f9;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.admin-lang-btn:hover {
+    background: #334155;
+    border-color: #475569;
+}
+
+.admin-lang-code {
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.admin-lang-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    min-width: 160px;
+    overflow: hidden;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.admin-lang-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    width: 100%;
+    background: none;
+    border: none;
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.admin-lang-item:hover {
+    background: #334155;
+}
+
+.admin-lang-item.active {
+    background: #3b82f6;
+    color: white;
+}
+
+.lang-flag {
+    font-size: 18px;
+}
+
+.lang-name {
+    flex: 1;
+    font-size: 14px;
+}
+
+.lang-code {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.admin-lang-item.active .lang-code {
+    color: #cbd5e1;
+}
+
+/* User Menu */
+.admin-user-menu {
+    position: relative;
+}
+
+.admin-user-btn {
+    background: #1e293b;
+    border: 1px solid #334155;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+}
+
+.admin-user-btn:hover {
+    background: #334155;
+}
+
+.admin-user-avatar {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #60a5fa, #a78bfa);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    font-size: 14px;
+}
+
+.admin-user-name {
+    color: #f1f5f9;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.admin-user-arrow {
+    color: #94a3b8;
+    font-size: 10px;
+}
+
+.admin-user-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    min-width: 220px;
+    overflow: hidden;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.admin-user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: #0f172a;
+}
+
+.user-avatar-large {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #60a5fa, #a78bfa);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    font-size: 20px;
+}
+
+.user-details {
+    flex: 1;
+}
+
+.user-name {
+    color: #f1f5f9;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.user-email {
+    color: #94a3b8;
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #334155;
+    margin: 4px 0;
+}
+
+.admin-user-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    width: 100%;
+    background: none;
+    border: none;
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    font-size: 14px;
+}
+
+.admin-user-item:hover {
+    background: #334155;
+}
+
+.admin-user-item.logout {
+    color: #ef4444;
+}
+
+.admin-user-item.logout:hover {
+    background: #7f1d1d;
+    color: #fca5a5;
+}
+
+.item-icon {
+    font-size: 18px;
+    width: 24px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .admin-navbar-inner {
+        flex-direction: column;
+        padding: 12px 16px;
+    }
+
+    .admin-nav-list {
+        justify-content: center;
+        width: 100%;
+        order: 1;
+    }
+
+    .admin-nav-right {
+        order: 2;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .admin-nav-link {
+        padding: 8px 12px;
+    }
+
+    .admin-nav-label {
+        display: none;
+    }
+
+    .admin-nav-icon {
+        font-size: 20px;
+    }
+
+    .admin-user-name {
+        display: none;
+    }
+
+    .admin-lang-code {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .admin-nav-list {
+        gap: 2px;
+    }
+
+    .admin-nav-link {
+        padding: 8px 10px;
+    }
+
+    .admin-user-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+}

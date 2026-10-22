@@ -1,0 +1,17 @@
+---
+actiongrp:
+  id: 7
+  name: fswatch
+  img: ~
+  type: ~
+  description: watching all system for changes and execute a series of changes based
+    on the actiongrp_fswatch.yml manifest
+  sort: 0
+  status: active
+  keys: ~
+  project_id: ~
+  updated: "2024-12-21 07:43:22"
+  created: "2024-12-21 07:43:22"
+  doc: ~
+  meta: ~
+...

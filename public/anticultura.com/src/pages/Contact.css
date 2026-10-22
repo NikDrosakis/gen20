@@ -1,0 +1,26 @@
+.error-message {
+    background-color: #fee;
+    border-left: 4px solid #dc3545;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #721c24;
+}
+
+.error-message svg {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.error-message strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.error-message p {
+    margin: 0;
+    font-size: 14px;
+}

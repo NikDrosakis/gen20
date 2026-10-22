@@ -1,0 +1,68 @@
+#!/bin/bash
+ROOT="/var/www/gs"
+DAEMON="$ROOT/cli/gen-daemon"
+PID_FILE="$ROOT/cli/gen.pid"
+LOG_FILE="$ROOT/log/gen.log"
+
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
+is_running() {
+    if [ -f "$PID_FILE" ]; then
+        PID=$(cat "$PID_FILE")
+        if kill -0 "$PID" 2>/dev/null; then
+            return 0  # Process exists
+        else
+            log "Stale PID detected, removing: $PID"
+            rm -f "$PID_FILE"
+        fi
+    fi
+    return 1  # Not running
+}
+
+start_daemon() {
+    if is_running; then
+        log "Daemon already running (PID: $(cat "$PID_FILE"))"
+        echo "Daemon already running (PID: $(cat "$PID_FILE"))"
+        return 1
+    fi
+    log "Starting daemon..."
+    echo "Starting gen daemon..."
+
+    nohup "$DAEMON" >> "$LOG_FILE" 2>&1 &
+    echo $! > "$PID_FILE"
+
+    sleep 1
+    if is_running; then
+        log "Daemon started successfully (PID: $(cat "$PID_FILE"))"
+        echo "Daemon started successfully (PID: $(cat "$PID_FILE"))"
+    else
+        log "Daemon failed to start"
+        echo "Daemon failed to start"
+        return 1
+    fi
+}
+
+stop_daemon() {
+    if is_running; then
+        PID=$(cat "$PID_FILE")
+        log "Stopping daemon (PID: $PID)"
+        echo "Stopping daemon (PID: $PID)"
+        kill -9 "$PID" && rm -f "$PID_FILE"
+        return $?
+    else
+        log "Daemon not running"
+        echo "Daemon not running"
+        return 1
+    fi
+}
+
+case "$1" in
+    start) start_daemon ;;
+    stop) stop_daemon ;;
+    restart) stop_daemon && sleep 1 && start_daemon ;;
+    status) is_running && echo "Running (PID: $(cat "$PID_FILE"))" || echo "Not running" ;;
+    *) echo "Usage: $0 {start|stop|restart|status}" ;;
+esac

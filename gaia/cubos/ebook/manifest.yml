@@ -1,0 +1,35 @@
+---
+ebook_cubo:
+  id: 8
+  sort: 0
+  img: ~
+  name: ebook
+  path: cubos/ebook
+  pages: ~
+  description: Main widget like a file manager for managing & reading pdf from folder.
+    Not currently used in Vivalibro
+  template: ~
+  query: ~
+  todo: ~
+  version: "0.00"
+  status: 0
+  tables: ~
+  actions: ~
+  has_maria: ~
+  has_admin: 0
+  valuability: 0
+  flag: 0
+  ideally: ~
+  layout_views: 0
+  total_duration: 0
+  created: "2024-08-23 23:32:24"
+  modified: "2025-01-07 11:23:35"
+  hasPage: 0
+  isSub: 0
+  branch: ~
+  doc: ~
+  meta:
+  - reader
+  - pdf
+  manifest: ~
+...

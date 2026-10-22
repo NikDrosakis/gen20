@@ -1,0 +1,495 @@
+.
+├── core
+├── old
+├── public
+├── services
+│   ├── claude
+│   ├── googleal
+│   ├── mermaid
+│   ├── misc
+│   └── openai
+├── templates
+├── test
+├── tmp
+└── vendor
+    ├── cloud.google.com
+    │   └── go
+    │       ├── ai
+    │       │   ├── generativelanguage
+    │       │   │   └── apiv1beta
+    │       │   │       └── generativelanguagepb
+    │       │   └── internal
+    │       ├── auth
+    │       │   ├── credentials
+    │       │   │   └── internal
+    │       │   │       ├── externalaccount
+    │       │   │       ├── externalaccountuser
+    │       │   │       ├── gdch
+    │       │   │       ├── impersonate
+    │       │   │       └── stsexchange
+    │       │   ├── grpctransport
+    │       │   ├── httptransport
+    │       │   ├── internal
+    │       │   │   ├── compute
+    │       │   │   ├── credsfile
+    │       │   │   ├── jwt
+    │       │   │   └── transport
+    │       │   │       └── cert
+    │       │   └── oauth2adapt
+    │       ├── compute
+    │       │   └── metadata
+    │       └── longrunning
+    │           └── autogen
+    │               └── longrunningpb
+    ├── filippo.io
+    │   └── edwards25519
+    │       └── field
+    ├── github.com
+    │   ├── bytedance
+    │   │   └── sonic
+    │   │       ├── ast
+    │   │       ├── decoder
+    │   │       ├── encoder
+    │   │       ├── internal
+    │   │       │   ├── base64
+    │   │       │   ├── caching
+    │   │       │   ├── cpu
+    │   │       │   ├── decoder
+    │   │       │   │   ├── api
+    │   │       │   │   ├── consts
+    │   │       │   │   ├── errors
+    │   │       │   │   ├── jitdec
+    │   │       │   │   └── optdec
+    │   │       │   ├── encoder
+    │   │       │   │   ├── alg
+    │   │       │   │   ├── ir
+    │   │       │   │   ├── vars
+    │   │       │   │   ├── vm
+    │   │       │   │   └── x86
+    │   │       │   ├── envs
+    │   │       │   ├── jit
+    │   │       │   ├── native
+    │   │       │   │   ├── avx2
+    │   │       │   │   ├── neon
+    │   │       │   │   ├── sse
+    │   │       │   │   └── types
+    │   │       │   ├── optcaching
+    │   │       │   ├── resolver
+    │   │       │   ├── rt
+    │   │       │   └── utils
+    │   │       ├── loader
+    │   │       │   └── internal
+    │   │       │       ├── abi
+    │   │       │       ├── iasm
+    │   │       │       │   ├── expr
+    │   │       │       │   └── x86_64
+    │   │       │       └── rt
+    │   │       ├── option
+    │   │       ├── unquote
+    │   │       └── utf8
+    │   ├── cespare
+    │   │   └── xxhash
+    │   │       └── v2
+    │   ├── cloudwego
+    │   │   └── base64x
+    │   │       └── internal
+    │   │           ├── native
+    │   │           │   ├── avx2
+    │   │           │   └── sse
+    │   │           └── rt
+    │   ├── dgryski
+    │   │   └── go-rendezvous
+    │   ├── felixge
+    │   │   └── httpsnoop
+    │   ├── gabriel-vasile
+    │   │   └── mimetype
+    │   │       └── internal
+    │   │           ├── charset
+    │   │           ├── json
+    │   │           └── magic
+    │   ├── gin-contrib
+    │   │   └── sse
+    │   ├── gin-gonic
+    │   │   └── gin
+    │   │       ├── binding
+    │   │       ├── internal
+    │   │       │   ├── bytesconv
+    │   │       │   └── json
+    │   │       └── render
+    │   ├── goccy
+    │   │   └── go-json
+    │   │       └── internal
+    │   │           ├── decoder
+    │   │           ├── encoder
+    │   │           │   ├── vm
+    │   │           │   ├── vm_color
+    │   │           │   ├── vm_color_indent
+    │   │           │   └── vm_indent
+    │   │           ├── errors
+    │   │           └── runtime
+    │   ├── go-logr
+    │   │   ├── logr
+    │   │   │   └── funcr
+    │   │   └── stdr
+    │   ├── google
+    │   │   ├── generative-ai-go
+    │   │   │   └── genai
+    │   │   │       └── internal
+    │   │   │           ├── generativelanguage
+    │   │   │           │   └── v1beta
+    │   │   │           └── gensupport
+    │   │   ├── s2a-go
+    │   │   │   ├── fallback
+    │   │   │   ├── internal
+    │   │   │   │   ├── authinfo
+    │   │   │   │   ├── handshaker
+    │   │   │   │   │   └── service
+    │   │   │   │   ├── proto
+    │   │   │   │   │   ├── common_go_proto
+    │   │   │   │   │   ├── s2a_context_go_proto
+    │   │   │   │   │   ├── s2a_go_proto
+    │   │   │   │   │   └── v2
+    │   │   │   │   │       ├── common_go_proto
+    │   │   │   │   │       ├── s2a_context_go_proto
+    │   │   │   │   │       └── s2a_go_proto
+    │   │   │   │   ├── record
+    │   │   │   │   │   └── internal
+    │   │   │   │   │       ├── aeadcrypter
+    │   │   │   │   │       └── halfconn
+    │   │   │   │   ├── tokenmanager
+    │   │   │   │   └── v2
+    │   │   │   │       ├── certverifier
+    │   │   │   │       ├── remotesigner
+    │   │   │   │       └── tlsconfigstore
+    │   │   │   ├── retry
+    │   │   │   └── stream
+    │   │   └── uuid
+    │   ├── googleapis
+    │   │   ├── enterprise-certificate-proxy
+    │   │   │   └── client
+    │   │   │       └── util
+    │   │   └── gax-go
+    │   │       └── v2
+    │   │           ├── apierror
+    │   │           │   └── internal
+    │   │           │       └── proto
+    │   │           ├── callctx
+    │   │           ├── internal
+    │   │           ├── internallog
+    │   │           │   ├── grpclog
+    │   │           │   └── internal
+    │   │           └── iterator
+    │   ├── go-playground
+    │   │   ├── locales
+    │   │   │   └── currency
+    │   │   ├── universal-translator
+    │   │   └── validator
+    │   │       └── v10
+    │   ├── go-redis
+    │   │   └── redis
+    │   │       └── v8
+    │   │           └── internal
+    │   │               ├── hashtag
+    │   │               ├── hscan
+    │   │               ├── pool
+    │   │               ├── proto
+    │   │               ├── rand
+    │   │               └── util
+    │   ├── gorilla
+    │   │   ├── mux
+    │   │   └── websocket
+    │   ├── go-sql-driver
+    │   │   └── mysql
+    │   ├── joho
+    │   │   └── godotenv
+    │   ├── json-iterator
+    │   │   └── go
+    │   ├── klauspost
+    │   │   └── cpuid
+    │   │       └── v2
+    │   ├── leodido
+    │   │   └── go-urn
+    │   │       └── scim
+    │   │           └── schema
+    │   ├── mattn
+    │   │   └── go-isatty
+    │   ├── modern-go
+    │   │   ├── concurrent
+    │   │   └── reflect2
+    │   ├── pelletier
+    │   │   └── go-toml
+    │   │       └── v2
+    │   │           ├── internal
+    │   │           │   ├── characters
+    │   │           │   ├── danger
+    │   │           │   └── tracker
+    │   │           └── unstable
+    │   ├── sashabaranov
+    │   │   └── go-openai
+    │   │       └── internal
+    │   ├── twitchyliquid64
+    │   │   └── golang-asm
+    │   │       ├── asm
+    │   │       │   └── arch
+    │   │       ├── bio
+    │   │       ├── dwarf
+    │   │       ├── goobj
+    │   │       ├── obj
+    │   │       │   ├── arm
+    │   │       │   ├── arm64
+    │   │       │   ├── mips
+    │   │       │   ├── ppc64
+    │   │       │   ├── riscv
+    │   │       │   ├── s390x
+    │   │       │   ├── wasm
+    │   │       │   └── x86
+    │   │       ├── objabi
+    │   │       ├── src
+    │   │       ├── sys
+    │   │       └── unsafeheader
+    │   └── ugorji
+    │       └── go
+    │           └── codec
+    ├── golang.org
+    │   └── x
+    │       ├── arch
+    │       │   └── x86
+    │       │       └── x86asm
+    │       ├── crypto
+    │       │   ├── chacha20
+    │       │   ├── chacha20poly1305
+    │       │   ├── cryptobyte
+    │       │   │   └── asn1
+    │       │   ├── hkdf
+    │       │   ├── internal
+    │       │   │   ├── alias
+    │       │   │   └── poly1305
+    │       │   └── sha3
+    │       ├── net
+    │       │   ├── html
+    │       │   │   └── atom
+    │       │   ├── http
+    │       │   │   └── httpguts
+    │       │   ├── http2
+    │       │   │   ├── h2c
+    │       │   │   └── hpack
+    │       │   ├── idna
+    │       │   ├── internal
+    │       │   │   └── timeseries
+    │       │   └── trace
+    │       ├── oauth2
+    │       │   ├── authhandler
+    │       │   ├── google
+    │       │   │   ├── externalaccount
+    │       │   │   └── internal
+    │       │   │       ├── externalaccountauthorizeduser
+    │       │   │       ├── impersonate
+    │       │   │       └── stsexchange
+    │       │   ├── internal
+    │       │   ├── jws
+    │       │   └── jwt
+    │       ├── sync
+    │       │   └── semaphore
+    │       ├── sys
+    │       │   ├── cpu
+    │       │   ├── unix
+    │       │   └── windows
+    │       │       └── registry
+    │       ├── text
+    │       │   ├── internal
+    │       │   │   ├── language
+    │       │   │   │   └── compact
+    │       │   │   └── tag
+    │       │   ├── language
+    │       │   ├── secure
+    │       │   │   └── bidirule
+    │       │   ├── transform
+    │       │   └── unicode
+    │       │       ├── bidi
+    │       │       └── norm
+    │       └── time
+    │           └── rate
+    ├── google.golang.org
+    │   ├── api
+    │   │   ├── googleapi
+    │   │   │   └── transport
+    │   │   ├── internal
+    │   │   │   ├── cert
+    │   │   │   ├── impersonate
+    │   │   │   └── third_party
+    │   │   │       └── uritemplates
+    │   │   ├── iterator
+    │   │   ├── option
+    │   │   │   └── internaloption
+    │   │   └── transport
+    │   │       ├── grpc
+    │   │       └── http
+    │   ├── genproto
+    │   │   └── googleapis
+    │   │       ├── api
+    │   │       │   └── annotations
+    │   │       └── rpc
+    │   │           ├── code
+    │   │           ├── errdetails
+    │   │           └── status
+    │   ├── grpc
+    │   │   ├── attributes
+    │   │   ├── backoff
+    │   │   ├── balancer
+    │   │   │   ├── base
+    │   │   │   ├── grpclb
+    │   │   │   │   ├── grpc_lb_v1
+    │   │   │   │   └── state
+    │   │   │   ├── pickfirst
+    │   │   │   │   ├── internal
+    │   │   │   │   └── pickfirstleaf
+    │   │   │   └── roundrobin
+    │   │   ├── binarylog
+    │   │   │   └── grpc_binarylog_v1
+    │   │   ├── channelz
+    │   │   ├── codes
+    │   │   ├── connectivity
+    │   │   ├── credentials
+    │   │   │   ├── alts
+    │   │   │   │   └── internal
+    │   │   │   │       ├── authinfo
+    │   │   │   │       ├── conn
+    │   │   │   │       ├── handshaker
+    │   │   │   │       │   └── service
+    │   │   │   │       └── proto
+    │   │   │   │           └── grpc_gcp
+    │   │   │   ├── google
+    │   │   │   ├── insecure
+    │   │   │   └── oauth
+    │   │   ├── encoding
+    │   │   │   └── proto
+    │   │   ├── experimental
+    │   │   │   └── stats
+    │   │   ├── grpclog
+    │   │   │   └── internal
+    │   │   ├── internal
+    │   │   │   ├── backoff
+    │   │   │   ├── balancer
+    │   │   │   │   └── gracefulswitch
+    │   │   │   ├── balancerload
+    │   │   │   ├── binarylog
+    │   │   │   ├── buffer
+    │   │   │   ├── channelz
+    │   │   │   ├── credentials
+    │   │   │   ├── envconfig
+    │   │   │   ├── googlecloud
+    │   │   │   ├── grpclog
+    │   │   │   ├── grpcsync
+    │   │   │   ├── grpcutil
+    │   │   │   ├── idle
+    │   │   │   ├── metadata
+    │   │   │   ├── pretty
+    │   │   │   ├── resolver
+    │   │   │   │   ├── dns
+    │   │   │   │   │   └── internal
+    │   │   │   │   ├── passthrough
+    │   │   │   │   └── unix
+    │   │   │   ├── serviceconfig
+    │   │   │   ├── stats
+    │   │   │   ├── status
+    │   │   │   ├── syscall
+    │   │   │   ├── transport
+    │   │   │   │   └── networktype
+    │   │   │   └── xds
+    │   │   ├── keepalive
+    │   │   ├── mem
+    │   │   ├── metadata
+    │   │   ├── peer
+    │   │   ├── resolver
+    │   │   │   ├── dns
+    │   │   │   └── manual
+    │   │   ├── serviceconfig
+    │   │   ├── stats
+    │   │   ├── status
+    │   │   └── tap
+    │   └── protobuf
+    │       ├── encoding
+    │       │   ├── protojson
+    │       │   ├── prototext
+    │       │   └── protowire
+    │       ├── internal
+    │       │   ├── descfmt
+    │       │   ├── descopts
+    │       │   ├── detrand
+    │       │   ├── editiondefaults
+    │       │   ├── encoding
+    │       │   │   ├── defval
+    │       │   │   ├── json
+    │       │   │   ├── messageset
+    │       │   │   ├── tag
+    │       │   │   └── text
+    │       │   ├── errors
+    │       │   ├── filedesc
+    │       │   ├── filetype
+    │       │   ├── flags
+    │       │   ├── genid
+    │       │   ├── impl
+    │       │   ├── order
+    │       │   ├── pragma
+    │       │   ├── protolazy
+    │       │   ├── set
+    │       │   ├── strs
+    │       │   └── version
+    │       ├── proto
+    │       ├── protoadapt
+    │       ├── reflect
+    │       │   ├── protoreflect
+    │       │   └── protoregistry
+    │       ├── runtime
+    │       │   ├── protoiface
+    │       │   └── protoimpl
+    │       └── types
+    │           ├── descriptorpb
+    │           └── known
+    │               ├── anypb
+    │               ├── durationpb
+    │               ├── emptypb
+    │               ├── fieldmaskpb
+    │               ├── structpb
+    │               └── timestamppb
+    ├── go.opentelemetry.io
+    │   ├── auto
+    │   │   └── sdk
+    │   │       └── internal
+    │   │           └── telemetry
+    │   ├── contrib
+    │   │   └── instrumentation
+    │   │       ├── google.golang.org
+    │   │       │   └── grpc
+    │   │       │       └── otelgrpc
+    │   │       │           └── internal
+    │   │       └── net
+    │   │           └── http
+    │   │               └── otelhttp
+    │   │                   └── internal
+    │   │                       ├── request
+    │   │                       ├── semconv
+    │   │                       └── semconvutil
+    │   └── otel
+    │       ├── attribute
+    │       ├── baggage
+    │       ├── codes
+    │       ├── internal
+    │       │   ├── attribute
+    │       │   ├── baggage
+    │       │   └── global
+    │       ├── metric
+    │       │   ├── embedded
+    │       │   └── noop
+    │       ├── propagation
+    │       ├── semconv
+    │       │   ├── v1.17.0
+    │       │   ├── v1.20.0
+    │       │   └── v1.26.0
+    │       └── trace
+    │           ├── embedded
+    │           └── noop
+    └── gopkg.in
+        └── yaml.v3
+
+493 directories

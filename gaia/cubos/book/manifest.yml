@@ -1,0 +1,131 @@
+---
+book_cubo:
+  description: "Main cubo of vivalibro"
+  mains: [book, publisher, lib, categories, writer]
+  tables: [cat, lib, libuser, publisher, rating, writer]
+  img: https://vivalibro.com/cubos/book/output_book.png
+  name: book
+  path: cubos/book
+  id: 26
+  sort: 0
+  template:
+    book: |-
+      .card.archive-row
+          .archive-cell.cover
+              a(href="/book/#{id}/read", style="display:grid;font-size:15px;")
+                  img(
+                      id="img#{id}",
+                      src=(img ? MEDIA+img : "/img/empty.png")
+                  )
+          .description
+              span.published
+                  a(href="/publisher/#{publisher}/read") #{publishername}
+              , #{published}
+          .card-summary
+              .author
+                  a(href="/writer/#{writer}/read") #{writername}
+              p.title
+                  a(href="/book/#{id}/read", style="display:grid;color:#000000;font-size:15px;") #{title}
+              != summary
+    lib: |-
+      div(id="nodorder1_#{id}", class="card")
+          button.close(type="button", aria-label="delete", id="del#{sel[i].id}")
+              span(aria-hidden="true") &times;
+          .cover
+              img(id="img#{postid}", src=img)
+          .description
+              span.published
+                  a(href="/mylibrary/#{id}/read")= name != null ? name : ''
+                  | , #{created}
+              span.tag3= G.isread[status]
+    publisher: |-
+      .card
+          .author #{name ? name : ''}
+          .cover
+              img(
+                  alt="Image of #{name}",
+                  src=(img ? MEDIA + img : "/img/empty.png")
+              )
+          .description
+              if books.length > 0
+                  p.title #{title.join('</p><p class="title">')}
+                  .published #{publisher}, #{published}
+              else
+                  div No books listed
+          if summary
+              .card-summary #{summary.join(',')}
+    taxonomies: |-
+      each category, categoryKey in data
+          - var categoryTitle = categoryKey + ' - ' + category.class
+          - var totalDivisions = category.div.length
+          .category(id="category-#{categoryKey}")
+              h2 #{categoryTitle} <span class="counter">#{totalDivisions}</span>
+              ul
+                  each division, divisionKey in category.div
+                      li #{divisionKey} - #{division} <span class="counter">#{Math.floor(Math.random() * 100) + 1}</span>
+    categories: |-
+      table.TFtable
+          tr
+              td ID
+              td img
+              td Cat
+              td Parent
+              td Action
+          tbody#list1.group1
+              each category, i in sel
+                  tr(id="nodorder1_#{category.id}", style="cursor:move;")
+                      td
+                          span(id="id#{category.id}") #{category.id}
+                      td
+                          img(
+                              id="img#{category.id}",
+                              src=(category.img == '' ? "/img/empty.png" : MEDIA + category.img),
+                              width="30",
+                              height="30"
+                          )
+                      td
+                          a(href="/cat?id=#{category.id}") #{category.name}
+                      td
+                          select.form-control(id="parent#{category.id}")
+                              option(value="0") None
+                              each option, j in sel
+                                  option(
+                                      value=option.id,
+                                      selected=(category.parent == option.id ? "selected" : "")
+                                  ) #{option.name}
+                      td
+                          button.btn.btn-danger(id="del#{category.id}") Delete
+    writer: |-
+      .card
+          .author #{name}
+          .cover
+              img(
+                  src=(img ? "/media/"+ img : "/img/empty.png"),
+                  alt="Image of #{name}"
+              )
+          .description
+              if books
+                  p.title #{books}
+                  span.published #{publisher}, #{published}
+              else
+                  div No books listed
+          if bio
+              .card-summary #{bio}
+  query: ~
+  todo: ~
+  version: "0.00"
+  status: 0
+  actions: ~
+  has_admin: 0
+  valuability: 0
+  flag: 0
+  ideally: ~
+  layout_views: 0
+  total_duration: 0
+  created: "2024-12-03 01:06:46"
+  modified: "2025-01-07 11:23:35"
+  branch: ~
+  doc: ~
+  meta: ~
+  manifest: ~
+...

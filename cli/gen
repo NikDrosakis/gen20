@@ -1,0 +1,308 @@
+#!/bin/bash
+
+# ==================================================
+# gen20 CLI v1
+# ==================================================
+# A command-line interface (CLI) for managing services, scripts, tasks
+# from the gen20 ecosystem. This script acts as a central entry point for executing
+# commands related to Gaia, Redis, Composer, and other services.
+# Usage:
+#   gen <system> <command> [args...]
+# Examples:
+#   gen gaia buildTable gen_admin.globs
+#   gen composer install
+#   gen gaia this # access gaia namespace
+#   gend start  # Start the daemon
+#   gend stop   # Stop the daemon
+# ==================================================
+# Configuration
+# ==================================================
+ENV_FILE="/var/www/gs/.env"
+[ -f "$ENV_FILE" ] && source "$ENV_FILE" || { echo "Missing .env file"; exit 1; }
+# ==================================================
+# Measure Execution Time
+# ==================================================
+START_TIME=$(date +%s%N) # Capture start time in nanoseconds
+# ==================================================
+# Load CLI Utilities
+# ==================================================
+if [ -f "$COMMON" ]; then
+    source "$COMMON"                 # Load the utils.sh script
+else
+    echo "❌ Error: Missing utils.sh file."
+    exit 1
+fi
+# ==================================================
+# Validate Input Parameters
+# ==================================================
+if [ -z "$1" ]; then
+    echo "❌ Error: Usage: $0 <system> <command> [args...]"
+    exit 1
+fi
+COMMAND="$1"                            # First argument: System or command
+FILENAME="$2"                           # Second argument: Script or subcommand
+# Ορίζουμε τις δυνατές επιλογές για την ομάδα (folders)
+GEN_COMMANDS=("chat" "domain" "ermis" "mars" "god" "kronos" "cubos" "ws" "ai" "git")
+# Ορισμός της συνάρτησης autocompletion για την εντολή 'gen'
+complete -F _gen_autocomplete gen
+parsed_args=$(parse_args "$@")
+# ==================================================
+# Command Handling
+# ==================================================
+case "$COMMAND" in
+    # ==============================================
+    # Daemon Commands
+    # ==============================================
+    kill) bash "$BIN/kill.sh" "$@"
+      ;;
+    reload|restart|start|stop|status)
+      systemctl "$COMMAND" "$FILENAME"
+      ;;
+    magento)
+      php "$BIN/magento" "$@"
+      ;;
+    yarn)
+      TARGET="$FILENAME"  # e.g., domain, market, app
+      shift 2             # shift COMMAND and FILENAME
+      YARN_COMMAND="$*"   # collect the rest (e.g., build, dev)
+
+      if [[ -z "$TARGET" ]]; then
+        echo "❌ Please specify the domain/folder to run yarn in."
+        echo "Usage: gen yarn <folder> <yarn-command>"
+        exit 1
+      fi
+
+      YARN_PATH="/var/www/gs/gaia/public/$TARGET"
+
+      if [[ ! -d "$YARN_PATH" ]]; then
+        echo "❌ Folder does not exist: $YARN_PATH"
+        exit 1
+      fi
+
+      echo "📦 Running: yarn $YARN_COMMAND in $YARN_PATH"
+      cd "$YARN_PATH"
+      yarn $YARN_COMMAND
+      ;;
+    wget) wget -r -l 1 -A.html -P $ROOT/$3 https://$FILENAME
+      ;;
+    ports) netstat -tulnp | grep LISTEN
+      ;;
+    npm)
+      bash "$ROOT/cli/com/npm/publish.sh"
+      ;;
+    find:large)
+      echo "Searching for files >500MB across the system..."
+      sudo find / -type f -size +500M -exec ls -lh {} \; 2>/dev/null
+      ;;
+    net:info)
+        echo "Fetching detailed network information..."
+        echo "Public IP: $(curl -s ifconfig.me)"
+        echo "DNS Resolvers: $(cat /etc/resolv.conf | grep nameserver)"
+        echo "Active Interfaces:"
+        ip -brief a
+        echo "Open Network Ports:"
+        sudo netstat -tulnp | grep LISTEN
+        ;;
+    net:speed)
+        echo "Running network speed test..."
+        speetest
+        ;;
+     history:grep)
+            if [ -z "$FILENAME" ]; then
+                echo "Usage: gen history:grep <keyword>"
+                exit 1
+            fi
+            echo "Searching shell history for '$2'..."
+            history | grep "$2"
+            ;;
+    top)
+      echo "Showing top 10 processes by CPU usage..."
+      ps -eo pid,user,%cpu,%mem,command --sort=-%cpu | head -n 11
+      ;;
+    performance)
+        echo "Checking system performance..."
+        echo "CPU Load:"
+        uptime
+        echo "Memory Usage:"
+        free -m
+        echo "Disk Usage:"
+        df -h
+        ;;
+    log)
+       tail -f "$ROOT/log/$FILENAME"       # Live log monitoring
+       ;;
+# ==============================================
+# Execute Scripts for All Commands
+# ==============================================
+    all)
+        if [ -n "$FILENAME" ]; then
+            # Loop through all directories in $COM_DIR
+            for dir in "$COM_DIR"/*/; do
+                CMD_NAME=$(basename "$dir")  # Get the command name
+                SCRIPT="$dir/$FILENAME.sh"   # Path to the script
+                if [ -f "$SCRIPT" ]; then
+                    echo "▶ Executing $CMD_NAME/$FILENAME.sh..."
+                    bash "$SCRIPT"          # Execute the script
+                else
+                    echo "⚠ Missing script for $CMD_NAME/$FILENAME"
+                fi
+            done
+        else
+            echo "❌ Error: FILENAME is not specified."
+            exit 1
+        fi
+        ;;
+# ==============================================
+# Language-Specific Commands
+# ==============================================
+    php|python|go|node)
+        interpreter="${COMMAND}"        # Store the interpreter name
+        script_name="${FILENAME}"       # Store the script name
+        if [ -f "$script_name" ]; then
+            "${interpreter}" "${script_name}"  # Execute the script
+        else
+            echo "❌ Error: File $script_name not found."
+        fi
+        ;;
+# ==============================================
+# Custom Commands (Ermis, Mars, God, etc.)
+# ==============================================
+    domain:nginx)
+        echo "Listing active domains from Nginx..."
+        grep -r "server_name" /etc/nginx/conf.d/ | awk '{print $3}' | tr -d ';'
+        ;;
+      domain:ssl)
+          echo "Checking active SSL certificates..."
+          sudo ls -1 /etc/letsencrypt/live/
+          ;;
+        db)
+          mariadb -uroot -p"n130177!" -D $FILENAME < "$CLI_DIR/com/$COMMAND/sql/$3.sql"
+          ;;
+        sql)
+               mariadb -uroot -p"n130177!" -e "$FILENAME"
+          ;;
+        maria:dump)
+            echo "Dumping all MariaDB databases..."
+            mysqldump -u root --all-databases > $BACKUP_DIR/mariadb_backup_$(date +%F).sql
+            echo "Backup saved at ~/mariadb_backup_$(date +%F).sql"
+            ;;
+          maria:compare)
+              if [ -z "$2" ] || [ -z "$3" ]; then
+                  echo "Usage: gen maria:compare <db1> <db2>"
+                  exit 1
+              fi
+              echo "Comparing MariaDB databases: $2 vs $3..."
+              mysqldump -u root "$2" | grep -v "Dump completed" > /tmp/db1.sql
+              mysqldump -u root "$3" | grep -v "Dump completed" > /tmp/db2.sql
+              diff -u /tmp/db1.sql /tmp/db2.sql
+              ;;
+             elastic)
+                 echo "Fetching Elasticsearch index status..."
+                 curl -s "http://localhost:9200/_cat/indices?v"
+                 ;;
+               arango)
+                   echo "Listing ArangoDB collections..."
+                   curl -s -u root:password "http://localhost:8529/_api/collection" | jq '.result[].name'
+                   ;;
+                 php:lint)
+                     if [ -z "$2" ]; then
+                         echo "Usage: gen php:lint <file.php>"
+                         exit 1
+                     fi
+                     echo "Linting PHP file: $2"
+                     php -l "$2"
+                     ;;
+                   history:grep)
+                       if [ -z "$2" ]; then
+                           echo "Usage: gen history:grep <keyword>"
+                           exit 1
+                       fi
+                       echo "Searching history for '$2'..."
+                       history | grep --color=auto "$2"
+                       ;;
+
+domain|chat|ermis|mars|god|kronos|cubo|ws|ai|git)
+    if [ -z "$FILENAME" ]; then
+        echo "❌ Error: FILENAME is not specified for $COMMAND."
+    else
+        # Execute the custom script and pass all additional arguments
+        bash "$CLI_DIR/com/$COMMAND/$FILENAME.sh" "$@"
+        exit 1
+    fi
+    ;;
+# ==============================================
+# Redis CLI
+# ==============================================
+    redis)
+        redis-cli --auth "yjF1f7uiHttcp"  # Connect to Redis with authentication
+        ;;
+# ==============================================
+# Composer Commands
+# ==============================================
+    composer)
+        su - dros -c "cd '$ROOT/gaia' && composer '$FILENAME'"  # Run Composer as the 'dros' user
+        ;;
+# ==============================================
+# Gaia Commands
+# ==============================================
+    permissions)
+      echo "▶ Applying permissions to: $ROOT"
+      chown -R dros:dros "$ROOT" && chmod -R +x "$ROOT"
+      echo "✔ Permissions applied successfully!"
+     ;;
+    tree) /usr/bin/tree -L 2 -d "$ROOT" ;;
+    help)
+      declare -A COMMAND_SCRIPTS
+      echo "📌 Gen20 CLI - Available Commands"
+        echo "-----------------------------------"
+        for dir in "$COM_DIR"/*/; do
+            cmd_name=$(basename "$dir")
+            echo "▶ $cmd_name"
+            for script in "$dir"/*.sh; do
+                if [[ -f "$script" ]]; then
+                    subcmd_name=$(basename "$script" .sh)
+                    echo "   ├── $subcmd_name"
+                fi
+            done
+        done
+          ;;
+export)
+    for arg in "$@"; do
+        # Check if the argument is a valid JSON string
+        if echo "$arg" | jq empty > /dev/null 2>&1; then
+            # It's valid JSON; handle it properly
+            echo "Exporting JSON: $arg"
+            # Exporting as an environment variable, need to assign the argument to a variable
+            export MY_JSON_VAR="$arg"
+        else
+            # Not valid JSON, export it as a string
+            echo "Exporting non-JSON: $arg"
+            export MY_STRING_VAR="$arg"
+        fi
+    done
+    ;;
+  phpunit|test)
+            composer exec phpunit "${@:2}"
+            ;;
+    gaia)
+      #export TEMPLATE=vivalibrocom DEFAULT is localhost
+    #    if [ -n "$FILENAME" ]; then
+            # Pass all arguments to the Gaia PHP script
+           # Define the exact path without relying on CLI_DIR
+          php "$CLI_DIR/com/gaia/index.php" "$@"
+            #ai error logging inside with handleError
+            #php "$CLI_DIR/com/gaia/index.php" "$@" 2> >(bash "$COM_DIR/ai/error-handler.sh")
+     #   else
+      #      echo "❌ Error: FILENAME is not specified for Gaia."
+       #     exit 1
+       # fi
+        ;;
+esac
+# ==================================================
+# Calculate Execution Time
+# ==================================================
+END_TIME=$(date +%s%N) # Capture end time
+ELAPSED_TIME=$(( (END_TIME - START_TIME) / 1000000 )) # Convert to milliseconds
+# Retrieve the current version
+GEN_VERSION=$(get_current_version)
+echo "Gen20 Cli v.$GEN_VERSION ⏱ Execution Time: $ELAPSED_TIME ms"

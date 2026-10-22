@@ -1,0 +1,31 @@
+{
+  "name": "Vox",
+  "version": "1.0.0",
+  "description": "webSocket nodejs mongodb server real time chat ",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \\\"Error: no test specified\\\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NikDrosakis/GEN20.git"
+  },
+  "keywords": [
+    "realtime",
+    "mongodb",
+    "cluster"
+  ],
+  "author": "NikDrosakis",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NikDrosakis/soc/issues"
+  },
+  "homepage": "https://github.com/NikDrosakis/GEN20",
+  "dependencies": {
+    "cluster": "^0.7.7",
+    "dotenv": "^16.4.5",
+    "mongodb": "^6.9.0",
+    "openai": "^4.67.3",
+    "ws": "^8.18.0"
+  }
+}

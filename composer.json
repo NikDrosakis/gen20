@@ -1,0 +1,6 @@
+{
+    "require": {
+        "theseer/fxsl": "^1.1",
+        "zjkal/mysql-helper": "^1.0"
+    }
+}

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ .title }}</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        ul { list-style-type: none; padding: 0; }
+        li { margin-bottom: 10px; border: 1px solid #ddd; padding: 10px; }
+        a { color: #007bff; text-decoration: none;}
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<h1>{{ .title }}</h1>
+<p>Here are some available API endpoints:</p>
+<ul>
+    {{ range .endpoints }}
+    <li><a href="{{ .Path }}">{{ .Path }}</a> - {{ .Method }} method</li>
+    {{ else }}
+    <li>No endpoints available</li>
+    {{ end }}
+</ul>
+</body>
+</html>

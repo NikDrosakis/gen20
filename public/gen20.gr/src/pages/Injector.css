@@ -1,0 +1,220 @@
+/* Injector.css */
+
+.injector-container {
+    padding: 20px;
+    font-family: monospace;
+    min-height: 100vh;
+}
+
+.injector-section {
+    margin-bottom: 40px;
+    padding: 20px;
+    border: 1px solid #333;
+    border-radius: 8px;
+}
+
+.injector-bulk-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #333;
+}
+
+.injector-injection-form {
+    margin-bottom: 20px;
+}
+
+.injector-input {
+    display: block;
+    margin: 10px 0;
+    padding: 10px;
+    width: 100%;
+    max-width: 400px;
+    border: 1px solid #333;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.injector-file-input {
+    display: block;
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #333;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.injector-note {
+    font-size: 12px;
+    margin-top: 5px;
+    color: #666;
+}
+
+.injector-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-family: monospace;
+    background: #4a90e2;
+    color: white;
+}
+
+.injector-button:hover:not(:disabled) {
+    background: #357abd;
+}
+
+.injector-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.injector-danger-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: monospace;
+    background: #e53e3e;
+    color: white;
+}
+
+.injector-danger-button:hover {
+    background: #c53030;
+}
+
+.injector-small-button {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-right: 5px;
+    font-family: monospace;
+    background: #4a90e2;
+    color: white;
+}
+
+.injector-small-button:hover {
+    background: #357abd;
+}
+
+.injector-small-danger-button {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: monospace;
+    background: #e53e3e;
+    color: white;
+}
+
+.injector-small-danger-button:hover {
+    background: #c53030;
+}
+
+.injector-output {
+    margin-top: 20px;
+    padding: 10px;
+    border-radius: 4px;
+    overflow: auto;
+    font-size: 12px;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+}
+
+.injector-controls {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.injector-select {
+    padding: 8px;
+    border: 1px solid #333;
+    border-radius: 4px;
+    font-family: monospace;
+    background: white;
+}
+
+.injector-loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.injector-empty {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+}
+
+.injector-file-list {
+    margin-top: 20px;
+}
+
+.injector-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.injector-table th,
+.injector-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.injector-table th {
+    background: #f5f5f5;
+    font-weight: bold;
+}
+
+.injector-inline-input {
+    padding: 4px;
+    border: 1px solid #333;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    width: 100px;
+}
+/* Injector.css - add these styles */
+
+.injector-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(4px);
+}
+
+.injector-loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #4a90e2;
+    border-radius: 50%;
+    animation: injector-spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes injector-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.injector-loading-overlay p {
+    color: white;
+    font-family: monospace;
+    font-size: 14px;
+}
