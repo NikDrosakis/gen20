@@ -4,7 +4,6 @@ import MediaManager from '../components/media/MediaManager';
 import UploadImage from '../components/media/UploadImage';
 import ImageUploader from '../components/media/ImageUploader';
 import GoogleDrive from '../components/media/GoogleDrive';
-import DigMedia from '../components/media/DigMedia';
 import PasteImage from '../components/media/PasteImage';
 import GenerateMedia from '../components/media/GenerateMedia';
 
@@ -17,7 +16,6 @@ const Media = () => {
         upload_image: <UploadImage />,
         url_image: <ImageUploader />,
         google_drive: <GoogleDrive />,
-        dig: <DigMedia />,
         paste_image: <PasteImage />,
         generate: <GenerateMedia />
     }), []);
@@ -27,7 +25,6 @@ const Media = () => {
         { id: 'upload_image', label: 'Upload Image', icon: '📤' },
         { id: 'url_image', label: 'Image from URL', icon: '🔗' },
         { id: 'google_drive', label: 'Google Drive', icon: '☁️' },
-        { id: 'dig', label: 'Dig', icon: '🔍' },
         { id: 'paste_image', label: 'Paste Image', icon: '📋' },
         { id: 'generate', label: 'Generate', icon: '✨' }
     ];
@@ -66,9 +63,6 @@ const Media = () => {
             </div>
             <div style={{ display: activeTab === 'google_drive' ? 'block' : 'none' }}>
                 {components.google_drive}
-            </div>
-            <div style={{ display: activeTab === 'dig' ? 'block' : 'none' }}>
-                {components.dig}
             </div>
             <div style={{ display: activeTab === 'paste_image' ? 'block' : 'none' }}>
                 {components.paste_image}

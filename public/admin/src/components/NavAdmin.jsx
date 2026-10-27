@@ -2,7 +2,7 @@
 #name: NavAdmin
 #title: Admin Navigation Component
 #description: Main admin navigation bar with user menu, language switcher, and dynamic menu items based on permissions. Displays public languages status.
-#author: Niki Mourtzi
+#author: Nikolas Drosakis
 #version: 1.0.0
 #type: component
 #library: layout
@@ -42,6 +42,7 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
         { id: 'users', label: 'Users', icon: '👤', path: '/admin/users' },
         { id: 'members', label: 'Members', icon: '👤', path: '/admin/members' },
         { id: 'media', label: 'Media', icon: '🖼️', path: '/admin/media' },
+        { id: 'doc', label: 'Documentation', icon: '📚', path: '/admin/doc' },
         { id: 'links', label: 'Links', icon: '🖼️', path: '/admin/links' },
         { id: 'slides', label: 'Slides', icon: '🖼️', path: '/admin/slides' },
         { id: 'layout', label: 'Layout', icon: '🎨', path: '/admin/layout' },

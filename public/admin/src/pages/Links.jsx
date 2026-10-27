@@ -6,13 +6,14 @@ const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
 
 const LinksAdmin = ({ navigateTo }) => {
     const [links, setLinks] = useState([]);
+    const [classifications, setClassifications] = useState([]);
+    const [selectedClassificationId, setSelectedClassificationId] = useState('');
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingLink, setEditingLink] = useState(null);
     const [saving, setSaving] = useState(false);
     const [apiStatus, setApiStatus] = useState({ show: false, message: '', type: '' });
     const [formData, setFormData] = useState({
-        classification_id: 1,
         title: '',
         type: 'video',
         url: ''
@@ -24,13 +25,48 @@ const LinksAdmin = ({ navigateTo }) => {
     };
 
     useEffect(() => {
-        fetchLinks();
+        fetchClassifications();
     }, []);
+
+    useEffect(() => {
+        if (selectedClassificationId) fetchLinks();
+        else setLinks([]);
+    }, [selectedClassificationId]);
+
+    const fetchClassifications = async () => {
+        try {
+            const query = `SELECT id, name FROM ${publicdb}.classification ORDER BY name ASC`;
+            const response = await fetch(`/api/v1/maria/fa?folder=${encodeURIComponent(query)}`);
+            const result = await response.json();
+
+            if (!result.success || !Array.isArray(result.data)) {
+                throw new Error(result.error || 'Could not load classifications');
+            }
+
+            setClassifications(result.data);
+            const defaultClassification = result.data.find(
+                classification => classification.name?.toLowerCase() === 'links'
+            ) || result.data[0];
+
+            if (defaultClassification) {
+                setSelectedClassificationId(String(defaultClassification.id));
+            } else {
+                setLoading(false);
+            }
+        } catch (error) {
+            console.error('Error fetching classifications:', error);
+            showNotification('Failed to load classifications', 'error');
+            setLoading(false);
+        }
+    };
 
     const fetchLinks = async () => {
         setLoading(true);
         try {
-            const query = `SELECT * FROM ${publicdb}.links ORDER BY sort ASC, id ASC`;
+            const query = `SELECT content.*
+                FROM ${publicdb}.content AS content
+                WHERE content.classificationid = ${Number(selectedClassificationId)}
+                ORDER BY content.sort ASC, content.id ASC`;
             const response = await fetch(`/api/v1/maria/fa?folder=${encodeURIComponent(query)}`);
             const result = await response.json();
 
@@ -40,8 +76,8 @@ const LinksAdmin = ({ navigateTo }) => {
                 setLinks([]);
             }
         } catch (error) {
-            console.error('Error fetching links:', error);
-            showNotification('Failed to load links', 'error');
+            console.error('Error fetching content:', error);
+            showNotification('Failed to load content', 'error');
         } finally {
             setLoading(false);
         }
@@ -54,17 +90,16 @@ const LinksAdmin = ({ navigateTo }) => {
         }
 
         setSaving(true);
-        const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
         try {
             if (editingLink) {
                 // UPDATE
-                const query = `UPDATE ${publicdb}.links SET
-                    classification_id=${parseInt(formData.classification_id) || 1},
-                    title='${formData.title.replace(/'/g, "\\'")}',
-                    type='${formData.type}',
-                    url='${formData.url.replace(/'/g, "\\'")}'
-                WHERE id=${editingLink.id}`;
+                const query = `UPDATE ${publicdb}.content AS content
+                    SET
+                        content.title='${formData.title.replace(/'/g, "\\'")}',
+                        content.type='${formData.type}',
+                        content.url='${formData.url.replace(/'/g, "\\'")}'
+                    WHERE content.id=${Number(editingLink.id)}
+                      AND content.classificationid=${Number(selectedClassificationId)}`;
 
                 const response = await fetch('/api/v1/maria/q', {
                     method: 'POST',
@@ -84,15 +119,15 @@ const LinksAdmin = ({ navigateTo }) => {
             } else {
                 // INSERT
                 const maxSort = links.length > 0 ? Math.max(...links.map(l => l.sort || 0)) : 0;
-                const query = `INSERT INTO ${publicdb}.links
-                    (classification_id, title, type, url, sort)
-                VALUES (
-                    ${parseInt(formData.classification_id) || 1},
+                const query = `INSERT INTO ${publicdb}.content
+                    (classificationid, title, type, url, sort)
+                SELECT
+                    ${Number(selectedClassificationId)},
                     '${formData.title.replace(/'/g, "\\'")}',
                     '${formData.type}',
                     '${formData.url.replace(/'/g, "\\'")}',
                     ${maxSort + 1}
-                )`;
+                WHERE ${Number(selectedClassificationId)} > 0`;
 
                 const response = await fetch('/api/v1/maria/q', {
                     method: 'POST',
@@ -121,7 +156,9 @@ const LinksAdmin = ({ navigateTo }) => {
         if (!window.confirm(`Are you sure you want to delete "${title}"?`)) return;
 
         try {
-            const query = `DELETE FROM ${publicdb}.links WHERE id=${id}`;
+            const query = `DELETE FROM ${publicdb}.content
+                           WHERE id=${Number(id)}
+                             AND classificationid=${Number(selectedClassificationId)}`;
             const response = await fetch('/api/v1/maria/q', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -144,7 +181,6 @@ const LinksAdmin = ({ navigateTo }) => {
     const handleEdit = (link) => {
         setEditingLink(link);
         setFormData({
-            classification_id: link.classification_id || 1,
             title: link.title || '',
             type: link.type || 'video',
             url: link.url || ''
@@ -155,7 +191,6 @@ const LinksAdmin = ({ navigateTo }) => {
     const handleAddNew = () => {
         setEditingLink(null);
         setFormData({
-            classification_id: 1,
             title: '',
             type: 'video',
             url: ''
@@ -165,7 +200,10 @@ const LinksAdmin = ({ navigateTo }) => {
 
     const updateSortOrder = async (id, sort) => {
         try {
-            const query = `UPDATE ${publicdb}.links SET sort = ${sort} WHERE id = ${id}`;
+            const query = `UPDATE ${publicdb}.content
+                           SET sort = ${Number(sort)}
+                           WHERE id = ${Number(id)}
+                             AND classificationid=${Number(selectedClassificationId)}`;
             await fetch('/api/v1/maria/q', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -208,7 +246,7 @@ const LinksAdmin = ({ navigateTo }) => {
                 return () => sortable.destroy();
             }
         }
-    }, [loading, links]);
+    }, [loading, links, selectedClassificationId]);
 
     const getTypeIcon = (type) => {
         switch(type) {
@@ -242,14 +280,30 @@ const LinksAdmin = ({ navigateTo }) => {
 
             <div className="links-header">
                 <h1>🔗 Links Manager</h1>
-                <button className="links-add-btn" onClick={handleAddNew}>
-                    + Add New Link
-                </button>
+                <div className="links-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    <label className="classification-select-label" htmlFor="linksClassification">Classification</label>
+                    <select
+                        id="linksClassification"
+                        className="form-select classification-select"
+                        style={{ minWidth: '180px' }}
+                        value={selectedClassificationId}
+                        onChange={(e) => setSelectedClassificationId(e.target.value)}
+                    >
+                        {classifications.map((classification) => (
+                            <option key={classification.id} value={String(classification.id)}>
+                                {classification.name}
+                            </option>
+                        ))}
+                    </select>
+                    <button className="links-add-btn" onClick={handleAddNew} disabled={!selectedClassificationId}>
+                        + Add New Link
+                    </button>
+                </div>
             </div>
 
             {links.length === 0 ? (
                 <div className="links-empty">
-                    <p>🔗 No links found. Click "Add New Link" to create one.</p>
+                    <p>No content found for this classification. Click "Add New Link" to create one.</p>
                 </div>
             ) : (
                 <div className="table-container">
@@ -298,10 +352,10 @@ const LinksAdmin = ({ navigateTo }) => {
                                 </td>
                                 <td>
                                     <button className="links-edit-btn" onClick={() => handleEdit(link)}>
-                                        ✏️ Edit
+                                        ✏️
                                     </button>
                                     <button className="links-delete-btn" onClick={() => handleDelete(link.id, link.title)}>
-                                        🗑️ Delete
+                                        🗑️
                                     </button>
                                 </td>
                             </tr>
@@ -351,15 +405,6 @@ const LinksAdmin = ({ navigateTo }) => {
                                     value={formData.url}
                                     onChange={(e) => setFormData({...formData, url: e.target.value})}
                                     placeholder="https://..."
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Classification ID</label>
-                                <input
-                                    type="number"
-                                    className="form-input"
-                                    value={formData.classification_id}
-                                    onChange={(e) => setFormData({...formData, classification_id: parseInt(e.target.value) || 1})}
                                 />
                             </div>
                         </div>

@@ -24,6 +24,7 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
         classificationid: 1,
         userid: 1,
         img: '',
+        url:'',
         type: 'post',
         name: '',
         published: '',
@@ -104,6 +105,7 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
                     classificationid: contentData.classificationid || 1,
                     userid: contentData.userid || 1,
                     img: contentData.img || '',
+                    url: contentData.url || '',
                     type: contentData.type || 'post',
                     sort: contentData.sort || 0,
                     status: contentData.status ?? 1,
@@ -282,6 +284,7 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
                     sort: parseInt(formData.sort) || 0,
                     name: safeName,
                     title: safeTitle || null,
+                    url: formData.url || null,
                     description: safeDescription,
                     excerpt: safeExcerpt || null,
                     img: formData.img || null,
@@ -321,6 +324,7 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
                                                               classificationid=${parseInt(formData.classificationid) || 1},
                                                               userid=${parseInt(formData.userid) || 1},
                                                               img='${escapeSql(formData.img || '')}',
+                                                              url='${escapeSql(formData.url || '')}',
                                                               status=${parseInt(formData.status) || 1},
                                                               sort=${parseInt(formData.sort) || 0},
                                                               lang='${escapeSql(formData.lang || 'el')}',
@@ -459,6 +463,21 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
                             value={formData.name}
                             onChange={(e) => setFormData({...formData, name: e.target.value})}
                             placeholder="Content Name"
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">URL (Video / Website)</label>
+                        <input
+                            type="text"
+                            className="form-input"
+                            value={formData.url}
+                            onChange={(e) => {
+                                const newUrl = e.target.value;
+                                setFormData({...formData, url: newUrl});
+                                // ✅ Αποθήκευση στο localStorage κάθε φορά που πληκτρολογείς
+                                localStorage.setItem('temp_content_url', newUrl);
+                            }}
+                            placeholder="https://youtube.com/watch?v=... ή https://..."
                         />
                     </div>
                     <div className="form-group">

@@ -97,7 +97,9 @@ trap stop_services EXIT
 
 # Start services and inotify watcher
 start_services
-watch_files &  # Runs inotify in the background
+
+#temporarily disabled
+#watch_files &  # Runs inotify in the background
 
 # Main daemon loop to monitor services
 while true; do

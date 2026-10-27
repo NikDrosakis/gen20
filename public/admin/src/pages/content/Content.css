@@ -255,21 +255,25 @@ body.dark-mode .localization-group {
 .content-archive-table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 1000px;
+    table-layout: fixed; /* ← Σταθερό layout */
+    min-width: 0;        /* ← Αφαιρεί το 1000px */
 }
 
 .content-archive-table th,
 .content-archive-table td {
-    padding: 12px 16px;
+    padding: 10px 10px;
     text-align: left;
     border-bottom: 1px solid var(--border-color, #e2e8f0);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .content-archive-table th {
     background: #f1f5f9;
     font-weight: 600;
     color: #475569;
-    font-size: 13px;
+    font-size: 11px;
 }
 
 .content-archive-table tr:hover {
@@ -282,7 +286,32 @@ body.dark-mode .localization-group {
     object-fit: cover;
     border-radius: 6px;
 }
+.content-thumbnail-video,
+.content-iframe {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 6px;
+    object-fit: cover;
+    display: block;
+}
+.content-iframe-wrapper {
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+    border-radius: 6px;
+    position: relative;
+}
 
+.content-iframe-wrapper iframe {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    height: 120px;
+    transform: translate(-50%, -50%);
+    border: none;
+}
 .no-image {
     color: #9ca3af;
     font-size: 12px;
@@ -306,7 +335,7 @@ body.dark-mode .localization-group {
 }
 
 .content-name {
-    font-weight: 500;
+
 }
 
 .preview-link {
@@ -963,4 +992,114 @@ body.dark-mode .image-placeholder {
 
 body.dark-mode .clear-image-button:hover {
     background: rgba(255, 255, 255, 0.1);
+}
+
+
+/* Content Manager additions — uses the existing Content.css design system */
+.content-classification-select {
+    min-width: 180px;
+}
+
+.content-type-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 16px;
+}
+
+.content-type-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    background: var(--bg-secondary, #f8fafc);
+    color: var(--text-primary, #1a202c);
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.content-type-filter span {
+    font-size: 11px;
+    opacity: 0.75;
+}
+
+.content-type-filter:hover,
+.content-type-filter.active {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    color: #1e40af;
+}
+
+.content-sort-hint {
+    margin: 0 0 12px;
+    color: var(--text-secondary, #64748b);
+    font-size: 12px;
+}
+
+.content-sort-handle {
+    cursor: grab;
+    user-select: none;
+    color: var(--text-secondary, #64748b);
+}
+
+.content-sort-handle:active {
+    cursor: grabbing;
+}
+
+@media (max-width: 768px) {
+    .content-classification-select {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .content-type-filters {
+        gap: 6px;
+    }
+}
+
+body.dark-mode .content-type-filter {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+body.dark-mode .content-type-filter:hover,
+body.dark-mode .content-type-filter.active {
+    background: #1e3a5f;
+    border-color: #3b82f6;
+    color: #bfdbfe;
+}
+.btn-select-image {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-select-image:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+.btn-select-image:active {
+    transform: translateY(0);
+}
+
+/* Dark mode */
+body.dark-mode .btn-select-image {
+    background: #3b82f6;
+}
+
+body.dark-mode .btn-select-image:hover {
+    background: #2563eb;
 }

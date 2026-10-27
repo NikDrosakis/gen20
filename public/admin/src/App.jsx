@@ -17,6 +17,7 @@ import SuperAdmin from "./pages/SuperAdmin";
 import MemberFormAdmin from "./pages/MemberFormAdmin";
 import Setup from "./pages/Setup";
 import Media from "./pages/Media";
+import Doc from "./pages/Doc";
 
 const App = () => {
   const [currentPage, setCurrentPage] = useState('home');
@@ -54,6 +55,9 @@ const App = () => {
     // Other pages
     else if (path === '/admin/analytics') {
       setCurrentPage('analytics');
+    }
+    else if (path === '/admin/doc') {
+      setCurrentPage('doc');
     }
     else if (path === '/admin/classification') {
       setCurrentPage('classification');
@@ -156,6 +160,9 @@ const App = () => {
       case 'superadmin':
         window.location.href = '/admin/superadmin';
         break;
+      case 'doc':
+        window.location.href = '/admin/doc';
+        break;
       case 'home':
       default:
         window.location.href = '/admin';
@@ -213,6 +220,8 @@ const App = () => {
         return <SlidesAdmin navigateTo={navigateTo} />;
       case '/admin/links':
         return <Links navigateTo={navigateTo} />;
+      case '/admin/doc':
+        return <Doc navigateTo={navigateTo} />;
       case '/admin/members':
         return <MemberFormAdmin navigateTo={navigateTo} />;
       case '/admin/superadmin':

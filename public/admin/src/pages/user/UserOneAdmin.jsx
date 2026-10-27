@@ -9,6 +9,7 @@ const UserOneAdmin = ({ navigateTo, userId = null, isNew = false }) => {
     const [loading, setLoading] = useState(!isNew && !!userId);
     const [saving, setSaving] = useState(false);
     const [showMediaToolbox, setShowMediaToolbox] = useState(false);
+    const [categories, setCategories] = useState([]);
     const [formData, setFormData] = useState({
         name: '',
         firstname: '',
@@ -25,7 +26,7 @@ const UserOneAdmin = ({ navigateTo, userId = null, isNew = false }) => {
         tel: '',
         city: 0,
         lang: 'en',
-        usergrpid: 1
+        classificationid: 1
     });
     const [apiStatus, setApiStatus] = useState({ show: false, message: '', type: '' });
 
@@ -33,7 +34,26 @@ const UserOneAdmin = ({ navigateTo, userId = null, isNew = false }) => {
         setApiStatus({ show: true, message, type });
         setTimeout(() => setApiStatus({ show: false, message: '', type: '' }), 3000);
     };
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const query = `SELECT id, title FROM ${publicdb}.classification ORDER BY name`;
+                const response = await fetch(
+                    `/api/v1/maria/fa?folder=${encodeURIComponent(query)}`
+                );
+                const result = await response.json();
 
+                if (result.success && Array.isArray(result.data)) {
+                    setCategories(result.data);
+                }
+            } catch (error) {
+                console.error('Error loading categories:', error);
+                showNotification('Failed to load categories', 'error');
+            }
+        };
+
+        fetchCategories();
+    }, []);
     const escapeSql = (str) => {
         if (str === null || str === undefined) return '';
         return str
@@ -94,7 +114,7 @@ const UserOneAdmin = ({ navigateTo, userId = null, isNew = false }) => {
                     tel: userData.tel || '',
                     city: userData.city || 0,
                     lang: userData.lang || 'en',
-                    usergrpid: userData.usergrpid || 1
+                    classificationid: userData.classificationid || 1
                 });
             } else {
                 showNotification('User not found', 'error');
@@ -147,7 +167,7 @@ const UserOneAdmin = ({ navigateTo, userId = null, isNew = false }) => {
                 // INSERT new user
                 const query = `INSERT INTO ${publicdb}.user
                     (name, firstname, lastname, fullname, email, permission, status, display, 
-                     title, bio, img, url, tel, city, lang, usergrpid, created, modified, edited)
+                     title, bio, img, url, tel, city, lang, classificationid, created, modified, edited)
                 VALUES (
                     '${escapeSql(formData.name || '')}',
                     '${escapeSql(formData.firstname || '')}',
@@ -164,7 +184,7 @@ const UserOneAdmin = ({ navigateTo, userId = null, isNew = false }) => {
                     '${escapeSql(formData.tel || '')}',
                     ${parseInt(formData.city) || 0},
                     '${escapeSql(formData.lang || 'en')}',
-                    ${parseInt(formData.usergrpid) || 1},
+                    ${parseInt(formData.classificationid) || 1},
                     '${now}',
                     '${now}',
                     '${now}')`;
@@ -201,7 +221,7 @@ const UserOneAdmin = ({ navigateTo, userId = null, isNew = false }) => {
                     tel='${escapeSql(formData.tel || '')}',
                     city=${parseInt(formData.city) || 0},
                     lang='${escapeSql(formData.lang || 'en')}',
-                    usergrpid=${parseInt(formData.usergrpid) || 1},
+                    classificationid=${parseInt(formData.classificationid) || 1},
                     modified='${now}',
                     edited='${now}'
                 WHERE id=${id}`;
@@ -350,9 +370,24 @@ const UserOneAdmin = ({ navigateTo, userId = null, isNew = false }) => {
                         </select>
                     </div>
                     <div className="form-group">
-                        <label className="form-label">User Group ID</label>
-                        <input type="number" className="form-input" value={formData.usergrpid}
-                               onChange={(e) => setFormData({...formData, usergrpid: parseInt(e.target.value) || 1})} />
+                        <label className="form-label">Category</label>
+                        <select
+                            className="form-select"
+                            value={formData.classificationid}
+                            onChange={(e) =>
+                                setFormData(prev => ({
+                                    ...prev,
+                                    classificationid: Number(e.target.value)
+                                }))
+                            }
+                        >
+                            <option value={0}>-- Select Category --</option>
+                            {categories.map(category => (
+                                <option key={category.id} value={category.id}>
+                                    {category.title}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                 </div>
 
