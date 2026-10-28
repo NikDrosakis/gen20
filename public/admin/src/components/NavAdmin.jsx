@@ -36,9 +36,8 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
     const isGen20Net = window.location.hostname === 'gen20.net';
     const navItems = [
         { id: 'home', label: 'Home', icon: '🏠', path: '/admin' },
-        { id: 'setup', label: 'Setup', icon: '🔧', path: '/admin/setup' },
         { id: 'page', label: 'Content', icon: '📝', path: '/admin/page' },
-        { id: 'classification', label: 'Categories', icon: '📂', path: '/admin/classification' },
+        { id: 'classification', label: 'Classification', icon: '🏷️', path: '/admin/classification' },
         { id: 'users', label: 'Users', icon: '👤', path: '/admin/users' },
         { id: 'members', label: 'Members', icon: '👤', path: '/admin/members' },
         { id: 'media', label: 'Media', icon: '🖼️', path: '/admin/media' },
@@ -48,6 +47,7 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
         { id: 'layout', label: 'Layout', icon: '🎨', path: '/admin/layout' },
         { id: 'languages', label: 'Languages', icon: '🌐', path: '/admin/languages' },
         { id: 'analytics', label: 'Analytics', icon: '📈', path: '/admin/analytics' },
+        { id: 'setup', label: 'Setup', icon: '⚙️', path: '/admin/setup' },
         // monetize και superadmin μόνο για gen20.net
         ...(isGen20Net ? [
             { id: 'monetize', label: 'Monetize', icon: '💰', path: '/admin/monetize' },
@@ -141,7 +141,7 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
             <div className="admin-navbar-inner">
                 <div className="admin-brand">
                     <span className="admin-brand-icon">🧬</span>
-                    <span className="admin-brand-text">GEN20 Admin - {window.location.host}
+                    <span className="admin-brand-text">{window.location.host} - Dashboard
                         {languages.length > 0 && (
                             <div className="admin-languages-flags" title="Public site active languages">
                                 {languages.map(lang => (
@@ -176,7 +176,7 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
                             onClick={() => window.location.href = '/'}
                         >
                             <span className="admin-nav-icon">🏠</span>
-                            <span className="admin-nav-label">Public Home</span>
+                            <span className="admin-nav-label">Public</span>
                         </button>
                     </li>
                 </ul>

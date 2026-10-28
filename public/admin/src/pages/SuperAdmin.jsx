@@ -5,6 +5,7 @@ import SuperAdminHeader from '../components/superadmin/SuperAdminHeader';
 import DomainManager from '../components/superadmin/DomainManager';
 import SSLManager from '../components/superadmin/SSLManager';
 import FilesystemManager from '../components/superadmin/FilesystemManager';
+import ComponentManager from '../components/superadmin/ComponentManager';
 import DatabaseManager from '../components/superadmin/DatabaseManager';
 import NginxManager from '../components/superadmin/NginxManager';
 import DNSManager from '../components/superadmin/DNSManager';
@@ -23,6 +24,7 @@ const SuperAdmin = () => {
     const [loading, setLoading] = useState(true);
     const [sslInfo, setSslInfo] = useState({});
     const [filesystem, setFilesystem] = useState([]);
+    const [componentfiles, setComponentfiles] = useState([]);
     const [nginx, setNginx] = useState([]);
     const [dnsZones, setDnsZones] = useState([]);
     const [components, setComponents] = useState([]);
@@ -472,6 +474,7 @@ const SuperAdmin = () => {
         { id: 'domains', label: 'Domain Manager', icon: '🌐' },
         { id: 'lab', label: 'API Lab', icon: '🧩' },
         { id: 'filesystem', label: 'Filesystem', icon: '📁' },
+        { id: 'components', label: 'Components', icon: '🧱' },
         { id: 'db', label: 'Databases', icon: '🗄️' },
         { id: 'dbtemplate', label: 'DB Template', icon: '🌳' },
         { id: 'dbtree', label: 'DB Tree', icon: '🌳' },
@@ -563,6 +566,9 @@ const SuperAdmin = () => {
 
                 {activeTab === 'filesystem' && (
                     <FilesystemManager filesystem={filesystem} selectedDomain={selectedDomain}/>
+                )}
+                {activeTab === 'components' && (
+                    <ComponentManager filesystem={componentfiles}/>
                 )}
 
                 {activeTab === 'db' && (

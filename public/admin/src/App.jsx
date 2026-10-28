@@ -1,4 +1,4 @@
-// App.jsx - Χωρίς hash navigation, όλα path-based
+// App.jsx
 import React, { useState, useEffect } from 'react';
 import Navbar from "./components/NavAdmin";
 import SlidesAdmin from "./components/SlidesAdmin";
@@ -18,11 +18,44 @@ import MemberFormAdmin from "./pages/MemberFormAdmin";
 import Setup from "./pages/Setup";
 import Media from "./pages/Media";
 import Doc from "./pages/Doc";
+import { useG } from './contexts/GContext';
+import SetupToolbox from './components/SetupToolbox';
 
 const App = () => {
   const [currentPage, setCurrentPage] = useState('home');
   const [loading, setLoading] = useState(true);
   const [editId, setEditId] = useState(null);
+  const { G, loading: configLoading, error } = useG();
+  const [showSetup, setShowSetup] = useState(false);
+  const [setupChecked, setSetupChecked] = useState(false);
+
+  // ✅ ΝΕΟ: 5 Δευτερόλεπτα καθυστέρηση για το SetupToolbox
+  useEffect(() => {
+    // Αν το config φορτώνει ακόμα ή έχει σφάλμα, περίμενε
+    if (configLoading || error || !G || !G.set) return;
+
+    // Αν το έχουμε ήδη ελέγξει, μην κάνεις τίποτα
+    if (setupChecked) return;
+
+    // Έλεγχος για null τιμές
+    let missingValues = false;
+    if (Array.isArray(G.set)) {
+      missingValues = G.set.some(item => item?.val === null || item?.val === undefined);
+    } else if (typeof G.set === 'object') {
+      missingValues = Object.values(G.set).some(item => item?.val === null || item?.val === undefined);
+    }
+
+    setSetupChecked(true);
+
+    if (missingValues) {
+      // Αν λείπουν τιμές, περίμενε 5 δευτερόλεπτα (5000ms) και μετά δείξε το
+      const timer = setTimeout(() => {
+        setShowSetup(true);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [G, configLoading, error, setupChecked]);
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -99,12 +132,8 @@ const App = () => {
     setLoading(false);
   }, [window.location.pathname, window.location.search]);
 
-  // Handle navigation - all path-based
   const navigateTo = (page, id = null) => {
-    console.log('Navigating to:', page, id);
-
     switch(page) {
-        // Content management
       case 'page-edit':
         window.location.href = `/admin/page?id=${id}`;
         break;
@@ -114,8 +143,6 @@ const App = () => {
       case 'page-archive':
         window.location.href = '/admin/page';
         break;
-
-        // User management
       case 'user-edit':
         window.location.href = `/admin/user-edit?userId=${id}`;
         break;
@@ -125,8 +152,6 @@ const App = () => {
       case 'users':
         window.location.href = '/admin/users';
         break;
-
-        // Other pages
       case 'analytics':
         window.location.href = '/admin/analytics';
         break;
@@ -170,7 +195,6 @@ const App = () => {
     }
   };
 
-  // Render current page
   const renderPage = () => {
     const searchParams = new URLSearchParams(window.location.search);
     const id = searchParams.get('id');
@@ -178,7 +202,6 @@ const App = () => {
     const userId = searchParams.get('userId');
     const path = window.location.pathname;
 
-    // Content routes
     if (path === '/admin/page') {
       if (id) {
         return <ContentOneAdmin navigateTo={navigateTo} contentId={id} isNew={false} />;
@@ -189,7 +212,6 @@ const App = () => {
       }
     }
 
-    // User routes
     if (path === '/admin/user-edit' && userId) {
       return <UserOneAdmin navigateTo={navigateTo} userId={userId} isNew={false} />;
     }
@@ -200,7 +222,6 @@ const App = () => {
       return <UserArchiveAdmin navigateTo={navigateTo} />;
     }
 
-    // Other routes based on path
     switch(path) {
       case '/admin/analytics':
         return <AnalyticsDashboard navigateTo={navigateTo} />;
@@ -237,14 +258,23 @@ const App = () => {
   }
 
   return (
-      <div className="admin-container">
-        <header className="admin-header">
-          <Navbar currentPage={currentPage} onNavigate={navigateTo} />
-        </header>
-        <div className="admin-content">
-          {renderPage()}
+      <>
+        <div className="admin-container">
+          <header className="admin-header">
+            <Navbar currentPage={currentPage} onNavigate={navigateTo} />
+          </header>
+          <div className="admin-content">
+            {renderPage()}
+          </div>
         </div>
-      </div>
+
+        {/* Το Toolbox εμφανίζεται μετά από 5 δευτερόλεπτα (αν χρειάζεται) */}
+        {showSetup && (
+            <SetupToolbox
+                onComplete={() => setShowSetup(false)}
+            />
+        )}
+      </>
   );
 };
 

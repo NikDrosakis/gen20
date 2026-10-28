@@ -1,19 +1,18 @@
-// main.jsx - Minimal entry point
+
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import ReactDOM from 'react-dom/client';
 import AppRouter from './router';
 import { HelmetProvider } from 'react-helmet-async';
 import './App.css';
 import './styles/admin.css';
+import { GProvider } from './contexts/GContext';
 
-// Mount React app
-const container = document.getElementById('root');
-const root = createRoot(container);
-
-root.render(
+ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
-        <HelmetProvider>
-            <AppRouter />
-        </HelmetProvider>
+        <GProvider>
+            <HelmetProvider>
+                <AppRouter />
+            </HelmetProvider>
+        </GProvider>
     </React.StrictMode>
 );

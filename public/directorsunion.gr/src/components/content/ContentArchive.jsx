@@ -316,7 +316,7 @@ console.log('posts',posts)
             <div className="archive-footer">
                 <p className="footer-note">
                     <span>🔬</span>
-                    Το υλικό ανανεώνεται διαρκώς. Ενημερώστε μας για όποια λάθη.
+                    Το υλικό ανανεώνεται διαρκώς. Ενημερώστε μας για τυχόν λάθη και παραλήψεις.
                     <span>📅</span>
                 </p>
             </div>

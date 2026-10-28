@@ -33,7 +33,7 @@ const FootMenu = () => {
                         <span className="brand-text">Ένωση Σκηνοθετών Δημιουργών Οπτικοακουστικών και Παραστατικών Τεχνών</span>
                     </div>
                     <p className="brand-description">
-                        Ψηφιακή Πλατφόρμα
+                        Επίσημη Σελίδα
                     </p>
                 </div>
 

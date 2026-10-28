@@ -1,0 +1,155 @@
+/* components/superadmin/ComponentManager.css */
+
+.component-manager {
+    padding: 24px;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.component-header h2 {
+    margin: 0 0 4px 0;
+    font-size: 24px;
+    color: #1e293b;
+}
+
+.component-header .subtitle {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    color: #64748b;
+}
+
+.search-container {
+    margin-bottom: 24px;
+}
+
+.component-search-input {
+    width: 100%;
+    padding: 14px 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    font-size: 15px;
+    color: #334155;
+    outline: none;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.component-search-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.domains-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    align-items: start;
+}
+
+.domain-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.domain-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    margin-bottom: 4px;
+}
+
+.domain-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.domain-path {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 16px;
+    padding-left: 20px;
+}
+
+.arrow-icon {
+    font-size: 10px;
+    color: #64748b;
+    width: 12px;
+    display: inline-block;
+}
+
+.tree-children {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tree-folder {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #334155;
+    transition: background 0.2s;
+}
+
+.tree-folder:hover {
+    background: #f1f5f9;
+}
+
+.folder-icon, .file-icon {
+    font-size: 14px;
+}
+
+.file-name, .folder-name {
+    font-weight: 400;
+}
+
+.tree-file {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    font-size: 14px;
+    color: #475569;
+}
+
+.file-name {
+    font-family: monospace;
+    font-size: 13px;
+}
+
+.add-file-action {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 13px;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.add-file-action:hover {
+    color: #3b82f6;
+}
+
+.no-results {
+    padding: 40px;
+    text-align: center;
+    color: #64748b;
+    background: #f8fafc;
+    border-radius: 8px;
+    grid-column: 1 / -1;
+}

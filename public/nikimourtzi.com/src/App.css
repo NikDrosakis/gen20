@@ -149,7 +149,7 @@ body {
 .research-page-container,
 .contact-page-container {
   width: 100%;
-  min-height: calc(100vh - 73px);
+  min-height: calc(74vh - 73px);
   background: var(--bg);
   display: flex;
   justify-content: center;

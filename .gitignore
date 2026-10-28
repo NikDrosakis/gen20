@@ -17,7 +17,6 @@
 log/
 media/
 backup/
-core2/
 kronos/data/
 kronos/services/sketch/video/
 node_modules/

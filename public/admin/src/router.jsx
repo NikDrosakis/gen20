@@ -1,67 +1,49 @@
-// router.jsx - COMPLETE WORKING VERSION
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import App from './App';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Cookies from 'js-cookie';
+import App from './App';
 
-const Loading = () => (
-    <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh'
-    }}>
-        Loading Admin...
-    </div>
-);
-
-const ProtectedRoute = ({ children }) => {
-    const [isAuthorized, setIsAuthorized] = useState(null);
+function ProtectedRoute({ children }) {
+    const [authorized, setAuthorized] = useState(false);
+    const [checking, setChecking] = useState(true);
 
     useEffect(() => {
-        const genUid = Cookies.get('GENUID');
-        const genName = Cookies.get('GENNAME');
-        const genRole = Cookies.get('GENROLE');
+        const uid = Cookies.get('GENUID');
+        const name = Cookies.get('GENNAME');
+        const role = Cookies.get('GENROLE');
 
-        console.log('Admin Auth Check:', { genUid, genName, genRole }); // Debug
+        const allowed =
+            Boolean(uid && name) &&
+            (role === 'admin' || role === '1');
 
-        if (genUid && genName && (genRole === 'admin' || genRole === '1')) {
-            setIsAuthorized(true);
-        } else {
-            // Use window.location for cross-app navigation
+        setAuthorized(allowed);
+        setChecking(false);
+
+        if (!allowed) {
             window.location.href = '/login';
-            setIsAuthorized(false);
         }
     }, []);
 
-    if (isAuthorized === null) {
-        return <Loading />;
+    if (checking) {
+        return <div className="admin-loading">Loading Admin...</div>;
     }
 
-    return isAuthorized ? children : null;
-};
+    return authorized ? children : null;
+}
 
-// CRITICAL: No basename here because Vite base handles it
-const AppRouter = () => {
+export default function AppRouter() {
     return (
         <BrowserRouter>
-            <React.Suspense fallback={<Loading />}>
-                <Routes>
-                    {/* Use "/*" to match all routes under /admin */}
-                    <Route
-                        path="/*"
-                        element={
-                            <ProtectedRoute>
-                                <App />
-                            </ProtectedRoute>
-                        }
-                    />
-                    {/* Fallback redirect */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-            </React.Suspense>
+            <Routes>
+                <Route
+                    path="/*"
+                    element={
+                        <ProtectedRoute>
+                            <App />
+                        </ProtectedRoute>
+                    }
+                />
+            </Routes>
         </BrowserRouter>
     );
-};
-
-export default AppRouter;
+}

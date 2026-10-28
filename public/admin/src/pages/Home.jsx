@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { getPageViewsStats, getActiveUsers, getAvgEngagementTime, getDailyViews } from '../utils/GoogleAnalytics';
 import './Home.css';
-
+import ClassificationModal from '../components/ClassificationModal';
 const Home = () => {
     const [stats, setStats] = useState({
         totalUsers: 0,
@@ -12,6 +12,7 @@ const Home = () => {
         activeUsers: 0,
         avgEngagementTime: '0m 0s'
     });
+    const [showClassificationModal, setShowClassificationModal] = useState(false);
     const [pageStats, setPageStats] = useState([]);
     const [dailyStats, setDailyStats] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -85,17 +86,17 @@ const Home = () => {
         }
 
         switch(actionName) {
-            case 'Create Post':
-                window.location.href = '#create-post';
+            case 'Add Content':
+                window.location.href = '#add-content';
                 break;
             case 'Add User':
                 window.location.href = '#add-user';
                 break;
-            case 'Upload Media':
-                window.location.href = '#upload-media';
+            case 'Media Toolbox':
+                window.location.href = '#media-toolbox';
                 break;
-            case 'Settings':
-                window.location.href = '#settings';
+            case 'Add Classification':
+                setShowClassificationModal(true);
                 break;
             default:
                 break;
@@ -168,7 +169,8 @@ const Home = () => {
     }
 
     return (
-        <div className="home-dashboard">
+        <>
+            <div className="home-dashboard">
             <div style={{
                 padding: "24px",
                 maxWidth: "1400px",
@@ -179,7 +181,6 @@ const Home = () => {
                     fontSize: "28px",
                     color: "rgb(26, 32, 44)"
                 }}>Analytics Dashboard</h1>
-                <p>Real-time statistics from your website</p>
             </div>
 
             {/* Stats Cards */}
@@ -205,16 +206,75 @@ const Home = () => {
                 ))}
             </div>
 
+            {/* Recent Activity  */}
+            <div className="content-grid">
+                <div className="recent-activity">
+                    <h2>Recent Activity</h2>
+                    <div className="activity-list">
+                        <div className="activity-item">
+                            <div className="activity-icon">📊</div>
+                            <div className="activity-details">
+                                <div className="activity-title">
+                                    Total views: {stats.totalViews.toLocaleString()}
+                                </div>
+                                <div className="activity-time">
+                                    Active users: {stats.activeUsers}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="activity-item">
+                            <div className="activity-icon">⏱️</div>
+                            <div className="activity-details">
+                                <div className="activity-title">
+                                    Average engagement time
+                                </div>
+                                <div className="activity-time">
+                                    {stats.avgEngagementTime}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="activity-item">
+                            <div className="activity-icon">📄</div>
+                            <div className="activity-details">
+                                <div className="activity-title">
+                                    Unique pages viewed
+                                </div>
+                                <div className="activity-time">
+                                    {stats.totalPages} pages
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="quick-actions">
+                    <h2>Quick Actions</h2>
+                    <div className="actions-grid">
+                        <button className="action-btn" onClick={() => handleQuickAction('Add Content')}>
+                            📝 Add Content
+                        </button>
+                        <button className="action-btn" onClick={() => handleQuickAction('Add User')}>
+                            👥 Add User
+                        </button>
+                        <button className="action-btn" onClick={() => handleQuickAction('Media Toolbox')}>
+                            🖼️ Media Toolbox
+                        </button>
+                        <button className="action-btn" onClick={() => handleQuickAction('Add Classification')}>
+                            🏷️ New Classification
+                        </button>
+                    </div>
+                </div>
+
+
             {/* Daily Views Chart */}
             {dailyStats.length > 0 && (
                 <div style={{
                     background: "white",
                     borderRadius: "12px",
                     padding: "24px",
-                    margin: "0 24px 24px",
                     boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
                 }}>
-                    <h3 style={{ marginBottom: "20px" }}>📈 Daily Views (Last 30 Days)</h3>
+                    <h3 style={{marginBottom: "20px"}}>📈 Daily Views (Last 30 Days)</h3>
                     <div style={{
                         display: "flex",
                         alignItems: "flex-end",
@@ -275,11 +335,10 @@ const Home = () => {
                     background: "white",
                     borderRadius: "12px",
                     padding: "24px",
-                    margin: "0 24px 24px",
                     boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
                 }}>
-                    <h3 style={{ marginBottom: "20px" }}>📊 Top Pages</h3>
-                    <div style={{ overflowX: "auto" }}>
+                    <h3 style={{marginBottom: "20px"}}>📊 Top Pages</h3>
+                    <div style={{overflowX: "auto"}}>
                         <table style={{
                             width: "100%",
                             borderCollapse: "collapse"
@@ -293,19 +352,22 @@ const Home = () => {
                                     padding: "12px",
                                     color: "#4a5568",
                                     fontWeight: "600"
-                                }}>Page</th>
+                                }}>Page
+                                </th>
                                 <th style={{
                                     textAlign: "right",
                                     padding: "12px",
                                     color: "#4a5568",
                                     fontWeight: "600"
-                                }}>Views</th>
+                                }}>Views
+                                </th>
                                 <th style={{
                                     textAlign: "right",
                                     padding: "12px",
                                     color: "#4a5568",
                                     fontWeight: "600"
-                                }}>% of Total</th>
+                                }}>% of Total
+                                </th>
                             </tr>
                             </thead>
                             <tbody>
@@ -343,68 +405,19 @@ const Home = () => {
                         </table>
                     </div>
                 </div>
+
             )}
-
-            {/* Quick Actions */}
-            <div className="content-grid">
-                <div className="recent-activity">
-                    <h2>Recent Activity</h2>
-                    <div className="activity-list">
-                        <div className="activity-item">
-                            <div className="activity-icon">📊</div>
-                            <div className="activity-details">
-                                <div className="activity-title">
-                                    Total views: {stats.totalViews.toLocaleString()}
-                                </div>
-                                <div className="activity-time">
-                                    Active users: {stats.activeUsers}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="activity-item">
-                            <div className="activity-icon">⏱️</div>
-                            <div className="activity-details">
-                                <div className="activity-title">
-                                    Average engagement time
-                                </div>
-                                <div className="activity-time">
-                                    {stats.avgEngagementTime}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="activity-item">
-                            <div className="activity-icon">📄</div>
-                            <div className="activity-details">
-                                <div className="activity-title">
-                                    Unique pages viewed
-                                </div>
-                                <div className="activity-time">
-                                    {stats.totalPages} pages
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="quick-actions">
-                    <h2>Quick Actions</h2>
-                    <div className="actions-grid">
-                        <button className="action-btn" onClick={() => handleQuickAction('Create Post')}>
-                            📝 Create Post
-                        </button>
-                        <button className="action-btn" onClick={() => handleQuickAction('Add User')}>
-                            👥 Add User
-                        </button>
-                        <button className="action-btn" onClick={() => handleQuickAction('Upload Media')}>
-                            🖼️ Upload Media
-                        </button>
-                        <button className="action-btn" onClick={() => handleQuickAction('Settings')}>
-                            ⚙️ Settings
-                        </button>
-                    </div>
-                </div>
             </div>
         </div>
+            {/* ✅ Classification Modal */}
+            <ClassificationModal
+                isOpen={showClassificationModal}
+                onClose={() => setShowClassificationModal(false)}
+                onSave={() => {
+                    alert('✅ Η κατηγορία αποθηκεύτηκε!');
+                }}
+            />
+        </>
     );
 };
 

@@ -62,7 +62,7 @@ trait DomainDB {
         }
 
         // Check required tables exist
-        $requiredTables = ['users', 'settings', 'content'];
+        $requiredTables = ['user', 'setup', 'content','comment','classification'];
         foreach ($requiredTables as $table) {
             $fullTableName = "{$domain}_$table";
             if (!$this->db->tableExists($fullTableName)) {

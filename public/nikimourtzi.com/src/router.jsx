@@ -1,5 +1,5 @@
 // /router.jsx
-import { createBrowserRouter,useParams } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import App from "./App";
 import Home from "./pages/Home";
 import Blog from "./pages/Blog";

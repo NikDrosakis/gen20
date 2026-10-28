@@ -1,69 +1,75 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import Cookies from 'js-cookie';
+
+import React, {
+    createContext,
+    useContext,
+    useState,
+    useEffect
+} from 'react';
 
 const GContext = createContext({
     G: null,
-    setG: () => {},
-    lang: 'el',
-    setLang: () => {}
+    setG: () => {}
 });
 
 export const useG = () => useContext(GContext);
 
 export const GProvider = ({ children }) => {
-    const baseURL = import.meta.env.VITE_HTTP_API;
-    const NODE_ENV = import.meta.env.VITE_HTTP_API;
-    const [G, setG] = useState(null);
-    const [lang, setLangState] = useState(Cookies.get('lang') || 'el');
-    const [loading, setLoading] = useState(true);
+    const [G, setG] = useState(() =>
+        typeof window !== 'undefined' ? window.G ?? null : null
+    );
+
+    const [loading, setLoading] = useState(!G);
     const [error, setError] = useState(null);
 
-    const setLang = (newLang) => {
-        Cookies.set('lang', newLang);
-        setLangState(newLang);
-    };
-
     useEffect(() => {
-        const loadConfig = async () => {
-            // 1. Check if G is already available from server (injected script)
-            if (typeof window !== "undefined" && window.G) {
-                setG(window.G);
-                setLoading(false);
-                return;
-            }
+        if (window.G) {
+            setG(window.G);
+            setLoading(false);
+            return;
+        }
 
+        const controller = new AbortController();
+
+        const loadConfig = async () => {
             try {
-                const res = await fetch(`${baseURL}local?lang=en`);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const res = await fetch('/api/v1/local', {
+                    signal: controller.signal
+                });
+
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
 
                 const result = await res.json();
-                console.log(result.data);
 
                 if (!result?.data || typeof result.data !== 'object') {
                     throw new Error('Malformed response: missing data');
                 }
 
+                window.G = result.data;
                 setG(result.data);
-                if (NODE_ENV === 'development') {
-                    console.log('Loaded G config from fetch:', result.data);
-                }
             } catch (err) {
-                console.error('Failed to load setup data:', err);
-                setError(err.message || 'Unknown error');
+                if (err.name !== 'AbortError') {
+                    console.error('Failed to load setup data:', err);
+                    setError(err.message || 'Unknown error');
+                }
             } finally {
-                setLoading(false);
+                if (!controller.signal.aborted) {
+                    setLoading(false);
+                }
             }
         };
 
         loadConfig();
-    }, [baseURL, lang]);
 
+        return () => controller.abort();
+    }, []);
 
     if (loading) return <div>Loading configuration...</div>;
     if (error) return <div>Error loading configuration: {error}</div>;
 
     return (
-        <GContext.Provider value={{ G, setG, lang, setLang }}>
+        <GContext.Provider value={{ G, setG }}>
             {children}
         </GContext.Provider>
     );

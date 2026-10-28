@@ -1,0 +1,35 @@
+
+.setup-toolbox-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.65);
+}
+
+.setup-toolbox {
+    width: min(1400px, 100%);
+    max-height: 92vh;
+    overflow: auto;
+    background: #fff;
+    color: #222;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.setup-toolbox-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #ddd;
+}
+
+.setup-toolbox-header h2 {
+    margin: 0 0 8px;
+}
+
+.setup-toolbox-header p {
+    margin: 0;
+    color: #666;
+}
