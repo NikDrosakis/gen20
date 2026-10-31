@@ -34,11 +34,13 @@ const RAW_RUNTIME_STATE =
           ["@codemirror/lang-html", "npm:6.4.12"],\
           ["@codemirror/lang-javascript", "npm:6.2.5"],\
           ["@codemirror/lang-json", "npm:6.0.2"],\
+          ["@codemirror/lang-markdown", "npm:6.5.2"],\
           ["@codemirror/lang-php", "npm:6.0.2"],\
           ["@codemirror/language", "npm:6.13.1"],\
           ["@codemirror/lint", "npm:6.9.7"],\
           ["@codemirror/search", "npm:6.7.2"],\
           ["@codemirror/state", "npm:6.7.6"],\
+          ["@codemirror/theme-one-dark", "npm:6.1.3"],\
           ["@codemirror/view", "npm:6.43.15"],\
           ["@eslint/js", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:10.0.1"],\
           ["@tanstack/react-query", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:5.100.9"],\
@@ -359,6 +361,22 @@ const RAW_RUNTIME_STATE =
           ["@codemirror/lang-json", "npm:6.0.2"],\
           ["@codemirror/language", "npm:6.13.1"],\
           ["@lezer/json", "npm:1.0.3"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@codemirror/lang-markdown", [\
+      ["npm:6.5.2", {\
+        "packageLocation": "../../../../../root/.yarn/berry/cache/@codemirror-lang-markdown-npm-6.5.2-5b46b8c5a4-10c0.zip/node_modules/@codemirror/lang-markdown/",\
+        "packageDependencies": [\
+          ["@codemirror/autocomplete", "npm:6.20.4"],\
+          ["@codemirror/lang-html", "npm:6.4.12"],\
+          ["@codemirror/lang-markdown", "npm:6.5.2"],\
+          ["@codemirror/language", "npm:6.13.1"],\
+          ["@codemirror/state", "npm:6.7.6"],\
+          ["@codemirror/view", "npm:6.43.15"],\
+          ["@lezer/common", "npm:1.5.5"],\
+          ["@lezer/markdown", "npm:1.8.1"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -786,6 +804,17 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["@lezer/markdown", [\
+      ["npm:1.8.1", {\
+        "packageLocation": "../../../../../root/.yarn/berry/cache/@lezer-markdown-npm-1.8.1-e849760d02-10c0.zip/node_modules/@lezer/markdown/",\
+        "packageDependencies": [\
+          ["@lezer/common", "npm:1.5.5"],\
+          ["@lezer/highlight", "npm:1.2.5"],\
+          ["@lezer/markdown", "npm:1.8.1"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["@lezer/php", [\
       ["npm:1.0.6", {\
         "packageLocation": "../../../../../root/.yarn/berry/cache/@lezer-php-npm-1.0.6-e4d89f54d9-10c0.zip/node_modules/@lezer/php/",\
@@ -1178,6 +1207,7 @@ const RAW_RUNTIME_STATE =
         ],\
         "packagePeers": [\
           "@codemirror/state",\
+          "@codemirror/theme-one-dark",\
           "@codemirror/view",\
           "@types/babel__runtime",\
           "@types/codemirror",\
@@ -1273,11 +1303,13 @@ const RAW_RUNTIME_STATE =
           ["@codemirror/lang-html", "npm:6.4.12"],\
           ["@codemirror/lang-javascript", "npm:6.2.5"],\
           ["@codemirror/lang-json", "npm:6.0.2"],\
+          ["@codemirror/lang-markdown", "npm:6.5.2"],\
           ["@codemirror/lang-php", "npm:6.0.2"],\
           ["@codemirror/language", "npm:6.13.1"],\
           ["@codemirror/lint", "npm:6.9.7"],\
           ["@codemirror/search", "npm:6.7.2"],\
           ["@codemirror/state", "npm:6.7.6"],\
+          ["@codemirror/theme-one-dark", "npm:6.1.3"],\
           ["@codemirror/view", "npm:6.43.15"],\
           ["@eslint/js", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:10.0.1"],\
           ["@tanstack/react-query", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:5.100.9"],\

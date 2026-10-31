@@ -1,25 +1,16 @@
 // components/superadmin/CodeEditorPane.jsx
-//
-// VS Code-style editor pane.
-//
-// Props:
-//   path       — display path (π.χ. 'admin/components/Header.jsx')
-//   filetype   — 'jsx' | 'js' | 'css' | ...
-//   onClose    — () => void
-//   onSave     — async (path, content) => { success }
-//   callApi    — (endpoint, body, method?) => Promise
-//   showNotification — (message, type?) => void
-//
-// Όλα τα χρώματα έρχονται από CSS variables (--cm-*)
-// που ορίζονται στο ComponentManager.css.
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import CodeMirror from '@uiw/react-codemirror';
+import { oneDark } from '@codemirror/theme-one-dark';
 
-import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { javascript } from '@codemirror/lang-javascript';
+import { css as cssLang } from '@codemirror/lang-css';
+import { json as jsonLang } from '@codemirror/lang-json';
+import { markdown as markdownLang } from '@codemirror/lang-markdown';
+import { html as htmlLang } from '@codemirror/lang-html';
+import { php as phpLang } from '@codemirror/lang-php';
 
-/* ------------------------------------------------------------------ */
-/*  Helpers                                                          */
-/* ------------------------------------------------------------------ */
-
-const LANG_MAP = {
+const LANG_LABEL = {
     jsx: 'JavaScript React',
     tsx: 'TypeScript React',
     js: 'JavaScript',
@@ -33,12 +24,22 @@ const LANG_MAP = {
     pug: 'Pug',
 };
 
-const getLanguageLabel = (filetype) =>
-    LANG_MAP[filetype] || filetype?.toUpperCase() || 'Plain Text';
-
-/* ------------------------------------------------------------------ */
-/*  Component                                                        */
-/* ------------------------------------------------------------------ */
+const getLanguageExtension = (filetype) => {
+    switch (filetype) {
+        case 'jsx': return javascript({ jsx: true });
+        case 'tsx': return javascript({ jsx: true, typescript: true });
+        case 'js':  return javascript();
+        case 'ts':  return javascript({ typescript: true });
+        case 'css': return cssLang();
+        case 'scss': return cssLang();
+        case 'json': return jsonLang();
+        case 'md': return markdownLang();
+        case 'html': return htmlLang();
+        case 'php': return phpLang();
+        case 'pug': return htmlLang(); // fallback
+        default: return [];
+    }
+};
 
 export default function CodeEditorPane({
                                            path,
@@ -54,12 +55,9 @@ export default function CodeEditorPane({
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
-    const textareaRef = useRef(null);
-    const gutterRef = useRef(null);
-
     const dirty = content !== originalContent;
 
-    /* ─── Load file ─────────────────────────────────────────────── */
+    /* Load file */
     useEffect(() => {
         let cancelled = false;
         setLoading(true);
@@ -90,7 +88,7 @@ export default function CodeEditorPane({
         return () => { cancelled = true; };
     }, [path, callApi, showNotification]);
 
-    /* ─── Save ──────────────────────────────────────────────────── */
+    /* Save */
     const handleSave = useCallback(async () => {
         if (!dirty || saving) return;
         setSaving(true);
@@ -102,13 +100,13 @@ export default function CodeEditorPane({
         }
     }, [dirty, saving, onSave, path, content]);
 
-    /* ─── Close with dirty guard ────────────────────────────────── */
+    /* Close */
     const handleClose = useCallback(() => {
         if (dirty && !window.confirm('Discard unsaved changes?')) return;
         onClose();
     }, [dirty, onClose]);
 
-    /* ─── Ctrl+S handler ────────────────────────────────────────── */
+    /* Ctrl+S */
     useEffect(() => {
         const handler = (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -120,126 +118,76 @@ export default function CodeEditorPane({
         return () => window.removeEventListener('keydown', handler);
     }, [handleSave]);
 
-    /* ─── Tab key inserts \t ────────────────────────────────────── */
-    const handleKeyDown = useCallback((e) => {
-        if (e.key === 'Tab') {
-            e.preventDefault();
-            const ta = e.currentTarget;
-            const start = ta.selectionStart;
-            const end = ta.selectionEnd;
+    /* Language extension */
+    const extensions = useMemo(() => {
+        const ext = getLanguageExtension(filetype);
+        return Array.isArray(ext) ? ext : [ext];
+    }, [filetype]);
 
-            const next = content.slice(0, start) + '\t' + content.slice(end);
-            setContent(next);
-
-            requestAnimationFrame(() => {
-                ta.selectionStart = ta.selectionEnd = start + 1;
-            });
-        }
-    }, [content]);
-
-    /* ─── Sync gutter scroll with textarea scroll ───────────────── */
-    const handleScroll = useCallback((e) => {
-        if (gutterRef.current) {
-            gutterRef.current.scrollTop = e.currentTarget.scrollTop;
-        }
-    }, []);
-
-    /* ─── Line numbers ──────────────────────────────────────────── */
-    const lineCount = useMemo(
-        () => (content ? content.split('\n').length : 1),
-        [content]
-    );
-
-    const lineNumbers = useMemo(() => {
-        const arr = [];
-        for (let i = 1; i <= lineCount; i++) arr.push(i);
-        return arr;
-    }, [lineCount]);
-
-    /* ─── Render ────────────────────────────────────────────────── */
+    /* Render */
     return (
         <div className="cm-editor">
-            {/* ─── Editor title bar (VS Code) ──────────────────── */}
+            {/* Title bar */}
             <div className="cm-editor-titlebar">
                 <span className="cm-editor-tab active">
-                    {dirty && <span className="cm-dirty-dot" title="Unsaved changes">●</span>}
-                    <span className="cm-editor-tab-name">
-                        {path.split('/').pop()}
-                    </span>
-                    <span className="cm-editor-tab-path">{path}</span>
+                    {dirty && <span className="cm-dirty-dot">●</span>}
+                    <span className="cm-editor-tab-name">{path.split('/').pop()}</span>
+                    <span className="cm-editor-tab-path"> — {path}</span>
                 </span>
-
                 <div className="cm-editor-actions">
                     <button
                         className={`cm-btn-save ${dirty ? 'dirty' : ''}`}
                         onClick={handleSave}
                         disabled={!dirty || saving}
-                        title="Save (Ctrl+S)"
                     >
                         {saving ? '…' : '💾 Save'}
                     </button>
-                    <button
-                        className="cm-btn-close"
-                        onClick={handleClose}
-                        title="Close editor"
-                    >
-                        ✕
-                    </button>
+                    <button className="cm-btn-close" onClick={handleClose}>✕</button>
                 </div>
             </div>
 
-            {/* ─── Editor body: gutter + textarea ──────────────── */}
+            {/* Body */}
             <div className="cm-editor-body">
                 {loading ? (
                     <div className="cm-editor-loading">
-                        <div className="cm-spinner"/>
+                        <div className="cm-spinner" />
                         <span>Loading {path.split('/').pop()}…</span>
                     </div>
                 ) : error ? (
                     <div className="cm-editor-error">⚠️ {error}</div>
                 ) : (
-                    <div className="cm-editor-scroll">
-                        <div className="cm-editor-gutter" aria-hidden="true">
-                            {lineNumbers.map((n) => (
-                                <div key={n} className="cm-editor-line-number">{n}</div>
-                            ))}
-                        </div>
-                        <textarea
-                            ref={textareaRef}
-                            className="cm-editor-textarea"
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            spellCheck={false}
-                            autoCapitalize="off"
-                            autoCorrect="off"
-                            wrap="off"
-                        />
-                    </div>
+                    <CodeMirror
+                        value={content}
+                        height="100%"
+                        theme={oneDark}
+                        extensions={extensions}
+                        onChange={(val) => setContent(val)}
+                        basicSetup={{
+                            lineNumbers: true,
+                            foldGutter: true,
+                            highlightActiveLine: true,
+                            bracketMatching: true,
+                            closeBrackets: true,
+                            autocompletion: true,
+                            indentOnInput: true,
+                            tabSize: 2,
+                        }}
+                        style={{ fontSize: 13, height: '100%' }}
+                    />
                 )}
             </div>
 
-            {/* ─── Status bar (VS Code) ────────────────────────── */}
+            {/* Status bar */}
             <div className="cm-editor-statusbar">
                 <div className="cm-statusbar-left">
                     <span className="cm-statusbar-item">🌿 {path.split('/')[0]}</span>
                     <span className="cm-statusbar-item">
-                        {getLanguageLabel(filetype)}
+                        {LANG_LABEL[filetype] || filetype?.toUpperCase() || 'TEXT'}
                     </span>
                 </div>
                 <div className="cm-statusbar-right">
-                    <span className="cm-statusbar-item">
-                        Ln {lineCount}, Col —
-                    </span>
-                    <span className="cm-statusbar-item">
-                        {content.length} chars
-                    </span>
-                    <span className="cm-statusbar-item">
-                        UTF-8
-                    </span>
-                    <span className="cm-statusbar-item">
-                        {dirty ? '● Modified' : '✓ Saved'}
-                    </span>
+                    <span className="cm-statusbar-item">{content.length} chars</span>
+                    <span className="cm-statusbar-item">{dirty ? '● Modified' : '✓ Saved'}</span>
                 </div>
             </div>
         </div>
