@@ -2,14 +2,14 @@
 import { createBrowserRouter } from "react-router-dom";
 import App from "./App";
 import About from "./pages/About.jsx";
+import Blog from "./pages/Blog.jsx";
 import Book from "./pages/Book.jsx";
 import BookTest from "./pages/BookTest.jsx";
 import Booktest from "./pages/Booktest.jsx";
 import Contact from "./pages/Contact.jsx";
 import DynamicPage from "./pages/DynamicPage.jsx";
-import Film from "./pages/Film.jsx";
 import Events from "./pages/Events.jsx";
-import Blog from "./pages/Blog.jsx";
+import Film from "./pages/Film.jsx";
 import Gallery from "./pages/Gallery.jsx";
 import Home from "./pages/Home.jsx";
 import Layout from "./pages/Layout.jsx";
@@ -38,13 +38,14 @@ const router = createBrowserRouter([
         children: [
             { index: true, element: <Home /> },
             { path: "about", element: <About /> },
+            { path: "blog", element: <Blog /> },
             { path: "book", element: <Book /> },
             { path: "booktest", element: <BookTest /> },
+            { path: "booktest", element: <Booktest /> },
             { path: "contact", element: <Contact /> },
             { path: "dynamicpage", element: <DynamicPage /> },
-            { path: "film", element: <Film /> },
             { path: "events", element: <Events /> },
-            { path: "blog", element: <Blog /> },
+            { path: "film", element: <Film /> },
             { path: "gallery", element: <Gallery /> },
             { path: "layout", element: <Layout /> },
             { path: "login", element: <Login /> },

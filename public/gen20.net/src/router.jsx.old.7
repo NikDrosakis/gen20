@@ -1,0 +1,67 @@
+
+import { createBrowserRouter } from "react-router-dom";
+import App from "./App";
+import About from "./pages/About.jsx";
+import Book from "./pages/Book.jsx";
+import BookTest from "./pages/BookTest.jsx";
+import Booktest from "./pages/Booktest.jsx";
+import Contact from "./pages/Contact.jsx";
+import DynamicPage from "./pages/DynamicPage.jsx";
+import Film from "./pages/Film.jsx";
+import Events from "./pages/Events.jsx";
+import Blog from "./pages/Blog.jsx";
+import Gallery from "./pages/Gallery.jsx";
+import Home from "./pages/Home.jsx";
+import Layout from "./pages/Layout.jsx";
+import Login from "./pages/Login.jsx";
+import Main from "./pages/Main.jsx";
+import NotFound from "./pages/NotFound.jsx";
+import Portfolio from "./pages/Portfolio.jsx";
+import Profile from "./pages/Profile.jsx";
+import Publisher from "./pages/Publisher.jsx";
+import Research from "./pages/Research.jsx";
+import Services from "./pages/Services.jsx";
+import Signup from "./pages/Signup.jsx";
+import Sketch from "./pages/Sketch.jsx";
+import Test from "./pages/Test.jsx";
+import Theatre from "./pages/Theatre.jsx";
+import Webtv from "./pages/Webtv.jsx";
+import ErrorBoundary from "./components/ErrorBoundary";
+
+const ErrorElement = () => <ErrorBoundary><div /></ErrorBoundary>;
+
+const router = createBrowserRouter([
+    {
+        path: "/",
+        element: <App />,
+        errorElement: <ErrorElement />,
+        children: [
+            { index: true, element: <Home /> },
+            { path: "about", element: <About /> },
+            { path: "book", element: <Book /> },
+            { path: "booktest", element: <BookTest /> },
+            { path: "contact", element: <Contact /> },
+            { path: "dynamicpage", element: <DynamicPage /> },
+            { path: "film", element: <Film /> },
+            { path: "events", element: <Events /> },
+            { path: "blog", element: <Blog /> },
+            { path: "gallery", element: <Gallery /> },
+            { path: "layout", element: <Layout /> },
+            { path: "login", element: <Login /> },
+            { path: "main", element: <Main /> },
+            { path: "notfound", element: <NotFound /> },
+            { path: "portfolio", element: <Portfolio /> },
+            { path: "profile", element: <Profile /> },
+            { path: "publisher", element: <Publisher /> },
+            { path: "research", element: <Research /> },
+            { path: "services", element: <Services /> },
+            { path: "signup", element: <Signup /> },
+            { path: "sketch", element: <Sketch /> },
+            { path: "test", element: <Test /> },
+            { path: "theatre", element: <Theatre /> },
+            { path: "webtv", element: <Webtv /> }
+        ]
+    }
+]);
+
+export default router;

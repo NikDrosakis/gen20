@@ -1,0 +1,45 @@
+// /router.jsx
+import { createBrowserRouter,  useParams } from "react-router-dom";
+import App from "./App";
+import Home from "./pages/Home";
+import Radio from "./pages/Radio";
+import Whois from "./pages/Whois";
+import Board from "./pages/Board";
+import Contact from "./pages/Contact";
+import MemberForm from "./components/MemberForm";
+import ContentOne from "./components/content/ContentOne";
+import Blog from "./pages/Blog";
+import Faq from "./pages/Faq";
+import Arxeio from "./pages/Arxeio";
+import Reels from "./pages/Reels";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+const BlogWrapper = () => {
+    const { path } = useParams();
+    const titles = {
+        publications: 'Θέσεις/Παρεμβάσεις',
+        actions: 'Εκδηλώσεις/Δράσεις'
+    };
+    return <Blog classification={path} pageTitle={titles[path] || path} />;
+};
+export const router = createBrowserRouter([
+    {
+        path: "/",
+        element: <App />,
+        children: [
+            { index: true, element: <Home /> },
+            { path: "whois", element: <Whois /> },
+            { path: ":classification", element: <BlogWrapper />},
+            { path: "login", element: <Login /> },
+            { path: "signup", element: <Signup /> },
+            { path: "radio", element: <Radio /> },
+            { path: "reels", element: <Reels /> },
+            { path: "faq", element: <Faq /> },
+            { path: "arxeio", element: <Arxeio /> },
+            { path: "join", element: <MemberForm /> },
+            { path: "contact", element: <Contact /> },
+            { path: "board", element: <Board /> },
+            { path: "post/:name", element: <ContentOne postName=":name"/> }
+        ]
+    }
+]);
