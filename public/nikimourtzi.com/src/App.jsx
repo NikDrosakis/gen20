@@ -1,6 +1,6 @@
 // /App.jsx
 import { Outlet } from "react-router-dom";
-import Navbar from "./components/Navbar";
+import Navigation from "./components/Navigation";
 import Footer from "./components/layout/Footer";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -9,7 +9,7 @@ export default function App() {
     return (
         <ErrorBoundary>
             <ThemeProvider>
-                <Navbar />
+                <Navigation />
                 <Outlet />
                 <Footer/>
             </ThemeProvider>

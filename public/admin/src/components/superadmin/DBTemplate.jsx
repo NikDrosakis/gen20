@@ -1,7 +1,7 @@
 // components/superadmin/DBTemplate.jsx
 import React, { useState, useEffect } from 'react';
 
-const DBTemplate = ({ selectedDomain = '' }) => {
+const DBTemplate = () => {
     const [loading, setLoading] = useState(false);
     const [configContent, setConfigContent] = useState('');
     const [originalContent, setOriginalContent] = useState('');

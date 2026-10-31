@@ -312,97 +312,93 @@ protected function synchronizeDomains(): array{
              return $nginxSites; // Return the list of zones
     }
 
-protected function getSSLs(): array
-{
+protected function getSSLs(): array {
     $sslInfo = [];
-
-    // Define the Let's Encrypt SSL directories
     $liveDir = '/etc/letsencrypt/live/';
-    $archiveDir = '/etc/letsencrypt/archive/';
 
-    // Check if the live directory exists
     if (!is_dir($liveDir)) {
-        error_log("Let's Encrypt live directory not found: " . $liveDir);
-        return ['error' => "SSL directory not found"];
+        return ['error' => "SSL directory not found: $liveDir"];
     }
 
-    // Get all directories in /etc/letsencrypt/live/
-    $certDirs = glob($liveDir . '*', GLOB_ONLYDIR);
+    $certDirs = glob($liveDir . '*', GLOB_ONLYDIR) ?: [];
 
     foreach ($certDirs as $certDir) {
         $domain = basename($certDir);
+        if (in_array($domain, ['.', '..', 'README'], true)) continue;
 
-        // Skip special directories
-        if ($domain === '.' || $domain === '..' || $domain === 'README') {
-            continue;
-        }
-
-        // Check for certificate files
         $certPath = $certDir . '/fullchain.pem';
         $privKeyPath = $certDir . '/privkey.pem';
+        $hasFullchain = file_exists($certPath);
+        $hasPrivkey = file_exists($privKeyPath);
 
-        if (file_exists($certPath) && file_exists($privKeyPath)) {
-            // Get certificate expiry date
-            $expiryDate = null;
-            $serialNumber = null;
-
-            try {
-                // Parse certificate to get expiry date
-                $certContent = file_get_contents($certPath);
-                if ($certContent !== false) {
-                    // Use openssl to parse certificate
-                    $parsedCert = openssl_x509_parse($certContent);
-                    if ($parsedCert !== false) {
-                        $expiryDate = date('Y-m-d H:i:s', $parsedCert['validTo_time_t']);
-                        $serialNumber = isset($parsedCert['serialNumber']) ? $parsedCert['serialNumber'] : null;
-                    }
-                }
-            } catch (Exception $e) {
-                error_log("Error parsing certificate for {$domain}: " . $e->getMessage());
-            }
-
-            // Determine key type from certificate
-            $keyType = 'RSA'; // Default
-            try {
-                $keyContent = file_get_contents($privKeyPath);
-                if ($keyContent !== false) {
-                    if (strpos($keyContent, 'BEGIN EC PRIVATE KEY') !== false) {
-                        $keyType = 'ECC';
-                    } elseif (strpos($keyContent, 'BEGIN RSA PRIVATE KEY') !== false) {
-                        $keyType = 'RSA';
-                    }
-                }
-            } catch (Exception $e) {
-                error_log("Error determining key type for {$domain}: " . $e->getMessage());
-            }
-
-            $sslInfo[$domain] = [
-                'exists' => true,
-                'expires' => $expiryDate,
-                'serial_number' => $serialNumber,
-                'key_type' => $keyType,
-                'certificate_path' => $certPath,
-                'private_key_path' => $privKeyPath,
-                'directory' => $certDir,
-                'fullchain_exists' => file_exists($certPath),
-                'privkey_exists' => file_exists($privKeyPath),
-                'cert_files' => $this->getSSLCertFiles($domain, $archiveDir)
-            ];
-        } else {
-            // Certificate exists but maybe missing files
+        if (!$hasFullchain || !$hasPrivkey) {
             $sslInfo[$domain] = [
                 'exists' => false,
                 'error' => 'Missing certificate files',
                 'certificate_path' => $certPath,
                 'private_key_path' => $privKeyPath,
-                'cert_file_exists' => file_exists($certPath),
-                'privkey_file_exists' => file_exists($privKeyPath)
+                'cert_file_exists' => $hasFullchain,
+                'privkey_file_exists' => $hasPrivkey,
             ];
+            continue;
         }
+
+        $expiryDate = null;
+        $serialNumber = null;
+        $issuer = null;
+
+        try {
+            $certContent = file_get_contents($certPath);
+            if ($certContent !== false) {
+                $parsed = openssl_x509_parse($certContent);
+                if ($parsed !== false) {
+                    $expiryTs = $parsed['validTo_time_t'] ?? null;
+                    if ($expiryTs) {
+                        $expiryDate = date('Y-m-d H:i:s', $expiryTs);
+                    }
+                    $serialNumber = $parsed['serialNumber'] ?? null;
+                    $issuer = $parsed['issuer']['O'] ?? ($parsed['issuer']['CN'] ?? null);
+                }
+            }
+        } catch (Exception $e) {
+            error_log("SSL parse error for $domain: " . $e->getMessage());
+        }
+
+        // Key type
+        $keyType = 'RSA';
+        $keyContent = @file_get_contents($privKeyPath);
+        if ($keyContent !== false && strpos($keyContent, 'BEGIN EC PRIVATE KEY') !== false) {
+            $keyType = 'ECC';
+        }
+
+        // Days valid (υπολογισμός)
+        $daysValid = null;
+        if ($expiryDate) {
+            $expiryTs = strtotime($expiryDate);
+            if ($expiryTs) {
+                $daysValid = (int)floor(($expiryTs - time()) / 86400);
+            }
+        }
+
+        $sslInfo[$domain] = [
+            'exists' => true,
+            'expires' => $expiryDate,
+            'days_valid' => $daysValid,
+            'serial_number' => $serialNumber,
+            'issuer' => $issuer,
+            'key_type' => $keyType,
+            'certificate_path' => $certPath,
+            'private_key_path' => $privKeyPath,
+            'directory' => $certDir,
+            'fullchain_exists' => $hasFullchain,
+            'privkey_exists' => $hasPrivkey,
+            'cert_files' => $this->getSSLCertFiles($domain, '/etc/letsencrypt/archive/'),
+        ];
     }
 
     return $sslInfo;
 }
+
 protected function createSSL($domainame) {
 if(is_array($domainame)){
  $domain = $domainame['key'];

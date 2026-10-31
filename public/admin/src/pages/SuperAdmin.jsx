@@ -4,26 +4,24 @@ import { useSearchParams } from 'react-router-dom';
 import SuperAdminHeader from '../components/superadmin/SuperAdminHeader';
 import DomainManager from '../components/superadmin/DomainManager';
 import SSLManager from '../components/superadmin/SSLManager';
-import FilesystemManager from '../components/superadmin/FilesystemManager';
 import ComponentManager from '../components/superadmin/ComponentManager';
-import DatabaseManager from '../components/superadmin/DatabaseManager';
+import Layout from '../components/superadmin/Layout';
 import NginxManager from '../components/superadmin/NginxManager';
 import DNSManager from '../components/superadmin/DNSManager';
 import DBTemplate from '../components/superadmin/DBTemplate';
 import DBTree from '../components/superadmin/DBTree';
 import Lab from '../components/superadmin/Lab';
+import Terminal from '../components/superadmin/Terminal';
 import NewDomain from '../components/superadmin/NewDomain';
 import './SuperAdmin.css';
 
 const SuperAdmin = () => {
     const [searchParams, setSearchParams] = useSearchParams();
-    const [selectedDomain, setSelectedDomain] = useState('');
     const [activeTab, setActiveTab] = useState('domains');
     const [domains, setDomains] = useState([]);
     const [DBS, setDBS] = useState([]);
     const [loading, setLoading] = useState(true);
     const [sslInfo, setSslInfo] = useState({});
-    const [filesystem, setFilesystem] = useState([]);
     const [componentfiles, setComponentfiles] = useState([]);
     const [nginx, setNginx] = useState([]);
     const [dnsZones, setDnsZones] = useState([]);
@@ -34,16 +32,10 @@ const SuperAdmin = () => {
     const [cacheTimestamp, setCacheTimestamp] = useState(null);
     const [genAdminData, setGenAdminData] = useState([]);
 
+    // ❌ ΑΦΑΙΡΕΘΗΚΕ: selectedDomain state + handleDomainChange
+
     const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
     const CACHE_URL = '/var/www/gs/public/admin/cache/superadmin.json';
-
-  //  console.log('=== SuperAdmin Component Loaded ===');
-   // console.log('Hostname:', window.location.hostname);
-   // console.log('Public DB:', publicdb);
-   // console.log('Cache URL:', CACHE_URL);
-    const handleDomainChange = (domain) => {
-        setSelectedDomain(domain);
-    };
 
     useEffect(() => {
         console.log('🔄 Starting data fetch with cache check...');
@@ -84,8 +76,6 @@ const SuperAdmin = () => {
         }
     };
 
-// Στο SuperAdmin.jsx, replace το loadFromCache με αυτό:
-
     const loadFromCache = async () => {
         console.log('📦 Checking cache at:', CACHE_URL);
 
@@ -111,7 +101,6 @@ const SuperAdmin = () => {
             console.log('📖 Cache file loaded successfully');
             console.log('Cache structure:', Object.keys(cacheData));
 
-            // Get timestamp
             const timestamp = cacheData._timestamp || null;
             if (timestamp) {
                 setCacheTimestamp(timestamp);
@@ -125,7 +114,6 @@ const SuperAdmin = () => {
 
             let hasValidData = false;
 
-            // Load domains (now at root level, not per-domain)
             if (cacheData.domains && Array.isArray(cacheData.domains)) {
                 setDomains(cacheData.domains);
                 console.log(`✅ Cache: Loaded ${cacheData.domains.length} domains`);
@@ -135,7 +123,6 @@ const SuperAdmin = () => {
                 setDomains([]);
             }
 
-            // Load SSL certificates
             if (cacheData.ssl && typeof cacheData.ssl === 'object') {
                 setSslInfo(cacheData.ssl);
                 console.log(`✅ Cache: Loaded SSL for ${Object.keys(cacheData.ssl).length} domains`);
@@ -145,17 +132,6 @@ const SuperAdmin = () => {
                 setSslInfo({});
             }
 
-            // Load filesystem (now as object, not array)
-            if (cacheData.filesystem && typeof cacheData.filesystem === 'object') {
-                setFilesystem(cacheData.filesystem);
-                console.log(`✅ Cache: Loaded ${Object.keys(cacheData.filesystem).length} filesystem entries`);
-                hasValidData = true;
-            } else {
-                console.log('⚠️ Cache: No filesystem data');
-                setFilesystem({});
-            }
-
-            // Load components
             if (cacheData.components && Array.isArray(cacheData.components)) {
                 setComponents(cacheData.components);
                 console.log(`✅ Cache: Loaded ${cacheData.components.length} components`);
@@ -165,7 +141,6 @@ const SuperAdmin = () => {
                 setComponents([]);
             }
 
-            // Load databases
             if (cacheData.databases && Array.isArray(cacheData.databases)) {
                 setDBS(cacheData.databases);
                 console.log(`✅ Cache: Loaded ${cacheData.databases.length} databases`);
@@ -175,7 +150,6 @@ const SuperAdmin = () => {
                 setDBS([]);
             }
 
-            // Load nginx configs
             if (cacheData.nginx && Array.isArray(cacheData.nginx)) {
                 setNginx(cacheData.nginx);
                 console.log(`✅ Cache: Loaded ${cacheData.nginx.length} nginx configs`);
@@ -185,7 +159,6 @@ const SuperAdmin = () => {
                 setNginx([]);
             }
 
-            // Load DNS zones
             if (cacheData.dns_zones && Array.isArray(cacheData.dns_zones)) {
                 setDnsZones(cacheData.dns_zones);
                 console.log(`✅ Cache: Loaded ${cacheData.dns_zones.length} DNS zones`);
@@ -216,7 +189,7 @@ const SuperAdmin = () => {
         let hasErrors = false;
 
         try {
-            // Fetch gen_admin.domain record
+            // gen_admin.domain record
             try {
                 const genAdminRes = await fetch('/api/v1/maria/fa?folder=select * from gen_admin.domain order by name asc');
                 const genAdminResult = await genAdminRes.json();
@@ -246,23 +219,6 @@ const SuperAdmin = () => {
                 hasErrors = true;
             }
 
-            // Databases
-            try {
-                const dbsRes = await fetch('/api/v1/maria/show?q=databases');
-                const dbData = await dbsRes.json();
-                if (dbData.success && dbData.data) {
-                    setDBS(dbData.data);
-                    console.log(`✅ Loaded ${dbData.data.length} databases from API`);
-                } else {
-                    setDBS([]);
-                    hasErrors = true;
-                }
-            } catch (error) {
-                console.error('❌ Databases API failed:', error);
-                setDBS([]);
-                hasErrors = true;
-            }
-
             // SSL certificates
             try {
                 const sslRes = await fetch('/api/v1/local/getSSLs');
@@ -277,23 +233,6 @@ const SuperAdmin = () => {
             } catch (error) {
                 console.error('❌ SSL API failed:', error);
                 setSslInfo({});
-                hasErrors = true;
-            }
-
-            // Filesystem
-            try {
-                const fsRes = await fetch('/api/v1/local/getPublicFilesystem');
-                const fsData = await fsRes.json();
-                if (fsData.success && fsData.data) {
-                    setFilesystem(fsData.data);
-                    console.log(`✅ Loaded ${fsData.data.length} filesystem entries from API`);
-                } else {
-                    setFilesystem([]);
-                    hasErrors = true;
-                }
-            } catch (error) {
-                console.error('❌ Filesystem API failed:', error);
-                setFilesystem([]);
                 hasErrors = true;
             }
 
@@ -471,13 +410,13 @@ const SuperAdmin = () => {
     };
 
     const tabs = [
-        { id: 'domains', label: 'Domain Manager', icon: '🌐' },
-        { id: 'lab', label: 'API Lab', icon: '🧩' },
-        { id: 'filesystem', label: 'Filesystem', icon: '📁' },
+        { id: 'domains', label: 'Domains Setup', icon: '🌐' },
         { id: 'components', label: 'Components', icon: '🧱' },
-        { id: 'db', label: 'Databases', icon: '🗄️' },
-        { id: 'dbtemplate', label: 'DB Template', icon: '🌳' },
+        { id: 'layout', label: 'Layout', icon: '🧱' },
+        { id: 'dbtemplate', label: 'DB Template', icon: '🗄' },
         { id: 'dbtree', label: 'DB Tree', icon: '🌳' },
+        { id: 'lab', label: 'API Lab', icon: '🧩' },
+        { id: 'terminal', label: 'GEN CLI', icon: '⌘' },
         { id: 'nginx', label: 'WebServer Hosts', icon: '⚙️' },
         { id: 'dns', label: 'Bind Zones', icon: '🌍' },
         { id: 'ssl', label: 'SSL Certificates', icon: '🔒' },
@@ -491,12 +430,10 @@ const SuperAdmin = () => {
         }
     }, [searchParams]);
 
-    // ✅ Αλλαγή tab - ενημέρωση URL
     const handleTabChange = (tabId) => {
         setActiveTab(tabId);
-        setSearchParams({ tab: tabId }); // ← Προσθήκη query parameter
+        setSearchParams({ tab: tabId });
     };
-
 
     if (loading) {
         return (
@@ -516,14 +453,13 @@ const SuperAdmin = () => {
                 </div>
             )}
 
+            {/* ❌ ΑΦΑΙΡΕΘΗΚΑΝ: selectedDomain, onDomainChange */}
             <SuperAdminHeader
                 usingCache={usingCache}
                 cacheTimestamp={cacheTimestamp}
                 onRefresh={refreshData}
                 onSync={syncDomains}
                 isLoading={actionLoading || loading}
-                selectedDomain={selectedDomain}
-                onDomainChange={handleDomainChange}
             />
 
             <div className="superadmin-tabs">
@@ -539,62 +475,61 @@ const SuperAdmin = () => {
                 ))}
             </div>
 
-
             <div className="superadmin-content">
                 {activeTab === 'domains' && (
                     <DomainManager
                         domains={domains}
-                        genAdminData={genAdminData}  // Πρόσθεσε αυτό
+                        genAdminData={genAdminData}
                         databases={DBS}
                         dnsZones={dnsZones}
                         onDomainAction={handleDomainAction}
                         onAddNew={() => console.log('Add new domain')}
                         actionLoading={actionLoading}
                         onRefreshDomains={refreshData}
-                        selectedDomain={selectedDomain}
                     />
                 )}
-
+                {activeTab === 'terminal' && (
+                    <Terminal />
+                )}
                 {activeTab === 'ssl' && (
                     <SSLManager
                         sslInfo={sslInfo}
                         onSSLAction={handleSSLAction}
                         actionLoading={actionLoading}
-                        selectedDomain={selectedDomain}
                     />
                 )}
 
-                {activeTab === 'filesystem' && (
-                    <FilesystemManager filesystem={filesystem} selectedDomain={selectedDomain}/>
-                )}
                 {activeTab === 'components' && (
-                    <ComponentManager filesystem={componentfiles}/>
+                    <ComponentManager filesystem={componentfiles} />
                 )}
 
-                {activeTab === 'db' && (
-                    <DatabaseManager databases={DBS} selectedDomain={selectedDomain}/>
+
+                {activeTab === 'layout' && (
+                    <Layout filesystem={componentfiles} />
                 )}
 
                 {activeTab === 'dbtemplate' && (
-                    <DBTemplate databases={DBS} selectedDomain={selectedDomain}/>
+                    <DBTemplate databases={DBS} />
                 )}
+
                 {activeTab === 'dbtree' && (
-                    <DBTree databases={DBS} selectedDomain={selectedDomain}/>
+                    <DBTree databases={DBS} />
                 )}
 
                 {activeTab === 'nginx' && (
-                    <NginxManager nginxConfigs={nginx} selectedDomain={selectedDomain}/>
+                    <NginxManager nginxConfigs={nginx} />
                 )}
 
                 {activeTab === 'dns' && (
-                    <DNSManager dnsZones={dnsZones} selectedDomain={selectedDomain}/>
+                    <DNSManager dnsZones={dnsZones} />
                 )}
 
                 {activeTab === 'lab' && (
-                    <Lab components={components} selectedDomain={selectedDomain}/>
+                    <Lab components={components} />
                 )}
+
                 {activeTab === 'newdomain' && (
-                    <NewDomain components={components} selectedDomain={selectedDomain}/>
+                    <NewDomain components={components} />
                 )}
             </div>
         </div>

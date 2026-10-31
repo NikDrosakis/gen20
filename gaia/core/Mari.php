@@ -501,6 +501,39 @@ addresses the "Duplicate entry" scenario by checking for a PDOException with a s
      }
  }
 
+/**
+ * INSERT χωρίς uniqueness check.
+ * Χρήσιμο για tables όπου το `name` ΔΕΝ είναι unique
+ * (π.χ. components — το ίδιο filename υπάρχει σε πολλά domains).
+ *
+ * Επιστρέφει:
+ *  - int   → lastInsertId (αν 성공)
+ *  - true  → αν πέτυχε αλλά δεν υπάρχει auto-increment
+ *  - false → αν απέτυχε
+ */
+public function inseRaw(string $table, array $params = []) {
+    if (empty($params)) {
+        return false;
+    }
+
+    try {
+        $columns = implode(',', array_keys($params));
+        $placeholders = implode(',', array_fill(0, count($params), '?'));
+        $sql = "INSERT INTO $table ($columns) VALUES ($placeholders)";
+
+        $stmt = $this->_db->prepare($sql);
+        $stmt->execute(array_values($params));
+
+        $lastId = $this->_db->lastInsertId();
+        return $lastId ? (int)$lastId : true;
+    } catch (PDOException $e) {
+        error_log('[DB::inseRaw] INSERT failed table=' . $table
+            . ' params=' . json_encode($params, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+            . ' ERROR=' . $e->getMessage());
+        return false;
+    }
+}
+
 public function inse(string $table, array $params = []) {
     // Check if 'name' exists in $params
     if (isset($params['name'])) {

@@ -3,19 +3,35 @@ import { useState, useEffect } from 'react';
 import Navigation from "../Navigation";
 import { useTheme } from '../../contexts/ThemeContext';
 import { FaFacebook } from 'react-icons/fa';
-import "./Header.css";
+import './Header.css';
+import { useG } from '../../contexts/GContext';
 
 const Header = () => {
+    const { G } = useG();
     const [scrolled, setScrolled] = useState(false);
     const { theme, toggleTheme } = useTheme();
 
-    const facebookPageUrl = "https://web.facebook.com/p/%CE%88%CE%BD%CF%89%CF%83%CE%B7-%CE%A3%CE%BA%CE%B7%CE%BD%CE%BF%CE%B8%CE%B5%CF%84%CF%8E%CE%BD-%CE%94%CE%B7%CE%BC%CE%B9%CE%BF%CF%85%CF%81%CE%B3%CF%8E%CE%BD-100082985457661/";
+    // ✅ Safe access
+    const logo = G?.set?.logo;
+    const bg = G?.set?.bg;
+    const facebookPageUrl = G?.set?.facebook || 'https://facebook.com';
 
+    // ✅ Throttled scroll listener
     useEffect(() => {
+        let ticking = false;
         const handleScroll = () => {
-            setScrolled(window.scrollY > 50);
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    setScrolled(prev => {
+                        const next = window.scrollY > 50;
+                        return prev === next ? prev : next;
+                    });
+                    ticking = false;
+                });
+                ticking = true;
+            }
         };
-        window.addEventListener('scroll', handleScroll);
+        window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
@@ -25,23 +41,29 @@ const Header = () => {
             <div className="profile-section">
                 <div className="profile-container">
                     {/* Avatar */}
-                    <div className="avatar-container">
-                        <img src="/logo0.png" alt="Logo" className="avatar" />
-                    </div>
+                    {logo && (
+                        <div className="avatar-container">
+                            <img src={`/media/${logo}`} alt="Logo" className="avatar" />
+                        </div>
+                    )}
 
                     {/* Organization Info */}
                     <div className="org-info">
                         <h1 className="org-name">
-                            Ένωση Σκηνοθετών Δημιουργών Οπτικοακουστικών και Παραστατικών Τεχνών
+                           {G.set.title}
                         </h1>
-                        <img src="/media/paste-1781788910789.png" class="bg-image"/>
+                        {bg && (
+                            <img
+                                src={`/media/${bg}`}
+                                className="bg-image"
+                                alt="Background"
+                            />
+                        )}
                     </div>
 
                     {/* Navigation */}
                     <Navigation />
-
                 </div>
-
             </div>
 
             {/* Sticky Header on Scroll */}

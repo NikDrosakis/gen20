@@ -1,8 +1,9 @@
 // components/FootMenu.jsx
 import React, { useState, useEffect } from 'react';
 import './FootMenu.css';
-
+import { useG } from '../../contexts/GContext';
 const FootMenu = () => {
+    const { G } = useG();
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
     const menuItems = [
@@ -30,7 +31,7 @@ const FootMenu = () => {
                 <div className="footmenu-section footmenu-brand-section">
                     <div className="footmenu-brand">
                         <span className="brand-symbol">⚙️</span>
-                        <span className="brand-text">Ένωση Σκηνοθετών Δημιουργών Οπτικοακουστικών και Παραστατικών Τεχνών</span>
+                        <span className="brand-text">{G.set.title}</span>
                     </div>
                     <p className="brand-description">
                         Επίσημη Σελίδα
@@ -75,9 +76,9 @@ const FootMenu = () => {
                 <div className="footmenu-section">
                     <h3 className="footmenu-title">Επικοινωνία</h3>
                     <ul className="footmenu-contact">
-                        <li>Αθήνα, Ελλάς</li>
-                        <li>Τηλ: 210 1234567</li>
-                        <li>Email: info@gen20.gr</li>
+                        <li>{G.set.address}</li>
+                        <li>Τηλ: {G.set.tel}</li>
+                        <li>Email: {G.set.email}</li>
                     </ul>
                 </div>
             </div>
@@ -86,7 +87,7 @@ const FootMenu = () => {
             <div className="footmenu-bottom">
                 <div className="footmenu-bottom-content">
                     <a href="https://gen20.net" className="copyright">
-                        © {currentYear} Ένωση Σκηνοθετών Δημιουργών Οπτικοακουστικών και Παραστατικών Τεχνών
+                        © {currentYear} {G.set.title}
                     </a>
                     <a href="/rss.xml" className="rss-link" target="_blank" rel="noopener">
                         <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">

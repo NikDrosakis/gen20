@@ -104,7 +104,6 @@
 }
 
 .admin-navbar-inner {
-    max-width: 1400px;
     margin: 0 auto;
     padding: 0 20px;
     display: flex;
@@ -125,13 +124,19 @@
 
 .admin-brand-icon {
     font-size: 1.5rem;
+    width: 60px;
 }
 
 .admin-brand-text {
     background: linear-gradient(135deg, #60a5fa, #a78bfa);
+    color: #0000;
     -webkit-background-clip: text;
     background-clip: text;
-    color: transparent;
+    max-width: 300px;
+    overflow: hidden;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .admin-nav-list {
@@ -155,7 +160,7 @@
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    padding: 10px 14px;
+    padding: 10px 10px;
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -183,17 +188,6 @@
 
 .admin-nav-label {
     font-size: 16px;
-}
-
-/* Public Home button */
-.admin-nav-link.public-home {
-    background: #10b981;
-    color: white;
-    margin-left: 8px;
-}
-
-.admin-nav-link.public-home:hover {
-    background: #059669;
 }
 
 /* Right side - Languages & User Menu */

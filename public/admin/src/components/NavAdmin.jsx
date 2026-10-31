@@ -5,7 +5,6 @@
 #author: Nikolas Drosakis
 #version: 1.0.0
 #type: component
-#library: layout
 #independent: true
 #standalone: true
 #compatible_areas: h
@@ -24,8 +23,9 @@
 import React, { useState, useEffect } from 'react';
 import './NavAdmin.css';
 import Cookies from 'js-cookie';
-
+import { useG } from '../contexts/GContext';
 const NavAdmin = ({ currentPage, onNavigate }) => {
+    const { G } = useG();
     const [languages, setLanguages] = useState([]);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [user, setUser] = useState({
@@ -44,14 +44,13 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
         { id: 'doc', label: 'Documentation', icon: '📚', path: '/admin/doc' },
         { id: 'links', label: 'Links', icon: '🖼️', path: '/admin/links' },
         { id: 'slides', label: 'Slides', icon: '🖼️', path: '/admin/slides' },
-        { id: 'layout', label: 'Layout', icon: '🎨', path: '/admin/layout' },
         { id: 'languages', label: 'Languages', icon: '🌐', path: '/admin/languages' },
         { id: 'analytics', label: 'Analytics', icon: '📈', path: '/admin/analytics' },
-        { id: 'setup', label: 'Setup', icon: '⚙️', path: '/admin/setup' },
+        { id: 'setup', label: 'Settings', icon: '⚙️', path: '/admin/setup' },
+        { id: 'superadmin', label: 'SuperAdmin', icon: '🛡️', path: '/admin/superadmin' },
         // monetize και superadmin μόνο για gen20.net
         ...(isGen20Net ? [
             { id: 'monetize', label: 'Monetize', icon: '💰', path: '/admin/monetize' },
-            { id: 'superadmin', label: 'SuperAdmin', icon: '🛡️', path: '/admin/superadmin' },
         ] : []),
     ];
 
@@ -140,8 +139,8 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
         <nav className="admin-navbar">
             <div className="admin-navbar-inner">
                 <div className="admin-brand">
-                    <span className="admin-brand-icon">🧬</span>
-                    <span className="admin-brand-text">{window.location.host} - Dashboard
+                    <img className="admin-brand-icon" src={`/media/${G.set.logo}`} alt="Logo"/>
+                    <span className="admin-brand-text">{G.set.title} / {window.location.host}
                         {languages.length > 0 && (
                             <div className="admin-languages-flags" title="Public site active languages">
                                 {languages.map(lang => (

@@ -1,10 +1,6 @@
 /* components/superadmin/DBTree.css */
 
 .db-tree-container {
-    padding: 20px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
     background: var(--bg-color, #f5f5f5);
 }
 
@@ -86,7 +82,6 @@
 .db-tree-tables-list {
     flex: 1;
     overflow-y: auto;
-    max-height: 500px;
 }
 
 .db-tree-table-item {
@@ -511,10 +506,7 @@
 }
 /* components/superadmin/DBTree.css */
 .db-tree-container {
-    padding: 20px;
     background: #0f172a;
-    border-radius: 12px;
-    min-height: 500px;
     color: #e2e8f0;
 }
 
@@ -900,7 +892,6 @@
 
     .db-tree-sidebar {
         flex: none;
-        max-height: 200px;
     }
 
     .db-tree-main {

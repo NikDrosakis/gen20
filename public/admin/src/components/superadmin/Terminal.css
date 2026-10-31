@@ -1,0 +1,273 @@
+
+.gen-terminal {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    min-width: 0;
+    color: var(--text, #20252b);
+}
+
+.gen-terminal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.gen-terminal-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    font-size: 14px;
+}
+
+.gen-terminal-indicator {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 8px #22c55e80;
+}
+
+.gen-terminal-subtitle {
+    margin: 5px 0 0 18px;
+    color: var(--text-muted, #858b94);
+    font-size: 12px;
+}
+
+.gen-terminal-actions {
+    display: flex;
+    gap: 7px;
+}
+
+.gen-terminal button {
+    cursor: pointer;
+    border: 1px solid var(--border, #dfe3e8);
+    background: var(--surface, #fff);
+    color: inherit;
+    border-radius: 6px;
+    padding: 7px 11px;
+    font-size: 12px;
+    transition: background .15s ease, border-color .15s ease;
+}
+
+.gen-terminal button:hover {
+    background: var(--surface-hover, #f1f3f5);
+}
+
+.gen-terminal button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.gen-terminal .gen-terminal-stop {
+    color: #dc2626;
+    border-color: #dc2626;
+}
+
+.gen-terminal-console {
+    height: 390px;
+    overflow: auto;
+    padding: 16px;
+    border-radius: 9px;
+    background: #101820;
+    color: #d5e0e8;
+    font: 13px/1.65 "JetBrains Mono", "Fira Code", Consolas, monospace;
+    box-shadow: inset 0 0 0 1px #ffffff0b;
+}
+
+.gen-terminal-line pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    margin: 0;
+    font: inherit;
+}
+
+.gen-terminal-line {
+    margin-bottom: 5px;
+}
+
+.gen-terminal-line.command {
+    color: #7dd3a7;
+    font-weight: 600;
+}
+
+.gen-terminal-line.stdout {
+    color: #d5e0e8;
+}
+
+.gen-terminal-line.stderr,
+.gen-terminal-line.error {
+    color: #fb8585;
+}
+
+.gen-terminal-line.success {
+    color: #7dd3a7;
+}
+
+.gen-terminal-line.system {
+    color: #8fa4b7;
+}
+
+.gen-terminal-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--border, #dfe3e8);
+    border-radius: 8px;
+    background: var(--surface, #fff);
+}
+
+.gen-terminal-prompt {
+    color: #16a34a;
+    font: 700 13px monospace;
+    white-space: nowrap;
+}
+
+.gen-terminal-input-wrap input {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: inherit;
+    font: 13px "JetBrains Mono", "Fira Code", Consolas, monospace;
+}
+
+.gen-terminal-input-wrap > button {
+    background: #16794b;
+    color: #fff;
+    border-color: #16794b;
+}
+
+.gen-terminal-suggestions {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 5px);
+    left: 45px;
+    right: 70px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border, #dfe3e8);
+    border-radius: 7px;
+    background: var(--surface, #fff);
+    box-shadow: 0 8px 24px #0002;
+}
+
+.gen-terminal-suggestions button {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    text-align: left;
+    border: 0;
+    border-radius: 0;
+    padding: 9px 12px;
+}
+
+.gen-terminal-suggestions button.active {
+    background: var(--surface-hover, #edf2f7);
+}
+
+.gen-terminal-suggestions span {
+    color: var(--text-muted, #858b94);
+    font-size: 11px;
+}
+
+.gen-terminal-command-panel {
+    padding: 13px;
+    border: 1px solid var(--border, #dfe3e8);
+    border-radius: 8px;
+    background: var(--surface, #fff);
+}
+
+.gen-terminal-panel-title {
+    margin-bottom: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: var(--text-muted, #858b94);
+}
+
+.gen-terminal-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.gen-terminal-categories button.active {
+    background: #16794b;
+    color: white;
+    border-color: #16794b;
+}
+
+.gen-terminal-command-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+    gap: 7px;
+}
+
+.gen-terminal-command-grid button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 5px;
+    min-width: 0;
+    text-align: left;
+    overflow: hidden;
+}
+
+.gen-terminal-command-grid button span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: monospace;
+}
+
+.gen-terminal-command-grid button.dangerous {
+    border-color: #e7b4b4;
+}
+
+.gen-terminal-command-grid small {
+    color: #dc2626;
+    font-size: 8px;
+    white-space: nowrap;
+}
+
+.gen-terminal-footer {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    color: var(--text-muted, #858b94);
+    font-size: 10px;
+}
+
+.gen-terminal-footer span:first-child {
+    color: #16a34a;
+    font-weight: 700;
+}
+
+@media (max-width: 700px) {
+    .gen-terminal-console {
+        height: 320px;
+    }
+
+    .gen-terminal-footer {
+        flex-direction: column;
+    }
+
+    .gen-terminal-suggestions {
+        left: 10px;
+        right: 10px;
+    }
+}

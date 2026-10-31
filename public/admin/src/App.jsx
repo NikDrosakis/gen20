@@ -11,11 +11,10 @@ import Links from "./pages/Links";
 import ContentArchiveAdmin from "./pages/content/ContentArchiveAdmin";
 import ContentOneAdmin from "./pages/content/ContentOneAdmin";
 import Monetize from "./pages/Monetize";
-import Layout from "./pages/Layout";
 import LangAdmin from "./pages/LangAdmin";
 import SuperAdmin from "./pages/SuperAdmin";
 import MemberFormAdmin from "./pages/MemberFormAdmin";
-import Setup from "./pages/Setup";
+import Settings from "./pages/Settings";
 import Media from "./pages/Media";
 import Doc from "./pages/Doc";
 import { useG } from './contexts/GContext';
@@ -95,9 +94,6 @@ const App = () => {
     else if (path === '/admin/classification') {
       setCurrentPage('classification');
     }
-    else if (path === '/admin/layout') {
-      setCurrentPage('layout');
-    }
     else if (path === '/admin/monetize') {
       setCurrentPage('monetize');
     }
@@ -157,9 +153,6 @@ const App = () => {
         break;
       case 'classification':
         window.location.href = '/admin/classification';
-        break;
-      case 'layout':
-        window.location.href = '/admin/layout';
         break;
       case 'monetize':
         window.location.href = '/admin/monetize';
@@ -227,12 +220,10 @@ const App = () => {
         return <AnalyticsDashboard navigateTo={navigateTo} />;
       case '/admin/classification':
         return <Classification navigateTo={navigateTo} />;
-      case '/admin/layout':
-        return <Layout navigateTo={navigateTo} />;
       case '/admin/monetize':
         return <Monetize navigateTo={navigateTo} />;
       case '/admin/setup':
-        return <Setup navigateTo={navigateTo} />;
+        return <Settings navigateTo={navigateTo} />;
       case '/admin/languages':
         return <LangAdmin navigateTo={navigateTo} />;
       case '/admin/media':

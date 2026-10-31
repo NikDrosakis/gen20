@@ -1,7 +1,6 @@
 // pages/Lab.jsx
 import React, { useState, useEffect } from 'react';
-import './Lab.css';
-
+import "./Lab.css";
 const Lab = () => {
     const [endpoint, setEndpoint] = useState('');
     const [method, setMethod] = useState('GET');
@@ -286,6 +285,73 @@ const Lab = () => {
                 <div className="lab-layout">
                     {/* Left Panel - Request */}
                     <div className="lab-request-panel">
+
+
+                        <div className="lab-method-endpoint">
+                            <select
+                                value={method}
+                                onChange={(e) => setMethod(e.target.value)}
+                                className="lab-method-select"
+                            >
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="DELETE">DELETE</option>
+                            </select>
+                            <input
+                                type="text"
+                                value={endpoint}
+                                onChange={(e) => setEndpoint(e.target.value)}
+                                placeholder="/api/v1/local/..."
+                                className="lab-endpoint-input"
+                            />
+                        </div>
+
+                        <div className="lab-params">
+                            <label>Parameters (JSON):</label>
+                            <textarea
+                                value={params}
+                                onChange={(e) => setParams(e.target.value)}
+                                className="lab-params-textarea"
+                                rows="6"
+                                placeholder='{"key": "value"}'
+                            />
+                            {params && params !== '{}' && (
+                                <div className="lab-params-hint">
+                                    💡 Παράμετροι για {method} request
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="lab-actions">
+                            <button
+                                className="lab-send-btn"
+                                onClick={handleSend}
+                                disabled={loading || !endpoint}
+                            >
+                                {loading ? '⏳ Sending...' : '🚀 Send Request'}
+                            </button>
+                            <button
+                                className="lab-save-btn"
+                                onClick={handleSaveRequest}
+                                disabled={!endpoint}
+                            >
+                                💾 Save
+                            </button>
+                            <button
+                                className="lab-clear-btn"
+                                onClick={() => {
+                                    setEndpoint('');
+                                    setParams('{}');
+                                    setResponse(null);
+                                    setError(null);
+                                }}
+                            >
+                                🗑️ Clear
+                            </button>
+                        </div>
+
+
                         <div className="lab-tabs">
                             <button
                                 className={`lab-tab ${activeTab === 'request' ? 'active' : ''}`}
@@ -337,7 +403,8 @@ const Lab = () => {
                                                 )
                                             ))
                                         )}
-                                    </div>// pages/Lab.jsx - στο render, αντικατέστησε το predefined-scroll
+                                    </div>
+                                    // pages/Lab.jsx - στο render, αντικατέστησε το predefined-scroll
 
                                     <div className="predefined-scroll">
                                         {loadingMethods ? (
@@ -346,7 +413,9 @@ const Lab = () => {
                                             // Πρώτα εμφάνισε το MariaDB
                                             traitCategories['_mariadb'] && traitCategories['_mariadb'].length > 0 && (
                                                 <div className="predefined-category">
-                                                    <div className="category-label">🗄️ MariaDB ({traitCategories['_mariadb'].length})</div>
+                                                    <div className="category-label">🗄️ MariaDB
+                                                        ({traitCategories['_mariadb'].length})
+                                                    </div>
                                                     <div className="predefined-buttons">
                                                         {traitCategories['_mariadb'].map((ep, idx) => (
                                                             <button
@@ -367,7 +436,9 @@ const Lab = () => {
                                                     if (traitName === '_mariadb' || methods.length === 0) return null;
                                                     return (
                                                         <div key={traitName} className="predefined-category">
-                                                            <div className="category-label">{traitName} ({methods.length})</div>
+                                                            <div
+                                                                className="category-label">{traitName} ({methods.length})
+                                                            </div>
                                                             <div className="predefined-buttons">
                                                                 {methods.map((ep, idx) => (
                                                                     <button
@@ -386,70 +457,6 @@ const Lab = () => {
                                                 })
                                         )}
                                     </div>
-                                </div>
-
-                                <div className="lab-method-endpoint">
-                                    <select
-                                        value={method}
-                                        onChange={(e) => setMethod(e.target.value)}
-                                        className="lab-method-select"
-                                    >
-                                        <option value="GET">GET</option>
-                                        <option value="POST">POST</option>
-                                        <option value="PUT">PUT</option>
-                                        <option value="DELETE">DELETE</option>
-                                    </select>
-                                    <input
-                                        type="text"
-                                        value={endpoint}
-                                        onChange={(e) => setEndpoint(e.target.value)}
-                                        placeholder="/api/v1/local/..."
-                                        className="lab-endpoint-input"
-                                    />
-                                </div>
-
-                                <div className="lab-params">
-                                    <label>Parameters (JSON):</label>
-                                    <textarea
-                                        value={params}
-                                        onChange={(e) => setParams(e.target.value)}
-                                        className="lab-params-textarea"
-                                        rows="6"
-                                        placeholder='{"key": "value"}'
-                                    />
-                                    {params && params !== '{}' && (
-                                        <div className="lab-params-hint">
-                                            💡 Παράμετροι για {method} request
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="lab-actions">
-                                    <button
-                                        className="lab-send-btn"
-                                        onClick={handleSend}
-                                        disabled={loading || !endpoint}
-                                    >
-                                        {loading ? '⏳ Sending...' : '🚀 Send Request'}
-                                    </button>
-                                    <button
-                                        className="lab-save-btn"
-                                        onClick={handleSaveRequest}
-                                        disabled={!endpoint}
-                                    >
-                                        💾 Save
-                                    </button>
-                                    <button
-                                        className="lab-clear-btn"
-                                        onClick={() => {
-                                            setEndpoint('');
-                                            setParams('{}');
-                                            setResponse(null);
-                                            setError(null);
-                                        }}
-                                    >
-                                        🗑️ Clear
-                                    </button>
                                 </div>
                             </div>
                         )}
@@ -493,7 +500,8 @@ const Lab = () => {
                                         <div key={idx} className="lab-history-item">
                                             <span className="history-method">{entry.method}</span>
                                             <span className="history-endpoint">{entry.endpoint}</span>
-                                            <span className={`history-status ${entry.status === 200 ? 'success' : 'error'}`}>
+                                            <span
+                                                className={`history-status ${entry.status === 200 ? 'success' : 'error'}`}>
                                                 {entry.status}
                                             </span>
                                         </div>
@@ -547,7 +555,7 @@ const Lab = () => {
                                     ) : responseType === 'html' ? (
                                         <div
                                             className="lab-html"
-                                            dangerouslySetInnerHTML={{ __html: response }}
+                                            dangerouslySetInnerHTML={{__html: response}}
                                         />
                                     ) : (
                                         <pre className="lab-text">{response}</pre>

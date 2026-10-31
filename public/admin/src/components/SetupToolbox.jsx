@@ -1,5 +1,5 @@
 import React from 'react';
-import Setup from '../pages/Setup';
+import Setup from '../pages/Settings';
 import './SetupToolbox.css';
 
 export default function SetupToolbox({ onComplete }) {

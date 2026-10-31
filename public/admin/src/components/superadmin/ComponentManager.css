@@ -43,17 +43,16 @@
 
 .domains-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 5px;
     align-items: start;
 }
 
 .domain-card {
-    background: #ffffff;
+    background: #f1f1f1;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    padding: 6px;
+    box-shadow: 0 1px 2px #00000005;
 }
 
 .domain-header {
@@ -152,4 +151,91 @@
     background: #f8fafc;
     border-radius: 8px;
     grid-column: 1 / -1;
+}/* Dragging file */
+.tree-file.dragging {
+    opacity: 0.4;
+    background: #dbeafe;
+}
+
+/* Drop target */
+.tree-folder.drop-target {
+    background: #dbeafe !important;
+    border: 2px dashed #3b82f6;
+    border-radius: 6px;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+}
+
+/* Cursor για draggable files */
+.tree-file[draggable="true"] {
+    cursor: grab;
+}
+
+.tree-file[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+/* Smooth hover */
+.tree-file {
+    transition: background 0.15s;
+}
+
+.tree-file:hover {
+    background: #f1f5f9;
+}
+
+/* Context menu */
+.context-menu {
+    animation: contextFadeIn 0.1s ease;
+}
+
+@keyframes contextFadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Dragging file */
+.tree-file.dragging {
+    opacity: 0.4;
+    background: #dbeafe;
+}
+
+/* Drop target */
+.tree-folder.drop-target {
+    background: #dbeafe !important;
+    border: 2px dashed #3b82f6;
+    border-radius: 6px;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+}
+
+.tree-file[draggable="true"] {
+    cursor: grab;
+}
+
+.tree-file[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.tree-file {
+    transition: background 0.15s;
+}
+
+.tree-file:hover {
+    background: #f1f5f9;
+}
+.domain-card.drop-target-domain {
+    border: 2px dashed #3b82f6;
+    background: #dbeafe;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+}
+
+.tree-file, .tree-folder {
+    transition: background 0.15s;
+}
+
+/* Highlight για search (mark) */
+.tree-file mark, .tree-folder mark {
+    background: #fef08a;
+    padding: 0 2px;
+    border-radius: 2px;
+    font-weight: 600;
 }

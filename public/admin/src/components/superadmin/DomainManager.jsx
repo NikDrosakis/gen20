@@ -1,17 +1,24 @@
 // components/superadmin/DomainManager.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
-const DomainManager = ({ domains, genAdminData, databases, dnsZones, onDomainAction, onAddNew, actionLoading, onRefreshDomains, selectedDomain = '' }) => {
+const DomainManager = ({
+                           domains,              // από gen_admin.domain (μπορεί να είναι κενό)
+                           genAdminData,
+                           databases,            // από SHOW DATABASES
+                           dnsZones,
+                           onDomainAction,
+                           onAddNew,
+                           actionLoading,
+                           onRefreshDomains,
+                       }) => {
     const [localActionLoading, setLocalActionLoading] = useState({});
     const [realFsStatus, setRealFsStatus] = useState(null);
+    const [realDatabases, setRealDatabases] = useState([]);
     const [isLoadingFolders, setIsLoadingFolders] = useState(true);
+    const [isLoadingDatabases, setIsLoadingDatabases] = useState(true);
     const [apiStatus, setApiStatus] = useState({ show: false, message: '', type: '' });
+    const [searchTerm, setSearchTerm] = useState('');
 
-    const filteredDomains = selectedDomain
-        ? domains.filter(domain => domain.name === selectedDomain)
-        : domains;
-
-    // ✅ Show notification function
     const showNotification = (message, type = 'success') => {
         setApiStatus({ show: true, message, type });
         setTimeout(() => setApiStatus({ show: false, message: '', type: '' }), 4000);
@@ -23,22 +30,31 @@ const DomainManager = ({ domains, genAdminData, databases, dnsZones, onDomainAct
     };
 
     const getFsCheck = (domainName) => {
-        if (realFsStatus === null) {
-            return null;
-        }
+        if (realFsStatus === null) return null;
         if (realFsStatus && realFsStatus[domainName]) {
             return realFsStatus[domainName].exists;
         }
         return false;
     };
 
+    // ============================================================
+    // 1. Φόρτωση πραγματικών φακέλων (fresh — χωρίς cache)
+    // ============================================================
     const fetchPublicFolders = async () => {
         setIsLoadingFolders(true);
         try {
-            const response = await fetch('/api/v1/local/getPublicFolders', {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            });
+            const response = await fetch(
+                `/api/v1/local/getPublicFolders?t=${Date.now()}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache',
+                    },
+                    cache: 'no-store',
+                }
+            );
             const result = await response.json();
 
             if (result.success) {
@@ -57,17 +73,122 @@ const DomainManager = ({ domains, genAdminData, databases, dnsZones, onDomainAct
         }
     };
 
-    useEffect(() => {
-        fetchPublicFolders();
-    }, []);
+    // ============================================================
+    // 2. Φόρτωση πραγματικών databases (fresh — χωρίς cache)
+    // ============================================================
+    const fetchRealDatabases = async () => {
+        setIsLoadingDatabases(true);
+        try {
+            const response = await fetch(
+                `/api/v1/maria/show?q=databases&t=${Date.now()}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache',
+                    },
+                    cache: 'no-store',
+                }
+            );
+            const result = await response.json();
 
-    const handleRefreshFilesystems = async () => {
-        await fetchPublicFolders();
-        if (onRefreshDomains) onRefreshDomains();
-        showNotification('✅ Folders refreshed successfully', 'success');
+            if (result.success && Array.isArray(result.data)) {
+                // Μόνο gen_* databases
+                const genDbs = result.data.filter(db => db.startsWith('gen_'));
+                setRealDatabases(genDbs);
+            } else {
+                setRealDatabases([]);
+            }
+        } catch (error) {
+            console.error('Error fetching real databases:', error);
+            setRealDatabases([]);
+        } finally {
+            setIsLoadingDatabases(false);
+        }
     };
 
-    // ✅ Generic API caller με notifications
+    useEffect(() => {
+        fetchPublicFolders();
+        fetchRealDatabases();
+    }, []);
+
+    const handleRefreshAll = async () => {
+        await Promise.all([fetchPublicFolders(), fetchRealDatabases()]);
+        if (onRefreshDomains) onRefreshDomains();
+        showNotification('✅ Data refreshed successfully', 'success');
+    };
+
+    // ============================================================
+    // 3. Συνδυασμός ΟΛΩΝ των πηγών σε ένα array domains
+    // ============================================================
+    const allDomains = useMemo(() => {
+        const map = new Map();   // name → domain object
+
+        // α) Από gen_admin.domain (επίσημα)
+        (domains || []).forEach(d => {
+            if (!d || !d.name) return;
+            map.set(d.name, {
+                name: d.name,
+                source: 'gen_admin',
+                raw: d,
+            });
+        });
+
+        // β) Από πραγματικές databases (gen_*)
+        realDatabases.forEach(dbName => {
+            // gen_examplecom  →  example.com
+            // gen_example_com →  example.com (fallback)
+            const baseName = dbName.replace(/^gen_/, '');
+
+            // Δοκίμασε πρώτα με τελεία (αν υπάρχει στα gen_admin)
+            let domainName = null;
+
+            // Αν υπάρχει ήδη στο map (από gen_admin) → skip
+            for (const existing of map.keys()) {
+                const existingDb = 'gen_' + existing.replace(/\./g, '');
+                const existingDbUnderscore = 'gen_' + existing.replace(/\./g, '_');
+                if (existingDb === dbName || existingDbUnderscore === dbName) {
+                    domainName = existing;
+                    break;
+                }
+            }
+
+            if (domainName) return;   // υπάρχει ήδη
+
+            // Δεν υπάρχει → πρόσθεσέ το με το baseName ως domain name
+            // (δεν ξέρουμε αν είναι example.com ή example_com — κρατάμε το raw)
+            map.set(baseName, {
+                name: baseName,
+                source: 'database',
+                raw: { name: baseName, _db: dbName },
+            });
+        });
+
+        // γ) Από πραγματικούς φακέλους
+        Object.keys(realFsStatus || {}).forEach(folderName => {
+            if (map.has(folderName)) return;
+            map.set(folderName, {
+                name: folderName,
+                source: 'filesystem',
+                raw: { name: folderName },
+            });
+        });
+
+        // Επιστροφή ταξινομημένα αλφαβητικά
+        return Array.from(map.values()).sort((a, b) =>
+            a.name.localeCompare(b.name)
+        );
+    }, [domains, realDatabases, realFsStatus]);
+
+    // Local search filter
+    const filteredDomains = allDomains.filter(d =>
+        !searchTerm || d.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // ============================================================
+    // 4. Generic API caller με notifications
+    // ============================================================
     const callApi = async (endpoint, action, domain, component = null) => {
         const key = `${domain}_${action}_${component || ''}`;
         setLocalActionLoading(prev => ({ ...prev, [key]: true }));
@@ -77,16 +198,16 @@ const DomainManager = ({ domains, genAdminData, databases, dnsZones, onDomainAct
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    key: domain,      // ✅ Το domain ως key
-                    domain: domain,   // ✅ Και ξεχωριστά το domain
-                    component: component
-                })
+                    key: domain,
+                    domain: domain,
+                    component: component,
+                }),
             });
             const result = await response.json();
 
             if (result.success) {
                 showNotification(`✅ ${action} successful for ${domain}`, 'success');
-                await fetchPublicFolders();
+                await Promise.all([fetchPublicFolders(), fetchRealDatabases()]);
                 if (onRefreshDomains) onRefreshDomains();
             } else {
                 showNotification(`❌ ${action} failed: ${result.error || 'Unknown error'}`, 'error');
@@ -100,80 +221,80 @@ const DomainManager = ({ domains, genAdminData, databases, dnsZones, onDomainAct
         }
     };
 
-    // Filesystem actions
+    // Filesystem
     const handleInstallFilesystem = async (domain) => {
         if (!window.confirm(`Create folder for ${domain}?`)) return;
         await callApi('/api/v1/local/apiInstallViteApp', 'Create Folder', domain);
     };
-
     const handleUninstallFilesystem = async (domain) => {
         if (!window.confirm(`⚠️ DANGER: Delete folder for ${domain}? This cannot be undone!`)) return;
         await callApi('/api/v1/local/uninstallDomain', 'Delete Folder', domain);
     };
-
-    const handleEditFilesystem = async (domain) => {
+    const handleEditFilesystem = (domain) => {
         window.open(`/admin#media?path=/var/www/gs/public/${domain}`, '_blank');
     };
 
-    // Nginx actions
+    // Nginx
     const handleInstallNginx = async (domain) => {
         if (!window.confirm(`Install Nginx configuration for ${domain}?`)) return;
         await callApi('/api/v1/local/addHost', 'Install Nginx', domain);
     };
-
     const handleUninstallNginx = async (domain) => {
         if (!window.confirm(`Remove Nginx configuration for ${domain}?`)) return;
         await callApi('/api/v1/local/delHost', 'Uninstall Nginx', domain);
     };
-
-    const handleEditNginx = async (domain) => {
+    const handleEditNginx = (domain) => {
         window.open(`/admin#media?path=/etc/nginx/sites-available/${domain}.conf`, '_blank');
     };
 
-    // DNS actions
+    // DNS
     const handleInstallDNS = async (domain) => {
         if (!window.confirm(`Install DNS zone for ${domain}?`)) return;
         await callApi('/api/v1/local/installDNS', 'Install DNS', domain);
     };
-
     const handleUninstallDNS = async (domain) => {
         if (!window.confirm(`Remove DNS zone for ${domain}?`)) return;
         await callApi('/api/v1/local/uninstallDNS', 'Uninstall DNS', domain);
     };
-
-    const handleEditDNS = async (domain) => {
+    const handleEditDNS = (domain) => {
         window.open(`/admin#media?path=/etc/bind/zones/db.${domain}`, '_blank');
     };
 
-    // Database actions
+    // Database — τώρα ελέγχει και τα realDatabases
     const checkDatabaseExists = (domainName) => {
-        if (!databases || databases.length === 0) return false;
-        const dbName = "gen_" + domainName.replace(/\./g, '');
-        const dbNameWithUnderscores = "gen_" + domainName.replace(/\./g, '_');
-        return databases.some(db => {
-            if (typeof db === 'string') {
-                return db === dbName || db === dbNameWithUnderscores;
-            }
-            return false;
-        });
+        const dbName = 'gen_' + domainName.replace(/\./g, '');
+        const dbNameUnderscores = 'gen_' + domainName.replace(/\./g, '_');
+
+        // α) Από τα realDatabases (fresh)
+        if (realDatabases.includes(dbName) || realDatabases.includes(dbNameUnderscores)) {
+            return true;
+        }
+
+        // β) Από τα props databases (fallback)
+        if (Array.isArray(databases)) {
+            return databases.some(db => {
+                const name = typeof db === 'string' ? db : (db?.Database || db?.name);
+                return name === dbName || name === dbNameUnderscores;
+            });
+        }
+
+        return false;
     };
 
     const handleInstallDatabase = async (domain) => {
         if (!window.confirm(`Create database for ${domain}?`)) return;
         await callApi('/api/v1/local/installDatabase', 'Install Database', domain);
     };
-
     const handleUninstallDatabase = async (domain) => {
         if (!window.confirm(`⚠️ DANGER: Delete database for ${domain}? This will delete ALL data!`)) return;
         await callApi('/api/v1/local/uninstallDatabase', 'Uninstall Database', domain);
     };
-
-    const handleEditDatabase = async (domain) => {
-        const dbName = "gen_" + domain.replace(/\./g, '');
+    const handleEditDatabase = (domain) => {
+        const dbName = 'gen_' + domain.replace(/\./g, '');
         window.open(`/admin#db?database=${dbName}`, '_blank');
     };
 
-    // DNS Zone check
+    // DNS zone check
     const checkDnsZoneExists = (domainName) => {
         if (!dnsZones || dnsZones.length === 0) return false;
         return dnsZones.some(zone => {
@@ -187,41 +308,27 @@ const DomainManager = ({ domains, genAdminData, databases, dnsZones, onDomainAct
         });
     };
 
-    // SSL actions
+    // SSL
     const handleInstallSSL = async (domain) => {
         if (!window.confirm(`Install SSL certificate for ${domain}?`)) return;
         await callApi('/api/v1/local/installSSL', 'Install SSL', domain);
     };
-
     const handleUninstallSSL = async (domain) => {
         if (!window.confirm(`Remove SSL certificate for ${domain}?`)) return;
         await callApi('/api/v1/local/delSSL', 'Uninstall SSL', domain);
     };
-
-    const handleEditSSL = async (domain) => {
+    const handleEditSSL = (domain) => {
         window.open(`/admin#ssl?domain=${domain}`, '_blank');
     };
 
-    // Generic edit handler
-    const handleEdit = async (domain, component) => {
-        switch(component) {
-            case 'filesystem':
-                handleEditFilesystem(domain);
-                break;
-            case 'nginx':
-                handleEditNginx(domain);
-                break;
-            case 'dns':
-                handleEditDNS(domain);
-                break;
-            case 'database':
-                handleEditDatabase(domain);
-                break;
-            case 'ssl':
-                handleEditSSL(domain);
-                break;
-            default:
-                console.log('Edit', component, domain);
+    const handleEdit = (domain, component) => {
+        switch (component) {
+            case 'filesystem': return handleEditFilesystem(domain);
+            case 'nginx':      return handleEditNginx(domain);
+            case 'dns':        return handleEditDNS(domain);
+            case 'database':   return handleEditDatabase(domain);
+            case 'ssl':        return handleEditSSL(domain);
+            default:           console.log('Edit', component, domain);
         }
     };
 
@@ -230,9 +337,11 @@ const DomainManager = ({ domains, genAdminData, databases, dnsZones, onDomainAct
         return localActionLoading[key] || actionLoading;
     };
 
+    // ============================================================
+    // Render
+    // ============================================================
     return (
         <div className="tab-pane">
-            {/* ✅ Notifications */}
             {apiStatus.show && (
                 <div className={`notification ${apiStatus.type === 'success' ? 'notification-success' : 'notification-error'}`}>
                     {apiStatus.message}
@@ -241,17 +350,40 @@ const DomainManager = ({ domains, genAdminData, databases, dnsZones, onDomainAct
 
             <div className="section-header">
                 <h2>Domain Management</h2>
-                <button className="btn-refresh-all" onClick={handleRefreshFilesystems} disabled={isLoadingFolders} style={{ marginLeft: '10px' }}>
-                    {isLoadingFolders ? '⏳ Loading...' : '🔄 Refresh All'}
+
+                <span className="db-count" style={{ marginLeft: 8 }}>
+                    {allDomains.length} domains
+                </span>
+
+                <input
+                    type="text"
+                    className="search-input"
+                    placeholder="🔍 Search domain..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{ marginLeft: 12 }}
+                />
+
+                <button
+                    className="btn-refresh-all"
+                    onClick={handleRefreshAll}
+                    disabled={isLoadingFolders || isLoadingDatabases}
+                    style={{ marginLeft: '10px' }}
+                >
+                    {isLoadingFolders || isLoadingDatabases ? '⏳ Loading...' : '🔄 Refresh All'}
                 </button>
-                <button className="btn-primary" onClick={onAddNew}>+ Add New Domain</button>
+
+                <button className="btn-primary" onClick={onAddNew}>
+                    + Add New Domain
+                </button>
             </div>
 
-            <div className="domains-grid">
+            <div>
                 <table className="data-table">
                     <thead>
                     <tr>
                         <th>Domain</th>
+                        <th>Source</th>
                         <th>GenAdmin (fsys_check)</th>
                         <th>Filesystem</th>
                         <th>Nginx</th>
@@ -263,20 +395,41 @@ const DomainManager = ({ domains, genAdminData, databases, dnsZones, onDomainAct
                     </thead>
                     <tbody>
                     {filteredDomains.length === 0 ? (
-                        <tr><td colSpan="9" style={{ textAlign: 'center' }}>No domains found</td></tr>
+                        <tr>
+                            <td colSpan="9" style={{ textAlign: 'center' }}>
+                                {searchTerm
+                                    ? `No domains match "${searchTerm}"`
+                                    : 'No domains found (neither in gen_admin, nor as databases/folders)'}
+                            </td>
+                        </tr>
                     ) : (
                         filteredDomains.map(domain => {
-                            const genAdminValue = getGenAdminFsCheck(domain.name);
-                            const fsRealValue = getFsCheck(domain.name);
-                            const dbExists = checkDatabaseExists(domain.name);
-                            const dnsExists = checkDnsZoneExists(domain.name);
-                            const dbName = "gen_" + domain.name.replace(/\./g, '');
+                            const name = domain.name;
+                            const genAdminValue = getGenAdminFsCheck(name);
+                            const fsRealValue = getFsCheck(name);
+                            const dbExists = checkDatabaseExists(name);
+                            const dnsExists = checkDnsZoneExists(name);
+                            const dbName = 'gen_' + name.replace(/\./g, '');
+                            const raw = domain.raw || {};
+
+                            // ✅ Badge για την πηγή
+                            const sourceBadge = {
+                                gen_admin:  { icon: '📋', title: 'Registered in gen_admin.domain' },
+                                database:   { icon: '🗄️', title: 'Found as database only' },
+                                filesystem: { icon: '📁', title: 'Found as folder only' },
+                            }[domain.source] || { icon: '❓', title: 'Unknown source' };
 
                             return (
-                                <tr key={domain.name}>
+                                <tr key={name}>
                                     <td style={{ textAlign: 'left' }}>
-                                        <strong>{domain.name}</strong>
-                                        {dbExists && <span className="db-badge" title={`Database: ${dbName}`}>🗄️</span>}
+                                        <strong>{name}</strong>
+                                        {dbExists && (
+                                            <span className="db-badge" title={`Database: ${dbName}`}>🗄️</span>
+                                        )}
+                                    </td>
+
+                                    <td title={sourceBadge.title} style={{ textAlign: 'center', fontSize: 16 }}>
+                                        {sourceBadge.icon}
                                     </td>
 
                                     <td className={genAdminValue ? 'status-ok' : 'status-missing'}>
@@ -284,29 +437,31 @@ const DomainManager = ({ domains, genAdminData, databases, dnsZones, onDomainAct
                                     </td>
 
                                     <td className={fsRealValue ? 'status-ok' : 'status-missing'}>
-                                        {isLoadingFolders && realFsStatus === null ? '⏳' : (fsRealValue ? '✓' : '✗')}
+                                        {isLoadingFolders && realFsStatus === null
+                                            ? '⏳'
+                                            : (fsRealValue ? '✓' : '✗')}
                                         <div className="action-buttons-cell">
                                             {fsRealValue ? (
                                                 <>
-                                                    <button className="btn-uninstall" onClick={() => handleUninstallFilesystem(domain.name)} disabled={isActionLoading(domain.name, 'uninstall', 'filesystem')} title="Delete Folder">🗑️</button>
-                                                    <button className="btn-edit" onClick={() => handleEdit(domain.name, 'filesystem')} disabled={isActionLoading(domain.name, 'edit', 'filesystem')} title="Edit Files">✏️</button>
+                                                    <button className="btn-uninstall" onClick={() => handleUninstallFilesystem(name)} disabled={isActionLoading(name, 'uninstall', 'filesystem')} title="Delete Folder">🗑️</button>
+                                                    <button className="btn-edit" onClick={() => handleEdit(name, 'filesystem')} disabled={isActionLoading(name, 'edit', 'filesystem')} title="Edit Files">✏️</button>
                                                 </>
                                             ) : (
-                                                <button className="btn-install" onClick={() => handleInstallFilesystem(domain.name)} disabled={isActionLoading(domain.name, 'install', 'filesystem')} title="Create Folder">📥 Install</button>
+                                                <button className="btn-install" onClick={() => handleInstallFilesystem(name)} disabled={isActionLoading(name, 'install', 'filesystem')} title="Create Folder">📥 Install</button>
                                             )}
                                         </div>
                                     </td>
 
-                                    <td className={domain.nginx_check ? 'status-ok' : 'status-missing'}>
-                                        {domain.nginx_check ? '✓' : '✗'}
+                                    <td className={raw.nginx_check ? 'status-ok' : 'status-missing'}>
+                                        {raw.nginx_check ? '✓' : '✗'}
                                         <div className="action-buttons-cell">
-                                            {domain.nginx_check ? (
+                                            {raw.nginx_check ? (
                                                 <>
-                                                    <button className="btn-uninstall" onClick={() => handleUninstallNginx(domain.name)} disabled={isActionLoading(domain.name, 'uninstall', 'nginx')}>🗑️</button>
-                                                    <button className="btn-edit" onClick={() => handleEdit(domain.name, 'nginx')} disabled={isActionLoading(domain.name, 'edit', 'nginx')}>✏️</button>
+                                                    <button className="btn-uninstall" onClick={() => handleUninstallNginx(name)} disabled={isActionLoading(name, 'uninstall', 'nginx')}>🗑️</button>
+                                                    <button className="btn-edit" onClick={() => handleEdit(name, 'nginx')} disabled={isActionLoading(name, 'edit', 'nginx')}>✏️</button>
                                                 </>
                                             ) : (
-                                                <button className="btn-install" onClick={() => handleInstallNginx(domain.name)} disabled={isActionLoading(domain.name, 'install', 'nginx')}>📥 Install</button>
+                                                <button className="btn-install" onClick={() => handleInstallNginx(name)} disabled={isActionLoading(name, 'install', 'nginx')}>📥 Install</button>
                                             )}
                                         </div>
                                     </td>
@@ -316,11 +471,11 @@ const DomainManager = ({ domains, genAdminData, databases, dnsZones, onDomainAct
                                         <div className="action-buttons-cell">
                                             {dnsExists ? (
                                                 <>
-                                                    <button className="btn-uninstall" onClick={() => handleUninstallDNS(domain.name)} disabled={isActionLoading(domain.name, 'uninstall', 'dns')}>🗑️</button>
-                                                    <button className="btn-edit" onClick={() => handleEdit(domain.name, 'dns')} disabled={isActionLoading(domain.name, 'edit', 'dns')}>✏️</button>
+                                                    <button className="btn-uninstall" onClick={() => handleUninstallDNS(name)} disabled={isActionLoading(name, 'uninstall', 'dns')}>🗑️</button>
+                                                    <button className="btn-edit" onClick={() => handleEdit(name, 'dns')} disabled={isActionLoading(name, 'edit', 'dns')}>✏️</button>
                                                 </>
                                             ) : (
-                                                <button className="btn-install" onClick={() => handleInstallDNS(domain.name)} disabled={isActionLoading(domain.name, 'install', 'dns')}>📥 Install</button>
+                                                <button className="btn-install" onClick={() => handleInstallDNS(name)} disabled={isActionLoading(name, 'install', 'dns')}>📥 Install</button>
                                             )}
                                         </div>
                                     </td>
@@ -331,31 +486,37 @@ const DomainManager = ({ domains, genAdminData, databases, dnsZones, onDomainAct
                                         <div className="action-buttons-cell">
                                             {dbExists ? (
                                                 <>
-                                                    <button className="btn-uninstall" onClick={() => handleUninstallDatabase(domain.name)} disabled={isActionLoading(domain.name, 'uninstall', 'database')}>🗑️</button>
-                                                    <button className="btn-edit" onClick={() => handleEdit(domain.name, 'database')} disabled={isActionLoading(domain.name, 'edit', 'database')}>✏️</button>
+                                                    <button className="btn-uninstall" onClick={() => handleUninstallDatabase(name)} disabled={isActionLoading(name, 'uninstall', 'database')}>🗑️</button>
+                                                    <button className="btn-edit" onClick={() => handleEdit(name, 'database')} disabled={isActionLoading(name, 'edit', 'database')}>✏️</button>
                                                 </>
                                             ) : (
-                                                <button className="btn-install" onClick={() => handleInstallDatabase(domain.name)} disabled={isActionLoading(domain.name, 'install', 'database')}>📥 Install</button>
+                                                <button className="btn-install" onClick={() => handleInstallDatabase(name)} disabled={isActionLoading(name, 'install', 'database')}>📥 Install</button>
                                             )}
                                         </div>
                                     </td>
 
-                                    <td className={domain.ssl_check ? 'status-ok' : 'status-missing'}>
-                                        {domain.ssl_check ? '✓' : '✗'}
+                                    <td className={raw.ssl_check ? 'status-ok' : 'status-missing'}>
+                                        {raw.ssl_check ? '✓' : '✗'}
                                         <div className="action-buttons-cell">
-                                            {domain.ssl_check ? (
+                                            {raw.ssl_check ? (
                                                 <>
-                                                    <button className="btn-uninstall" onClick={() => handleUninstallSSL(domain.name)} disabled={isActionLoading(domain.name, 'uninstall', 'ssl')}>🗑️</button>
-                                                    <button className="btn-edit" onClick={() => handleEdit(domain.name, 'ssl')} disabled={isActionLoading(domain.name, 'edit', 'ssl')}>✏️</button>
+                                                    <button className="btn-uninstall" onClick={() => handleUninstallSSL(name)} disabled={isActionLoading(name, 'uninstall', 'ssl')}>🗑️</button>
+                                                    <button className="btn-edit" onClick={() => handleEdit(name, 'ssl')} disabled={isActionLoading(name, 'edit', 'ssl')}>✏️</button>
                                                 </>
                                             ) : (
-                                                <button className="btn-install" onClick={() => handleInstallSSL(domain.name)} disabled={isActionLoading(domain.name, 'install', 'ssl')}>📥 Install</button>
+                                                <button className="btn-install" onClick={() => handleInstallSSL(name)} disabled={isActionLoading(name, 'install', 'ssl')}>📥 Install</button>
                                             )}
                                         </div>
                                     </td>
 
                                     <td>
-                                        <button className="btn-small" onClick={() => onDomainAction(domain.name, 'fix')} disabled={actionLoading}>🔧 Fix All</button>
+                                        <button
+                                            className="btn-small"
+                                            onClick={() => onDomainAction(name, 'fix')}
+                                            disabled={actionLoading}
+                                        >
+                                            🔧 Fix All
+                                        </button>
                                     </td>
                                 </tr>
                             );
