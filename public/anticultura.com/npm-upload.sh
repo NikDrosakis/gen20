@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 FILE="$1"
 
 if [ -z "$FILE" ]; then
@@ -57,7 +58,6 @@ echo "Syncing version package.json → $VER"
 npm version "$VER" --allow-same-version --force
 
 echo "Publishing to npm…"
-npm set //registry.npmjs.org/:_authToken=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
 
 OUTPUT=$(npm publish --access public 2>&1)
 STATUS=$?
