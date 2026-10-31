@@ -8,6 +8,8 @@ const CubosPanel = ({
                         newName, setNewName,
                         suggestedTitle,
                         suggestedName,
+                        suggestedVersion,
+                        newVersion, setNewVersion,
                         saving,
                         onSaveThis,
                         onSaveAll,
@@ -17,23 +19,13 @@ const CubosPanel = ({
     const canSaveAll = !!cubosChoice && !saving && highlightedCount > 1;
 
     return (
-        <div style={{
-            flex: '0 0 340px',
-            border: '1px solid #e2e8f0',
-            borderRadius: 10,
-            padding: 14,
-            background: '#f8fafc',
-        }}>
-            <div style={{ fontWeight: 600, marginBottom: 8 }}>📦 Cubos σύνδεση</div>
+        <div className="cm-cubos-panel">
+            <div className="cm-cubos-title">📦 Cubos σύνδεση</div>
 
             <select
                 value={cubosChoice}
                 onChange={(e) => setCubosChoice(e.target.value)}
-                style={{
-                    width: '100%', padding: '8px 10px',
-                    border: '1px solid #e2e8f0', borderRadius: 6,
-                    marginBottom: 8, background: 'white',
-                }}
+                className="cm-cubos-select"
             >
                 <option value="">— Διάλεξε υπάρχον cubos —</option>
                 {cubosList.map(c => (
@@ -45,62 +37,54 @@ const CubosPanel = ({
             </select>
 
             {cubosChoice === 'new' && (
-                <>
+                <div className="cm-cubos-new-fields">
                     <input
                         type="text"
                         placeholder="Title (human-readable)"
                         value={newTitle}
                         onChange={(e) => setNewTitle(e.target.value)}
-                        style={{
-                            width: '100%', padding: '8px 10px',
-                            border: '1px solid #e2e8f0', borderRadius: 6,
-                            marginBottom: 6, boxSizing: 'border-box',
-                        }}
+                        className="cm-cubos-input"
                     />
                     <input
                         type="text"
                         placeholder="Name (slug, π.χ. slides-pro)"
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
-                        style={{
-                            width: '100%', padding: '8px 10px',
-                            border: '1px solid #e2e8f0', borderRadius: 6,
-                            marginBottom: 8, boxSizing: 'border-box',
-                            fontFamily: 'monospace',
-                        }}
+                        className="cm-cubos-input cm-mono"
+                    />
+                    <input
+                        type="text"
+                        placeholder="Version (auto αν κενό)"
+                        value={newVersion || ''}
+                        onChange={(e) => setNewVersion(e.target.value)}
+                        className="cm-cubos-input cm-mono"
                     />
                     {suggestedName && !newName && (
-                        <div style={{ fontSize: 11, color: '#64748b', marginBottom: 8 }}>
+                        <div className="cm-cubos-hint">
                             💡 Suggested: <code>{suggestedName}</code>
                         </div>
                     )}
-                </>
+                </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div className="cm-cubos-actions">
                 <button
                     onClick={onSaveThis}
                     disabled={!canSaveThis}
-                    style={{
-                        padding: '9px 12px', border: 'none', borderRadius: 6,
-                        background: canSaveThis ? '#3b82f6' : '#cbd5e1',
-                        color: 'white',
-                        cursor: canSaveThis ? 'pointer' : 'not-allowed',
-                    }}
-                >💾 Save this file</button>
+                    className="cm-cubos-btn cm-btn-primary"
+                >
+                    💾 Save this file
+                </button>
                 <button
                     onClick={onSaveAll}
                     disabled={!canSaveAll}
-                    style={{
-                        padding: '9px 12px', border: 'none', borderRadius: 6,
-                        background: canSaveAll ? '#10b981' : '#cbd5e1',
-                        color: 'white',
-                        cursor: canSaveAll ? 'pointer' : 'not-allowed',
-                    }}
-                >💾 Save all highlighted ({highlightedCount})</button>
+                    className="cm-cubos-btn cm-btn-success"
+                >
+                    💾 Save all highlighted ({highlightedCount})
+                </button>
             </div>
 
-            <div style={{ fontSize: 11, color: '#64748b', marginTop: 8 }}>
+            <div className="cm-cubos-footer">
                 Αντιγραφή σε <code>/var/www/gs/cubos/&lt;folder&gt;/</code>
             </div>
         </div>

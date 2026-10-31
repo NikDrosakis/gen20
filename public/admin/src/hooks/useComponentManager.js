@@ -109,8 +109,28 @@ export function useComponentManager() {
             const payload = result?.data || result;
             if (payload.success && payload.data) {
                 setData(payload.data);
+
+                // ✅ Auto-expand ΟΛΑ τα paths (domains + folders)
+                // Δομή: { admin: { path, children }, 'gen20.net': {...} }
+                // Expanded keys: 'admin', 'admin/components',
+                //                'admin/components/layout', ...
                 const initialExpanded = {};
-                Object.keys(payload.data).forEach(d => (initialExpanded[d] = true));
+                const walk = (node, path = '') => {
+                    if (!node?.children) return;
+                    for (const [key, child] of Object.entries(node.children)) {
+                        const currentPath = path ? `${path}/${key}` : key;
+                        if (child.children) {
+                            // Πάντα βάλε το path του φακέλου
+                            initialExpanded[currentPath] = true;
+                            walk(child, currentPath);
+                        }
+                    }
+                };
+                for (const [domain, node] of Object.entries(payload.data)) {
+                    // Domain level: το domain ως key
+                    initialExpanded[domain] = true;
+                    walk(node, domain);
+                }
                 setExpanded(initialExpanded);
             } else {
                 setError(payload.error || 'Failed to load components');

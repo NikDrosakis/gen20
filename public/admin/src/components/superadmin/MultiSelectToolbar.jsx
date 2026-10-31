@@ -1,14 +1,15 @@
 // components/superadmin/MultiSelectToolbar.jsx
 import React from 'react';
 
-const MultiSelectToolbar = ({
-                                count,
-                                onSave,
-                                onClear,
-                                saving,
-                                canSave,
-                            }) => {
+export default function MultiSelectToolbar({
+                                               count,
+                                               canSave,
+                                               saving,
+                                               onSave,
+                                               onClear,
+                                           }) {
     if (count <= 1) return null;
+
     return (
         <div style={{
             position: 'fixed', bottom: 20, left: '50%',
@@ -44,6 +45,4 @@ const MultiSelectToolbar = ({
             </button>
         </div>
     );
-};
-
-export default MultiSelectToolbar;
+}
