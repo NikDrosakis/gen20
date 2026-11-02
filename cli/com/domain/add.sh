@@ -462,7 +462,7 @@ create_database() {
     }
 
     # Import template if exists
-    local template_file="/var/www/gs/public/admin/templates/simple/data/template.sql"
+    local template_file=" /var/www/gs/public/template.sql"
     if [[ -f "$template_file" ]]; then
         mariadb -uroot -pn130177! -D "$db_name" < "$template_file" 2>/dev/null || {
             log "WARN" "Failed to import template SQL"

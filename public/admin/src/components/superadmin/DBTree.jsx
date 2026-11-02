@@ -1,13 +1,15 @@
 // components/superadmin/DBTree.jsx
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import "./DBTree.css";
+import DBTemplate from './DBTemplate';
+import './DBTree.css';
+
+const TEMPLATE_KEY = '__template__';
 
 const DBTree = () => {
-    // ✅ Το useSearchParams διαβάζει και γράφει το ?db=... στο URL
     const [searchParams, setSearchParams] = useSearchParams();
 
-    // ✅ Διαβάζουμε το db από το URL (?db=...)
+    // ?db=... ή ?db=__template__
     const dbFromUrl = searchParams.get('db') || '';
 
     const [tables, setTables] = useState([]);
@@ -20,7 +22,6 @@ const DBTree = () => {
     const [deleting, setDeleting] = useState({});
 
     const [databases, setDatabases] = useState([]);
-    // ✅ Αρχικοποίηση του state από το URL
     const [selectedDatabase, setSelectedDatabase] = useState(dbFromUrl);
     const [loadingDatabases, setLoadingDatabases] = useState(true);
 
@@ -30,7 +31,7 @@ const DBTree = () => {
     };
 
     // ============================================================
-    // ✅ Sync με browser back/forward (το URL αλλάζει -> αλλάζει το state)
+    // Sync με URL
     // ============================================================
     useEffect(() => {
         if (dbFromUrl && dbFromUrl !== selectedDatabase) {
@@ -39,7 +40,7 @@ const DBTree = () => {
     }, [dbFromUrl, selectedDatabase]);
 
     // ============================================================
-    // ✅ Φόρτωση databases
+    // Φόρτωση databases
     // ============================================================
     const fetchDatabases = async () => {
         setLoadingDatabases(true);
@@ -76,13 +77,10 @@ const DBTree = () => {
                 return;
             }
 
-            // ✅ Auto-select / sync με URL
-            // Αν το URL έχει έγκυρο db, το state ενημερώνεται ήδη από το useEffect.
-            // Αν δεν έχει, το βάζουμε εμείς στο URL.
-            if (!dbFromUrl || !genDatabases.includes(dbFromUrl)) {
+            // Auto-select
+            if (!dbFromUrl || (dbFromUrl !== TEMPLATE_KEY && !genDatabases.includes(dbFromUrl))) {
                 const defaultDb = genDatabases[0];
                 setSelectedDatabase(defaultDb);
-                // Αντικαθιστούμε το URL (replace: true) για να μη γεμίζει το history με άκυρα states
                 setSearchParams({ db: defaultDb }, { replace: true });
             } else {
                 setSelectedDatabase(dbFromUrl);
@@ -101,9 +99,9 @@ const DBTree = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Όταν αλλάζει το database, φόρτωσε tables
+    // Όταν αλλάζει το database (και δεν είναι template), φόρτωσε tables
     useEffect(() => {
-        if (selectedDatabase) {
+        if (selectedDatabase && selectedDatabase !== TEMPLATE_KEY) {
             fetchTables(selectedDatabase);
             setSelectedTable(null);
             setTableData(null);
@@ -160,17 +158,11 @@ const DBTree = () => {
     };
 
     // ============================================================
-    // ✅ Αλλαγή database μέσω dropdown — ΑΛΛΑΖΕΙ ΤΟ URL
+    // Αλλαγή database — γράφει στο URL
     // ============================================================
-    const handleDatabaseChange = (e) => {
-        const newDb = e.target.value;
-
-        // 1. Ενημερώνουμε το state για άμεση απόκριση
-        setSelectedDatabase(newDb);
-
-        // 2. Γράφουμε το νέο db στο URL.
-        // Αυτό προσθέτει μια νέα εγγραφή στο browser history (back/forward δουλεύει!)
-        setSearchParams({ db: newDb });
+    const handleSelectDatabase = (db) => {
+        setSelectedDatabase(db);
+        setSearchParams({ db }, { replace: true });
     };
 
     const handleDeleteTable = async (tableName, e) => {
@@ -265,6 +257,9 @@ const DBTree = () => {
         );
     };
 
+    // ============================================================
+    // Render
+    // ============================================================
     if (loadingDatabases && databases.length === 0) {
         return (
             <div className="db-tree-container">
@@ -272,6 +267,9 @@ const DBTree = () => {
             </div>
         );
     }
+
+    // Αν είναι template
+    const isTemplateMode = selectedDatabase === TEMPLATE_KEY;
 
     return (
         <div className="db-tree-container">
@@ -284,123 +282,124 @@ const DBTree = () => {
             <div className="db-tree-header">
                 <h2>🗄️ Database Tree</h2>
 
-                <div className="db-tree-controls" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                    {/* ✅ Dropdown database με πραγματικό navigation */}
-                    <select
-                        value={selectedDatabase}
-                        onChange={handleDatabaseChange}
-                        className="db-tree-select"
-                        disabled={loadingDatabases || databases.length === 0}
+                {/* Buttons αντί dropdown */}
+                <div className="db-tree-buttons">
+                    {databases.map(db => (
+                        <button
+                            key={db}
+                            className={`db-tree-btn ${selectedDatabase === db ? 'active' : ''}`}
+                            onClick={() => handleSelectDatabase(db)}
+                            title={db}
+                        >
+                            🗄️ {db}
+                        </button>
+                    ))}
+                    <button
+                        className={`db-tree-btn db-tree-btn-template ${isTemplateMode ? 'active' : ''}`}
+                        onClick={() => handleSelectDatabase(TEMPLATE_KEY)}
+                        title="Edit template.sql"
                     >
-                        {loadingDatabases ? (
-                            <option>Loading databases...</option>
-                        ) : databases.length === 0 ? (
-                            <option>No gen_* databases found</option>
-                        ) : (
-                            databases.map(db => (
-                                <option key={db} value={db}>{db}</option>
-                            ))
-                        )}
-                    </select>
-
-                    {/* ✅ Refresh button */}
+                        📄 Template
+                    </button>
                     <button
                         onClick={fetchDatabases}
                         disabled={loadingDatabases}
-                        style={{
-                            padding: '6px 12px',
-                            border: '1px solid #334155',
-                            background: '#1e293b',
-                            color: '#e2e8f0',
-                            borderRadius: 6,
-                            cursor: 'pointer',
-                        }}
-                        title="Refresh databases list"
+                        className="db-tree-btn db-tree-btn-refresh"
+                        title="Refresh databases"
                     >
                         {loadingDatabases ? '⏳' : '🔄'}
                     </button>
-
-                    <input
-                        type="text"
-                        placeholder="Search tables..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="db-tree-search-input"
-                    />
                 </div>
             </div>
 
-            <div className="db-tree-layout">
-                <div className="db-tree-sidebar">
-                    <div className="db-tree-tables-list">
-                        {loading ? (
-                            <div className="db-tree-loading">Loading tables...</div>
-                        ) : filteredTables.length === 0 ? (
-                            <div className="db-tree-no-tables">
-                                {selectedDatabase ? 'No tables found' : 'Select a database'}
-                            </div>
-                        ) : (
-                            filteredTables.map((table, idx) => (
-                                <div
-                                    key={idx}
-                                    className={`db-tree-table-item ${selectedTable === table ? 'active' : ''}`}
-                                    onClick={() => handleTableClick(table)}
-                                >
-                                    <span className="db-tree-table-icon">📋</span>
-                                    <span className="db-tree-table-name">{table}</span>
-                                    <button
-                                        className="db-tree-delete-btn"
-                                        onClick={(e) => handleDeleteTable(table, e)}
-                                        disabled={deleting[table]}
-                                        title="Delete table"
-                                    >
-                                        {deleting[table] ? '⏳' : '🗑️'}
-                                    </button>
-                                </div>
-                            ))
-                        )}
+            {/* Αν είναι template, δείξε το DBTemplate */}
+            {isTemplateMode ? (
+                <DBTemplate />
+            ) : (
+                <>
+                    <div className="db-tree-controls">
+                        <input
+                            type="text"
+                            placeholder="Search tables..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="db-tree-search-input"
+                        />
                     </div>
 
-                    {selectedTable && tableData && (
-                        <div className="db-tree-views">
-                            <button
-                                className={`view-btn ${activeTab === 'buildTable' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('buildTable')}
-                            >
-                                📋 Table
-                            </button>
-                            <button
-                                className={`view-btn ${activeTab === 'buildSchema' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('buildSchema')}
-                            >
-                                📐 Schema
-                            </button>
-                            <button
-                                className={`view-btn ${activeTab === 'compare' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('compare')}
-                            >
-                                🔄 Compare
-                            </button>
-                        </div>
-                    )}
-                </div>
+                    <div className="db-tree-layout">
+                        <div className="db-tree-sidebar">
+                            <div className="db-tree-tables-list">
+                                {loading ? (
+                                    <div className="db-tree-loading">Loading tables...</div>
+                                ) : filteredTables.length === 0 ? (
+                                    <div className="db-tree-no-tables">
+                                        {selectedDatabase ? 'No tables found' : 'Select a database'}
+                                    </div>
+                                ) : (
+                                    filteredTables.map((table, idx) => (
+                                        <div
+                                            key={idx}
+                                            className={`db-tree-table-item ${selectedTable === table ? 'active' : ''}`}
+                                            onClick={() => handleTableClick(table)}
+                                        >
+                                            <span className="db-tree-table-icon">📋</span>
+                                            <span className="db-tree-table-name">{table}</span>
+                                            <button
+                                                className="db-tree-delete-btn"
+                                                onClick={(e) => handleDeleteTable(table, e)}
+                                                disabled={deleting[table]}
+                                                title="Delete table"
+                                            >
+                                                {deleting[table] ? '⏳' : '🗑️'}
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
 
-                <div className="db-tree-main">
-                    {selectedTable ? (
-                        loading ? (
-                            <div className="db-tree-loading">Loading table data...</div>
-                        ) : (
-                            renderContent()
-                        )
-                    ) : (
-                        <div className="db-tree-select-prompt">
-                            <span className="db-tree-prompt-icon">🗄️</span>
-                            <p>Select a table from the left to view its data</p>
-                            <small>{tables.length} tables available</small>
+                            {selectedTable && tableData && (
+                                <div className="db-tree-views">
+                                    <button
+                                        className={`view-btn ${activeTab === 'buildTable' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('buildTable')}
+                                    >
+                                        📋 Table
+                                    </button>
+                                    <button
+                                        className={`view-btn ${activeTab === 'buildSchema' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('buildSchema')}
+                                    >
+                                        📐 Schema
+                                    </button>
+                                    <button
+                                        className={`view-btn ${activeTab === 'compare' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('compare')}
+                                    >
+                                        🔄 Compare
+                                    </button>
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
-            </div>
+
+                        <div className="db-tree-main">
+                            {selectedTable ? (
+                                loading ? (
+                                    <div className="db-tree-loading">Loading table data...</div>
+                                ) : (
+                                    renderContent()
+                                )
+                            ) : (
+                                <div className="db-tree-select-prompt">
+                                    <span className="db-tree-prompt-icon">🗄️</span>
+                                    <p>Select a table from the left to view its data</p>
+                                    <small>{tables.length} tables available</small>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 };

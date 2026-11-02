@@ -13,7 +13,7 @@
 </head>
 <body>
 <h1>{{ .title }}</h1>
-<p>Here are some available API endpoints:</p>
+<p>API endpoints:</p>
 <ul>
     {{ range .endpoints }}
     <li><a href="{{ .Path }}">{{ .Path }}</a> - {{ .Method }} method</li>

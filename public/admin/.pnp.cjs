@@ -48,6 +48,9 @@ const RAW_RUNTIME_STATE =
           ["@types/react-dom", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:19.2.3"],\
           ["@uiw/react-codemirror", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:4.25.12"],\
           ["@vitejs/plugin-react", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:6.0.1"],\
+          ["@xterm/addon-fit", "npm:0.11.0"],\
+          ["@xterm/addon-web-links", "npm:0.12.0"],\
+          ["@xterm/xterm", "npm:6.0.0"],\
           ["admin", "workspace:."],\
           ["eslint", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:10.3.0"],\
           ["eslint-plugin-react-hooks", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:7.1.1"],\
@@ -61,6 +64,7 @@ const RAW_RUNTIME_STATE =
           ["react-icons", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:5.6.0"],\
           ["react-redux", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:9.2.0"],\
           ["react-router-dom", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:7.15.0"],\
+          ["react-xtermjs", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:1.0.12"],\
           ["vite", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:8.0.11"]\
         ],\
         "linkType": "SOFT"\
@@ -1253,6 +1257,33 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["@xterm/addon-fit", [\
+      ["npm:0.11.0", {\
+        "packageLocation": "../../../../../root/.yarn/berry/cache/@xterm-addon-fit-npm-0.11.0-1a9f48bb05-10c0.zip/node_modules/@xterm/addon-fit/",\
+        "packageDependencies": [\
+          ["@xterm/addon-fit", "npm:0.11.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@xterm/addon-web-links", [\
+      ["npm:0.12.0", {\
+        "packageLocation": "../../../../../root/.yarn/berry/cache/@xterm-addon-web-links-npm-0.12.0-0676385f16-10c0.zip/node_modules/@xterm/addon-web-links/",\
+        "packageDependencies": [\
+          ["@xterm/addon-web-links", "npm:0.12.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@xterm/xterm", [\
+      ["npm:6.0.0", {\
+        "packageLocation": "../../../../../root/.yarn/berry/cache/@xterm-xterm-npm-6.0.0-232e693732-10c0.zip/node_modules/@xterm/xterm/",\
+        "packageDependencies": [\
+          ["@xterm/xterm", "npm:6.0.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["abbrev", [\
       ["npm:4.0.0", {\
         "packageLocation": "../../../../../root/.yarn/berry/cache/abbrev-npm-4.0.0-7d848a1ef0-10c0.zip/node_modules/abbrev/",\
@@ -1317,6 +1348,9 @@ const RAW_RUNTIME_STATE =
           ["@types/react-dom", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:19.2.3"],\
           ["@uiw/react-codemirror", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:4.25.12"],\
           ["@vitejs/plugin-react", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:6.0.1"],\
+          ["@xterm/addon-fit", "npm:0.11.0"],\
+          ["@xterm/addon-web-links", "npm:0.12.0"],\
+          ["@xterm/xterm", "npm:6.0.0"],\
           ["admin", "workspace:."],\
           ["eslint", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:10.3.0"],\
           ["eslint-plugin-react-hooks", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:7.1.1"],\
@@ -1330,6 +1364,7 @@ const RAW_RUNTIME_STATE =
           ["react-icons", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:5.6.0"],\
           ["react-redux", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:9.2.0"],\
           ["react-router-dom", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:7.15.0"],\
+          ["react-xtermjs", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:1.0.12"],\
           ["vite", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:8.0.11"]\
         ],\
         "linkType": "SOFT"\
@@ -2594,6 +2629,28 @@ const RAW_RUNTIME_STATE =
           "@types/react",\
           "react-dom",\
           "react"\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["react-xtermjs", [\
+      ["npm:1.0.12", {\
+        "packageLocation": "../../../../../root/.yarn/berry/cache/react-xtermjs-npm-1.0.12-0c6743c3d5-10c0.zip/node_modules/react-xtermjs/",\
+        "packageDependencies": [\
+          ["react-xtermjs", "npm:1.0.12"]\
+        ],\
+        "linkType": "SOFT"\
+      }],\
+      ["virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:1.0.12", {\
+        "packageLocation": "./.yarn/__virtual__/react-xtermjs-virtual-e97bc3a500/6/root/.yarn/berry/cache/react-xtermjs-npm-1.0.12-0c6743c3d5-10c0.zip/node_modules/react-xtermjs/",\
+        "packageDependencies": [\
+          ["@types/xterm__xterm", null],\
+          ["@xterm/xterm", "npm:6.0.0"],\
+          ["react-xtermjs", "virtual:7f0f7e8da996c6611fedc2eefcfbfbb5bbcfc606eeb73b9ab6c24d9bc872ef307681a74dfe14e363f41c7441fb3a075cca0714dd0d46f39b526685692269b78e#npm:1.0.12"]\
+        ],\
+        "packagePeers": [\
+          "@types/xterm__xterm",\
+          "@xterm/xterm"\
         ],\
         "linkType": "HARD"\
       }]\

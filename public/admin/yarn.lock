@@ -944,6 +944,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@xterm/addon-fit@npm:^0.11.0":
+  version: 0.11.0
+  resolution: "@xterm/addon-fit@npm:0.11.0"
+  checksum: 10c0/c0ce94f7e877d07e7197d15d041cc629ce2e853016400aadddc9810838ea8a26e836f87f325eba36df88c03feb72d9f13cd8c3bb41ee31e701f1058edb8553c3
+  languageName: node
+  linkType: hard
+
+"@xterm/addon-web-links@npm:^0.12.0":
+  version: 0.12.0
+  resolution: "@xterm/addon-web-links@npm:0.12.0"
+  checksum: 10c0/1c4847f43948483a6a0f59994090b8b9d9f6006a1e4a8deed7d9c28fcb47422d77eb418fb8fc63fbfb0c486c49e4646b73188ff2efac5290b680db34f298f334
+  languageName: node
+  linkType: hard
+
+"@xterm/xterm@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "@xterm/xterm@npm:6.0.0"
+  checksum: 10c0/b99122553f323a65b708e5eba9903d4c5a1bcb59fe576d29d6e91a33002bccfd1b99403e1e839e1942f4952039db6d3d74ca9d65ed0399b4e9a0a5f35b8c12d9
+  languageName: node
+  linkType: hard
+
 "abbrev@npm:^4.0.0":
   version: 4.0.0
   resolution: "abbrev@npm:4.0.0"
@@ -993,6 +1014,9 @@ __metadata:
     "@types/react-dom": "npm:^19.2.3"
     "@uiw/react-codemirror": "npm:^4.25.12"
     "@vitejs/plugin-react": "npm:^6.0.1"
+    "@xterm/addon-fit": "npm:^0.11.0"
+    "@xterm/addon-web-links": "npm:^0.12.0"
+    "@xterm/xterm": "npm:^6.0.0"
     eslint: "npm:^10.2.1"
     eslint-plugin-react-hooks: "npm:^7.1.1"
     eslint-plugin-react-refresh: "npm:^0.5.2"
@@ -1005,6 +1029,7 @@ __metadata:
     react-icons: "npm:^5.6.0"
     react-redux: "npm:^9.2.0"
     react-router-dom: "npm:^7.15.0"
+    react-xtermjs: "npm:^1.0.12"
     vite: "npm:^8.0.10"
   languageName: unknown
   linkType: soft
@@ -2030,6 +2055,15 @@ __metadata:
     react-dom:
       optional: true
   checksum: 10c0/ce27ff25a0a53afec7f24385be89b779efd9f04d84c5b90c6a8f3fbbac28fc2f8c5f1bb26aff0588d41a225482365997082808f9e098c565435fad09426de114
+  languageName: node
+  linkType: hard
+
+"react-xtermjs@npm:^1.0.12":
+  version: 1.0.12
+  resolution: "react-xtermjs@npm:1.0.12"
+  peerDependencies:
+    "@xterm/xterm": ^5.5.0
+  checksum: 10c0/bd70426a123a75b9a03377457db08d705bdcc13789ec5809208d5b50aed001d7b38abdd19bef16500f4b1b7b9affafdbcbc1f492158f42ad9fce6c5bcdb19a02
   languageName: node
   linkType: hard
 

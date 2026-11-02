@@ -16,7 +16,7 @@ const DBTemplate = () => {
 
     // Φόρτωση του template.sql
     const loadConfig = async () => {
-        const path = '/var/www/gs/setup/maria/schema/template.sql';
+        const path = '/var/www/gs/public/template.sql';
         setFilePath(path);
 
         setLoading(true);
@@ -184,7 +184,7 @@ INSERT INTO user (id, permission, name, email, status) VALUES
         const path = '/var/www/gs/setup/maria/schema/template.sql';
 
         try {
-            const response = await fetch('/api/v1/local/saveFileContent', {
+            const response = await fetch('/api/v1/local/saveFSContent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

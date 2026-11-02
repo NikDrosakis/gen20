@@ -13,12 +13,33 @@ import ContentOneAdmin from "./pages/content/ContentOneAdmin";
 import Monetize from "./pages/Monetize";
 import LangAdmin from "./pages/LangAdmin";
 import SuperAdmin from "./pages/SuperAdmin";
+import { MessagingProvider, useMessaging } from './contexts/MessagingContext';
 import MemberFormAdmin from "./pages/MemberFormAdmin";
 import Settings from "./pages/Settings";
 import Media from "./pages/Media";
 import Doc from "./pages/Doc";
 import { useG } from './contexts/GContext';
 import SetupToolbox from './components/SetupToolbox';
+
+function MessagingDebug() {
+  const { connection, messages, sendSystem } = useMessaging();
+  return (
+      <div style={{
+        position: "fixed", bottom: 0, left: 0,
+        background: "#000", color: "#0f0",
+        padding: 8, fontSize: 12, zIndex: 9999,
+        fontFamily: "monospace",
+      }}>
+        <div>WS: {connection} · msgs: {messages.length}</div>
+        <button onClick={() => sendSystem("hello from admin")}>
+          Send test
+        </button>
+        {messages.slice(-3).map((m, i) => (
+            <div key={i}>{m.system}: {m.verba}</div>
+        ))}
+      </div>
+  );
+}
 
 const App = () => {
   const [currentPage, setCurrentPage] = useState('home');
@@ -249,7 +270,7 @@ const App = () => {
   }
 
   return (
-      <>
+      <MessagingProvider userID="admin" domains={["gen20.net"]}>
         <div className="admin-container">
           <header className="admin-header">
             <Navbar currentPage={currentPage} onNavigate={navigateTo} />
@@ -265,7 +286,8 @@ const App = () => {
                 onComplete={() => setShowSetup(false)}
             />
         )}
-      </>
+        <MessagingDebug />
+      </MessagingProvider>
   );
 };
 

@@ -1,41 +1,35 @@
 // components/superadmin/NewDomain.jsx
 import React, { useState } from 'react';
 
-const NewDomain = ({ onClose, onSuccess }) => {
+const NewDomain = ({ onSuccess }) => {
     const [formData, setFormData] = useState({
         domain: '',
         type: 'public',
-        createFilesystem: true,
-        createDatabase: true,
-        createNginx: true,
-        createDNS: true,
-        createSSL: false,
-        template: 'default',
-        torPort: 80,
-        torHiddenService: '',
     });
     const [loading, setLoading] = useState(false);
     const [apiStatus, setApiStatus] = useState({ show: false, message: '', type: '' });
-    const [step, setStep] = useState(1);
 
     const showNotification = (message, type = 'success') => {
         setApiStatus({ show: true, message, type });
-        setTimeout(() => setApiStatus({ show: false, message: '', type: '' }), 4000);
+        setTimeout(() => setApiStatus({ show: false, message: '', type: '' }), 6000);
     };
 
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const validateDomain = (domain) => {
         if (formData.type === 'tor') {
             const onionRegex = /^[a-z2-7]{16,56}\.onion$/;
             if (!onionRegex.test(domain)) {
-                return 'Invalid Tor (.onion) domain format. Must be 16-56 characters of a-z2-7 followed by .onion';
+                return 'Invalid Tor (.onion) domain format (16-56 chars of a-z2-7 + .onion)';
+            }
+            return null;
+        }
+        if (formData.type === 'internal') {
+            if (!domain || domain.length > 253) {
+                return 'Invalid internal domain';
             }
             return null;
         }
@@ -57,8 +51,8 @@ const NewDomain = ({ onClose, onSuccess }) => {
 
     const handleTorGenerate = () => {
         const onion = generateOnionAddress();
-        setFormData(prev => ({ ...prev, domain: onion, torHiddenService: onion }));
-        showNotification('🔒 Tor .onion address generated!', 'success');
+        setFormData(prev => ({ ...prev, domain: onion }));
+        showNotification('🔒 Tor .onion address generated', 'success');
     };
 
     const handleSubmit = async (e) => {
@@ -68,203 +62,140 @@ const NewDomain = ({ onClose, onSuccess }) => {
             showNotification(domainError, 'error');
             return;
         }
-        setLoading(true);
 
+        setLoading(true);
         try {
-            const response = await fetch('/api/v1/local/createDomain', {
+            const response = await fetch('/god/v1/setup/domain', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     domain: formData.domain,
                     type: formData.type,
-                    options: {
-                        filesystem: formData.createFilesystem,
-                        database: formData.createDatabase,
-                        nginx: formData.createNginx,
-                        dns: formData.createDNS,
-                        ssl: formData.createSSL,
-                        template: formData.template,
-                        tor: formData.type === 'tor' ? {
-                            port: formData.torPort,
-                            hiddenService: formData.torHiddenService || formData.domain
-                        } : null
-                    }
-                })
+                }),
             });
 
             const result = await response.json();
+
             if (result.success) {
-                showNotification(`✅ Domain "${formData.domain}" created successfully!`, 'success');
-                setTimeout(() => {
-                    if (onSuccess) onSuccess(result.data);
-                    if (onClose) onClose();
-                }, 1500);
+                const actual = result.actual_domain || result.domain;
+                showNotification(`✅ Domain "${actual}" created successfully`, 'success');
+                setFormData({ domain: '', type: 'public' });
+                if (onSuccess) onSuccess(result);
             } else {
-                showNotification(`❌ Failed to create domain: ${result.error || 'Unknown error'}`, 'error');
+                showNotification(`❌ ${result.error || 'Unknown error'}`, 'error');
             }
         } catch (error) {
-            console.error('Error creating domain:', error);
-            showNotification('❌ Error creating domain: ' + error.message, 'error');
+            showNotification(`❌ ${error.message}`, 'error');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="new-domain-overlay" onClick={onClose}>
-            <div className="new-domain-modal" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                    <h3>🌐 Create New Domain</h3>
-                    <button className="modal-close" onClick={onClose}>×</button>
+        <div className="new-domain-page">
+            <div className="section-header">
+                <h2>🌐 Create New Domain</h2>
+                <p className="section-subtitle">
+                    The domain will be fully provisioned: filesystem, database, nginx, DNS and optional SSL.
+                </p>
+            </div>
+
+            {apiStatus.show && (
+                <div className={`notification ${apiStatus.type === 'success' ? 'notification-success' : 'notification-error'}`}>
+                    {apiStatus.message}
+                </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="new-domain-form-page">
+                <div className="form-group">
+                    <label className="form-label">Domain Type</label>
+                    <select
+                        name="type"
+                        value={formData.type}
+                        onChange={handleChange}
+                        className="form-select"
+                        disabled={loading}
+                    >
+                        <option value="public">🌐 Public</option>
+                        <option value="tor">🔒 Tor (.onion)</option>
+                        <option value="internal">🏠 Internal</option>
+                    </select>
                 </div>
 
-                {apiStatus.show && (
-                    <div className={`notification notification-${apiStatus.type === 'success' ? 'success' : 'error'}`}>
-                        {apiStatus.message}
+                <div className="form-group">
+                    <label className="form-label">
+                        {formData.type === 'tor' ? '🔒 .onion Address' : '🌐 Domain Name'}
+                        <span className="required">*</span>
+                    </label>
+                    <div className="domain-input-group">
+                        <input
+                            type="text"
+                            name="domain"
+                            value={formData.domain}
+                            onChange={handleChange}
+                            placeholder={formData.type === 'tor' ? 'xxxxx.onion' : 'example.com'}
+                            className="form-input"
+                            disabled={loading}
+                            required
+                        />
+                        {formData.type === 'tor' && (
+                            <button
+                                type="button"
+                                onClick={handleTorGenerate}
+                                className="btn-generate"
+                                disabled={loading}
+                            >
+                                🔄 Generate
+                            </button>
+                        )}
+                    </div>
+                    <small className="form-hint">
+                        {formData.type === 'tor'
+                            ? '16-56 characters (a-z, 2-7) followed by .onion'
+                            : formData.type === 'internal'
+                                ? 'Internal domain (no external DNS)'
+                                : 'Enter the domain name (e.g., example.com)'}
+                    </small>
+                </div>
+
+                {formData.type === 'tor' && (
+                    <div className="tor-info">
+                        <div className="tor-badge">🔒 Tor Hidden Service</div>
+                        <p className="tor-description">
+                            Accessible only via the Tor network. The .onion address is configured automatically.
+                            SSL is not supported for .onion domains.
+                        </p>
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="new-domain-form">
-                    <div className="form-tabs">
-                        <button type="button" className={`step-btn ${step === 1 ? 'active' : ''}`} onClick={() => setStep(1)}>
-                            📝 Basic
-                        </button>
-                        <button type="button" className={`step-btn ${step === 2 ? 'active' : ''}`} onClick={() => setStep(2)}>
-                            ⚙️ Advanced
-                        </button>
-                    </div>
+                <div className="form-summary">
+                    <h4>Will be provisioned automatically:</h4>
+                    <ul>
+                        <li>📁 Filesystem: <code>/var/www/gs/public/{formData.domain || 'domain'}</code></li>
+                        <li>🗄️ Database: <code>gen_{formData.domain ? formData.domain.replace(/\./g, '') : 'domain'}</code></li>
+                        <li>⚙️ Nginx: <code>/etc/nginx/conf.d/{formData.domain || 'domain'}.conf</code></li>
+                        {formData.type !== 'tor' && (
+                            <li>🌍 DNS: <code>/etc/bind/zones/db.{formData.domain || 'domain'}</code></li>
+                        )}
+                        {formData.type === 'tor' && (
+                            <li>🔒 Tor hidden service: auto-configured</li>
+                        )}
+                    </ul>
+                    <p className="form-hint" style={{ marginTop: 12 }}>
+                        ⏱️ This may take 3–5 minutes (yarn create + install + build).
+                    </p>
+                </div>
 
-                    {step === 1 && (
-                        <div className="form-step">
-                            <div className="form-group">
-                                <label className="form-label">Domain Type</label>
-                                <select name="type" value={formData.type} onChange={handleChange} className="form-select">
-                                    <option value="public">🌐 Public (regular)</option>
-                                    <option value="tor">🔒 Tor (.onion)</option>
-                                    <option value="internal">🏠 Internal (local)</option>
-                                </select>
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label">
-                                    {formData.type === 'tor' ? '🔒 .onion Address' : '🌐 Domain Name'}
-                                    <span className="required">*</span>
-                                </label>
-                                <div className="domain-input-group">
-                                    <input
-                                        type="text"
-                                        name="domain"
-                                        value={formData.domain}
-                                        onChange={handleChange}
-                                        placeholder={formData.type === 'tor' ? 'example.onion' : 'example.com'}
-                                        className="form-input"
-                                        required
-                                    />
-                                    {formData.type === 'tor' && (
-                                        <button type="button" onClick={handleTorGenerate} className="btn-generate">
-                                            🔄 Generate
-                                        </button>
-                                    )}
-                                </div>
-                                <small className="form-hint">
-                                    {formData.type === 'tor'
-                                        ? '16-56 characters (a-z, 2-7) followed by .onion'
-                                        : 'Enter your domain name (e.g., example.com)'}
-                                </small>
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label">Template</label>
-                                <select name="template" value={formData.template} onChange={handleChange} className="form-select">
-                                    <option value="default">📄 Default (React + API)</option>
-                                    <option value="static">📄 Static Website</option>
-                                    <option value="api">📄 API Only</option>
-                                    <option value="minimal">📄 Minimal</option>
-                                </select>
-                            </div>
-
-                            {formData.type === 'tor' && (
-                                <div className="form-group tor-info">
-                                    <div className="tor-badge">🔒 Tor Hidden Service</div>
-                                    <p className="tor-description">
-                                        This domain will be accessible via the Tor network.
-                                        The .onion address will be generated automatically.
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {step === 2 && (
-                        <div className="form-step">
-                            <div className="form-group">
-                                <label className="checkbox-label">
-                                    <input type="checkbox" name="createFilesystem" checked={formData.createFilesystem} onChange={handleChange} />
-                                    📁 Create Filesystem
-                                </label>
-                                <small className="form-hint">/var/www/gs/public/{formData.domain || 'domain'}</small>
-                            </div>
-
-                            <div className="form-group">
-                                <label className="checkbox-label">
-                                    <input type="checkbox" name="createDatabase" checked={formData.createDatabase} onChange={handleChange} />
-                                    🗄️ Create Database
-                                </label>
-                                <small className="form-hint">gen_{formData.domain ? formData.domain.replace(/\./g, '') : 'domain'}</small>
-                            </div>
-
-                            <div className="form-group">
-                                <label className="checkbox-label">
-                                    <input type="checkbox" name="createNginx" checked={formData.createNginx} onChange={handleChange} />
-                                    ⚙️ Configure Nginx
-                                </label>
-                                <small className="form-hint">/etc/nginx/conf.d/{formData.domain || 'domain'}.conf</small>
-                            </div>
-
-                            <div className="form-group">
-                                <label className="checkbox-label">
-                                    <input type="checkbox" name="createDNS" checked={formData.createDNS} onChange={handleChange} />
-                                    🌍 Configure DNS
-                                </label>
-                                <small className="form-hint">/etc/bind/zones/db.{formData.domain || 'domain'}</small>
-                            </div>
-
-                            <div className="form-group">
-                                <label className="checkbox-label">
-                                    <input type="checkbox" name="createSSL" checked={formData.createSSL} onChange={handleChange} />
-                                    🔒 Install SSL Certificate
-                                </label>
-                                <small className="form-hint">Let's Encrypt (requires valid domain)</small>
-                            </div>
-
-                            {formData.type === 'tor' && (
-                                <div className="form-group tor-advanced">
-                                    <label className="form-label">Tor Port</label>
-                                    <input
-                                        type="number"
-                                        name="torPort"
-                                        value={formData.torPort}
-                                        onChange={handleChange}
-                                        className="form-input"
-                                        min="1"
-                                        max="65535"
-                                    />
-                                    <small className="form-hint">Port for the Tor hidden service</small>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    <div className="form-actions">
-                        <button type="button" className="btn-cancel" onClick={onClose}>
-                            Cancel
-                        </button>
-                        <button type="submit" className="btn-submit" disabled={loading}>
-                            {loading ? '⏳ Creating...' : '🚀 Create Domain'}
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <div className="form-actions">
+                    <button
+                        type="submit"
+                        className="btn-submit"
+                        disabled={loading || !formData.domain.trim()}
+                    >
+                        {loading ? '⏳ Creating… (please wait)' : '🚀 Create Domain'}
+                    </button>
+                </div>
+            </form>
         </div>
     );
 };

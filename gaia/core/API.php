@@ -17,8 +17,8 @@ use Core\Traits\Tree;
 use Core\Traits\Form;
 use Core\Traits\Domain;
 use Core\Traits\DomainFS;
-use Core\Traits\DomainSSL;
-use Core\Traits\DomainHost;
+use Core\Traits\DomainDB;
+//use Core\Traits\DomainHost;
 use Core\Traits\CuboAdmin;
 use Core\Traits\CuboPublic;
 use Core\Traits\Lang;
@@ -40,7 +40,7 @@ use Core\Traits\Poeta;
  * */
 
 class API extends Gaia{
-	 use Action, Share,Content, Poeta, Deepseek, My, Xml, GA,Filesystem,Filemeta, Media, Email, Mail, Tree,Form, Domain, DomainFS, DomainHost, DomainSSL, CuboAdmin, CuboPublic, Lang, Manifest, Kronos, Sketch, Oxygen, Url;
+	 use Action, Share,Content, Poeta, Deepseek, My, Xml, GA,Filesystem,Filemeta, Media, Email, Mail, Tree,Form, Domain,DomainDB, DomainFS, CuboAdmin, CuboPublic, Lang, Manifest, Kronos, Sketch, Oxygen, Url;
    private $security;
 
    public function __construct() {

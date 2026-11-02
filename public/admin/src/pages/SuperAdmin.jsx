@@ -8,7 +8,6 @@ import ComponentManager from '../components/superadmin/ComponentManager';
 import Layout from '../components/superadmin/Layout';
 import NginxManager from '../components/superadmin/NginxManager';
 import DNSManager from '../components/superadmin/DNSManager';
-import DBTemplate from '../components/superadmin/DBTemplate';
 import DBTree from '../components/superadmin/DBTree';
 import Lab from '../components/superadmin/Lab';
 import Terminal from '../components/superadmin/Terminal';
@@ -367,10 +366,13 @@ const SuperAdmin = () => {
         console.log(`🔒 SSL action: ${action} on ${domain}`);
         setActionLoading(true);
         try {
-            const response = await fetch(`/api/v1/local/${action}SSL`, {
+            // Map: renew -> renew, delete/del -> delete
+            const godAction = action === 'renew' ? 'renew' : 'delete';
+
+            const response = await fetch('/god/v1/ssl/action', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ domain })
+                body: JSON.stringify({ action: godAction, domain })
             });
             const result = await response.json();
 
@@ -381,13 +383,12 @@ const SuperAdmin = () => {
                 showMessage('error', result.error || 'SSL action failed');
             }
         } catch (error) {
-            console.error(`❌ Error in ${action}SSL:`, error);
+            console.error(`❌ Error in SSL ${action}:`, error);
             showMessage('error', error.message);
         } finally {
             setActionLoading(false);
         }
     };
-
     const syncDomains = async () => {
         console.log('🔄 Syncing domains...');
         setActionLoading(true);
@@ -411,16 +412,15 @@ const SuperAdmin = () => {
 
     const tabs = [
         { id: 'domains', label: 'Domains Setup', icon: '🌐' },
+        { id: 'newdomain', label: 'New Domain', icon: '🧩' },
         { id: 'components', label: 'Components', icon: '🧱' },
         { id: 'layout', label: 'Layout', icon: '🧱' },
-        { id: 'dbtemplate', label: 'DB Template', icon: '🗄' },
         { id: 'dbtree', label: 'DB Tree', icon: '🌳' },
+        { id: 'terminal', label: 'Terminal', icon: '⌘' },
         { id: 'lab', label: 'API Lab', icon: '🧩' },
-        { id: 'terminal', label: 'GEN CLI', icon: '⌘' },
-        { id: 'nginx', label: 'WebServer Hosts', icon: '⚙️' },
-        { id: 'dns', label: 'Bind Zones', icon: '🌍' },
-        { id: 'ssl', label: 'SSL Certificates', icon: '🔒' },
-        { id: 'newdomain', label: 'New Domain', icon: '🧩' },
+        { id: 'nginx', label: 'Nginx', icon: '⚙️' },
+        { id: 'dns', label: 'DNS Bind', icon: '🌍' },
+        { id: 'ssl', label: 'SSL', icon: '🔒' },
     ];
 
     useEffect(() => {
@@ -506,10 +506,6 @@ const SuperAdmin = () => {
 
                 {activeTab === 'layout' && (
                     <Layout filesystem={componentfiles} />
-                )}
-
-                {activeTab === 'dbtemplate' && (
-                    <DBTemplate databases={DBS} />
                 )}
 
                 {activeTab === 'dbtree' && (

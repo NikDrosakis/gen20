@@ -1,6 +1,8 @@
 <?php
   // Handle SERVER_NAME in CLI
-   //define('DOMAIN', $_SERVER['SERVER_NAME']);
+   if (!defined('DOMAIN')) {
+   define('DOMAIN', $_SERVER['SERVER_NAME']);
+   }
     if (php_sapi_name() == "cli") {
         $template = getenv('TEMPLATE') ?: 'localhost';
         $_SERVER['SERVER_NAME'] = $template;
@@ -20,7 +22,9 @@
             $template = "gen_" . str_replace('.', '', DOMAIN);
         }
     }
-   // define('TEMPLATE', $template);
+if (!defined('TEMPLATE')) {
+    define('TEMPLATE', $template);
+}
 	define('GSROOT','/var/www/gs/');
     define('GAIAROOT',GSROOT.'gaia/');
     define('API_ROOT',GAIAROOT.'apiv1/');

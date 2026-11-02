@@ -2,10 +2,9 @@
 import React, { useState, useEffect } from 'react';
 
 const NginxManager = () => {
-    const [domains, setDomains] = useState([]);
-    const [loadingDomains, setLoadingDomains] = useState(true);
-    const [files, setFiles] = useState([]); // Array από { domain, path, content, original }
-    const [loadingConfigs, setLoadingConfigs] = useState(false);
+    const [files, setFiles] = useState([]);
+    const [shared, setShared] = useState({ content: '', original: '', path: '' });
+    const [loadingConfigs, setLoadingConfigs] = useState(true);
     const [apiStatus, setApiStatus] = useState({ show: false, message: '', type: '' });
 
     const showNotification = (message, type = 'success') => {
@@ -13,121 +12,69 @@ const NginxManager = () => {
         setTimeout(() => setApiStatus({ show: false, message: '', type: '' }), 4000);
     };
 
-    // ============================================================
-    // 1. Φόρτωση domains
-    // ============================================================
-    useEffect(() => {
-        (async () => {
-            setLoadingDomains(true);
-            try {
-                const res = await fetch('/api/v1/maria/fa?folder=select * from gen_admin.domain order by name asc');
-                const data = await res.json();
-                if (data.success && data.data && data.data.length > 0) {
-                    setDomains(data.data);
-                } else {
-                    setDomains([]);
-                }
-            } catch (err) {
-                console.error('Failed to load domains:', err);
-                showNotification('❌ Failed to load domains', 'error');
-                setDomains([]);
-            } finally {
-                setLoadingDomains(false);
+    const fetchAll = async () => {
+        setLoadingConfigs(true);
+        try {
+            // 1. Hosts
+            const hostsRes = await fetch(`/god/v1/hosts/list?t=${Date.now()}`, { cache: 'no-store' });
+            const hostsData = await hostsRes.json();
+
+            if (hostsData.success && hostsData.data?.hosts) {
+                const hosts = hostsData.data.hosts.map(h => ({
+                    domain: h.domain,
+                    path: h.path,
+                    content: h.content,
+                    original: h.content,
+                    saving: false,
+                }));
+                setFiles(hosts);
+            } else {
+                setFiles([]);
             }
-        })();
+
+            // 2. Shared
+            const sharedRes = await fetch(`/god/v1/hosts/shared?t=${Date.now()}`, { cache: 'no-store' });
+            const sharedData = await sharedRes.json();
+            if (sharedData.success && sharedData.data) {
+                setShared({
+                    content: sharedData.data.content || '',
+                    original: sharedData.data.content || '',
+                    path: sharedData.data.path || '/var/www/gs/setup/server/gen_shared.conf',
+                });
+            }
+        } catch (err) {
+            console.error('Failed to load:', err);
+            showNotification(`❌ ${err.message}`, 'error');
+        } finally {
+            setLoadingConfigs(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchAll();
     }, []);
 
-    // ============================================================
-    // 2. Φόρτωση όλων των configs παράλληλα όταν έρθουν τα domains
-    // ============================================================
-    useEffect(() => {
-        if (domains.length === 0) return;
-
-        const fetchAllConfigs = async () => {
-            setLoadingConfigs(true);
-
-            // Δημιουργούμε promises για κάθε domain
-            const promises = domains.map(async (d) => {
-                const domainName = d.name;
-                const path = `/etc/nginx/conf.d/${domainName}.conf`;
-                let content = '';
-
-                try {
-                    const response = await fetch(`/api/v1/local/getFileContent?path=${encodeURIComponent(path)}`);
-                    const result = await response.json();
-
-                    if (result.success && result.data) {
-                        if (typeof result.data === 'string') content = result.data;
-                        else if (result.data.data) content = result.data.data;
-                        else if (result.data.content) content = result.data.content;
-                    }
-                } catch (err) {
-                    // Αν δεν υπάρχει το αρχείο, φτιάχνουμε template
-                    content = `# Nginx configuration for ${domainName}
-server {
-    listen 443 ssl;
-    http2 on;
-    server_name ${domainName};
-    root /var/www/gs/public/${domainName}/dist;
-    index index.html;
-    ssl_certificate /etc/letsencrypt/live/${domainName}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${domainName}/privkey.pem;
-    include /etc/letsencrypt/options-ssl-nginx.conf;
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-    include /var/www/gs/setup/nginx/gen_shared.conf;
-
-    location = /favicon.ico {
-        log_not_found off;
-        access_log off;
-        try_files /favicon.ico =204;
-    }
-
-    location / {
-        root /var/www/gs/public/${domainName}/dist;
-        index index.html;
-        try_files $uri $uri/ /index.html;
-    }
-}`;
-                }
-
-                return {
-                    domain: domainName,
-                    path: path,
-                    content: content,
-                    original: content,
-                    saving: false,
-                    expanded: false // Για να μην ανοίγουν όλα τα textareas μαζί
-                };
-            });
-
-            const results = await Promise.all(promises);
-            setFiles(results);
-            setLoadingConfigs(false);
-        };
-
-        fetchAllConfigs();
-    }, [domains]);
-
-    // ============================================================
-    // 3. Handlers για κάθε Card
-    // ============================================================
     const updateFileContent = (domain, newContent) => {
         setFiles(prev => prev.map(f =>
             f.domain === domain ? { ...f, content: newContent } : f
         ));
     };
 
-    const handleSave = async (domain, path, content) => {
-        // Βάζουμε το saving=true για το συγκεκριμένο domain
+    const updateShared = (newContent) => {
+        setShared(prev => ({ ...prev, content: newContent }));
+    };
+
+    // --- Save host ---
+    const handleSave = async (domain, content) => {
         setFiles(prev => prev.map(f =>
             f.domain === domain ? { ...f, saving: true } : f
         ));
 
         try {
-            const response = await fetch('/api/v1/local/saveFileContent', {
+            const response = await fetch('/god/v1/hosts/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ path, content })
+                body: JSON.stringify({ domain, content }),
             });
             const result = await response.json();
 
@@ -143,22 +90,75 @@ server {
                 ));
             }
         } catch (error) {
-            console.error('Error saving config:', error);
-            showNotification(`❌ Error saving ${domain}`, 'error');
+            showNotification(`❌ Error saving ${domain}: ${error.message}`, 'error');
             setFiles(prev => prev.map(f =>
                 f.domain === domain ? { ...f, saving: false } : f
             ));
         }
     };
 
+    // --- Delete host ---
+    const handleDelete = async (domain) => {
+        if (!window.confirm(`Delete nginx config for "${domain}"?`)) return;
+
+        setFiles(prev => prev.map(f =>
+            f.domain === domain ? { ...f, saving: true } : f
+        ));
+
+        try {
+            const response = await fetch('/god/v1/hosts/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ domain }),
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                showNotification(`✅ Config deleted for ${domain}`, 'success');
+                setFiles(prev => prev.filter(f => f.domain !== domain));
+            } else {
+                showNotification(`❌ Failed to delete ${domain}: ${result.error}`, 'error');
+                setFiles(prev => prev.map(f =>
+                    f.domain === domain ? { ...f, saving: false } : f
+                ));
+            }
+        } catch (error) {
+            showNotification(`❌ Error: ${error.message}`, 'error');
+            setFiles(prev => prev.map(f =>
+                f.domain === domain ? { ...f, saving: false } : f
+            ));
+        }
+    };
+
+    // --- Save shared ---
+    const handleSaveShared = async () => {
+        try {
+            const response = await fetch('/god/v1/hosts/shared', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: shared.content }),
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                showNotification('✅ gen_shared.conf saved', 'success');
+                setShared(prev => ({ ...prev, original: prev.content }));
+            } else {
+                showNotification(`❌ Failed to save shared: ${result.error}`, 'error');
+            }
+        } catch (error) {
+            showNotification(`❌ Error: ${error.message}`, 'error');
+        }
+    };
+
     const handleReload = async () => {
         try {
-            const response = await fetch('/api/v1/local/reloadNginx', { method: 'POST' });
+            const response = await fetch('/god/v1/hosts/reload', { method: 'POST' });
             const result = await response.json();
             if (result.success) {
-                showNotification('✅ Nginx reloaded successfully', 'success');
+                showNotification('✅ Nginx reloaded', 'success');
             } else {
-                showNotification(`❌ Failed to reload Nginx: ${result.error || 'Unknown error'}`, 'error');
+                showNotification(`❌ Reload failed: ${result.error}`, 'error');
             }
         } catch (error) {
             showNotification('❌ Error reloading Nginx', 'error');
@@ -167,12 +167,12 @@ server {
 
     const handleTestConfig = async () => {
         try {
-            const response = await fetch('/api/v1/local/testNginxConfig', { method: 'POST' });
+            const response = await fetch('/god/v1/hosts/test', { method: 'POST' });
             const result = await response.json();
             if (result.success) {
                 showNotification('✅ Nginx config test passed', 'success');
             } else {
-                showNotification(`❌ Config test failed: ${result.error || result.details || 'Unknown error'}`, 'error');
+                showNotification(`❌ Test failed: ${result.error}`, 'error');
             }
         } catch (error) {
             showNotification('❌ Error testing config', 'error');
@@ -182,11 +182,11 @@ server {
     const getLineCount = (content) => (!content || typeof content !== 'string') ? 0 : content.split('\n').length;
     const getSize = (content) => (!content || typeof content !== 'string') ? 0 : new Blob([content]).size;
 
-    // ============================================================
-    // Render
-    // ============================================================
-    if (loadingDomains) return <div className="tab-pane"><div className="loading-state">Loading domains...</div></div>;
-    if (domains.length === 0) return <div className="tab-pane"><div className="empty-state">No domains found</div></div>;
+    if (loadingConfigs) {
+        return <div className="tab-pane"><div className="loading-state">Loading nginx configs...</div></div>;
+    }
+
+    const sharedModified = shared.content !== shared.original;
 
     return (
         <div className="tab-pane">
@@ -198,20 +198,117 @@ server {
 
             <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <h2>⚙️ Nginx Configuration</h2>
-                <div className="header-actions" style={{ display: 'flex', gap: 10 }}>
-                    <button className="btn-test" onClick={handleTestConfig}>
-                        🔍 Test All
-                    </button>
-                    <button className="btn-reload" onClick={handleReload}>
-                        🔄 Reload Nginx
-                    </button>
+                <span className="db-count" style={{ marginLeft: 8 }}>
+                    {files.length} hosts
+                </span>
+                <div className="header-actions" style={{ display: 'flex', gap: 10, marginLeft: 'auto' }}>
+                    <button className="btn-refresh-all" onClick={fetchAll}>🔄 Refresh</button>
+                    <button className="btn-test" onClick={handleTestConfig}>🔍 Test All</button>
+                    <button className="btn-reload" onClick={handleReload}>🔄 Reload Nginx</button>
                 </div>
             </div>
 
-            {loadingConfigs ? (
-                <div className="loading-state">Loading all configurations...</div>
+            {/* gen_shared.conf card */}
+            <div className="nginx-card" style={{
+                border: '1px solid #e2e8f0',
+                borderRadius: 8,
+                background: 'white',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                marginBottom: 20,
+            }}>
+                <div style={{
+                    padding: '12px 16px',
+                    borderBottom: '1px solid #e2e8f0',
+                    background: '#f8fafc',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>
+                        🔗 {shared.path} (shared include)
+                    </div>
+                    <div className={`status-badge ${sharedModified ? 'modified' : ''}`} style={{
+                        fontSize: 11,
+                        padding: '2px 8px',
+                        borderRadius: 12,
+                        background: sharedModified ? '#fef3c7' : '#dcfce7',
+                        color: sharedModified ? '#92400e' : '#166534'
+                    }}>
+                        {sharedModified ? '⚠️ Modified' : '✓ Saved'}
+                    </div>
+                </div>
+
+                <div style={{ padding: 12 }}>
+                    <textarea
+                        value={shared.content}
+                        onChange={(e) => updateShared(e.target.value)}
+                        style={{
+                            width: '100%',
+                            height: '250px',
+                            fontFamily: 'monospace',
+                            fontSize: 12,
+                            padding: 8,
+                            border: '1px solid #cbd5e1',
+                            borderRadius: 4,
+                            resize: 'vertical',
+                        }}
+                        spellCheck={false}
+                    />
+                </div>
+
+                <div style={{
+                    padding: '12px 16px',
+                    borderTop: '1px solid #e2e8f0',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    background: '#f8fafc'
+                }}>
+                    <div style={{ fontSize: 11, color: '#64748b' }}>
+                        {getLineCount(shared.content)} lines · {getSize(shared.content)} B
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                            onClick={() => setShared(prev => ({ ...prev, content: prev.original }))}
+                            disabled={!sharedModified}
+                            style={{
+                                padding: '4px 8px',
+                                fontSize: 12,
+                                background: 'white',
+                                border: '1px solid #cbd5e1',
+                                borderRadius: 4,
+                                cursor: !sharedModified ? 'not-allowed' : 'pointer',
+                                opacity: !sharedModified ? 0.5 : 1,
+                            }}
+                        >
+                            ↩️ Discard
+                        </button>
+                        <button
+                            onClick={handleSaveShared}
+                            disabled={!sharedModified}
+                            style={{
+                                padding: '4px 12px',
+                                fontSize: 12,
+                                background: sharedModified ? '#3b82f6' : '#cbd5e1',
+                                color: sharedModified ? 'white' : '#64748b',
+                                border: 'none',
+                                borderRadius: 4,
+                                cursor: !sharedModified ? 'not-allowed' : 'pointer',
+                            }}
+                        >
+                            💾 Save shared
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Hosts grid */}
+            {files.length === 0 ? (
+                <div className="empty-state">No nginx configs found</div>
             ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
                     {files.map(file => {
                         const isModified = file.content !== file.original;
 
@@ -224,7 +321,6 @@ server {
                                 flexDirection: 'column',
                                 overflow: 'hidden'
                             }}>
-                                {/* Header του Card */}
                                 <div style={{
                                     padding: '12px 16px',
                                     borderBottom: '1px solid #e2e8f0',
@@ -245,12 +341,10 @@ server {
                                     </div>
                                 </div>
 
-                                {/* Textarea */}
                                 <div style={{ padding: 12, flex: 1 }}>
                                     <textarea
                                         value={file.content}
                                         onChange={(e) => updateFileContent(file.domain, e.target.value)}
-                                        className="nginx-editor"
                                         style={{
                                             width: '100%',
                                             height: '300px',
@@ -265,7 +359,6 @@ server {
                                     />
                                 </div>
 
-                                {/* Footer του Card */}
                                 <div style={{
                                     padding: '12px 16px',
                                     borderTop: '1px solid #e2e8f0',
@@ -294,7 +387,22 @@ server {
                                             ↩️ Discard
                                         </button>
                                         <button
-                                            onClick={() => handleSave(file.domain, file.path, file.content)}
+                                            onClick={() => handleDelete(file.domain)}
+                                            disabled={file.saving}
+                                            style={{
+                                                padding: '4px 8px',
+                                                fontSize: 12,
+                                                background: 'white',
+                                                color: '#ef4444',
+                                                border: '1px solid #fecaca',
+                                                borderRadius: 4,
+                                                cursor: file.saving ? 'not-allowed' : 'pointer',
+                                            }}
+                                        >
+                                            🗑️ Delete
+                                        </button>
+                                        <button
+                                            onClick={() => handleSave(file.domain, file.content)}
                                             disabled={!isModified || file.saving}
                                             style={{
                                                 padding: '4px 12px',
