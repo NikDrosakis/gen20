@@ -1,9 +1,14 @@
+// /main.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
-import "./App.css";
-import router from "./router";
-
+import { router } from "./router";
+import { HelmetProvider } from 'react-helmet-async';
+import { GProvider } from './contexts/GContext';
 ReactDOM.createRoot(document.getElementById("root")).render(
-    <RouterProvider router={router} />
+    <GProvider>
+    <HelmetProvider>
+            <RouterProvider router={router} />
+    </HelmetProvider>
+    </GProvider>
 );

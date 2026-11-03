@@ -112,6 +112,9 @@
     font-size: 14px;
 }
 
+.db-tree-btn.active {
+    background:red;
+}
 .db-tree-delete-btn {
     background: none;
     border: none;
@@ -133,6 +136,7 @@
 
 .db-tree-views {
     display: flex;
+    flex-direction: row;
     gap: 4px;
     padding-top: 12px;
     border-top: 1px solid var(--border-color, #ddd);
@@ -383,7 +387,7 @@
     padding: 12px;
     border-top: 1px solid #334155;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 6px;
 }
 
@@ -1105,4 +1109,95 @@
     .db-tree-html-content .styled-table td {
         padding: 4px 6px;
     }
+}
+
+.db-tree-format,
+.db-tree-sql {
+    padding: 16px;
+}
+
+.db-tree-format .comment-input {
+    width: 100%;
+    padding: 4px 8px;
+    background: #0f172a;
+    color: #cbd5e1;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+}
+
+.db-tree-sql .sql-code {
+    background: #0f172a;
+    color: #cbd5e1;
+    padding: 16px;
+    border-radius: 8px;
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    overflow-x: auto;
+    white-space: pre;
+    border: 1px solid #1e293b;
+}
+
+.db-tree-error {
+    padding: 16px;
+    color: #ef4444;
+    background: #1e1b1b;
+    border-radius: 8px;
+}
+.db-tree-format table.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.db-tree-format .styled-table th {
+    text-align: left;
+    padding: 8px 10px;
+    background: #1e293b;
+    color: #94a3b8;
+    font-weight: 600;
+    border-bottom: 1px solid #334155;
+}
+
+.db-tree-format .styled-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #1e293b;
+    color: #cbd5e1;
+    vertical-align: middle;
+}
+
+.db-tree-format .styled-table tr.row-dirty td {
+    background: rgba(250, 204, 21, 0.05);
+}
+
+.db-tree-format .comment-input {
+    width: 100%;
+    padding: 4px 8px;
+    background: #0f172a;
+    color: #cbd5e1;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+}
+
+.db-tree-format .comment-input.dirty {
+    border-color: #facc15;
+    background: rgba(250, 204, 21, 0.1);
+}
+
+.db-tree-format .comment-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.db-tree-format .btn-save-dirty {
+    background: #3b82f6;
+    color: #fff;
+    border-color: #2563eb;
+}
+
+.db-tree-format .btn-save-dirty:hover {
+    background: #2563eb;
 }

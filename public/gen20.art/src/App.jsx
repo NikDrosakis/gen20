@@ -1,16 +1,7 @@
-// /App.jsx
-import { Outlet } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import ErrorBoundary from "./components/ErrorBoundary";
-import { ThemeProvider } from "./contexts/ThemeContext";
+// /src/App.jsx
+import Skeleton from "./Skeleton";
 import "./App.css";
+
 export default function App() {
-    return (
-        <ErrorBoundary>
-            <ThemeProvider>
-                <Navbar />
-                <Outlet />
-            </ThemeProvider>
-        </ErrorBoundary>
-    );
+    return <Skeleton />;
 }

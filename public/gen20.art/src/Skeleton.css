@@ -1,0 +1,140 @@
+/* /Skeleton.css — ΜΟΝΟ δομή, ΟΧΙ χρώματα/fonts */
+
+/* ============================================================
+   Container
+   ============================================================ */
+.skeleton-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ============================================================
+   Main Layout
+   ============================================================ */
+.skeleton-main {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+/* ============================================================
+   Sidebars
+   ============================================================ */
+.skeleton-sidebar-left {
+    width: 256px;
+    padding: 16px;
+    flex-shrink: 0;
+    overflow-y: auto;
+}
+
+.skeleton-sidebar-right {
+    width: 256px;
+    padding: 16px;
+    flex-shrink: 0;
+    overflow-y: auto;
+}
+
+/* ============================================================
+   Main Content
+   ============================================================ */
+.skeleton-main-content {
+    padding: 24px;
+    overflow: auto;
+    flex: 1;
+    min-width: 0;
+}
+
+.skeleton-main-content.w-full { width: 100%; }
+.skeleton-main-content.w-4\/5 { width: 80%; }
+.skeleton-main-content.w-3\/5 { width: 60%; }
+
+/* ============================================================
+   Header / Footer components
+   ============================================================ */
+.skeleton-header-components {
+    width: 100%;
+}
+
+.skeleton-footer-components {
+    width: 100%;
+}
+
+/* ============================================================
+   Component wrappers
+   ============================================================ */
+.component-wrapper {
+    margin-bottom: 8px;
+}
+
+.component-item {
+    margin-bottom: 16px;
+}
+
+/* ============================================================
+   Component placeholder — μόνο δομή
+   ============================================================ */
+.component-placeholder {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    /* ❌ background, border, border-radius, color → App.css */
+}
+
+.component-icon {
+    font-size: 18px;
+}
+
+.component-name {
+    font-weight: 500;
+    /* ❌ color → App.css */
+}
+
+.component-desc {
+    font-size: 12px;
+    margin-left: 4px;
+    /* ❌ color → App.css */
+}
+
+/* ============================================================
+   Loading state
+   ============================================================ */
+.skeleton-loading {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.skeleton-loading-center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-spinner {
+    /* ❌ color, font-size → App.css */
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 768px) {
+    .skeleton-main {
+        flex-direction: column;
+    }
+
+    .skeleton-sidebar-left,
+    .skeleton-sidebar-right {
+        width: 100%;
+        border-right: none;
+        border-left: none;
+    }
+
+    .skeleton-main-content.w-full,
+    .skeleton-main-content.w-4\/5,
+    .skeleton-main-content.w-3\/5 {
+        width: 100%;
+    }
+}

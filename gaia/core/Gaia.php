@@ -160,11 +160,11 @@ public $deepseekApiUrl;
     $this->set = $this->db->flist("SELECT name, val from {$this->publicdb}.setup");
     //$this->head = json_encode($this->renderHeadArray(), JSON_UNESCAPED_UNICODE);
 
-    $this->pagetable = $_SERVER['SYSTEM']=='admin' ? "gen_admin.page" : $this->publicdb.".page";
+    $this->pagetable = $_SERVER['SYSTEM']=='admin' ? "gen_admin.content" : $this->publicdb.".content";
     if($_SERVER['SYSTEM']=='admin'){
-    $this->menupages = $this->db->flist("SELECT link, title_{$this->lang} from {$this->pagetable} WHERE menu=1 AND status > 0 ORDER BY sort");
+    $this->menupages = $this->db->flist("SELECT name, title from {$this->pagetable} WHERE status > 0 ORDER BY sort");
     }else{
-    $this->menupages = $this->db->flist("SELECT link, title_{$this->lang} from {$this->pagetable} WHERE menu=1 AND status > 0 ORDER BY sort");
+    $this->menupages = $this->db->flist("SELECT name, title from {$this->pagetable} WHERE status > 0 ORDER BY sort");
     }
     $this->pages = $this->db->flist("SELECT link, title_{$this->lang} from {$this->pagetable} WHERE status > 0 ORDER BY sort");
 

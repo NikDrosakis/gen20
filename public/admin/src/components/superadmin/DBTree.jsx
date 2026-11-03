@@ -158,6 +158,232 @@ const DBTree = () => {
     };
 
     // ============================================================
+// FormatTab — editable COLUMN_COMMENT
+// ============================================================
+    const FormatTab = ({ table, db }) => {
+        const [columns, setColumns] = useState([]);
+        const [loading, setLoading] = useState(true);
+        const [saving, setSaving] = useState({});
+        const [error, setError] = useState(null);
+        const [notification, setNotification] = useState(null);
+
+        const fullTable = `${db}.${table}`;
+
+        const fetchFormat = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const r = await fetch(`/api/v1/maria/tableFormat?key=${encodeURIComponent(fullTable)}`);
+                if (!r.ok) throw new Error(`HTTP ${r.status} ${r.statusText}`);
+
+                const j = await r.json();
+
+                // ✅ Ξετύλιξε το διπλό wrapper:
+                // { status, success, data: { success, table, columns: [...] } }
+                const inner = j.data ?? j;
+                const rawColumns = inner.columns ?? inner.data ?? inner ?? [];
+
+                let cols;
+                if (Array.isArray(rawColumns)) {
+                    cols = rawColumns;
+                } else if (rawColumns && typeof rawColumns === 'object') {
+                    cols = Object.values(rawColumns);
+                } else {
+                    cols = [];
+                }
+
+                const mapped = cols.map(c => {
+                    const comment = c.COLUMN_COMMENT ?? c.column_comment ?? '';
+                    return {
+                        ...c,
+                        COLUMN_COMMENT: comment,
+                        _originalComment: comment,
+                        _dirty: false,
+                    };
+                });
+
+                setColumns(mapped);
+
+                if (mapped.length === 0) {
+                    setError('No columns returned — check the endpoint response');
+                }
+            } catch (e) {
+                console.error('[FormatTab] fetch error:', e);
+                setError(e.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        useEffect(() => {
+            fetchFormat();
+        }, [fullTable]);
+
+        const handleCommentChange = (idx, value) => {
+            setColumns(prev => prev.map((c, i) => {
+                if (i !== idx) return c;
+                return {
+                    ...c,
+                    COLUMN_COMMENT: value,
+                    _dirty: value !== c._originalComment,
+                };
+            }));
+        };
+
+        const handleSaveComment = async (col, idx) => {
+            setSaving(prev => ({ ...prev, [col.COLUMN_NAME]: true }));
+            try {
+                const r = await fetch('/api/v1/local/updateColumnComment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        table: fullTable,
+                        column: col.COLUMN_NAME,
+                        comment: col.COLUMN_COMMENT || '',
+                    }),
+                });
+                const j = await r.json();
+                if (j.success) {
+                    setColumns(prev => prev.map((c, i) =>
+                        i === idx
+                            ? { ...c, _originalComment: c.COLUMN_COMMENT || '', _dirty: false }
+                            : c
+                    ));
+                    setNotification({ type: 'success', text: `Comment saved for ${col.COLUMN_NAME}` });
+                    setTimeout(() => setNotification(null), 3000);
+                } else {
+                    setNotification({ type: 'error', text: j.error || 'Failed to save' });
+                    setTimeout(() => setNotification(null), 4000);
+                }
+            } catch (e) {
+                setNotification({ type: 'error', text: e.message });
+                setTimeout(() => setNotification(null), 4000);
+            } finally {
+                setSaving(prev => ({ ...prev, [col.COLUMN_NAME]: false }));
+            }
+        };
+
+        if (loading) return <div className="db-tree-loading">Loading format...</div>;
+        if (error) return <div className="db-tree-error">⚠️ {error}</div>;
+
+        const dirtyCount = columns.filter(c => c._dirty).length;
+
+        return (
+            <div className="db-tree-format">
+                {notification && (
+                    <div className={`db-tree-notification db-tree-notification-${notification.type}`}>
+                        {notification.type === 'success' ? '✓ ' : '✗ '}{notification.text}
+                    </div>
+                )}
+
+                <div className="db-tree-table-header">
+                    <h4>🎨 Format: {fullTable}</h4>
+                    <span className="hint">
+                    Edit COLUMN_COMMENT — επηρεάζει το UI rendering
+                        {dirtyCount > 0 && ` · ${dirtyCount} unsaved`}
+                </span>
+                </div>
+
+                <table className="styled-table">
+                    <thead>
+                    <tr>
+                        <th>Column</th>
+                        <th>Type</th>
+                        <th>Null</th>
+                        <th>Default</th>
+                        <th>Key</th>
+                        <th>Extra</th>
+                        <th>Comment (editable)</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {columns.map((col, idx) => (
+                        <tr key={col.COLUMN_NAME} className={col._dirty ? 'row-dirty' : ''}>
+                            <td><code>{col.COLUMN_NAME}</code></td>
+                            <td><code>{col.COLUMN_TYPE}</code></td>
+                            <td>{col.IS_NULLABLE}</td>
+                            <td>{col.COLUMN_DEFAULT ?? 'NULL'}</td>
+                            <td>{col.COLUMN_KEY}</td>
+                            <td>{col.EXTRA}</td>
+                            <td>
+                                <input
+                                    type="text"
+                                    value={col.COLUMN_COMMENT || ''}
+                                    onChange={(e) => handleCommentChange(idx, e.target.value)}
+                                    className={`comment-input ${col._dirty ? 'dirty' : ''}`}
+                                    placeholder="π.χ. img-upload, loc, json, selectG..."
+                                />
+                            </td>
+                            <td>
+                                <button
+                                    onClick={() => handleSaveComment(col, idx)}
+                                    disabled={saving[col.COLUMN_NAME] || !col._dirty}
+                                    className={col._dirty ? 'btn-save-dirty' : ''}
+                                    title={col._dirty ? 'Save comment' : 'No changes'}
+                                >
+                                    {saving[col.COLUMN_NAME] ? '⏳' : '💾'}
+                                </button>
+                            </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+            </div>
+        );
+    };
+
+// ============================================================
+// CreateSqlTab — SHOW CREATE TABLE
+// ============================================================
+    const CreateSqlTab = ({ table, db }) => {
+        const [sql, setSql] = useState('');
+        const [loading, setLoading] = useState(true);
+        const [error, setError] = useState(null);
+        const [copied, setCopied] = useState(false);
+
+        const fullTable = `${db}.${table}`;
+
+        useEffect(() => {
+            (async () => {
+                setLoading(true);
+                setError(null);
+                try {
+                    const r = await fetch(`/api/v1/maria/showCreateTable?key=${encodeURIComponent(fullTable)}`);
+                    const j = await r.json();
+                    if (j.success) {
+                        setSql(j.data || '');
+                    } else {
+                        setError(j.error || 'Failed to load SQL');
+                    }
+                } catch (e) {
+                    setError(e.message);
+                } finally {
+                    setLoading(false);
+                }
+            })();
+        }, [fullTable]);
+
+        const copy = async () => {
+            await navigator.clipboard.writeText(sql);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        };
+
+        if (loading) return <div className="db-tree-loading">Loading SQL...</div>;
+        if (error) return <div className="db-tree-error">⚠️ {error}</div>;
+
+        return (
+            <div className="db-tree-sql">
+                <div className="db-tree-table-header">
+                    <h4>🗄️ CREATE TABLE: {fullTable}</h4>
+                    <button onClick={copy}>{copied ? '✅ Copied' : '📋 Copy'}</button>
+                </div>
+                <pre className="sql-code">{sql}</pre>
+            </div>
+        );
+    };
+    // ============================================================
     // Αλλαγή database — γράφει στο URL
     // ============================================================
     const handleSelectDatabase = (db) => {
@@ -208,27 +434,99 @@ const DBTree = () => {
         return <div className="db-tree-html-content" dangerouslySetInnerHTML={{ __html: html }} />;
     };
 
+
+    // ============================================================
+    // Render
+    // ============================================================
     const renderContent = () => {
         if (!tableData) return <div className="db-tree-empty">No data found</div>;
 
-        let content = '';
-        let title = '';
+        // Header με tabs — κοινό για όλα τα cases
+        const header = (
+            <div className="db-tree-table-header">
+                <div className="db-tree-header-left">
+                    <h4>
+                        {activeTab === 'buildTable' && '📋 Table Data'}
+                        {activeTab === 'buildSchema' && '📐 Table Schema'}
+                        {activeTab === 'format' && '🎨 Format'}
+                        {activeTab === 'createSql' && '🗄️ CREATE TABLE'}
+                        {activeTab === 'compare' && '📊 Compare with Standard'}
+                    </h4>
+                </div>
+
+                <div className="db-tree-views">
+                    <button
+                        className={`view-btn ${activeTab === 'buildTable' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('buildTable')}
+                    >
+                        📋 Table
+                    </button>
+                    <button
+                        className={`view-btn ${activeTab === 'buildSchema' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('buildSchema')}
+                    >
+                        📐 Schema
+                    </button>
+                    <button
+                        className={`view-btn ${activeTab === 'format' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('format')}
+                    >
+                        🎨 Format
+                    </button>
+                    <button
+                        className={`view-btn ${activeTab === 'createSql' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('createSql')}
+                    >
+                        🗄️ SQL
+                    </button>
+                    <button
+                        className={`view-btn ${activeTab === 'compare' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('compare')}
+                    >
+                        🔄 Compare
+                    </button>
+                </div>
+            </div>
+        );
+
         switch (activeTab) {
             case 'buildTable':
-                content = tableData.buildTable || '';
-                title = '📋 Table Data';
-                break;
+                return (
+                    <div className="db-tree-table-wrapper">
+                        {header}
+                        {renderHtmlContent(tableData.buildTable || '')}
+                    </div>
+                );
+
             case 'buildSchema':
-                content = tableData.buildSchema || '';
-                title = '📐 Table Schema';
-                break;
+                return (
+                    <div className="db-tree-table-wrapper">
+                        {header}
+                        {renderHtmlContent(tableData.buildSchema || '')}
+                    </div>
+                );
+
+            case 'format':
+                return (
+                    <div className="db-tree-table-wrapper">
+                        {header}
+                        <FormatTab table={selectedTable} db={selectedDatabase} />
+                    </div>
+                );
+
+            case 'createSql':
+                return (
+                    <div className="db-tree-table-wrapper">
+                        {header}
+                        <CreateSqlTab table={selectedTable} db={selectedDatabase} />
+                    </div>
+                );
+
             case 'compare':
                 const compareData = tableData.compareWithStandardReport || [];
                 return (
                     <div className="db-tree-compare">
-                        <div className="db-tree-table-header">
-                            <h4>📊 Compare with Standard</h4>
-                        </div>
+                        {header}
                         <div className="db-tree-compare-content">
                             {compareData.map((item, idx) => (
                                 <div key={idx} className="db-tree-compare-item">
@@ -242,24 +540,18 @@ const DBTree = () => {
                         </div>
                     </div>
                 );
-            default:
-                content = tableData.buildTable || '';
-                title = '📋 Table Data';
-        }
 
-        return (
-            <div className="db-tree-table-wrapper">
-                <div className="db-tree-table-header">
-                    <h4>{title}</h4>
-                </div>
-                {renderHtmlContent(content)}
-            </div>
-        );
+            default:
+                return (
+                    <div className="db-tree-table-wrapper">
+                        {header}
+                        {renderHtmlContent(tableData.buildTable || '')}
+                    </div>
+                );
+        }
     };
 
-    // ============================================================
-    // Render
-    // ============================================================
+
     if (loadingDatabases && databases.length === 0) {
         return (
             <div className="db-tree-container">
@@ -287,7 +579,7 @@ const DBTree = () => {
                     {databases.map(db => (
                         <button
                             key={db}
-                            className={`db-tree-btn ${selectedDatabase === db ? 'active' : ''}`}
+                            className={`sync-btn db-tree-btn ${selectedDatabase === db ? 'active' : ''}`}
                             onClick={() => handleSelectDatabase(db)}
                             title={db}
                         >
@@ -295,7 +587,7 @@ const DBTree = () => {
                         </button>
                     ))}
                     <button
-                        className={`db-tree-btn db-tree-btn-template ${isTemplateMode ? 'active' : ''}`}
+                        className={`sync-btn db-tree-btn db-tree-btn-template ${isTemplateMode ? 'active' : ''}`}
                         onClick={() => handleSelectDatabase(TEMPLATE_KEY)}
                         title="Edit template.sql"
                     >
@@ -304,7 +596,7 @@ const DBTree = () => {
                     <button
                         onClick={fetchDatabases}
                         disabled={loadingDatabases}
-                        className="db-tree-btn db-tree-btn-refresh"
+                        className="sync-btn db-tree-btn-refresh"
                         title="Refresh databases"
                     >
                         {loadingDatabases ? '⏳' : '🔄'}
@@ -357,29 +649,6 @@ const DBTree = () => {
                                     ))
                                 )}
                             </div>
-
-                            {selectedTable && tableData && (
-                                <div className="db-tree-views">
-                                    <button
-                                        className={`view-btn ${activeTab === 'buildTable' ? 'active' : ''}`}
-                                        onClick={() => setActiveTab('buildTable')}
-                                    >
-                                        📋 Table
-                                    </button>
-                                    <button
-                                        className={`view-btn ${activeTab === 'buildSchema' ? 'active' : ''}`}
-                                        onClick={() => setActiveTab('buildSchema')}
-                                    >
-                                        📐 Schema
-                                    </button>
-                                    <button
-                                        className={`view-btn ${activeTab === 'compare' ? 'active' : ''}`}
-                                        onClick={() => setActiveTab('compare')}
-                                    >
-                                        🔄 Compare
-                                    </button>
-                                </div>
-                            )}
                         </div>
 
                         <div className="db-tree-main">

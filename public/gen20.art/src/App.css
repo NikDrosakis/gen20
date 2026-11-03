@@ -33,7 +33,7 @@ button, h1, h2, p {
 }
 
 /* Dark Mode */
-body.dark-mode {
+body.dark {
   --primary: #6ba5d1;
   --secondary: #7fb4e8;
   --accent: #f39c12;

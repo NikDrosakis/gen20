@@ -206,7 +206,6 @@
     border: 1px solid var(--border-color, #ddd);
     cursor: pointer;
     font-size: 13px;
-    color: var(--text-color, #333);
     transition: all 0.2s;
 }
 

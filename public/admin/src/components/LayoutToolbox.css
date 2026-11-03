@@ -1,0 +1,117 @@
+/* components/superadmin/LayoutToolbox.css */
+
+.layout-toolbox {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #0b0f14;
+    color: #cbd5e1;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.layout-toolbox-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #111820;
+    border-bottom: 1px solid #1e293b;
+    flex-shrink: 0;
+}
+
+.layout-toolbox-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+.layout-toolbox-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.layout-toolbox-domain,
+.layout-toolbox-page-id {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    background: #1a222c;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.layout-toolbox-domain {
+    color: #4ade80;
+}
+
+.layout-toolbox-page-id {
+    color: #60a5fa;
+}
+
+.layout-toolbox-refresh,
+.layout-toolbox-close {
+    padding: 4px 10px;
+    font-size: 13px;
+    background: #1e293b;
+    color: #cbd5e1;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.layout-toolbox-refresh:hover,
+.layout-toolbox-close:hover {
+    background: #334155;
+    color: #f1f5f9;
+}
+
+/* Split layout */
+.layout-toolbox-body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.layout-toolbox-left {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 16px;
+    border-right: 1px solid #1e293b;
+    min-width: 0;
+}
+
+.layout-toolbox-right {
+    flex: 0 0 380px;
+    overflow: auto;
+    padding: 16px;
+    background: #0d1117;
+    min-width: 0;
+}
+
+@media (max-width: 1200px) {
+    .layout-toolbox-right {
+        flex: 0 0 320px;
+    }
+}
+
+@media (max-width: 900px) {
+    .layout-toolbox-body {
+        flex-direction: column;
+    }
+    .layout-toolbox-left {
+        border-right: none;
+        border-bottom: 1px solid #1e293b;
+    }
+    .layout-toolbox-right {
+        flex: 1 1 auto;
+    }
+}
+
+.layout-toolbox-loading {
+    padding: 40px;
+    text-align: center;
+    color: #64748b;
+}

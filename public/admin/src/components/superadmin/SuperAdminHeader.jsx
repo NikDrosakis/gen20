@@ -2,8 +2,6 @@
 import React from 'react';
 
 const SuperAdminHeader = ({
-                              usingCache,
-                              cacheTimestamp,
                               onRefresh,
                               onSync,
                               isLoading,
@@ -11,20 +9,8 @@ const SuperAdminHeader = ({
     return (
         <div className="superadmin-header">
             <div className="superadmin-header-top">
-                <h1>🛡️ SuperAdmin Dashboard</h1>
+                <h1>🛡️ SuperAdmin</h1>
                 <div className="header-actions">
-                    {usingCache && (
-                        <div
-                            className="cache-badge"
-                            title={`Cached data from ${
-                                cacheTimestamp
-                                    ? new Date(cacheTimestamp).toLocaleString()
-                                    : 'unknown time'
-                            }`}
-                        >
-                            📦 Cache Mode
-                        </div>
-                    )}
                     <button
                         onClick={onRefresh}
                         disabled={isLoading}

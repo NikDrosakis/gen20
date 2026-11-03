@@ -452,8 +452,7 @@ const SuperAdmin = () => {
                     {message.type === 'success' ? '✓' : message.type === 'error' ? '✗' : 'ℹ'} {message.text}
                 </div>
             )}
-
-            {/* ❌ ΑΦΑΙΡΕΘΗΚΑΝ: selectedDomain, onDomainChange */}
+            <div className="superadmin-content">
             <SuperAdminHeader
                 usingCache={usingCache}
                 cacheTimestamp={cacheTimestamp}
@@ -461,7 +460,6 @@ const SuperAdmin = () => {
                 onSync={syncDomains}
                 isLoading={actionLoading || loading}
             />
-
             <div className="superadmin-tabs">
                 {tabs.map(tab => (
                     <button
@@ -475,7 +473,6 @@ const SuperAdmin = () => {
                 ))}
             </div>
 
-            <div className="superadmin-content">
                 {activeTab === 'domains' && (
                     <DomainManager
                         domains={domains}

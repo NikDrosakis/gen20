@@ -6,7 +6,7 @@ import (
     "os"
     "os/exec"
     "time"
-
+"path/filepath"
     "github.com/gin-gonic/gin"
 )
 
@@ -74,6 +74,11 @@ func createDomain(c *gin.Context) {
         }
     }
 
+// ✅ Fix ownership του νέου domain
+    domainPath := filepath.Join("/var/www/gs/public", req.Domain)
+    if _, err := os.Stat(domainPath); err == nil {
+        fixOwnershipDir(domainPath)
+    }
     // Το add.sh γράφει logs + JSON στο τέλος.
     // Παίρνουμε μόνο το τελευταίο {...} block.
     resultJSON := extractLastJSON(stdout.String())

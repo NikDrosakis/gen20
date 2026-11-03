@@ -22,12 +22,12 @@ v1.POST("/hosts/shared", saveShared)
     v1.GET("/bind/list", listZones)
     v1.GET("/bind/read", readZone)
     v1.POST("/bind/save", saveZone)
-    v1.GET("/bind/named-conf", readNamedConf)       // ← νέο
-    v1.POST("/bind/named-conf", saveNamedConf)      // ← νέο
+    v1.GET("/bind/named-conf", readNamedConf)
+    v1.POST("/bind/named-conf", saveNamedConf)
     v1.POST("/bind/test", testZones)
     v1.POST("/bind/reload", reloadBind)
     v1.POST("/bind/delete", deleteZone)
-    v1.POST("/bind/checkfix", deleteZone)
+    v1.POST("/bind/checkfix", checkfixZone)
 
     // ssl
     v1.POST("/ssl/action", sslAction)

@@ -1065,4 +1065,71 @@ public function generateFkReport(string $table, string $column) {
     }
 }
 
+public function showCreateTable($tableName) {
+    $table = is_array($tableName) ? ($tableName['key'] ?? '') : $tableName;
+    if (!$table) {
+        return false;
+    }
+    try {
+        $stmt = $this->_db->query("SHOW CREATE TABLE `$table`");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['Create Table'] ?? false;
+
+    } catch (PDOException $e) {
+        return false;
+    }
+}
+
+public function tableFormat($tableName) {
+    $table = is_array($tableName) ? ($tableName['key'] ?? '') : $tableName;
+    if (!$table) {
+        return false;
+    }
+    try {
+        $columns = $this->tableMeta($table);
+        return $columns ?? [];
+
+    } catch (PDOException $e) {
+        return $e->getMessage();
+    }
+}
+
+public function updateColumnComment($tableName, $columnName, $comment) {
+    try {
+        // Validate
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $tableName) &&
+            !preg_match('/^[a-zA-Z0-9_]+\.[a-zA-Z0-9_]+$/', $tableName)) {
+            return false;
+        }
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $columnName)) {
+            return false;
+        }
+
+        $escapedComment = $this->_db->quote($comment);
+        $sql = "ALTER TABLE `$tableName` MODIFY COLUMN `$columnName` <TYPE> COMMENT $escapedComment";
+        // Πρέπει να πάρεις τον τύπο από tableMeta
+        $meta = $this->f("SELECT ... WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?", [
+                explode('.', $tableName)[0] ?? '',
+                explode('.', $tableName)[1] ?? $tableName,
+                $columnName
+            ]);
+
+        if (!$meta) {
+            return false;
+        }
+
+        $type = $meta['COLUMN_TYPE'];
+        $null = $meta['IS_NULLABLE'] === 'NO' ? 'NOT NULL' : 'NULL';
+        $default = $meta['COLUMN_DEFAULT'] !== null
+            ? 'DEFAULT ' . $this->_db->quote($meta['COLUMN_DEFAULT'])
+            : '';
+
+        $sql = "ALTER TABLE `$tableName` MODIFY COLUMN `$columnName` $type $null $default COMMENT $escapedComment";
+        return $this->_db->exec($sql);
+
+    } catch (PDOException $e) {
+        return false;
+    }
+}
+
 }

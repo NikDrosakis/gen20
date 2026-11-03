@@ -27,7 +27,8 @@
 /* Το doc-container (Μενού + Περιεχόμενο) */
 .doc-container {
     display: flex;
-    gap: 24px;
+    max-height: 100vh;
+    gap: 4px;
     width: 100%;
     align-items: flex-start;
     margin: 0;
@@ -36,12 +37,13 @@
 /* Αριστερό Μενού - Επαναφορά Links */
 .doc-sidebar {
     width: 260px;
+    height: 78vh;
+    overflow: auto;
     flex-shrink: 0;
     background: #f8fafc;
     border-radius: 0 0 0 8px;
-    padding: 20px;
+    padding: 10px;
     border: 1px solid #e2e8f0;
-    height: fit-content;
     position: sticky;
     top: 20px;
 }
@@ -90,7 +92,7 @@
     padding: 40px 50px;
     border: 1px solid #e2e8f0;
     box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-    min-height: 400px;
+    min-height: 78vh;
 }
 
 .doc-content h1 {

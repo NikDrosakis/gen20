@@ -4,13 +4,15 @@ import RichTextEditor from "../../components/RichTextEditor";
 import AuthorDropdown from "../../components/content/AuthorDrop";
 import ClassificationDrop from "../../components/content/ClassificationDrop";
 import MediaToolbox from '../../components/media/MediaToolbox';
+import LayoutToolbox from '../../components/LayoutToolbox';
 import ContentNavigation from '../../components/content/ContentNavigation';
 import "./Content.css";
 
 const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
 
 const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }) => {
-
+    const [layoutToolboxOpen, setLayoutToolboxOpen] = useState(false);
+    const [layoutPageId, setLayoutPageId] = useState(null);
     const [jsonData, setJsonData] = useState({});
     const [showMediaToolbox, setShowMediaToolbox] = useState(false);
     const [customCss, setCustomCss] = useState('');
@@ -379,6 +381,40 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
         return () => window.removeEventListener('mediaSelected', handleMediaSelected);
     }, []);
 
+    // ============================================================
+    // Άνοιγμα Layout Toolbox
+    // ============================================================
+    const openLayoutToolbox = (id = null) => {
+        setLayoutPageId(id);
+        setLayoutToolboxOpen(true);
+
+        // Γράψε το ?id= στο URL (αν υπάρχει)
+        if (id) {
+            setSearchParams(
+                prev => {
+                    const p = new URLSearchParams(prev);
+                    p.set('id', id);
+                    return p;
+                },
+                { replace: false }
+            );
+        }
+    };
+    const closeLayoutToolbox = () => {
+        setLayoutToolboxOpen(false);
+        setLayoutPageId(null);
+
+        // Καθάρισε το ?id= από το URL
+        setSearchParams(
+            prev => {
+                const p = new URLSearchParams(prev);
+                p.delete('id');
+                return p;
+            },
+            { replace: true }
+        );
+    };
+
     // 🔧 ΔΙΟΡΘΩΜΕΝΟ: format για το input datetime-local
     const getFormattedPublished = () => {
         if (!formData.published) return '';
@@ -428,6 +464,24 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
                             <option value="component">Component</option>
                             <option value="block">Block</option>
                         </select>
+
+                        <button onClick={() => openLayoutToolbox()}>
+                            📐 Layout
+                        </button>
+
+                        {/* Modal */}
+                        {layoutToolboxOpen && (
+                            <div className="modal-overlay" onClick={closeLayoutToolbox}>
+                                <div className="modal-content" onClick={e => e.stopPropagation()}>
+                                    <LayoutToolbox
+                                        onClose={closeLayoutToolbox}
+                                        selectedDomain={window.location.hostname}
+                                        pageId={layoutPageId}   // ← περνάει το id
+                                    />
+                                </div>
+                            </div>
+                        )}
+
                     </div>
                     <div className="form-group">
                         <label className="form-label">Status</label>

@@ -21,7 +21,7 @@ console.log(pageName,'pageName');
             setLoading(true);
             try {
                 // ✅ 1. Πάρε το content_id
-                const pageRes = await fetch(`/api/v1/maria/f?query=SELECT id, type FROM ${publicdb}.content WHERE name='${pageName}'`);
+                const pageRes = await fetch(`/api/v1/maria/f?query=SELECT id, type FROM ${publicdb}.content WHERE name='${pageName}' and type='page'`);
                 const pageData = await pageRes.json();
 
                 console.log('📄 Page data:', pageData);

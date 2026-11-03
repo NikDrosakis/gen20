@@ -187,31 +187,56 @@ $cuboview=is_array($cuboview) ? $cuboview['name']: $cuboview;
 }
 
 protected function pageCP($link = '') {
+
     $page = $link !== '' ? $link : $this->page;
-    $list = ['m'=>[],'f'=>[],'h'=>[],'sl'=>[],'sr'=>[]];
-    $fetchM = $this->db->f("SELECT name,menu FROM {$this->pagetable} WHERE link = ? ",[$link]);
+
+    $list = [
+        'm'  => [],
+        'f'  => [],
+        'h'  => [],
+        'sl' => [],
+        'sr' => []
+    ];
+
+    // Page menu
+    $fetchM = $this->db->f(
+        "SELECT name, menu
+         FROM {$this->pagetable}
+         WHERE link = ?",
+        [$page]
+    );
+
+    // Page Cubos
     $fetch = $this->db->fa("
-        SELECT pagecubo.area, pagecubo.cuboviewid, cuboview.name AS cuboname FROM {$this->publicdb}.pagecubo
-        LEFT JOIN {$this->publicdb}.page ON page.id = pagecubo.pageid
-        LEFT JOIN gen_admin.cuboview ON cuboview.id = pagecubo.cuboviewid
-        WHERE page.link = ?
+        SELECT
+            cc.area,
+            cc.cubosid,
+            c.name AS cuboname
+        FROM {$this->publicdb}.content AS p
+        INNER JOIN {$this->publicdb}.content_cubos AS cc
+            ON cc.contentid = p.id
+        LEFT JOIN {$this->publicdb}.cubos AS c
+            ON c.id = cc.cubosid
+        WHERE p.name = ?
+          AND p.type = 'page'
+          AND p.status = 1
+        ORDER BY cc.id ASC
     ", [$page]);
 
-    if (!empty($fetch) && is_array($fetch)) {
-        foreach ($fetch as $row) {
-            if (!empty($row['cuboviewid'])) {
-                $list[$row['area']][]["renderCP"] = $row['cuboname'];
+    if (is_array($fetch)) {
+        foreach ($fetch as $component) {
+            $area = $component['area'] ?? '';
+
+            if (array_key_exists($area, $list)) {
+                $list[$area][] = $component;
             }
         }
     }
-        //add default main in m area
-        if(!empty($fetchM)){
-        if($fetchM['menu']){
-        $list['h'][0]["renderCP"]= "default.menu";
-        }
-        $list['m'][0]["renderCP"]= $fetchM['name'];
-        }
-    return $list;
+
+    return [
+        'menu' => $fetchM,
+        'components' => $list
+    ];
 }
 
 
