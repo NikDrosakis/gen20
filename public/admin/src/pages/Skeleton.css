@@ -164,18 +164,6 @@ header {
     text-align: center;
 }
 
-h3, .h3 {
-    font-size: 15px;
-    flex-direction: row;
-    align-items: center;
-    font-weight: 700;
-    margin: 3px;
-    gap: 8px;
-    border: 1px solid darkcyan;
-    width: 98%;
-    margin: 1%;
-    padding: 1%;
-}
 /* Show the submenu when the parent item is hovered */
 #mainmenu > li:hover > .submenu,
 .menu > .menu-item:hover > .submenu,

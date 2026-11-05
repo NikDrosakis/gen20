@@ -1,9 +1,9 @@
 // /App.jsx
 import { Outlet } from "react-router-dom";
-import Navigation from "./components/Navigation";
-import Footer from "./components/layout/Footer";
-import ErrorBoundary from "./components/ErrorBoundary";
-import { ThemeProvider } from "./contexts/ThemeContext";
+import Navigation from "./Navigation";
+import Footer from "./Footer";
+import ErrorBoundary from "./ErrorBoundary";
+import { ThemeProvider } from "./ThemeContext";
 import "./App.css";
 export default function App() {
     return (

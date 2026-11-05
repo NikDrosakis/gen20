@@ -18,7 +18,7 @@ export default function Skeleton() {
     const { G } = useG();
 
     const pageComponents = useMemo(() => {
-        const cubo = G?.PAGECUBO || {};
+        const cubo = G?.PAGECUBO?.components || {};
         return {
             h:  Array.isArray(cubo.h)  ? cubo.h  : [],
             sl: Array.isArray(cubo.sl) ? cubo.sl : [],

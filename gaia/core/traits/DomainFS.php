@@ -934,6 +934,43 @@ protected function listCubos($params = []): array {
           ];
       }
 
+/**
+ * Διαβάζει ένα .jsx αρχείο και επιστρέφει τα imports του
+ * ως array από strings (π.χ. ['react', 'react-router-dom', './Header']).
+ */
+protected function extractJsxDependencies(string $filePath): array {
+    if (!is_file($filePath)) return [];
+
+    $content = @file_get_contents($filePath);
+    if ($content === false) return [];
+
+    $deps = [];
+
+    // 1. Static imports: import ... from 'pkg'
+    if (preg_match_all('/^\s*import\s+[^;]*?from\s+[\'"]([^\'"]+)[\'"]/m', $content, $m)) {
+        $deps = array_merge($deps, $m[1]);
+    }
+
+    // 2. Side-effect imports: import 'pkg'
+    if (preg_match_all('/^\s*import\s+[\'"]([^\'"]+)[\'"]/m', $content, $m)) {
+        $deps = array_merge($deps, $m[1]);
+    }
+
+    // 3. Dynamic imports: import('pkg')
+    if (preg_match_all('/import\(\s*[\'"]([^\'"]+)[\'"]\s*\)/', $content, $m)) {
+        $deps = array_merge($deps, $m[1]);
+    }
+
+    // 4. require('pkg')
+    if (preg_match_all('/require\(\s*[\'"]([^\'"]+)[\'"]\s*\)/', $content, $m)) {
+        $deps = array_merge($deps, $m[1]);
+    }
+
+    $deps = array_values(array_unique($deps));
+    sort($deps);
+
+    return $deps;
+}
 
 protected function getComponentFiles(): array {
     $publicRoot = '/var/www/gs/public';
@@ -958,6 +995,30 @@ protected function getComponentFiles(): array {
         }
     }
 
+ // ✅ Φόρτωσε τα cubos files
+    $cuboFilesSet = [];
+    $cubosRoot = '/var/www/gs/cubos';
+    if (is_dir($cubosRoot)) {
+        $packages = array_diff(scandir($cubosRoot), ['.', '..']);
+        foreach ($packages as $pkg) {
+            $pkgPath = $cubosRoot . '/' . $pkg;
+            if (!is_dir($pkgPath)) continue;
+            $versions = array_diff(scandir($pkgPath), ['.', '..']);
+            foreach ($versions as $version) {
+                $versionPath = $pkgPath . '/' . $version;
+                if (!is_dir($versionPath)) continue;
+                $items = array_diff(scandir($versionPath), ['.', '..']);
+                foreach ($items as $item) {
+                    $itemPath = $versionPath . '/' . $item;
+                    if (is_file($itemPath)) {
+                        $key = strtolower($pkg) . '|' . strtolower($item);
+                        $cuboFilesSet[$key] = true;
+                    }
+                }
+            }
+        }
+    }
+
     $result = [];
     $domains = array_diff(scandir($publicRoot), ['.', '..']);
 
@@ -969,7 +1030,7 @@ protected function getComponentFiles(): array {
         if (!is_dir($srcPath)) continue;
 
         // ✅ Πέρνα domain και rel
-        $srcChildren = $this->scanComponentDir($srcPath, $domain, '', $colorMap);
+      $srcChildren = $this->scanComponentDir($srcPath, $domain, '', $colorMap, $cuboFilesSet);
 
         $result[$domain] = [
             'path' => 'public/' . $domain,
@@ -980,7 +1041,81 @@ protected function getComponentFiles(): array {
     return ['success' => true, 'data' => $result];
 }
 
-protected function scanComponentDir(string $dir, string $domain = '', string $rel = '', array $colorMap = []): array {
+protected function getCuboPackages(){
+// ✅ Μετά: διάβασε από το filesystem
+$cubosNames = [];
+$cubosRoot = '/var/www/gs/cubos';
+if (is_dir($cubosRoot)) {
+    $items = array_diff(scandir($cubosRoot), ['.', '..']);
+    foreach ($items as $item) {
+        if (is_dir($cubosRoot . '/' . $item)) {
+            $cubosNames[] = strtolower($item);
+        }
+    }
+}
+return $cubosNames ?? [];
+}
+
+protected function getCuboFilesList(): array {
+    $cubosRoot = '/var/www/gs/cubos';
+    if (!is_dir($cubosRoot)) {
+        return ['success' => false, 'error' => 'Cubos directory not found'];
+    }
+
+    $files = [];
+    $packages = array_diff(scandir($cubosRoot), ['.', '..']);
+
+    foreach ($packages as $pkg) {
+        $pkgPath = $cubosRoot . '/' . $pkg;
+        if (!is_dir($pkgPath)) continue;
+
+        // Version folders (π.χ. 610310917)
+        $versions = array_diff(scandir($pkgPath), ['.', '..']);
+        foreach ($versions as $version) {
+            $versionPath = $pkgPath . '/' . $version;
+            if (!is_dir($versionPath)) continue;
+
+            // Files μέσα στο version
+            $items = array_diff(scandir($versionPath), ['.', '..']);
+            foreach ($items as $item) {
+                $itemPath = $versionPath . '/' . $item;
+                if (is_file($itemPath)) {
+                    $files[] = [
+                        'package' => strtolower($pkg),
+                        'version' => $version,
+                        'filename' => $item,
+                        'path' => "$pkg/$version/$item"
+                    ];
+                }
+            }
+        }
+    }
+
+    return ['success' => true, 'data' => $files];
+}
+
+protected function fileExistsInTree(string $path, string $domain): bool {
+    $publicRoot = '/var/www/gs/public';
+    $fullPath = $publicRoot . '/' . $domain . '/src/' . ltrim($path, '/');
+
+    // Δοκίμασε ως έχει
+    if (is_file($fullPath)) return true;
+
+    // Δοκίμασε με extension
+    foreach (['.jsx', '.js', '.css', '.json'] as $ext) {
+        if (is_file($fullPath . $ext)) return true;
+    }
+
+    return false;
+}
+
+protected function scanComponentDir(
+    string $dir,
+    string $domain = '',
+    string $rel = '',
+    array $colorMap = [],
+    array $cuboFilesSet = []
+): array {
     $result = [];
     $raw = @scandir($dir);
     if ($raw === false) return [];
@@ -993,17 +1128,52 @@ protected function scanComponentDir(string $dir, string $domain = '', string $re
 
         if (is_dir($path)) {
             if (in_array($item, ['node_modules', 'vendor', '.git', 'cache', 'build', 'dist'])) continue;
-            $subChildren = $this->scanComponentDir($path, $domain, ($rel ? $rel . '/' : '') . $item, $colorMap);
+            $subChildren = $this->scanComponentDir(
+                $path,
+                $domain,
+                ($rel ? $rel . '/' : '') . $item,
+                $colorMap,
+                $cuboFilesSet
+            );
             $result[$item] = ['children' => $subChildren];
         } else {
             $ext = strtolower(pathinfo($item, PATHINFO_EXTENSION));
             if (in_array($ext, ['jsx', 'js', 'css', 'tsx', 'ts', 'pug', 'json'])) {
                 $meta = $colorMap[$displayPath] ?? null;
+                $cubosName = $meta['cubos_name'] ?? null;
+
+                // in_package
+                $inPackage = false;
+                if ($cubosName !== null) {
+                    $key = strtolower($cubosName) . '|' . strtolower($item);
+                    $inPackage = isset($cuboFilesSet[$key]);
+                }
+
+                // 🆕 Resolve dependencies + in_place
+                $rawDeps = $this->extractJsxDependencies($path);
+                $resolvedDeps = [];
+                $inPlace = true;
+
+                foreach ($rawDeps as $dep) {
+                   $resolved = $this->resolveDependency($dep, $displayPath, $domain);
+                    $resolvedDeps[] = $resolved;
+
+                    // Έλεγχος μόνο για internal
+                    if ($resolved['type'] === 'internal') {
+                        if (!$this->fileExistsInTree($resolved['path'], $domain)) {
+                            $inPlace = false;
+                        }
+                    }
+                }
+
                 $result[$item] = [
                     'type' => 'file',
                     'color' => $meta['color'] ?? null,
-                    'cubos_name' => $meta['cubos_name'] ?? null,
+                    'cubos_name' => $cubosName,
                     'cubos_title' => $meta['cubos_title'] ?? null,
+                    'dependencies' => $resolvedDeps,   // 🆕 resolved
+                    'in_package' => $inPackage,
+                    'in_place' => $inPlace,             // 🆕
                 ];
             }
         }
@@ -1011,7 +1181,41 @@ protected function scanComponentDir(string $dir, string $domain = '', string $re
 
     return $result;
 }
+/**
+ * Resolve ένα import path σε root-relative path (με βάση το src/).
+ * Επιστρέφει:
+ *  - ['type' => 'external', 'path' => 'react']     για εξωτερικά packages
+ *  - ['type' => 'internal', 'path' => 'components/Navbar']  για internal
+ */
+protected function resolveDependency(string $import, string $currentFilePath, string $domain = ''): array {
+    // Εξωτερικό package
+    if ($import === '' || $import[0] !== '.') {
+        return ['type' => 'external', 'path' => $import];
+    }
 
+    // 🆕 Αφαίρεσε το domain από το currentFilePath
+    $relPath = $currentFilePath;
+    if ($domain && str_starts_with($relPath, $domain . '/')) {
+        $relPath = substr($relPath, strlen($domain) + 1);
+    }
+
+    // Τώρα το $relPath είναι π.χ. "App.jsx" ή "components/NavAdmin.jsx"
+    $currentDir = dirname($relPath);  // "components" ή ""
+    $resolved = ($currentDir === '.' ? '' : $currentDir . '/') . $import;
+
+    // Κανονικοποίηση
+    $parts = [];
+    foreach (explode('/', $resolved) as $part) {
+        if ($part === '' || $part === '.') continue;
+        if ($part === '..') {
+            array_pop($parts);
+        } else {
+            $parts[] = $part;
+        }
+    }
+
+    return ['type' => 'internal', 'path' => implode('/', $parts)];
+}
 
 private function randomCubosColor(): string {
     $palette = [
@@ -1706,5 +1910,35 @@ protected function listCubosWithCounts($params = []): array {
     return ['success' => true, 'data' => $rows];
 }
 
+protected function readFile($params = []): array {
+    $publicRoot = '/var/www/gs/public';
+    $path = $params['path'] ?? $_POST['path'] ?? $_GET['path'] ?? null;
+
+    if (!$path) {
+        return ['success' => false, 'error' => 'path required'];
+    }
+
+    // Ασφάλεια: μόνο εντός publicRoot
+    $fullPath = realpath($publicRoot . '/' . ltrim($path, '/'));
+    $publicRootReal = realpath($publicRoot);
+
+    if (!$fullPath || strpos($fullPath, $publicRootReal) !== 0) {
+        return ['success' => false, 'error' => 'Access denied'];
+    }
+
+    if (!is_file($fullPath)) {
+        return ['success' => false, 'error' => 'File not found'];
+    }
+
+    return [
+        'success' => true,
+        'data' => [
+            'content' => file_get_contents($fullPath),
+            'path' => $path,
+            'size' => filesize($fullPath),
+            'modified' => filemtime($fullPath),
+        ]
+    ];
+}
 
 }

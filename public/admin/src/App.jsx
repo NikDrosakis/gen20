@@ -4,23 +4,53 @@ import Navbar from "./components/NavAdmin";
 import SlidesAdmin from "./components/SlidesAdmin";
 import Home from "./pages/Home";
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
-import UserArchiveAdmin from "./pages/user/UserArchiveAdmin";
-import UserOneAdmin from "./pages/user/UserOneAdmin";
+import UserArchiveAdmin from "./pages/UserArchiveAdmin";
+import UserOneAdmin from "./pages/UserOneAdmin";
 import Classification from "./pages/Classification";
 import Links from "./pages/Links";
-import ContentArchiveAdmin from "./pages/content/ContentArchiveAdmin";
-import ContentOneAdmin from "./pages/content/ContentOneAdmin";
+import ContentArchiveAdmin from "./pages/ContentArchiveAdmin";
+import ContentOneAdmin from "./pages/ContentOneAdmin";
 import Monetize from "./pages/Monetize";
 import LangAdmin from "./pages/LangAdmin";
 import SuperAdmin from "./pages/SuperAdmin";
-import { MessagingProvider, useMessaging } from './contexts/MessagingContext';
+import { MessagingProvider, useMessaging } from './MessagingContext';
 import MemberFormAdmin from "./pages/MemberFormAdmin";
 import Settings from "./pages/Settings";
 import Media from "./pages/Media";
 import Doc from "./pages/Doc";
-import { useG } from './contexts/GContext';
+import { useG } from './GContext';
 import SetupToolbox from './components/SetupToolbox';
 
+function BuildButton() {
+  const { send, connection } = useMessaging();
+  return (
+      <button
+          onClick={() => send({
+            type: 'terminal',
+            verba: 'yarn build',
+            domain: 'admin'
+          })}
+          disabled={connection !== 'open'}
+          style={{
+            right: 12,
+            bottom: 12,
+            zIndex:999,
+            padding: '6px 12px',
+            background: connection === 'open' ? '#4a90e2' : '#888',
+            color: '#fff',
+            position:"fixed",
+            border: 'none',
+            borderRadius: 6,
+            cursor: connection === 'open' ? 'pointer' : 'not-allowed',
+            fontSize: 14,
+            fontWeight: 600,
+          }}
+          title={connection === 'open' ? 'Run yarn build' : 'WebSocket not connected'}
+      >
+        🔨 Build
+      </button>
+  );
+}
 function MessagingDebug() {
   const { connection, messages, sendSystem } = useMessaging();
   return (
@@ -261,7 +291,7 @@ const App = () => {
         return <SuperAdmin navigateTo={navigateTo} />;
       case '/admin':
       default:
-        return <Home />;
+        return <Home navigateTo={navigateTo} />;
     }
   };
 
@@ -274,6 +304,7 @@ const App = () => {
         <div className="admin-container">
           <header className="admin-header">
             <Navbar currentPage={currentPage} onNavigate={navigateTo} />
+            <BuildButton />
           </header>
           <div className="admin-content">
             {renderPage()}

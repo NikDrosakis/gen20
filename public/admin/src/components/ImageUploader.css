@@ -1,0 +1,36 @@
+/* Content.css ή admin.css */
+.download-button {
+    background: #4f46e5;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 8px;
+}
+
+.download-button:hover {
+    background: #4338ca;
+}
+
+.download-button:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+.image-uploader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.form-input {
+    flex: 1;
+    min-width: 250px;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}

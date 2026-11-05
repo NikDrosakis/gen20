@@ -1,7 +1,7 @@
 // pages/Monetize.jsx
 import React, { useState, useMemo } from 'react';
-import AdSenseManager from '../components/monetize/AdSenseManager';
-import AffiliateManager from '../components/monetize/AffiliateManager';
+import AdSenseManager from '../components/AdSenseManager';
+import AffiliateManager from '../components/AffiliateManager';
 
 const Monetize = () => {
     const [activeTab, setActiveTab] = useState('adsense');

@@ -1,40 +1,34 @@
-// Media.jsx
-import React, { useState, useMemo } from 'react';
-import MediaManager from '../components/media/MediaManager';
-import UploadImage from '../components/media/UploadImage';
-import ImageUploader from '../components/media/ImageUploader';
-import GoogleDrive from '../components/media/GoogleDrive';
-import PasteImage from '../components/media/PasteImage';
-import GenerateMedia from '../components/media/GenerateMedia';
+
+import React, { useState } from 'react';
+
+import MediaManager from '../components/MediaManager';
+import UploadImage from '../components/UploadImage';
+import ImageUploader from '../components/ImageUploader';
+import GoogleDrive from '../components/GoogleDrive';
+import PasteImage from '../components/PasteImage';
+import GenerateMedia from '../components/GenerateMedia';
 
 const Media = () => {
     const [activeTab, setActiveTab] = useState('media_manager');
 
-    // CRITICAL: Keep components in memory, never re-create
-    const components = useMemo(() => ({
-        media_manager: <MediaManager />,
-        upload_image: <UploadImage />,
-        url_image: <ImageUploader />,
-        google_drive: <GoogleDrive />,
-        paste_image: <PasteImage />,
-        generate: <GenerateMedia />
-    }), []);
-
     const tabs = [
-        { id: 'media_manager', label: 'Media Manager', icon: '🖼️' },
-        { id: 'upload_image', label: 'Upload Image', icon: '📤' },
-        { id: 'url_image', label: 'Image from URL', icon: '🔗' },
-        { id: 'google_drive', label: 'Google Drive', icon: '☁️' },
-        { id: 'paste_image', label: 'Paste Image', icon: '📋' },
-        { id: 'generate', label: 'Generate', icon: '✨' }
+        { id: 'media_manager', label: 'Media Manager', icon: '🖼️', component: MediaManager },
+        { id: 'upload_image', label: 'Upload Image', icon: '📤', component: UploadImage },
+        { id: 'url_image', label: 'Image from URL', icon: '🔗', component: ImageUploader },
+        { id: 'google_drive', label: 'Google Drive', icon: '☁️', component: GoogleDrive },
+        { id: 'paste_image', label: 'Paste Image', icon: '📋', component: PasteImage },
+        { id: 'generate', label: 'Generate', icon: '✨', component: GenerateMedia }
     ];
+
+    const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;
 
     return (
         <div className="media-page">
+
             <div className="page-header">
                 <h3>
                     <span className="indicator red"></span>
-                    <a href="/media/media">📁 Media Manager</a>
+                    <a href="/media">📁 Media Manager</a>
                 </h3>
             </div>
 
@@ -51,25 +45,10 @@ const Media = () => {
                 ))}
             </ul>
 
-            {/* All tabs rendered but only active one visible */}
-            <div style={{ display: activeTab === 'media_manager' ? 'block' : 'none' }}>
-                {components.media_manager}
+            <div className="media-tab-content">
+                {ActiveComponent && <ActiveComponent />}
             </div>
-            <div style={{ display: activeTab === 'upload_image' ? 'block' : 'none' }}>
-                {components.upload_image}
-            </div>
-            <div style={{ display: activeTab === 'url_image' ? 'block' : 'none' }}>
-                {components.url_image}
-            </div>
-            <div style={{ display: activeTab === 'google_drive' ? 'block' : 'none' }}>
-                {components.google_drive}
-            </div>
-            <div style={{ display: activeTab === 'paste_image' ? 'block' : 'none' }}>
-                {components.paste_image}
-            </div>
-            <div style={{ display: activeTab === 'generate' ? 'block' : 'none' }}>
-                {components.generate}
-            </div>
+
         </div>
     );
 };

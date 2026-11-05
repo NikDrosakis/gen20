@@ -2,11 +2,14 @@
 ├── api
 │   ├── api.go
 │   ├── bind.go
+│   ├── build.go
 │   ├── exec.go
 │   ├── hosts.go
 │   ├── ownership.go
 │   └── ssl.go
 ├── core
+│   ├── conversation_flusher.go
+│   ├── couchdb.go
 │   ├── gredis.go
 │   ├── hub_client.go
 │   ├── hub.go
@@ -20,6 +23,7 @@
 ├── go.sum
 ├── go.sum.bak
 ├── go_vendor.tar.gz
+├── index.go
 ├── index.html
 ├── main
 ├── main.go
@@ -35,7 +39,6 @@
 │   └── misc
 │       ├── product.go
 │       └── user.go
-├── templates
 ├── terminal.go
 ├── test
 ├── tmp
@@ -2181,4 +2184,4 @@
     │       └── yamlprivateh.go
     └── modules.txt
 
-254 directories, 1928 files
+253 directories, 1932 files

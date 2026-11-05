@@ -7,18 +7,81 @@ import { Helmet } from 'react-helmet-async';
 import Cookies from 'js-cookie';
 import LikeButton from "./LikeButton";
 import ContentComment from "./ContentComment";
+import { useG } from "./GContext";
 
 const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
+
+// ============================================================
+// Fallbacks — αν το G δεν έχει τα κλειδιά
+// ============================================================
+const FALLBACK = {
+    site_name: typeof window !== 'undefined' ? window.location.hostname : 'Site',
+    routes: {
+        home: '/',
+        blog: '/post',
+        post: '/blog',
+        contact: '/contact',
+    },
+    assets: {
+        hero: '/assets/hero.png',
+        avatar: '/assets/default-avatar.png',
+    },
+    media: {
+        blog: '/media/blog',
+        default_og: '/default-og-image.jpg',
+    },
+    i18n: {
+        loading: 'Loading...',
+        not_found_title: 'Article Not Found',
+        back_to_blog: '← Back to Blog',
+        back_to_articles: 'Back to all articles',
+        home: 'Home',
+        blog: 'Blog',
+        article: 'Article',
+        read_more: 'Read more →',
+        related_title: '📖 You might also like',
+        min_read: 'min read',
+        views: 'views',
+        recent: 'Recent',
+    },
+};
 
 export default function ContentOne({
                                        initialContent,
                                        allPosts = [],
                                        lang = 'el',
-                                       name: nameProp,                    // ✅ name από prop
+                                       name: nameProp,
                                    }) {
     const { name: nameFromParams } = useParams();
-    const name = nameProp || nameFromParams;   // ✅ fallback
+    const name = nameProp || nameFromParams;
 
+    const { G } = useG();
+
+    // ✅ Site config από G (με fallback)
+    const siteName = G?.site_name || G?.siteName || FALLBACK.site_name;
+
+    const routes = {
+        home: G?.routes?.home || FALLBACK.routes.home,
+        blog: G?.routes?.blog || FALLBACK.routes.blog,
+        post: G?.routes?.post || FALLBACK.routes.post,
+    };
+
+    const assets = {
+        hero: G?.assets?.hero || FALLBACK.assets.hero,
+        avatar: G?.assets?.avatar || FALLBACK.assets.avatar,
+    };
+
+    const mediaBase = G?.media?.blog || FALLBACK.media.blog;
+    const defaultOgImage = G?.media?.default_og || FALLBACK.media.default_og;
+
+    const t = (key) => {
+        const langPack = G?.i18n?.[lang] || G?.i18n || {};
+        return langPack[key] || FALLBACK.i18n[key] || key;
+    };
+
+    // --------------------------------------------------
+    // State
+    // --------------------------------------------------
     const [content, setContent] = useState(initialContent || null);
     const [loading, setLoading] = useState(!initialContent);
     const [error, setError] = useState(null);
@@ -27,7 +90,6 @@ export default function ContentOne({
     const currentLang = lang || Cookies.get('lang') || 'en';
     const isGreek = currentLang === 'el';
 
-    // Save language to cookie when changed
     useEffect(() => {
         Cookies.set('lang', language, { path: '/' });
     }, [language]);
@@ -63,7 +125,6 @@ export default function ContentOne({
                                     LEFT JOIN ${publicdb}.classification ct ON c.classificationid = ct.id
                            WHERE c.name = '${contentName.replace(/'/g, "''")}' `;
 
-            console.log('[ContentOne] query:', query);
             const response = await fetch(`/api/v1/maria/f?q=${encodeURIComponent(query)}`);
             const data = await response.json();
 
@@ -80,14 +141,10 @@ export default function ContentOne({
                 const safeContent = {
                     id: contentData.id,
                     name: contentData.name,
-                    title_en: contentData.title_en || "Untitled Article",
                     title: contentData.title || "",
-                    excerpt_en: contentData.excerpt_en || "",
                     excerpt: contentData.excerpt || "",
-                    description_en: contentData.description_en || "Content not available",
                     description: contentData.description || "",
                     classificationid: contentData.classificationid || 1,
-                    category_en: contentData.category_title_en || `Category ${contentData.classificationid}`,
                     category: contentData.category_title || "",
                     created: contentData.created,
                     liking: contentData.liking,
@@ -111,7 +168,7 @@ export default function ContentOne({
             console.error("[ContentOne] fetch error:", err);
             setError(err.message);
         } finally {
-            setLoading(false);   // ✅ ΠΑΝΤΑ κλείνει ο loader
+            setLoading(false);
         }
     };
 
@@ -132,14 +189,12 @@ export default function ContentOne({
         try {
             const query = `SELECT
                                c.id,
-                               c.title_en,
+                               c.name,
                                c.title,
-                               c.excerpt_en,
                                c.excerpt,
                                c.img,
                                u.img as author_img,
                                c.created,
-                               ct.title_en as category_title_en,
                                ct.title as category_title
                            FROM ${publicdb}.content c
                                     LEFT JOIN ${publicdb}.classification ct ON c.classificationid = ct.id
@@ -167,7 +222,7 @@ export default function ContentOne({
     };
 
     // --------------------------------------------------
-    // EFFECT — fetch content ή related posts
+    // EFFECT
     // --------------------------------------------------
     useEffect(() => {
         if (!initialContent && name) {
@@ -176,11 +231,10 @@ export default function ContentOne({
             if (initialContent.classificationid) {
                 fetchRelatedPosts(initialContent.classificationid, initialContent.id);
             }
-            setLoading(false);   // ✅ κλείσε τον loader
+            setLoading(false);
         } else {
-            // Ούτε name ούτε initialContent
             setError("No content identifier provided");
-            setLoading(false);   // ✅ κλείσε τον loader
+            setLoading(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [name, initialContent]);
@@ -188,52 +242,33 @@ export default function ContentOne({
     // --------------------------------------------------
     // Helpers
     // --------------------------------------------------
-    const getAuthorName = (post) => {
-        if (post.author_firstname || post.author_lastname) {
-            return `${post.author_firstname || ''} ${post.author_lastname || ''}`.trim();
-        }
-        return post.author_name || (isGreek ? `Συγγραφέας ${post.userid}` : `Author ${post.userid}`);
-    };
-
     const getPostTitle = (post) => {
         return isGreek ? (post.title || post.title_en) : (post.title_en || post.title);
     };
 
     const formatDate = (dateString) => {
-        if (!dateString) return language === 'el' ? "Πρόσφατα" : "Recent";
+        if (!dateString) return t('recent');
         try {
             const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            return new Date(dateString).toLocaleDateString(language === 'en' ? 'en-US' : 'el-GR', options);
+            return new Date(dateString).toLocaleDateString(
+                language === 'en' ? 'en-US' : 'el-GR',
+                options
+            );
         } catch (e) {
-            return language === 'el' ? "Πρόσφατα" : "Recent";
+            return t('recent');
         }
     };
 
     const getImageSrc = (img) => {
-        if (!img) return "/assets/hero.png";
+        if (!img) return assets.hero;
         if (img.startsWith("http")) return img;
-        return `/media/blog/${img}`;
+        return `${mediaBase}/${img}`;
     };
 
-    // --------------------------------------------------
-    // Current language content
-    // --------------------------------------------------
-    const currentTitle = language === 'en'
-        ? content?.title_en
-        : (content?.title || content?.title_en);
-
-    const currentDescription = language === 'en'
-        ? content?.description_en
-        : (content?.description || content?.description_en);
-
-    const currentExcerpt = language === 'en'
-        ? content?.excerpt_en
-        : (content?.excerpt || content?.excerpt_en);
-
-    const currentCategory = language === 'en'
-        ? content?.category_en
-        : (content?.category || content?.category_en);
-
+    const currentTitle = content?.title;
+    const currentDescription = content?.description;
+    const currentExcerpt = content?.excerpt;
+    const currentCategory = content?.category;
     const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
     // --------------------------------------------------
@@ -243,7 +278,7 @@ export default function ContentOne({
         return (
             <div className="content-one-container">
                 <div className="loading-spinner">
-                    <small>{language === 'el' ? 'Φόρτωση...' : 'Loading...'}</small>
+                    <small>{t('loading')}</small>
                 </div>
             </div>
         );
@@ -256,10 +291,10 @@ export default function ContentOne({
         return (
             <div className="content-one-container">
                 <div className="error-message">
-                    <h2>{language === 'el' ? 'Άρθρο δεν βρέθηκε' : 'Article Not Found'}</h2>
+                    <h2>{t('not_found_title')}</h2>
                     <p style={{ color: '#888', fontSize: '0.9rem' }}>{error}</p>
-                    <Link to="/post" className="back-link">
-                        {language === 'el' ? '← Επιστροφή στο Blog' : '← Back to Blog'}
+                    <Link to={routes.blog} className="back-link">
+                        {t('back_to_blog')}
                     </Link>
                 </div>
             </div>
@@ -272,18 +307,18 @@ export default function ContentOne({
     return (
         <>
             <Helmet prioritizeSeoTags={true}>
-                <title>{currentTitle} | GEN20</title>
+                <title>{currentTitle} | {siteName}</title>
                 <meta name="description" content={(currentExcerpt || currentDescription || '').substring(0, 160)} />
 
                 <meta property="og:type" content="article" />
                 <meta property="og:url" content={currentUrl} />
                 <meta property="og:title" content={currentTitle} />
                 <meta property="og:description" content={(currentExcerpt || currentDescription || '').substring(0, 160)} />
-                <meta property="og:image" content={`https://nikimourtzi.com/media/blog/${content.img}`} />
+                <meta property="og:image" content={content.img ? getImageSrc(content.img) : defaultOgImage} />
                 <meta property="og:image:alt" content={currentTitle} />
                 <meta property="og:image:width" content="968" />
                 <meta property="og:image:height" content="504" />
-                <meta property="og:site_name" content="Niki Mourtzi" />
+                <meta property="og:site_name" content={siteName} />
                 <meta property="og:locale" content={language === 'en' ? 'en_US' : 'el_GR'} />
                 <meta property="og:locale:alternate" content={language === 'en' ? 'el_GR' : 'en_US'} />
 
@@ -295,7 +330,7 @@ export default function ContentOne({
                 <meta name="twitter:url" content={currentUrl} />
                 <meta name="twitter:title" content={currentTitle} />
                 <meta name="twitter:description" content={(currentExcerpt || currentDescription || '').substring(0, 160)} />
-                <meta name="twitter:image" content={content.img || "https://gen20.net/default-og-image.jpg"} />
+                <meta name="twitter:image" content={content.img ? getImageSrc(content.img) : defaultOgImage} />
 
                 <link rel="canonical" href={currentUrl} />
             </Helmet>
@@ -321,17 +356,17 @@ export default function ContentOne({
 
                     {/* Breadcrumbs */}
                     <div className="breadcrumbs">
-                        <Link to="/">{language === 'el' ? 'Αρχική' : 'Home'}</Link>
+                        <Link to={routes.home}>{t('home')}</Link>
                         <span className="separator">/</span>
-                        <Link to="/blog">{language === 'el' ? 'Ιστολόγιο' : 'Blog'}</Link>
+                        <Link to={routes.blog}>{t('blog')}</Link>
                         <span className="separator">/</span>
                         <span className="current">{currentTitle}</span>
                     </div>
 
                     {/* Back to Blog */}
                     <div className="back-to-blog-top">
-                        <Link to="/blog" className="back-link">
-                            ← {language === 'el' ? 'Επιστροφή σε όλα τα άρθρα' : 'Back to all articles'}
+                        <Link to={routes.blog} className="back-link">
+                            {t('back_to_articles')}
                         </Link>
                     </div>
 
@@ -351,7 +386,7 @@ export default function ContentOne({
                                     <div className="author-avatar-large">
                                         <img
                                             className="user-avatar"
-                                            src={content?.author_img ? getImageSrc(content.author_img) : '/assets/default-avatar.png'}
+                                            src={content?.author_img ? getImageSrc(content.author_img) : assets.avatar}
                                             alt={getPostTitle(content)}
                                             onError={(e) => {
                                                 e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="%23999" stroke-width="2"%3E%3Ccircle cx="12" cy="8" r="4"%3E%3C/circle%3E%3Cpath d="M5 20v-2a7 7 0 0 1 14 0v2"%3E%3C/path%3E%3C/svg%3E';
@@ -367,12 +402,10 @@ export default function ContentOne({
                                 <div className="meta-stats">
                                     <span className="meta-date">📅 {formatDate(content.created)}</span>
                                     <span className="meta-read">
-                                        📖 {Math.ceil((currentDescription?.length || 0) / 1000) || 5}
-                                        {language === 'el' ? ' λεπτά ανάγνωσης' : ' min read'}
+                                        📖 {Math.ceil((currentDescription?.length || 0) / 1000) || 5} {t('min_read')}
                                     </span>
                                     <span className="meta-views">
-                                        👁️ {content.view_count?.toLocaleString()}
-                                        {language === 'el' ? ' προβολές' : ' views'}
+                                        👁️ {content.view_count?.toLocaleString()} {t('views')}
                                     </span>
                                 </div>
                             </div>
@@ -418,8 +451,8 @@ export default function ContentOne({
 
                     {/* Back to Blog */}
                     <div className="post-navigation">
-                        <Link to="/blog" className="back-to-blog">
-                            ← {language === 'el' ? 'Επιστροφή σε όλα τα άρθρα' : 'Back to all articles'}
+                        <Link to={routes.blog} className="back-to-blog">
+                            {t('back_to_articles')}
                         </Link>
                     </div>
 
@@ -427,27 +460,33 @@ export default function ContentOne({
                     {relatedPosts && relatedPosts.length > 0 && (
                         <div className="related-posts">
                             <h3 className="related-title">
-                                {language === 'en' ? '📖 You might also like' : '📖 Μπορεί επίσης να σας ενδιαφέρει'}
+                                {t('related_title')}
                             </h3>
                             <div className="related-grid">
                                 {relatedPosts.map((post) => (
-                                    <Link to={`/blog/${post?.name}`} key={post?.id} className="related-card">
+                                    <Link
+                                        to={`${routes.post}/${post?.name}`}
+                                        key={post?.id}
+                                        className="related-card"
+                                    >
                                         {post?.img && (
                                             <div className="related-image">
-                                                <img src={getImageSrc(post.img)} alt={language === 'en' ? post?.title_en : post?.title} />
+                                                <img
+                                                    src={getImageSrc(post.img)}
+                                                    alt={language === 'en' ? post?.title_en : post?.title}
+                                                />
                                             </div>
                                         )}
                                         <div className="related-content">
                                             <span className="related-category">
-                                                {language === 'en'
-                                                    ? (post?.category_title_en || "Article")
-                                                    : (post?.category_title || post?.category_title_en || "Άρθρο")}
+                                                {post?.category_title || t('article')}
                                             </span>
                                             <h4>{language === 'en' ? (post?.title_en || post?.title) : (post?.title || post?.title_en)}</h4>
-                                            <p>{((language === 'en' ? post?.excerpt_en : post?.excerpt) ||
-                                                (language === 'en' ? "Read this article..." : "Διαβάστε αυτό το άρθρο..."))?.substring(0, 80)}...</p>
+                                            <p>
+                                                {((language === 'en' ? post?.excerpt_en : post?.excerpt) || t('read_more'))?.substring(0, 80)}...
+                                            </p>
                                             <span className="read-more">
-                                                {language === 'en' ? 'Read more →' : 'Διαβάστε περισσότερα →'}
+                                                {t('read_more')}
                                             </span>
                                         </div>
                                     </Link>

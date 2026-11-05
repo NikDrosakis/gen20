@@ -1,0 +1,118 @@
+.generate-container {
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    min-height: 500px;
+}
+.generate-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+.integration-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+.generate-header h3 {
+    margin: 0 0 5px 0;
+    font-size: 20px;
+}
+.generate-header p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 14px;
+}
+.generate-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+.generate-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    margin-bottom: 15px;
+}
+.btn-generate {
+    width: 100%;
+    background: #6f42c1;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+}
+.btn-generate:hover:not(:disabled) {
+    background: #5a32a3;
+}
+.btn-generate:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+.generate-error {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 12px;
+    border-radius: 4px;
+    margin-top: 20px;
+    text-align: center;
+}
+.generate-loading {
+    text-align: center;
+    padding: 40px;
+}
+.generate-result {
+    margin-top: 30px;
+    text-align: center;
+}
+.generate-result h4 {
+    margin-bottom: 15px;
+}
+.generated-image-container {
+    display: inline-block;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.generated-image {
+    max-width: 100%;
+    max-height: 400px;
+}
+.generate-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+.btn-import, .btn-regenerate {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.btn-import {
+    background: #28a745;
+    color: white;
+}
+.btn-regenerate {
+    background: #6c757d;
+    color: white;
+}
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #6f42c1;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

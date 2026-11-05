@@ -1,39 +1,5 @@
 /*
 #name: RichTextEditor
-#title: Rich Text Editor with HTML, CSS, and JSON Template Support
-#description: A full-featured rich text editor with visual editing, HTML mode, CSS customization, and Handlebars JSON template rendering. Supports bilingual content and custom CSS injection.
-#author: Niki Mourtzi
-#version: 2.0.0
-#type: component
-#library: editor
-#independent: true
-#standalone: true
-#compatible_areas: m
-#dependencies: react, handlebars
-#methods:
-#   - execCommand(): Executes document.execCommand for formatting
-#   - formatBlock(): Applies block formatting (H2, H3, etc.)
-#   - insertHtml(): Inserts HTML at cursor position
-#   - handleImageUpload(): Prompts for image URL and inserts image
-#   - handleLink(): Prompts for URL and creates hyperlink
-#   - cleanHtml(): Removes unwanted span styles and cleans HTML
-#   - formatHtml(): Formats HTML code for readability
-#   - processContent(): Renders Handlebars templates with JSON data
-#   - renderHandlebarsTemplate(): Compiles and renders Handlebars templates
-#   - applyCustomCss(): Injects custom CSS into document head
-#   - saveCursorPosition(): Saves current cursor position
-#   - restoreCursorPosition(): Restores cursor position
-#   - insertVariable(): Inserts Handlebars variable syntax
-#   - insertLoop(): Inserts Handlebars loop syntax
-#   - toggleJsonMode(): Toggles JSON template editor mode
-#   - toggleHtmlMode(): Toggles HTML source code mode
-#   - toggleCssPanel(): Toggles custom CSS panel
-#   - togglePreview(): Toggles preview mode
-#handlebars_helpers:
-#   - eq: Equality comparison helper
-#   - lang: Language-specific field helper
-#   - ifCond: Conditional comparison helper
-#   - formatDate: Date formatting helper
 */
 import { useState, useRef, useEffect } from 'react';
 import Handlebars from 'handlebars';

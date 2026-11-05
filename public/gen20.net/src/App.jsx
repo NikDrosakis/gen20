@@ -1,18 +1,7 @@
-// App.js
-import { Outlet } from 'react-router-dom';
-import Skeleton from './contexts/Skeleton';
-import { ThemeProvider } from "./contexts/ThemeContext";
-import ErrorBoundary from "./components/ErrorBoundary";
-import Contact from './pages/Contact';
-import './App.css';
+// /src/App.jsx
+import Skeleton from "./Skeleton";
+import "./App.css";
+
 export default function App() {
-    return (
-        <ErrorBoundary>
-        <Skeleton>
-            <ThemeProvider>
-                <Outlet />
-               </ThemeProvider>
-        </Skeleton>
-        </ErrorBoundary>
-    );
+    return <Skeleton />;
 }

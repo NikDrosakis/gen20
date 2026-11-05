@@ -1,11 +1,12 @@
-// pages/ContentEdit.jsx (χωρίς _en _el - διορθωμένο datetime)
+// pages/ContentOneAdmin.jsx (χωρίς _en _el - διορθωμένο datetime)
 import React, { useState, useEffect } from 'react';
-import RichTextEditor from "../../components/RichTextEditor";
-import AuthorDropdown from "../../components/content/AuthorDrop";
-import ClassificationDrop from "../../components/content/ClassificationDrop";
-import MediaToolbox from '../../components/media/MediaToolbox';
-import LayoutToolbox from '../../components/LayoutToolbox';
-import ContentNavigation from '../../components/content/ContentNavigation';
+import RichTextEditor from "../components/RichTextEditor";
+import AuthorDropdown from "../components/AuthorDrop";
+import ClassificationDrop from "../components/ClassificationDrop";
+import MediaToolbox from '../components/media/MediaToolbox';
+import LayoutToolbox from '../components/LayoutToolbox';
+import ContentNavigation from '../components/ContentNavigation';
+import { useSearchParams } from 'react-router-dom';
 import "./Content.css";
 
 const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
@@ -13,7 +14,9 @@ const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
 const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }) => {
     const [layoutToolboxOpen, setLayoutToolboxOpen] = useState(false);
     const [layoutPageId, setLayoutPageId] = useState(null);
+    const [searchParams, setSearchParams] = useSearchParams();
     const [jsonData, setJsonData] = useState({});
+    const [editingTitle, setEditingTitle] = useState(false);
     const [showMediaToolbox, setShowMediaToolbox] = useState(false);
     const [customCss, setCustomCss] = useState('');
     const [loading, setLoading] = useState(!isNew && !!propContentId);
@@ -442,47 +445,169 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
             )}
 
             <div className="content-header">
+                {/* Content Navigation */}
+                <ContentNavigation
+                    contentId={contentId}
+                    onNavigate={handleNavigate}
+                />
+                <div style={{display: 'flex'}}>
+                    <div className="image-selection-area">
+                        <div className="image-preview-container">
+                            <img
+                                alt="Current"
+                                className="image-preview"
+                                src={
+                                    formData.img
+                                        ? `/media/${formData.img}`
+                                        : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='2.5'/%3E%3Cpath d='M21 15l-5-4-3 3-4-4-6 6'/%3E%3C/svg%3E"
+                                }
+                                onClick={() => setShowMediaToolbox(true)}
+                                title="Select or change featured image"
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        setShowMediaToolbox(true);
+                                    }
+                                }}
+                                onError={e => {
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3C/svg%3E";
+                                }}
+                            />
+                        </div>
+                    </div>
+                </div>
                 <h1 className="content-title">
-                    {isNew ? '📝 Create New Content' : `✏️ Edit Content #${contentId}`}
+                    {editingTitle ? (
+                        <input
+                            autoFocus
+                            value={formData.title}
+                            onChange={e =>
+                                setFormData({
+                                    ...formData,
+                                    title: e.target.value
+                                })
+                            }
+                            onBlur={() => setEditingTitle(false)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                    e.currentTarget.blur();
+                                }
+
+                                if (e.key === 'Escape') {
+                                    setEditingTitle(false);
+                                }
+                            }}
+                            className="inline-title-input"
+                        />
+                    ) : (
+                        <span
+                            onClick={() => setEditingTitle(true)}
+                            title="Click to edit title"
+                        >
+            <span className="edit-hint">✎</span>{formData.title || 'Untitled'}
+                     </span>
+                    )}
                 </h1>
+                <div className="form-group">
+                    <label className="form-label">Type</label>
+                    <select
+                        className="form-select"
+                        value={formData.type || 'post'}
+                        onChange={(e) => setFormData({...formData, type: e.target.value})}
+                    >
+                        <option value="post">Post</option>
+                        <option value="page">Page</option>
+                        <option value="component">Component</option>
+                        <option value="block">Block</option>
+                    </select>
+                    <button onClick={() => openLayoutToolbox()}>
+                        📐 Layout
+                    </button>
+                </div>
+
+                <div className="form-group">
+                    <label className="form-label">Name (Content URI)<span className="required">*</span></label>
+                    <input
+                        type="text"
+                        className="form-input"
+                        value={formData.name}
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        placeholder="Content Name"
+                    />
+                </div>
+
                 <button className="btn-back" onClick={() => navigateTo('page-archive')}>
-                    ← Back to List
+                    ← Archieve
                 </button>
             </div>
 
+            {/* === LAYOUT TOOLBOX FORM CARD === */}
+            {layoutToolboxOpen && (
+                <div className="form-card" style={{ position: 'relative' }}>
+                    <button
+                        onClick={closeLayoutToolbox}
+                        style={{
+                            position: 'absolute',
+                            top: '10px',
+                            right: '10px',
+                            background: 'red',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '30px',
+                            height: '30px',
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            zIndex: 10
+                        }}
+                        title="Close"
+                    >
+                        ✕
+                    </button>
+                    <LayoutToolbox
+                        onClose={closeLayoutToolbox}
+                        selectedDomain={window.location.hostname}
+                        pageId={layoutPageId}
+                    />
+                </div>
+            )}
+
+            {/* === MEDIA TOOLBOX FORM CARD === */}
+            {showMediaToolbox && (
+                <div className="form-card" style={{ position: 'relative' }}>
+                    <button
+                        onClick={() => setShowMediaToolbox(false)}
+                        style={{
+                            position: 'absolute',
+                            top: '10px',
+                            right: '10px',
+                            background: 'red',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '30px',
+                            height: '30px',
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            zIndex: 10
+                        }}
+                        title="Close"
+                    >
+                        ✕
+                    </button>
+                    <MediaToolbox
+                        onSelect={handleMediaSelect}
+                        onClose={() => setShowMediaToolbox(false)}
+                        selectedValue={formData.img}
+                    />
+                </div>
+            )}
+
             <div className="form-card">
                 <div className="form-row">
-                    <div className="form-group">
-                        <label className="form-label">Type</label>
-                        <select
-                            className="form-select"
-                            value={formData.type || 'post'}
-                            onChange={(e) => setFormData({...formData, type: e.target.value})}
-                        >
-                            <option value="post">Post</option>
-                            <option value="page">Page</option>
-                            <option value="component">Component</option>
-                            <option value="block">Block</option>
-                        </select>
-
-                        <button onClick={() => openLayoutToolbox()}>
-                            📐 Layout
-                        </button>
-
-                        {/* Modal */}
-                        {layoutToolboxOpen && (
-                            <div className="modal-overlay" onClick={closeLayoutToolbox}>
-                                <div className="modal-content" onClick={e => e.stopPropagation()}>
-                                    <LayoutToolbox
-                                        onClose={closeLayoutToolbox}
-                                        selectedDomain={window.location.hostname}
-                                        pageId={layoutPageId}   // ← περνάει το id
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                    </div>
                     <div className="form-group">
                         <label className="form-label">Status</label>
                         <select
@@ -494,6 +619,15 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
                             <option value={1}>Published (1)</option>
                             <option value={2}>Archived (2)</option>
                         </select>
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Published Date & Time</label>
+                        <input
+                            type="datetime-local"
+                            className="form-input"
+                            value={getFormattedPublished()}
+                            onChange={(e) => setFormData({...formData, published: e.target.value})}
+                        />
                     </div>
                     <div className="form-group">
                         <label className="form-label">Language</label>
@@ -509,16 +643,6 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
                 </div>
 
                 <div className="form-row">
-                    <div className="form-group">
-                        <label className="form-label">Name (Content URI)<span className="required">*</span></label>
-                        <input
-                            type="text"
-                            className="form-input"
-                            value={formData.name}
-                            onChange={(e) => setFormData({...formData, name: e.target.value})}
-                            placeholder="Content Name"
-                        />
-                    </div>
                     <div className="form-group">
                         <label className="form-label">URL (Video / Website)</label>
                         <input
@@ -547,28 +671,6 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
 
                 <div className="form-row">
                     <div className="form-group">
-                        <label className="form-label">Title <span className="required">*</span></label>
-                        <input
-                            type="text"
-                            className="form-input"
-                            value={formData.title}
-                            onChange={(e) => setFormData({...formData, title: e.target.value})}
-                            placeholder="Title"
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label className="form-label">Published Date & Time</label>
-                        <input
-                            type="datetime-local"
-                            className="form-input"
-                            value={getFormattedPublished()}
-                            onChange={(e) => setFormData({...formData, published: e.target.value})}
-                        />
-                    </div>
-                </div>
-
-                <div className="form-row">
-                    <div className="form-group">
                         <label className="form-label">Category</label>
                         <ClassificationDrop
                             classificationid={formData.classificationid}
@@ -590,49 +692,6 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
                             showNotification={showNotification}
                         />
                     </div>
-                </div>
-
-                {/* Image Selection */}
-                <div className="form-row">
-                    <div className="form-group">
-                        <label className="form-label">Feature Image</label>
-                        <div className="image-selection-area">
-                            {formData.img && (
-                                <div className="image-preview-container">
-                                    <img
-                                        alt="Current"
-                                        className="image-preview"
-                                        src={`/media/${formData.img}`}
-                                        onError={(e) => {
-                                            e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'%3E%3C/rect%3E%3Ccircle cx='8.5' cy='8.5' r='2.5'%3E%3C/circle%3E%3Cpath d='M21 15l-5-4-3 3-4-4-6 6'%3E%3C/path%3E%3C/svg%3E";
-                                            e.target.onerror = null;
-                                        }}
-                                    />
-                                </div>
-                            )}
-                            <button
-                                type="button"
-                                className="btn-select-image"
-                                onClick={() => setShowMediaToolbox(true)}
-                            >
-                                🖼️ {formData.img ? 'Change Image' : 'Select Image from Media Library'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Media Toolbox Modal */}
-                {showMediaToolbox && (
-                    <div className="media-toolbox-modal">
-                        <div className="media-toolbox-modal-content">
-                            <MediaToolbox
-                                onSelect={handleMediaSelect}
-                                onClose={() => setShowMediaToolbox(false)}
-                                selectedValue={formData.img}
-                            />
-                        </div>
-                    </div>
-                )}
 
                 <div className="form-group">
                     <label className="form-label">Excerpt</label>
@@ -644,9 +703,25 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
                         placeholder="Short summary..."
                     />
                 </div>
+                </div>
+            </div>
+
+            {/* Media Toolbox Modal */}
+            {showMediaToolbox && (
+                <div className="media-toolbox-modal">
+                    <div className="media-toolbox-modal-content">
+                        <MediaToolbox
+                            onSelect={handleMediaSelect}
+                            onClose={() => setShowMediaToolbox(false)}
+                            selectedValue={formData.img}
+                        />
+                        </div>
+                    </div>
+                )}
+
 
                 <div className="form-group">
-                    <label className="form-label">Description <span className="required">*</span></label>
+                    <label className="form-label">Content <span className="required">*</span></label>
                     <RichTextEditor
                         value={formData.description}
                         onChange={(e) => setFormData({...formData, description: e.target.value})}
@@ -663,8 +738,6 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
                         {saving ? 'Saving...' : (isNew ? '📝 Create Content' : '💾 Save Changes')}
                     </button>
                 </div>
-            </div>
-            <ContentNavigation contentId={contentId} onNavigate={handleNavigate} />
         </div>
 
     );

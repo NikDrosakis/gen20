@@ -1,29 +1,10 @@
 /*
 #name: NavAdmin
-#title: Admin Navigation Component
-#description: Main admin navigation bar with user menu, language switcher, and dynamic menu items based on permissions. Displays public languages status.
-#author: Nikolas Drosakis
-#version: 1.0.0
-#type: component
-#independent: true
-#standalone: true
-#compatible_areas: h
-#dependencies: react, js-cookie
-#apimethods:
-#   GET /api/v1/maria/fa?q=select * from gen_*.language where status=2
-#methods:
-#   - fetchLanguages(): Fetches active public languages from database
-#   - fetchUser(): Retrieves user data from cookies
-#   - handleNavigation(): Navigates to selected admin page
-#   - handleLanguageChange(): Changes admin language
-#   - handleLogout(): Clears cookies and redirects to login
-#   - getUserInitials(): Returns user initials for avatar
-#   - getUserName(): Returns display name from user data
 */
 import React, { useState, useEffect } from 'react';
 import './NavAdmin.css';
 import Cookies from 'js-cookie';
-import { useG } from '../contexts/GContext';
+import { useG } from '../GContext';
 const NavAdmin = ({ currentPage, onNavigate }) => {
     const { G } = useG();
     const [languages, setLanguages] = useState([]);
@@ -33,7 +14,7 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
         role: '',
         img: ''
     });
-    const isGen20Net = window.location.hostname === 'gen20.net';
+    const isGen20Net = window.location.hostname.split('.')[0] === 'gen20';
     const navItems = [
         { id: 'home', label: 'Home', icon: '🏠', path: '/admin' },
         { id: 'page', label: 'Content', icon: '📝', path: '/admin/page' },
@@ -47,9 +28,9 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
         { id: 'languages', label: 'Languages', icon: '🌐', path: '/admin/languages' },
         { id: 'analytics', label: 'Analytics', icon: '📈', path: '/admin/analytics' },
         { id: 'setup', label: 'Settings', icon: '⚙️', path: '/admin/setup' },
-        { id: 'superadmin', label: 'SuperAdmin', icon: '🛡️', path: '/admin/superadmin' },
         // monetize και superadmin μόνο για gen20.net
         ...(isGen20Net ? [
+            { id: 'superadmin', label: 'SuperAdmin', icon: '🛡️', path: '/admin/superadmin' },
             { id: 'monetize', label: 'Monetize', icon: '💰', path: '/admin/monetize' },
         ] : []),
     ];
@@ -139,6 +120,49 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
         <nav className="admin-navbar">
             <div className="admin-navbar-inner">
                 <div className="admin-brand">
+                        {/* User Menu */}
+                        <div className="admin-user-menu">
+                            <button
+                                className="admin-user-btn"
+                                onClick={() => setShowUserMenu(!showUserMenu)}
+                            >
+                                <div className="admin-user-avatar">
+                                    {getUserInitials()}
+                                </div>
+                                <span className="admin-user-name">{getUserName()}</span>
+                                <span className="admin-user-arrow">▼</span>
+                            </button>
+
+                            {showUserMenu && (
+                                <div className="admin-user-dropdown">
+                                    <div className="admin-user-info">
+                                        <div className="user-avatar-large">
+                                            {getUserInitials()}
+                                        </div>
+                                        <div className="user-details">
+                                            <div className="user-name">{getUserName()}</div>
+                                            <div className="user-email">{user?.email || 'admin@local.host'}</div>
+                                        </div>
+                                    </div>
+                                    <div className="dropdown-divider"></div>
+                                    <button className="admin-user-item"
+                                            onClick={() => window.location.href = '/admin/profile'}>
+                                        <span className="item-icon">👤</span>
+                                        My Profile
+                                    </button>
+                                    <button className="admin-user-item"
+                                            onClick={() => window.location.href = '/admin/settings'}>
+                                        <span className="item-icon">⚙️</span>
+                                        Settings
+                                    </button>
+                                    <div className="dropdown-divider"></div>
+                                    <button className="admin-user-item logout" onClick={handleLogout}>
+                                        <span className="item-icon">🚪</span>
+                                        Logout
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     <img className="admin-brand-icon" src={`/media/${G.set.logo}`} alt="Logo"/>
                     <span className="admin-brand-text">{G.set.title} / {window.location.host}
                         {languages.length > 0 && (
@@ -180,50 +204,6 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
                     </li>
                 </ul>
 
-                {/* Right side: Languages + User Menu */}
-                <div className="admin-nav-right">
-                    {/* User Menu */}
-                    <div className="admin-user-menu">
-                        <button
-                            className="admin-user-btn"
-                            onClick={() => setShowUserMenu(!showUserMenu)}
-                        >
-                            <div className="admin-user-avatar">
-                                {getUserInitials()}
-                            </div>
-                            <span className="admin-user-name">{getUserName()}</span>
-                            <span className="admin-user-arrow">▼</span>
-                        </button>
-
-                        {showUserMenu && (
-                            <div className="admin-user-dropdown">
-                                <div className="admin-user-info">
-                                    <div className="user-avatar-large">
-                                        {getUserInitials()}
-                                    </div>
-                                    <div className="user-details">
-                                        <div className="user-name">{getUserName()}</div>
-                                        <div className="user-email">{user?.email || 'admin@local.host'}</div>
-                                    </div>
-                                </div>
-                                <div className="dropdown-divider"></div>
-                                <button className="admin-user-item" onClick={() => window.location.href = '/admin/profile'}>
-                                    <span className="item-icon">👤</span>
-                                    My Profile
-                                </button>
-                                <button className="admin-user-item" onClick={() => window.location.href = '/admin/settings'}>
-                                    <span className="item-icon">⚙️</span>
-                                    Settings
-                                </button>
-                                <div className="dropdown-divider"></div>
-                                <button className="admin-user-item logout" onClick={handleLogout}>
-                                    <span className="item-icon">🚪</span>
-                                    Logout
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
             </div>
         </nav>
     );

@@ -4,20 +4,21 @@ import (
 	"encoding/json"
 	"sync"
 	"time"
-
+"fmt"
 	"github.com/gorilla/websocket"
 )
 
 // Message είναι το protocol που έστελνε το god στο ermis.
 // Τώρα το god το δέχεται και το προωθεί.
 type Message struct {
-	System    string `json:"system"`     // "god", "admin", "chat", ...
-	DomAffect string `json:"domaffect"`  // "*" ή "example.com"
-	Type      string `json:"type"`       // "open", "message", "close", "notify", ...
-	Verba     string `json:"verba"`      // το περιεχόμενο
-	UserID    string `json:"userid"`     // ποιος στέλνει
-	To        string `json:"to"`         // σε ποιον (userID ή "*")
-	Cast      string `json:"cast"`       // "one", "all", "system"
+	System    string `json:"system"`
+	DomAffect string `json:"domaffect"`
+	Type      string `json:"type"`
+	Verba     string `json:"verba"`
+	UserID    string `json:"userid"`
+	To        string `json:"to"`
+	Cast      string `json:"cast"`
+	Domain    string `json:"domain,omitempty"`  // ← ΝΕΟ
 	Timestamp int64  `json:"timestamp,omitempty"`
 }
 
@@ -41,19 +42,20 @@ type Hub struct {
 	unregister chan *Client
 	broadcast  chan *Message
 	mu         sync.RWMutex
+	redis      *Gredis
 }
 
-func NewHub() *Hub {
-	return &Hub{
-		clients:    make(map[*Client]bool),
-		byUser:     make(map[string]map[*Client]bool),
-		byDomain:   make(map[string]map[*Client]bool),
-		register:   make(chan *Client, 64),
-		unregister: make(chan *Client, 64),
-		broadcast:  make(chan *Message, 256),
-	}
+func NewHub(redis *Gredis) *Hub {
+    return &Hub{
+        clients:    make(map[*Client]bool),
+        byUser:     make(map[string]map[*Client]bool),
+        byDomain:   make(map[string]map[*Client]bool),
+        register:   make(chan *Client, 64),
+        unregister: make(chan *Client, 64),
+        broadcast:  make(chan *Message, 256),
+        redis:      redis,  // ← πρόσθεσε αυτό
+    }
 }
-
 // Run είναι ο κεντρικός loop — πρέπει να τρέχει σε goroutine.
 func (h *Hub) Run() {
 	for {
@@ -162,4 +164,14 @@ func (h *Hub) Register(c *Client) {
 // Unregister αφαιρεί client.
 func (h *Hub) Unregister(c *Client) {
 	h.unregister <- c
+}
+
+func (h *Hub) BroadcastConversation(cid int, msg ChatMessage) {
+    // Μετατροπή σε Message και broadcast (ή απλό log για τώρα)
+    h.Broadcast(&Message{
+        Type:      "chat",
+        Verba:     msg.C,
+        UserID:    fmt.Sprintf("%d", msg.UID),
+        Timestamp: time.Now().Unix(),
+    })
 }

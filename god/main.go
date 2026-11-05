@@ -15,11 +15,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-
-"god/api"          // ← ΝΕΟ
+"god/api"
     "god/core"
     "god/services/messaging"
 	"god/services/mermaid"
+"god/services/terminal"
+
 )
 
 var logFile *os.File
@@ -251,7 +252,7 @@ func main() {
 		logMessage("WARNING: Gin running in debug mode")
 	}
 
-    hub := core.NewHub()
+    hub := core.NewHub(gredisInstance)
 	go hub.Run()
 
 	router := gin.Default()
@@ -259,6 +260,7 @@ func main() {
 	router.LoadHTMLGlob("public/*")
 	mermaid.RegisterRoutes(router)
 	messaging.RegisterRoutes(router, hub)
+	terminal.RegisterRoutes(router)
 
  // ✅ ΟΛΑ τα /god/v1/* endpoints
     api.Register(router)
@@ -304,7 +306,7 @@ func main() {
     })
 		v1.GET("/getUrl", getUrl)
 		// Interactive terminal backed by PTY.
-		v1.GET("/ws", terminalWS)
+	// v1.GET("/ws", terminalSocket)
 	}
 
 	port := os.Getenv("PORT")

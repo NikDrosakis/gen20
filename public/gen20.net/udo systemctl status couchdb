@@ -1,0 +1,16 @@
+[0;1;32m●[0m couchdb.service - Apache CouchDB
+     Loaded: loaded (]8;;file://drosian/lib/systemd/system/couchdb.service/lib/systemd/system/couchdb.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: [0;1;32mactive (running)[0m since Wed 2026-11-04 01:27:12 EET; 10s ago
+   Main PID: 889141 (beam.smp)
+      Tasks: 91[0;38;5;245m (limit: 76993)[0m
+     Memory: 139.2M
+        CPU: 4.841s
+     CGroup: /system.slice/couchdb.service
+             ├─[0;38;5;245m889141 /opt/couchdb/bin/../erts-15.2.7.13/bin/beam.smp -P 1048576 -SDio 16 -zdbbl 32768 -Bd -- -root /opt/couchdb/bin/.. -bindir /opt/couchdb/bin/../erts-15.2.7.13/bin -progname couchdb -- -home /opt/couchdb -- -boot /opt/couchdb/bin/../releases/couchdb -name couchdb@127.0.0.1 -setcookie gen20 -kernel inet_dist_use_interface {127,0,0,1} -kernel error_logger silent -sasl sasl_error_logger false -kernel prevent_overlapping_partitions false -noshell -noinput -ssl session_lifetime 300 -os_mon start_cpu_sup false -os_mon start_memsup false -os_mon disk_space_check_interval 5 -os_mon disk_almost_full_threshold 1.0 -- -config /opt/couchdb/bin/../releases/sys.config --[0m
+             ├─[0;38;5;245m889153 /opt/couchdb/bin/../erts-15.2.7.13/bin/epmd -daemon[0m
+             ├─[0;38;5;245m889157 erl_child_setup 65536[0m
+             ├─[0;38;5;245m889243 sh -s disksup[0m
+             ├─[0;38;5;245m889276 /opt/couchdb/bin/../erts-15.2.7.13/bin/inet_gethost 4[0m
+             └─[0;38;5;245m889277 /opt/couchdb/bin/../erts-15.2.7.13/bin/inet_gethost 4[0m
+
+Nov 04 01:27:12 drosian systemd[1]: Started couchdb.service - Apache CouchDB.

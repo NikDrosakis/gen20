@@ -1,4 +1,4 @@
-// components/ClassificationModal.jsx
+// /ClassificationModal.jsx
 import React, { useState, useEffect } from 'react';
 import "../pages/Classification.css";
 

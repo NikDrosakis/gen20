@@ -1,112 +1,370 @@
-// components/superadmin/LayoutToolbox.jsx
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import PagesLayout from './superadmin/PagesLayout';
-import CurrentComponents from './superadmin/CurrentComponents';
+// /LayoutToolbox.jsx
+import React, {
+    useState,
+    useMemo,
+    useCallback,
+    useEffect
+} from 'react';
+
+import { useComponentManager } from '../useComponentManager';
+import { useDomainContext } from '../useDomainContext';
+
+import CurrentComponents from './CurrentComponents';
 import './LayoutToolbox.css';
 
-const LayoutToolbox = ({ onClose, selectedDomain, pageId: pageIdProp }) => {
-    const [searchParams, setSearchParams] = useSearchParams();
+const AREAS = [
+    { key: 'h', label: 'Header', icon: '🔝' },
+    { key: 'sl', label: 'Sidebar Left', icon: '⬅️' },
+    { key: 'm', label: 'Main', icon: '📄' },
+    { key: 'sr', label: 'Sidebar Right', icon: '➡️' },
+    { key: 'f', label: 'Footer', icon: '🔻' }
+];
 
-    // ?id=5 → συγκεκριμένη σελίδα
-    const pageIdFromUrl = searchParams.get('id') || '';
+const AREA_KEYS = AREAS.map(a => a.key);
+
+const normalizeName = (filename) =>
+    String(filename || '')
+        .replace(/\.jsx$/i, '')
+        .toLowerCase();
+
+const escapeSql = (value) =>
+    String(value ?? '').replace(/'/g, "''");
+
+const normalizePath = (path, domain) => {
+    let result = String(path || '').replace(/\\/g, '/');
+
+    if (domain && result.startsWith(`${domain}/`)) {
+        result = result.slice(domain.length + 1);
+    }
+
+    if (result.startsWith('src/')) {
+        result = result.slice(4);
+    }
+
+    return result.replace(/^\/+/, '');
+};
+
+const nowSql = () =>
+    new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+const collectJsxFiles = (tree, domain) => {
+    const files = [];
+
+    const walk = (children, parentPath = '') => {
+        if (!children || typeof children !== 'object') return;
+
+        Object.entries(children).forEach(([key, item]) => {
+            if (!item) return;
+
+            const filename = item.name || key;
+
+            if (item.type === 'file') {
+                if (!filename.toLowerCase().endsWith('.jsx')) return;
+
+                const path = normalizePath(
+                    item.displayPath ||
+                    item.path ||
+                    `${parentPath}${filename}`,
+                    domain
+                );
+
+                files.push({
+                    name: normalizeName(filename),
+                    label: filename.replace(/\.jsx$/i, ''),
+                    filename,
+                    path,
+                    type: 'jsx',
+                    description: item.description || '',
+                    author: item.author || '',
+                    version: item.version || '',
+                    dependencies: item.dependencies || [],
+                    file_size: item.file_size || null,
+                    modified: item.modified || null
+                });
+
+                return;
+            }
+
+            if (item.children) {
+                walk(
+                    item.children,
+                    `${parentPath}${filename}/`
+                );
+            }
+        });
+    };
+
+    walk(tree?.children || tree);
+
+    return files.sort((a, b) => a.name.localeCompare(b.name));
+};
+
+const LayoutToolbox = ({
+                           onClose,
+                           selectedDomain,
+                           pageId: pageIdProp
+                       }) => {
+    const { domain: contextDomain } = useDomainContext();
+
+    const domain =
+        selectedDomain || contextDomain || window.location.hostname;
+
+    const publicdb = 'gen_' + domain.replace(/\./g, '');
+
+    const pageIdFromUrl = pageIdProp ? String(pageIdProp) : '';
+
+    const cm = useComponentManager();
 
     const [pages, setPages] = useState([]);
-    const [components, setComponents] = useState([]);
+    const [cubosRows, setCubosRows] = useState([]);
+
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [expandedDescriptions, setExpandedDescriptions] = useState({});
     const [draggedItem, setDraggedItem] = useState(null);
+    const [dropTarget, setDropTarget] = useState(null);
 
-    const domain = selectedDomain || window.location.hostname;
-    const publicdb = 'gen_' + domain.replace(/\./g, '');
+    const filesystemComponents = useMemo(() => {
+        if (!cm.data || !domain) return [];
 
-    // ============================================================
-    // Fetch — μόνο η σελίδα από ?id= ή όλες αν δεν υπάρχει
-    // ============================================================
+        const domainTree = cm.data[domain];
+        if (!domainTree) return [];
+
+        return collectJsxFiles(domainTree, domain);
+    }, [cm.data, domain]);
+
+    const components = useMemo(() => {
+        return filesystemComponents.map(file => {
+            const dbComponent = cubosRows.find(
+                c => String(c.name).toLowerCase() === file.name
+            );
+
+            return {
+                ...file,
+                ...(dbComponent || {}),
+                name: file.name,
+                label: file.label,
+                path: file.path,
+                id: dbComponent?.id || null,
+                cubo: dbComponent?.id || null,
+                description:
+                    dbComponent?.description || file.description,
+                author: dbComponent?.author || file.author,
+                version: dbComponent?.version || file.version,
+                dependencies:
+                    dbComponent?.dependencies || file.dependencies
+            };
+        });
+    }, [filesystemComponents, cubosRows]);
+
     const fetchData = useCallback(async () => {
+        if (cm.loading) return;
+
         setLoading(true);
+
         try {
-            // Pages: φίλτρο με id αν υπάρχει
-            const pageFilter = pageIdFromUrl
-                ? `AND id = ${parseInt(pageIdFromUrl, 10)}`
-                : '';
+            const pageId = parseInt(pageIdFromUrl, 10);
 
-            const pagesRes = await fetch(
-                `/api/v1/maria/fa?folder=${encodeURIComponent(
-                    `select * from ${publicdb}.content where type='page' ${pageFilter} order by sort asc`
-                )}`
+            const pageFilter =
+                Number.isInteger(pageId) && pageId > 0
+                    ? `AND id = ${pageId}`
+                    : '';
+
+            const relFilter =
+                Number.isInteger(pageId) && pageId > 0
+                    ? `WHERE contentid = ${pageId}`
+                    : '';
+
+            const queries = [
+                `SELECT * FROM ${publicdb}.content
+                 WHERE type = 'page' ${pageFilter}
+                 ORDER BY sort ASC`,
+
+                `SELECT * FROM ${publicdb}.content_cubos
+                 ${relFilter}
+                 ORDER BY sort ASC`,
+
+                `SELECT * FROM ${publicdb}.cubos
+                 ORDER BY name ASC`
+            ];
+
+            const responses = await Promise.all(
+                queries.map(query =>
+                    fetch(
+                        `/api/v1/maria/fa?folder=${encodeURIComponent(
+                            query.replace(/\s+/g, ' ').trim()
+                        )}`
+                    ).then(res => res.json())
+                )
             );
-            const pagesData = await pagesRes.json();
 
-            // Relations: μόνο για τη σελίδα (αν έχουμε id)
-            const relFilter = pageIdFromUrl
-                ? `WHERE contentid = ${parseInt(pageIdFromUrl, 10)}`
-                : '';
+            const [pagesData, relData, cubosData] = responses;
 
-            const relRes = await fetch(
-                `/api/v1/maria/fa?folder=${encodeURIComponent(
-                    `select * from ${publicdb}.content_cubos ${relFilter} order by sort asc`
-                )}`
-            );
-            const relData = await relRes.json();
+            if (!pagesData.success) {
+                throw new Error('Unable to load pages');
+            }
 
-            // Components
-            const compQuery = `
-                SELECT a.*
-                FROM gen_admin.components a
-                INNER JOIN ${publicdb}.components b ON b.id = a.id
-                WHERE a.domain = '${domain}' AND a.cubosid IS NOT NULL
-                GROUP BY a.cubosid
-                ORDER BY a.name ASC
-            `.replace(/\s+/g, ' ').trim();
+            const relations = Array.isArray(relData.data)
+                ? relData.data
+                : [];
 
-            const compRes = await fetch(
-                `/api/v1/maria/fa?folder=${encodeURIComponent(compQuery)}`
-            );
-            const compData = await compRes.json();
+            const cubos = Array.isArray(cubosData.data)
+                ? cubosData.data
+                : [];
 
-            if (pagesData.success && Array.isArray(pagesData.data)) {
-                const rels = Array.isArray(relData.data) ? relData.data : [];
-                const pagesWithComponents = pagesData.data.map(page => ({
-                    ...page,
-                    h:  rels.filter(r => r.content_id === page.id && r.area === 'h').map(r => r.component_id),
-                    sl: rels.filter(r => r.contentid === page.id && r.area === 'sl').map(r => r.component_id),
-                    m:  rels.filter(r => r.contentid === page.id && r.area === 'm').map(r => r.component_id),
-                    sr: rels.filter(r => r.contentid === page.id && r.area === 'sr').map(r => r.component_id),
-                    f:  rels.filter(r => r.contentid === page.id && r.area === 'f').map(r => r.component_id),
-                }));
-                setPages(pagesWithComponents);
+            setCubosRows(cubos);
 
-                // Αν δεν υπάρχει ?id= και υπάρχει πρώτη σελίδα, βάλε το στο URL
-                if (!pageIdFromUrl && pagesWithComponents.length > 0) {
-                    setSearchParams(
-                        { id: pagesWithComponents[0].id },
-                        { replace: true }
+            const pagesWithComponents = (pagesData.data || []).map(
+                page => {
+                    const pageRelations = relations.filter(
+                        relation =>
+                            Number(relation.contentid) ===
+                            Number(page.id)
                     );
-                }
-            }
 
-            if (compData.success && Array.isArray(compData.data)) {
-                setComponents(compData.data.map(c => ({ ...c, cubo: c.cubosid })));
-            }
+                    const result = { ...page };
+
+                    AREA_KEYS.forEach(area => {
+                        result[area] = pageRelations
+                            .filter(relation => relation.area === area)
+                            .sort(
+                                (a, b) =>
+                                    Number(a.sort) - Number(b.sort)
+                            )
+                            .map(relation =>
+                                Number(relation.cubosid)
+                            );
+                    });
+
+                    return result;
+                }
+            );
+
+            setPages(pagesWithComponents);
         } catch (error) {
             console.error('LayoutToolbox fetch error:', error);
         } finally {
             setLoading(false);
         }
-    }, [domain, publicdb, pageIdFromUrl, setSearchParams]);
+    }, [cm.loading, publicdb, pageIdFromUrl]);
 
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        if (!cm.loading) {
+            fetchData();
+        }
+    }, [cm.loading, fetchData]);
 
-    // ============================================================
-    // Drag & Drop
-    // ============================================================
+    const resolveCubo = useCallback(
+        async (component) => {
+            const rawName =
+                component.filename || component.name || '';
+
+            const name = normalizeName(rawName).toLowerCase();
+            const path = normalizePath(component.path, domain);
+
+            if (!name || !path) {
+                throw new Error('Component name or path is missing');
+            }
+
+            const selectQuery = `
+                SELECT id
+                FROM ${publicdb}.cubos
+                WHERE name = '${escapeSql(name)}'
+                LIMIT 1
+            `
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            const selectResponse = await fetch(
+                `/api/v1/maria/fa?folder=${encodeURIComponent(
+                    selectQuery
+                )}`
+            );
+
+            const selectData = await selectResponse.json();
+
+            if (selectData.success && selectData.data?.length) {
+                return Number(selectData.data[0].id);
+            }
+
+            const createdAt = nowSql();
+
+            const insertResponse = await fetch(
+                '/api/v1/maria/insert',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        table: `${publicdb}.cubos`,
+                        params: {
+                            name,
+                            path,
+                            status: 'active',
+                            created: createdAt,
+                            updated: createdAt
+                        }
+                    })
+                }
+            );
+
+            const insertData = await insertResponse.json();
+
+            if (!insertData.success) {
+                throw new Error(
+                    insertData.error ||
+                    `Could not register Cubo: ${name}`
+                );
+            }
+
+            const verifyResponse = await fetch(
+                `/api/v1/maria/fa?folder=${encodeURIComponent(
+                    selectQuery
+                )}`
+            );
+
+            const verifyData = await verifyResponse.json();
+
+            if (!verifyData.success || !verifyData.data?.length) {
+                throw new Error(
+                    `Cubo ID not found after insert: ${name}`
+                );
+            }
+
+            const id = Number(verifyData.data[0].id);
+
+            setCubosRows(prev => {
+                if (prev.some(c => Number(c.id) === id)) {
+                    return prev;
+                }
+
+                return [
+                    ...prev,
+                    { id, name, path, status: 'active' }
+                ];
+            });
+
+            return id;
+        },
+        [publicdb, domain]
+    );
+
     const handleDragStart = useCallback((e, item, type) => {
-        setDraggedItem({ ...item, type });
-        e.dataTransfer.setData('text/plain', JSON.stringify({ ...item, type }));
+        const payload = {
+            name: item.name,
+            filename: item.filename,
+            path: item.path,
+            type
+        };
+
+        setDraggedItem(payload);
+
+        e.dataTransfer.setData(
+            'text/plain',
+            JSON.stringify(payload)
+        );
+
         e.dataTransfer.effectAllowed = 'move';
         e.currentTarget.classList.add('dragging');
     }, []);
@@ -116,153 +374,475 @@ const LayoutToolbox = ({ onClose, selectedDomain, pageId: pageIdProp }) => {
         setDraggedItem(null);
     }, []);
 
-    const handleDragOver = useCallback((e) => {
+    const handleDragOver = useCallback((e, pageId, area) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
-        e.currentTarget.classList.add('drag-over');
+        setDropTarget({ pageId, area });
     }, []);
 
     const handleDragLeave = useCallback((e) => {
         e.currentTarget.classList.remove('drag-over');
+        setDropTarget(null);
     }, []);
 
-    const addComponentToArea = useCallback(async (contentid, area, component_id) => {
-        try {
-            const response = await fetch('/api/v1/maria/insert', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    table: `${publicdb}.content_cubos`,
-                    params: { contentid, cubosid, area },
-                }),
-            });
-            const result = await response.json();
-            if (result.success) {
-                setPages(prev => prev.map(p =>
-                    p.id === contentid && !(p[area] || []).includes(cubosid)
-                        ? { ...p, [area]: [...(p[area] || []), cubosid] }
-                        : p
-                ));
-                setComponents(prev => prev.map(c =>
-                    c.id === cubosid ? { ...c, instances: (c.instances || 0) + 1 } : c
-                ));
+    const addComponentToArea = useCallback(
+        async (contentid, area, component) => {
+            if (!AREA_KEYS.includes(area)) return;
+
+            try {
+                const page = pages.find(
+                    p => Number(p.id) === Number(contentid)
+                );
+
+                if (!page) {
+                    throw new Error('Target page not found');
+                }
+
+                const cubosid = await resolveCubo(component);
+
+                const existing = page[area] || [];
+
+                if (existing.some(id => Number(id) === cubosid)) {
+                    return;
+                }
+
+                const sortQuery = `
+                    SELECT COALESCE(MAX(sort), -1) + 1 AS nextSort
+                    FROM ${publicdb}.content_cubos
+                    WHERE contentid = ${Number(contentid)}
+                    AND area = '${area}'
+                `
+                    .replace(/\s+/g, ' ')
+                    .trim();
+
+                const sortResponse = await fetch(
+                    `/api/v1/maria/fa?folder=${encodeURIComponent(
+                        sortQuery
+                    )}`
+                );
+
+                const sortData = await sortResponse.json();
+
+                const sort = Number(
+                    sortData.data?.[0]?.nextSort ?? 0
+                );
+
+                const createdAt = nowSql();
+
+                const response = await fetch(
+                    '/api/v1/maria/insert',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            table: `${publicdb}.content_cubos`,
+                            params: {
+                                contentid: Number(contentid),
+                                cubosid,
+                                area,
+                                sort,
+                                created: createdAt,
+                                updated: createdAt
+                            }
+                        })
+                    }
+                );
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(
+                        result.error || 'Placement insert failed'
+                    );
+                }
+
+                setPages(prev =>
+                    prev.map(p =>
+                        Number(p.id) === Number(contentid)
+                            ? {
+                                ...p,
+                                [area]: [
+                                    ...(p[area] || []),
+                                    cubosid
+                                ]
+                            }
+                            : p
+                    )
+                );
+
+                setCubosRows(prev =>
+                    prev.map(cubo =>
+                        Number(cubo.id) === cubosid
+                            ? {
+                                ...cubo,
+                                instances:
+                                    Number(cubo.instances || 0) + 1
+                            }
+                            : cubo
+                    )
+                );
+            } catch (error) {
+                console.error(
+                    'addComponentToArea error:',
+                    error
+                );
             }
-        } catch (e) {
-            console.error('addComponent error:', e);
-        }
-    }, [publicdb]);
+        },
+        [pages, publicdb, resolveCubo]
+    );
 
-    const removeComponentFromArea = useCallback(async (contentid, area, cubosid) => {
-        try {
-            const query = `DELETE FROM ${publicdb}.content_components
-                           WHERE contentid = ${contentid}
-                           AND area = '${area}'
-                           AND cubosid = ${cubosid}`;
+    const removeComponentFromArea = useCallback(
+        async (contentid, area, cubosid) => {
+            if (!AREA_KEYS.includes(area)) return;
 
-            const response = await fetch('/api/v1/maria/q', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query }),
-            });
-            const result = await response.json();
-            if (result.success) {
-                setPages(prev => prev.map(p =>
-                    p.id === contentid
-                        ? { ...p, [area]: (p[area] || []).filter(id => id !== cubosid) }
-                        : p
-                ));
-                setComponents(prev => prev.map(c =>
-                    c.id === cubosid
-                        ? { ...c, instances: Math.max(0, (c.instances || 0) - 1) }
-                        : c
-                ));
+            try {
+                const deleteQuery = `
+                    DELETE FROM ${publicdb}.content_cubos
+                    WHERE contentid = ${Number(contentid)}
+                    AND area = '${area}'
+                    AND cubosid = ${Number(cubosid)}
+                `
+                    .replace(/\s+/g, ' ')
+                    .trim();
+
+                await fetch('/api/v1/maria/q', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: deleteQuery })
+                });
+
+                const remainingQuery = `
+                    SELECT id
+                    FROM ${publicdb}.content_cubos
+                    WHERE contentid = ${Number(contentid)}
+                    AND area = '${area}'
+                    ORDER BY sort ASC, id ASC
+                `
+                    .replace(/\s+/g, ' ')
+                    .trim();
+
+                const remainingRes = await fetch(
+                    `/api/v1/maria/fa?folder=${encodeURIComponent(
+                        remainingQuery
+                    )}`
+                );
+
+                const remainingData = await remainingRes.json();
+
+                const remaining = Array.isArray(remainingData.data)
+                    ? remainingData.data
+                    : [];
+
+                for (let i = 0; i < remaining.length; i++) {
+                    await fetch('/api/v1/maria/q', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            query: `
+                                UPDATE ${publicdb}.content_cubos
+                                SET sort = ${i}
+                                WHERE id = ${Number(remaining[i].id)}
+                            `
+                                .replace(/\s+/g, ' ')
+                                .trim()
+                        })
+                    });
+                }
+
+                setPages(prev =>
+                    prev.map(p =>
+                        Number(p.id) === Number(contentid)
+                            ? {
+                                ...p,
+                                [area]: (p[area] || []).filter(
+                                    id =>
+                                        Number(id) !==
+                                        Number(cubosid)
+                                )
+                            }
+                            : p
+                    )
+                );
+
+                setCubosRows(prev =>
+                    prev.map(cubo =>
+                        Number(cubo.id) === Number(cubosid)
+                            ? {
+                                ...cubo,
+                                instances: Math.max(
+                                    0,
+                                    Number(cubo.instances || 0) -
+                                    1
+                                )
+                            }
+                            : cubo
+                    )
+                );
+            } catch (error) {
+                console.error(
+                    'removeComponentFromArea error:',
+                    error
+                );
             }
-        } catch (e) {
-            console.error('removeComponent error:', e);
-        }
-    }, [publicdb]);
+        },
+        [publicdb]
+    );
 
-    const handleDrop = useCallback(async (e, pageId, area) => {
-        e.preventDefault();
-        e.currentTarget.classList.remove('drag-over');
-        try {
-            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-            if (data.type === 'component') {
-                await addComponentToArea(pageId, area, data.id);
+    const clearPage = useCallback(
+        async (pageId) => {
+            if (
+                !window.confirm(
+                    'Clear all components from this page?'
+                )
+            ) {
+                return;
             }
-        } catch (err) {
-            console.error('drop error:', err);
-        }
-    }, [addComponentToArea]);
 
-    const clearPage = useCallback(async (pageId) => {
-        if (!window.confirm('Clear all components from this page?')) return;
-        const page = pages.find(p => p.id === pageId);
-        if (!page) return;
-        ['h', 'sl', 'm', 'sr', 'f'].forEach(area => {
-            (page[area] || []).forEach(cid => removeComponentFromArea(pageId, area, cid));
-        });
-    }, [pages, removeComponentFromArea]);
+            try {
+                await fetch('/api/v1/maria/q', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: `
+                            DELETE FROM ${publicdb}.content_cubos
+                            WHERE contentid = ${Number(pageId)}
+                        `
+                            .replace(/\s+/g, ' ')
+                            .trim()
+                    })
+                });
 
-    const getComponentName = useCallback((cubosid) => {
-        const comp = components.find(c => c.id === cubosid);
-        return comp ? comp.name : `Component ${cubosid}`;
-    }, [components]);
+                setPages(prev =>
+                    prev.map(p =>
+                        Number(p.id) === Number(pageId)
+                            ? {
+                                ...p,
+                                h: [],
+                                sl: [],
+                                m: [],
+                                sr: [],
+                                f: []
+                            }
+                            : p
+                    )
+                );
+            } catch (error) {
+                console.error('clearPage error:', error);
+            }
+        },
+        [publicdb]
+    );
+
+    const handleDrop = useCallback(
+        async (e, pageId, area) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            setDropTarget(null);
+
+            try {
+                const data = JSON.parse(
+                    e.dataTransfer.getData('text/plain')
+                );
+
+                if (data.type !== 'component') return;
+
+                if (!data.name || !data.path) {
+                    throw new Error(
+                        'Invalid component payload. Expected name and path.'
+                    );
+                }
+
+                await addComponentToArea(pageId, area, {
+                    name: data.name,
+                    filename:
+                        data.filename ||
+                        data.name + '.jsx',
+                    path: data.path
+                });
+            } catch (error) {
+                console.error('Layout drop error:', error);
+            }
+        },
+        [addComponentToArea]
+    );
+
+    const getComponentName = useCallback(
+        (cubosid) => {
+            const component = cubosRows.find(
+                c => Number(c.id) === Number(cubosid)
+            );
+
+            return component
+                ? component.name
+                : `Component ${cubosid}`;
+        },
+        [cubosRows]
+    );
 
     const toggleDescription = useCallback((componentId) => {
         setExpandedDescriptions(prev => ({
             ...prev,
-            [componentId]: !prev[componentId],
+            [componentId]: !prev[componentId]
         }));
     }, []);
 
-    // ============================================================
-    // Render
-    // ============================================================
+    const renderPage = (page) => {
+        return (
+            <div className="lt-page" key={page.id}>
+                <div className="lt-page-header">
+                    <div className="lt-page-title">
+                        <span className="lt-page-id">
+                            #{page.id}
+                        </span>{' '}
+                        {page.title || 'Untitled'}
+                    </div>
+                    <div className="lt-page-actions">
+                        <button
+                            type="button"
+                            className="lt-btn-clear"
+                            onClick={() => clearPage(page.id)}
+                            title="Clear all components"
+                        >
+                            🗑 Clear
+                        </button>
+                    </div>
+                </div>
+
+                <div className="lt-areas">
+                    {AREAS.map(({ key, label, icon }) => {
+                        const isOver =
+                            dropTarget &&
+                            Number(dropTarget.pageId) ===
+                            Number(page.id) &&
+                            dropTarget.area === key;
+
+                        return (
+                            <div
+                                key={key}
+                                className={`lt-area lt-area-${key} ${
+                                    isOver ? 'drag-over' : ''
+                                }`}
+                                onDragOver={(e) =>
+                                    handleDragOver(e, page.id, key)
+                                }
+                                onDragLeave={handleDragLeave}
+                                onDrop={(e) =>
+                                    handleDrop(e, page.id, key)
+                                }
+                            >
+                                <div className="lt-area-label">
+                                    <span>
+                                        {icon} {label}
+                                    </span>
+                                    <span className="lt-area-count">
+                                        {(page[key] || []).length}
+                                    </span>
+                                </div>
+
+                                <div className="lt-area-items">
+                                    {(page[key] || []).length ===
+                                    0 ? (
+                                        <div className="lt-area-empty">
+                                            Drop components here
+                                        </div>
+                                    ) : (
+                                        (page[key] || []).map(
+                                            cubosid => (
+                                                <div
+                                                    key={cubosid}
+                                                    className="lt-item"
+                                                >
+                                                    <span className="lt-item-name">
+                                                        {getComponentName(
+                                                            cubosid
+                                                        )}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        className="lt-item-remove"
+                                                        onClick={() =>
+                                                            removeComponentFromArea(
+                                                                page.id,
+                                                                key,
+                                                                cubosid
+                                                            )
+                                                        }
+                                                        title="Remove"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </div>
+                                            )
+                                        )
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="layout-toolbox">
-            {/* Header */}
             <div className="layout-toolbox-header">
                 <h3>📐 Layout Toolbox</h3>
+
                 <div className="layout-toolbox-actions">
-                    <span className="layout-toolbox-domain">{domain}</span>
+                    <span className="layout-toolbox-domain">
+                        {domain}
+                    </span>
+
                     {pageIdFromUrl && (
-                        <span className="layout-toolbox-page-id">page #{pageIdFromUrl}</span>
+                        <span className="layout-toolbox-page-id">
+                            page #{pageIdFromUrl}
+                        </span>
                     )}
+
                     <button
                         className="layout-toolbox-refresh"
                         onClick={fetchData}
-                        disabled={loading}
+                        disabled={loading || cm.loading}
                         title="Refresh data"
                     >
-                        {loading ? '⏳' : '🔄'}
+                        {loading || cm.loading ? '⏳' : '🔄'}
                     </button>
+
                     {onClose && (
-                        <button className="layout-toolbox-close" onClick={onClose} title="Close">
+                        <button
+                            className="layout-toolbox-close"
+                            onClick={onClose}
+                            title="Close"
+                        >
                             ✕
                         </button>
                     )}
                 </div>
             </div>
 
-            {/* Split layout: pages αριστερά, components δεξιά */}
             <div className="layout-toolbox-body">
                 <div className="layout-toolbox-left">
-                    {loading ? (
-                        <div className="layout-toolbox-loading">Loading page...</div>
+                    {loading || cm.loading ? (
+                        <div className="layout-toolbox-loading">
+                            Loading pages...
+                        </div>
+                    ) : pages.length === 0 ? (
+                        <div className="layout-toolbox-empty">
+                            No pages found.
+                        </div>
                     ) : (
-                        <PagesLayout
-                            pages={pages}
-                            components={components}
-                            onClearPage={clearPage}
-                            onRemoveComponent={removeComponentFromArea}
-                            onAddComponent={addComponentToArea}
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
-                            getComponentName={getComponentName}
-                            selectedDomain={domain}
-                        />
+                        <div className="lt-pages">
+                            {pages.map(renderPage)}
+                        </div>
                     )}
                 </div>
 
@@ -271,7 +851,9 @@ const LayoutToolbox = ({ onClose, selectedDomain, pageId: pageIdProp }) => {
                         components={components}
                         searchTerm={searchTerm}
                         onSearchChange={setSearchTerm}
-                        expandedDescriptions={expandedDescriptions}
+                        expandedDescriptions={
+                            expandedDescriptions
+                        }
                         onToggleDescription={toggleDescription}
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}

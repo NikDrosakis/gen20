@@ -95,7 +95,7 @@
 }
 /* Navbar.css */
 .admin-navbar {
-    background: #0f172a;
+    background: #9f0000;
     border-bottom: 1px solid #1e293b;
     position: sticky;
     top: 0;
@@ -128,15 +128,10 @@
 }
 
 .admin-brand-text {
-    background: linear-gradient(135deg, #60a5fa, #a78bfa);
-    color: #0000;
     -webkit-background-clip: text;
     background-clip: text;
-    max-width: 300px;
+    max-width: 193px;
     overflow: hidden;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .admin-nav-list {
@@ -156,7 +151,7 @@
 .admin-nav-link {
     background: none;
     border: none;
-    color: #94a3b8;
+    color: #fff3cd;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;

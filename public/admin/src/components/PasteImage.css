@@ -1,0 +1,272 @@
+/* components/media/PasteImage.css */
+.pasteimage-container {
+    padding: 16px;
+    background: #1e293b;
+    border-radius: 12px;
+    color: #e2e8f0;
+}
+
+[data-theme="light"] .pasteimage-container {
+    background: #ffffff;
+    color: #1e293b;
+}
+
+.pasteimage-header {
+    margin-bottom: 16px;
+}
+
+.pasteimage-header h3 {
+    font-size: 1.1rem;
+    margin: 0 0 4px 0;
+    color: #e2e8f0;
+}
+
+[data-theme="light"] .pasteimage-header h3 {
+    color: #1e293b;
+}
+
+.pasteimage-header p {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin: 0;
+}
+
+[data-theme="light"] .pasteimage-header p {
+    color: #64748b;
+}
+
+/* Paste Zone */
+.pasteimage-zone {
+    border: 2px dashed #475569;
+    border-radius: 12px;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #0f172a;
+    position: relative;
+    overflow: hidden;
+}
+
+[data-theme="light"] .pasteimage-zone {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.pasteimage-zone:hover {
+    border-color: #3b82f6;
+    background: #1e293b;
+}
+
+[data-theme="light"] .pasteimage-zone:hover {
+    background: #f1f5f9;
+}
+
+.pasteimage-zone.drag-over {
+    border-color: #10b981;
+    background: #1a2a2a;
+    border-style: solid;
+}
+
+[data-theme="light"] .pasteimage-zone.drag-over {
+    background: #ecfdf5;
+}
+
+.pasteimage-zone.has-image {
+    border-color: #10b981;
+    cursor: default;
+}
+
+/* Placeholder */
+.pasteimage-placeholder {
+    text-align: center;
+    padding: 30px;
+}
+
+.pasteimage-icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.pasteimage-placeholder p {
+    margin: 4px 0;
+    color: #94a3b8;
+}
+
+[data-theme="light"] .pasteimage-placeholder p {
+    color: #64748b;
+}
+
+.pasteimage-shortcut {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+/* Preview */
+.pasteimage-preview {
+    width: 100%;
+    height: 300px;
+    position: relative;
+}
+
+.pasteimage-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.pasteimage-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s ease;
+}
+
+.pasteimage-remove:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+/* Filename */
+.pasteimage-filename {
+    margin-top: 12px;
+}
+
+.pasteimage-input {
+    width: 100%;
+    padding: 10px 12px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+[data-theme="light"] .pasteimage-input {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #1e293b;
+}
+
+.pasteimage-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Progress */
+.pasteimage-progress {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pasteimage-progress-bar {
+    flex: 1;
+    height: 6px;
+    background: #334155;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+[data-theme="light"] .pasteimage-progress-bar {
+    background: #e2e8f0;
+}
+
+.pasteimage-progress-fill {
+    height: 100%;
+    background: #3b82f6;
+    transition: width 0.3s ease;
+    border-radius: 3px;
+}
+
+/* Error */
+.pasteimage-error {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: #7f1d1d;
+    color: #fecaca;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+[data-theme="light"] .pasteimage-error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Toolbar */
+.pasteimage-toolbar {
+    margin-top: 16px;
+    display: flex;
+    gap: 12px;
+}
+
+.btn-paste-upload,
+.btn-paste-cancel {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-paste-upload {
+    background: #3b82f6;
+    color: white;
+    flex: 1;
+}
+
+.btn-paste-upload:hover:not(:disabled) {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+.btn-paste-upload:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-paste-cancel {
+    background: #334155;
+    color: #e2e8f0;
+}
+
+[data-theme="light"] .btn-paste-cancel {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.btn-paste-cancel:hover {
+    background: #475569;
+    color: white;
+}
+
+[data-theme="light"] .btn-paste-cancel:hover {
+    background: #cbd5e1;
+}
+
+/* Footer */
+.pasteimage-footer {
+    margin-top: 12px;
+    text-align: center;
+}
+
+.pasteimage-footer small {
+    color: #64748b;
+    font-size: 0.75rem;
+}

@@ -1,0 +1,39 @@
+/*
+#name: FooterShort
+*/
+import React from 'react';
+import './Footer.css';
+
+const FooterShort = () => {
+    const currentYear = new Date().getFullYear();
+
+    return (
+        <footer className="footer">
+            <div className="footer-content">
+                <div className="footer-brand">
+                    <h3>GEN<span>20</span></h3>
+                    <p>Next Generation Platform</p>
+                </div>
+
+                <div className="footer-links">
+                    <a href="/about">About</a>
+                    <a href="/services">Services</a>
+                    <a href="/contact">Contact</a>
+                    <a href="/privacy">Privacy</a>
+                </div>
+
+                <div className="footer-social">
+                    <a href="https://github.com/NikDrosakis" target="_blank" rel="noopener noreferrer">GitHub</a>
+                    <a href="https://twitter.com/NikosDrosakis" target="_blank" rel="noopener noreferrer">Twitter</a>
+                    <a href="https://gen20.net" target="_blank" rel="noopener noreferrer">GEN20</a>
+                </div>
+            </div>
+
+            <div className="footer-bottom">
+                <p>© {currentYear} GEN20. All rights reserved.</p>
+            </div>
+        </footer>
+    );
+};
+
+export default FooterShort;

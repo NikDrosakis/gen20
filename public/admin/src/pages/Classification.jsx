@@ -1,381 +1,309 @@
-// Skeleton.jsx
-import React, { useState, useEffect, useMemo } from "react";
-import { useLocation } from "react-router-dom";
-import Header from "./Header";
-import Footer from "./Footer";
+// pages/Classification.jsx
+import React, { useState, useEffect, useCallback } from 'react';
+import './Classification.css';
 
-import "./Skeleton.css";
+const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
 
-const publicdb = "gen_" + window.location.hostname.replace(/\./g, "");
-
-export default function Skeleton({ children }) {
-    const location = useLocation();
-
-    const [pageComponents, setPageComponents] = useState({
-        h: [],
-        sl: [],
-        m: [],
-        sr: [],
-        f: []
-    });
-
+const Classification = ({ navigateTo }) => {
+    const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [hasCustomLayout, setHasCustomLayout] = useState(false);
+    const [error, setError] = useState('');
 
-    // --------------------------------------------------
-    // ROUTING
-    // --------------------------------------------------
+    // Modal state
+    const [modalOpen, setModalOpen] = useState(false);
+    const [editingItem, setEditingItem] = useState(null);
+    const [formData, setFormData] = useState({ name: '', title: '', description: '' });
+    const [saving, setSaving] = useState(false);
+    const [formError, setFormError] = useState('');
 
-    const pathname = location.pathname;
-    const segments = pathname.split("/").filter(Boolean);
-    const pageName = segments[0] || "home";
-
-    // --------------------------------------------------
-    // FETCH PAGE LAYOUT
-    // --------------------------------------------------
-
-    useEffect(() => {
-        let cancelled = false;
-
-        const fetchPageComponents = async () => {
-            setLoading(true);
-            setHasCustomLayout(false);
-
-            try {
-                // 1. Fetch page
-                const pageQuery = `
-                    SELECT id, name
-                    FROM ${publicdb}.content
-                    WHERE name = '${pageName.replace(/'/g, "''")}'
-                    AND type = 'page'
-                    LIMIT 1
-                `;
-
-                const pageRes = await fetch(
-                    `/api/v1/maria/f?folder=${encodeURIComponent(pageQuery)}`
-                );
-
-                if (!pageRes.ok) {
-                    throw new Error(`Page request failed: ${pageRes.status}`);
-                }
-
-                const pageData = await pageRes.json();
-
-                const page = Array.isArray(pageData.data)
-                    ? pageData.data[0]
-                    : pageData.data;
-
-                const contentId = page?.id;
-
-                if (!pageData.success || !contentId) {
-                    console.log("No page found for:", pageName);
-
-                    if (!cancelled) {
-                        setPageComponents({
-                            h: [],
-                            sl: [],
-                            m: [],
-                            sr: [],
-                            f: []
-                        });
-                        setHasCustomLayout(false);
-                    }
-
-                    return;
-                }
-
-                // 2. Fetch page components
-                const componentsQuery = `
-                    SELECT *
-                    FROM ${publicdb}.content_components
-                    WHERE content_id = ${Number(contentId)}
-                    ORDER BY sort ASC
-                `;
-
-                const compRes = await fetch(
-                    `/api/v1/maria/fa?folder=${encodeURIComponent(componentsQuery)}`
-                );
-
-                if (!compRes.ok) {
-                    throw new Error(
-                        `Components request failed: ${compRes.status}`
-                    );
-                }
-
-                const compData = await compRes.json();
-
-                const components = {
-                    h: [],
-                    sl: [],
-                    m: [],
-                    sr: [],
-                    f: []
-                };
-
-                if (
-                    compData.success &&
-                    Array.isArray(compData.data) &&
-                    compData.data.length > 0
-                ) {
-                    // 3. Fetch component definitions
-                    for (const item of compData.data) {
-                        const componentId = Number(item.component_id);
-
-                        if (!componentId) continue;
-
-                        const componentQuery = `
-                            SELECT id, name, path, type, description, props
-                            FROM ${publicdb}.components
-                            WHERE id = ${componentId}
-                            LIMIT 1
-                        `;
-
-                        const componentRes = await fetch(
-                            `/api/v1/maria/f?folder=${encodeURIComponent(componentQuery)}`
-                        );
-
-                        if (!componentRes.ok) continue;
-
-                        const componentData = await componentRes.json();
-
-                        const comp = Array.isArray(componentData.data)
-                            ? componentData.data[0]
-                            : componentData.data;
-
-                        if (!componentData.success || !comp) continue;
-
-                        const area = item.area;
-
-                        // Ignore unsupported areas
-                        if (!Object.prototype.hasOwnProperty.call(components, area)) {
-                            console.warn("Unknown component area:", area);
-                            continue;
-                        }
-
-                        let props = {};
-
-                        if (comp.props) {
-                            try {
-                                props = typeof comp.props === "string"
-                                    ? JSON.parse(comp.props)
-                                    : comp.props;
-                            } catch (error) {
-                                console.error(
-                                    "Invalid component props:",
-                                    comp.id,
-                                    error
-                                );
-                            }
-                        }
-
-                        components[area].push({
-                            id: comp.id,
-                            name: comp.name,
-                            path: comp.path,
-                            type: comp.type,
-                            description: comp.description,
-                            props,
-                            sort: item.sort
-                        });
-                    }
-                }
-
-                if (!cancelled) {
-                    setPageComponents(components);
-
-                    const hasComponents = Object.values(components)
-                        .some(area => area.length > 0);
-
-                    setHasCustomLayout(hasComponents);
-                }
-
-            } catch (error) {
-                console.error(
-                    "Error fetching page components:",
-                    error
-                );
-
-                if (!cancelled) {
-                    setPageComponents({
-                        h: [],
-                        sl: [],
-                        m: [],
-                        sr: [],
-                        f: []
-                    });
-
-                    setHasCustomLayout(false);
-                }
-
-            } finally {
-                if (!cancelled) {
-                    setLoading(false);
-                }
-            }
-        };
-
-        fetchPageComponents();
-
-        return () => {
-            cancelled = true;
-        };
-
-    }, [pageName]);
-
-    // --------------------------------------------------
-    // LAYOUT VISIBILITY
-    // --------------------------------------------------
-
-    const showLeftSidebar = pageComponents.sl.length > 0;
-    const showRightSidebar = pageComponents.sr.length > 0;
-    const showHeaderComponents = pageComponents.h.length > 0;
-    const showFooterComponents = pageComponents.f.length > 0;
-
-    // --------------------------------------------------
-    // MAIN WIDTH
-    // --------------------------------------------------
-
-    const mainWidthClass = useMemo(() => {
-        if (!showLeftSidebar && !showRightSidebar) return "w-full";
-        if (!showLeftSidebar || !showRightSidebar) return "w-4/5";
-        return "w-3/5";
-    }, [showLeftSidebar, showRightSidebar]);
-
-    // --------------------------------------------------
-    // COMPONENT RENDERER
-    // --------------------------------------------------
-
-    const renderComponent = (component) => {
-        return (
-            <div
-                className="component-placeholder"
-                data-component-id={component.id}
-            >
-                <span className="component-icon">📦</span>
-
-                <span className="component-name">
-                    {component.name}
-                </span>
-
-                {component.description && (
-                    <span className="component-desc">
-                        {component.description}
-                    </span>
-                )}
-            </div>
-        );
+    const escapeSql = (str) => {
+        if (str === null || str === undefined) return '';
+        return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
     };
 
-    // --------------------------------------------------
-    // LOADING
-    // --------------------------------------------------
+    // Φόρτωση όλων των classifications
+    const fetchItems = useCallback(async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const query = `SELECT * FROM ${publicdb}.classification ORDER BY title ASC, name ASC`;
+            const res = await fetch(
+                `/api/v1/maria/fa?query=${encodeURIComponent(query)}`
+            );
+            const data = await res.json();
+            if (data.success && Array.isArray(data.data)) {
+                setItems(data.data);
+            } else {
+                setItems([]);
+            }
+        } catch (err) {
+            console.error('Error fetching classifications:', err);
+            setError('Failed to load classifications');
+            setItems([]);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-    if (loading) {
-        return (
-            <div className="skeleton-loading">
-                <Header />
+    useEffect(() => {
+        fetchItems();
+    }, [fetchItems]);
 
-                <div className="skeleton-loading-center">
-                    <div className="loading-spinner">
-                        Loading...
-                    </div>
-                </div>
-
-                <Footer />
-            </div>
+    // Άνοιγμα modal
+    const openModal = (item = null) => {
+        setEditingItem(item);
+        setFormData(item
+            ? { name: item.name || '', title: item.title || '', description: item.description || '' }
+            : { name: '', title: '', description: '' }
         );
-    }
+        setFormError('');
+        setModalOpen(true);
+    };
 
-    // --------------------------------------------------
-    // MAIN LAYOUT
-    // --------------------------------------------------
+    // Κλείσιμο modal
+    const closeModal = () => {
+        setModalOpen(false);
+        setEditingItem(null);
+        setFormData({ name: '', title: '', description: '' });
+        setFormError('');
+    };
+
+    // Αποθήκευση
+    const handleSave = async () => {
+        if (!formData.name) {
+            setFormError('Name is required');
+            return;
+        }
+
+        setSaving(true);
+        setFormError('');
+        const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+        try {
+            let query;
+            if (editingItem) {
+                query = `UPDATE ${publicdb}.classification SET
+                    name='${escapeSql(formData.name)}',
+                    title='${escapeSql(formData.title || '')}',
+                    description='${escapeSql(formData.description || '')}',
+                    updated='${now}'
+                    WHERE id=${editingItem.id}`;
+            } else {
+                query = `INSERT INTO ${publicdb}.classification
+                    (name, title, description, created, updated)
+                    VALUES (
+                        '${escapeSql(formData.name)}',
+                        '${escapeSql(formData.title || '')}',
+                        '${escapeSql(formData.description || '')}',
+                        '${now}', '${now}')`;
+            }
+
+            const res = await fetch('/api/v1/maria/q', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify([query, []])
+            });
+
+            const result = await res.json();
+            if (result.success === true) {
+                closeModal();
+                fetchItems();
+            } else {
+                throw new Error(result.error || 'Save failed');
+            }
+        } catch (err) {
+            setFormError(err.message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // Διαγραφή
+    const handleDelete = async (id, name) => {
+        if (!window.confirm(`Delete "${name}"?`)) return;
+        try {
+            const query = `DELETE FROM ${publicdb}.classification WHERE id=${id}`;
+            const res = await fetch('/api/v1/maria/q', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify([query, []])
+            });
+            const result = await res.json();
+            if (result.success === true) {
+                fetchItems();
+            } else {
+                alert(result.error || 'Delete failed');
+            }
+        } catch (err) {
+            alert(err.message);
+        }
+    };
 
     return (
-        <div id="container">
-
-            <Header />
-
-            <div
-                className="skeleton-main"
-                id="main-content"
-            >
-
-                {/* Header Components */}
-
-                {showHeaderComponents && (
-                    <div id="h">
-                        {pageComponents.h.map((component, i) => (
-                            <div
-                                key={`h-${component.id}-${i}`}
-                                className="component-wrapper"
-                            >
-                                {renderComponent(component)}
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Left Sidebar */}
-
-                {showLeftSidebar && (
-                    <aside
-                        className="skeleton-sidebar-left"
-                        id="sl"
-                    >
-                        {pageComponents.sl.map((component, i) => (
-                            <div
-                                key={`sl-${component.id}-${i}`}
-                                className="component-item"
-                            >
-                                {renderComponent(component)}
-                            </div>
-                        ))}
-                    </aside>
-                )}
-
-                {/* Main Content */}
-
-                <main className={`skeleton-main-content ${mainWidthClass}`}>
-                    {children}
-                </main>
-
-                {/* Right Sidebar */}
-
-                {showRightSidebar && (
-                    <aside
-                        className="skeleton-sidebar-right"
-                        id="sr"
-                    >
-                        {pageComponents.sr.map((component, i) => (
-                            <div
-                                key={`sr-${component.id}-${i}`}
-                                className="component-item"
-                            >
-                                {renderComponent(component)}
-                            </div>
-                        ))}
-                    </aside>
-                )}
-
+        <div className="classification-page" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h1 style={{ margin: 0 }}>🏷️ Classification</h1>
+                <button
+                    className="btn-add"
+                    onClick={() => openModal()}
+                    style={{
+                        padding: '8px 16px',
+                        background: '#4a90e2',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: 600
+                    }}
+                >
+                    + New Classification
+                </button>
             </div>
 
-            <Footer />
+            {loading && <div style={{ padding: 20 }}>Loading...</div>}
+            {error && <div style={{ color: '#dc3545', padding: 20 }}>{error}</div>}
 
-            {/* Footer Components */}
-
-            {showFooterComponents && (
-                <div className="skeleton-footer-components">
-                    {pageComponents.f.map((component, i) => (
-                        <div
-                            key={`f-${component.id}-${i}`}
-                            className="component-wrapper"
-                        >
-                            {renderComponent(component)}
-                        </div>
-                    ))}
+            {!loading && !error && items.length === 0 && (
+                <div style={{ padding: 20, textAlign: 'center', color: '#888' }}>
+                    No classifications yet. Click "+ New Classification" to create one.
                 </div>
             )}
 
+            {!loading && items.length > 0 && (
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                    <tr style={{ background: '#f7f7f7', borderBottom: '2px solid #ddd' }}>
+                        <th style={{ padding: 10, textAlign: 'left' }}>ID</th>
+                        <th style={{ padding: 10, textAlign: 'left' }}>Name</th>
+                        <th style={{ padding: 10, textAlign: 'left' }}>Title</th>
+                        <th style={{ padding: 10, textAlign: 'left' }}>Description</th>
+                        <th style={{ padding: 10, textAlign: 'right' }}>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {items.map(item => (
+                        <tr key={item.id} style={{ borderBottom: '1px solid #eee' }}>
+                            <td style={{ padding: 10 }}>{item.id}</td>
+                            <td style={{ padding: 10 }}>{item.name}</td>
+                            <td style={{ padding: 10 }}>{item.title || '—'}</td>
+                            <td style={{ padding: 10, color: '#888' }}>{item.description || '—'}</td>
+                            <td style={{ padding: 10, textAlign: 'right' }}>
+                                <button
+                                    onClick={() => openModal(item)}
+                                    style={{ marginRight: 6, padding: '4px 10px', cursor: 'pointer' }}
+                                    title="Edit"
+                                >
+                                    ✏️
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(item.id, item.name)}
+                                    style={{ padding: '4px 10px', cursor: 'pointer', color: '#dc3545' }}
+                                    title="Delete"
+                                >
+                                    🗑️
+                                </button>
+                            </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+            )}
+
+            {/* Modal */}
+            {modalOpen && (
+                <div
+                    onClick={closeModal}
+                    style={{
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'rgba(0,0,0,0.5)', zIndex: 1000,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            background: 'white', padding: '24px', borderRadius: '12px',
+                            width: '100%', maxWidth: '500px',
+                            boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+                        }}
+                    >
+                        <h3 style={{ marginTop: 0 }}>
+                            {editingItem ? '✏️ Edit Classification' : '📝 Create New Classification'}
+                        </h3>
+
+                        {formError && (
+                            <div style={{
+                                color: '#dc3545', marginBottom: 16, padding: 8,
+                                background: '#fee2e2', borderRadius: 4
+                            }}>
+                                {formError}
+                            </div>
+                        )}
+
+                        <div style={{ marginBottom: 16 }}>
+                            <label style={{ display: 'block', marginBottom: 4, fontWeight: 600 }}>
+                                Name <span style={{ color: 'red' }}>*</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                placeholder="e.g., pharmacogenomics"
+                                style={{ width: '100%', padding: 8, border: '1px solid #ccc', borderRadius: 6 }}
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: 16 }}>
+                            <label style={{ display: 'block', marginBottom: 4, fontWeight: 600 }}>Title</label>
+                            <input
+                                type="text"
+                                value={formData.title}
+                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                placeholder="Display title"
+                                style={{ width: '100%', padding: 8, border: '1px solid #ccc', borderRadius: 6 }}
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: 24 }}>
+                            <label style={{ display: 'block', marginBottom: 4, fontWeight: 600 }}>Description</label>
+                            <textarea
+                                rows="3"
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                placeholder="Description..."
+                                style={{ width: '100%', padding: 8, border: '1px solid #ccc', borderRadius: 6 }}
+                            />
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                            <button
+                                onClick={closeModal}
+                                disabled={saving}
+                                style={{ padding: '8px 16px', cursor: 'pointer' }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                disabled={saving}
+                                style={{
+                                    padding: '8px 16px',
+                                    background: '#4a90e2',
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderRadius: 6,
+                                    cursor: saving ? 'wait' : 'pointer',
+                                    fontWeight: 600
+                                }}
+                            >
+                                {saving ? 'Saving...' : 'Save Classification'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
-}
+};
+
+export default Classification;

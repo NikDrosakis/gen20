@@ -1,40 +1,8 @@
 /*
 #name: SlidesAdmin
-#title: Slides Administration Panel
-#description: Full-featured slides manager with drag & drop for reordering, image upload via click or drag-drop, caption editing, and group management. Supports MediaToolbox integration for selecting existing media.
-#version: 1.0.0
-#type: component
-#library: admin
-#independent: true
-#standalone: true
-#compatible_areas: m
-#dependencies: react, SortableJS (CDN)
-#apimethods:
-#   GET /api/v1/maria/fa?folder=SELECT * FROM gen_*.c_slidergrp
-#   GET /api/v1/maria/fa?folder=SELECT * FROM gen_*.c_slides WHERE c_slidesgrpid=?
-#   POST /api/v1/maria/q (INSERT, UPDATE, DELETE)
-#methods:
-#   - fetchGroups(): Loads all slide groups from database
-#   - fetchSlides(): Loads slides for selected group
-#   - handleAddGroup(): Creates new slide group
-#   - handleDeleteGroup(): Deletes group and all its slides
-#   - handleDeleteSlide(): Deletes individual slide
-#   - handleFileUpload(): Processes drag & drop file upload
-#   - handleMediaSelect(): Handles media selection from MediaToolbox
-#   - handleSortEnd(): Handles drag & drop reordering
-#   - handleUpdateCaption(): Updates slide caption
-#   - updateSlideField(): Generic field update
-#   - updateSortOrder(): Batch update for sorting
-#drag_drop:
-#   - Drag & drop images from filesystem
-#   - Drag & drop for reordering slides
-#   - SortableJS integration for table rows
-#media_toolbox:
-#   - Opens MediaToolbox modal for existing media selection
-#   - Listens for 'mediaSelected' custom event
 */
 import React, { useState, useEffect } from 'react';
-import MediaToolbox from '../components/media/MediaToolbox';
+import MediaToolbox from '../components/MediaToolbox';
 import './SlidesAdmin.css';
 
 const SlidesAdmin = () => {

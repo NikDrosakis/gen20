@@ -1,17 +1,17 @@
 // pages/SuperAdmin.jsx
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import SuperAdminHeader from '../components/superadmin/SuperAdminHeader';
-import DomainManager from '../components/superadmin/DomainManager';
-import SSLManager from '../components/superadmin/SSLManager';
-import ComponentManager from '../components/superadmin/ComponentManager';
-import Layout from '../components/superadmin/Layout';
-import NginxManager from '../components/superadmin/NginxManager';
-import DNSManager from '../components/superadmin/DNSManager';
-import DBTree from '../components/superadmin/DBTree';
-import Lab from '../components/superadmin/Lab';
-import Terminal from '../components/superadmin/Terminal';
-import NewDomain from '../components/superadmin/NewDomain';
+import SuperAdminHeader from '../components/SuperAdminHeader';
+import DomainManager from '../components/DomainManager';
+import SSLManager from '../components/SSLManager';
+import ComponentManager from '../components/ComponentManager';
+import Layout from '../components/Layout';
+import NginxManager from '../components/NginxManager';
+import DNSManager from '../components/DNSManager';
+import DBTree from '../components/DBTree';
+import Lab from '../components/Lab';
+import Terminal from '../components/Terminal';
+import NewDomain from '../components/NewDomain';
 import './SuperAdmin.css';
 
 const SuperAdmin = () => {
