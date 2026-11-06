@@ -1,1 +1,0 @@
-This is a testing official npm cubo
