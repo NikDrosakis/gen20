@@ -1,12 +1,12 @@
 <?php
-  // Handle SERVER_NAME in CLI
+  // Handle SERVER_NAME in sun
    if (!defined('DOMAIN')) {
    define('DOMAIN', $_SERVER['SERVER_NAME']);
    }
-    if (php_sapi_name() == "cli") {
+    if (php_sapi_name() == "sun") {
         $template = getenv('TEMPLATE') ?: 'localhost';
         $_SERVER['SERVER_NAME'] = $template;
-        $_SERVER['SYSTEM'] = 'cli';
+        $_SERVER['SYSTEM'] = 'sun';
         $_SERVER['HTTP_HOST'] = $template;
         $_SERVER['HTTPS'] = '';
 
@@ -258,12 +258,12 @@ if (!defined('TEMPLATE')) {
     );
     // Assigning values to class properties using $this
     $this->CURRENT = getcwd();
-    $this->URL = php_sapi_name() !== 'cli' ? SITE_URL . $_SERVER['REQUEST_URI'] : '';
+    $this->URL = php_sapi_name() !== 'sun' ? SITE_URL . $_SERVER['REQUEST_URI'] : '';
     $this->URL_FILE = URL_FILE;
     $this->URL_PAGE = basename(URL_FILE, ".php");
-    $this->SELF = php_sapi_name() !== 'cli' ? (SITE_URL . $_SERVER['PHP_SELF'] . (!empty($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : '')) : '';
-    $this->SELF_NONURL = php_sapi_name() !== 'cli' ? $_SERVER['PHP_SELF'] . (!empty($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : '') : '';
-    $this->QUERY_STRING = php_sapi_name() !== 'cli' ? $_SERVER['QUERY_STRING'] : '';
+    $this->SELF = php_sapi_name() !== 'sun' ? (SITE_URL . $_SERVER['PHP_SELF'] . (!empty($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : '')) : '';
+    $this->SELF_NONURL = php_sapi_name() !== 'sun' ? $_SERVER['PHP_SELF'] . (!empty($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : '') : '';
+    $this->QUERY_STRING = php_sapi_name() !== 'sun' ? $_SERVER['QUERY_STRING'] : '';
     $this->server = $_SERVER;
     $this->SYSTEM = $_SERVER['SYSTEM'];
 //    $this->aconf = json_decode(file_get_contents(PUBLIC_ROOT_WEB . "gaia.json"), true);

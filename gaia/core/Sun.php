@@ -1,4 +1,5 @@
 <?php
+//Cli.php
 namespace Core;
 
 use ReflectionClass;
@@ -14,11 +15,8 @@ use Core\Traits\Lang;
 use Core\Traits\Tree;
 use Core\Traits\Form;
 use Core\Traits\Domain;
-use Core\Traits\DomainZone;
 use Core\Traits\DomainFS;
-use Core\Traits\DomainSSL;
 use Core\Traits\DomainDB;
-use Core\Traits\DomainHost;
 use Core\Traits\Kronos;
 use Core\Traits\Sketch;
 use Core\Traits\WS;
@@ -32,8 +30,8 @@ use Core\Traits\CuboPublic;
 use Core\Traits\CuboAdmin;
 use Core\Cubo\Book;
 
-class Cli extends Gaia {
-use  Watch, Doc, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form,Domain,DomainZone,DomainFS,DomainSSL,DomainDB,DomainHost, Kronos, Sketch, WS, Action, Template, Media, Filemeta, My, CuboPublic, CuboAdmin, Template,Book;
+class Sun extends Gaia {
+use  Watch, Doc, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form,Domain,DomainFS,DomainDB,Kronos, Sketch, WS, Action, Template, Media, Filemeta, My, CuboPublic, CuboAdmin, Template,Book;
 
 public $argv=[]; // To store the arguments passed to the script
 public $argc; // Store the argument count

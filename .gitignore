@@ -62,4 +62,5 @@ mars/tmp2
 ###> phpunit/phpunit ###
 /phpunit.xml
 .phpunit.result.cache
+ermis.zip
 ###< phpunit/phpunit ###
