@@ -14,7 +14,6 @@
         "symfony/flex": "*",
         "twig/twig": "^2.16",
         "symfony/yaml": "^5.4",
-        "johnpbloch/wordpress": "^6.7",
         "guzzlehttp/guzzle": "^7.9",
         "abraham/twitteroauth": "^7.0",
         "phpmailer/phpmailer": "^7.1"
@@ -42,9 +41,8 @@
     "config": {
         "allow-plugins": {
             "symfony/flex": true,
-            "nodejs-php-fallback/nodejs-php-fallback": true,
-            "johnpbloch/wordpress-core-installer": true
-        }
+            "nodejs-php-fallback/nodejs-php-fallback": true
+               }
     },
     "scripts": {
         "auto-scripts": []

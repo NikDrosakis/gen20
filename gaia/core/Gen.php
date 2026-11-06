@@ -80,27 +80,8 @@ protected $emptyChannelImg='<img src="https://scontent.fath6-1.fna.fbcdn.net/v/t
         }elseif (in_array($_SERVER['SYSTEM'],[TEMPLATE,'admin'])) {
 				$this->router();
 
-        }elseif ($_SERVER['SYSTEM'] == 'nomadpoetrycom') {
-				$this->wpRouter();
         }
     }
-
-
-/**
-WORDPRESS ROUTER
- */
-protected function wpRouter() {
-    define('WP_USE_THEMES', true);
-
-    //$wpPath = GAIAROOT . 'vendor/johnpbloch/wordpress'; // Adjust if needed
-    $wpPath = GAIAROOT . 'public/'.DOMAIN; // Adjust if needed
-    if (!file_exists($wpPath . '/wp-blog-header.php')) {
-        throw new Exception("WordPress not found at: $wpPath");
-    }
-
-    require_once $wpPath . '/wp-blog-header.php';
-    exit; // Ensure Gen20 does not continue processing
-}
 
 
 /**
