@@ -1,0 +1,107 @@
+/* Badge.css — styles for <Badge /> and <BadgeAdmin /> */
+
+/* ---------- Public cubo ---------- */
+.badge-cubo-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+}
+
+.badge-cubo {
+    display: flex;
+    transition: transform 0.5s ease;
+}
+
+.badge-card {
+    min-width: 100%;
+    padding: 20px;
+    text-align: center;
+    border-radius: 8px;
+    background-color: #fff;
+    box-sizing: border-box;
+}
+
+.badge-card h4 {
+    margin: 8px 0 4px;
+}
+
+.badge-icon {
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.badge-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 24px;
+    user-select: none;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.06);
+    transition: background 0.2s ease;
+}
+.badge-nav:hover { background: rgba(0, 0, 0, 0.12); }
+.nav-left  { left: 10px; }
+.nav-right { right: 10px; }
+
+.badge-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 0;
+}
+.badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ccc;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.badge-dot.active { background: #1db954; }
+
+/* ---------- Admin ---------- */
+.badge-admin {
+    padding: 16px;
+    font-family: system-ui, sans-serif;
+    background: #fff;
+}
+.badge-admin table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+}
+.badge-admin th,
+.badge-admin td {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+}
+.badge-admin th { background: #f4f4f4; }
+.badge-admin input[type="text"],
+.badge-admin input[type="number"] {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+.badge-admin button {
+    padding: 6px 12px;
+    border: 0;
+    border-radius: 4px;
+    background: #1db954;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 600;
+}
+.badge-admin button.danger { background: #e74c3c; }
+.badge-admin .row-actions { display: flex; gap: 6px; }

@@ -40,6 +40,7 @@
     cursor: pointer;
 }
 .btn-primary {
+    width:200px;
     background: #007bff;
     color: white;
 }

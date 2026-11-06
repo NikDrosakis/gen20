@@ -1,8 +1,8 @@
 // /App.jsx
 import { Outlet } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import ErrorBoundary from "./components/ErrorBoundary";
-import { ThemeProvider } from "./contexts/ThemeContext";
+import Navbar from "./Navbar";
+import ErrorBoundary from "./ErrorBoundary";
+import { ThemeProvider } from "./ThemeContext";
 import "./App.css";
 export default function App() {
     return (

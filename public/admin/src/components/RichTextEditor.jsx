@@ -1,22 +1,21 @@
-/*
-#name: RichTextEditor
-*/
-import { useState, useRef, useEffect } from 'react';
+// components/RichTextEditor.jsx
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Handlebars from 'handlebars';
-import "./RichTextEditor.css";
+import RichTextEditorTools from './RichTextEditorTools';
+import RichTextEditorBubbleMenu from './RichTextEditorBubbleMenu';
+import RichTextEditorGlobalTools from './RichTextEditorGlobalTools';
+import RichTextEditorContextMenu from './RichTextEditorContextMenu';
+import RichTextEditorImageMenu from './RichTextEditorImageMenu';
+import MediaToolbox from './MediaToolbox';
+import './RichTextEditor.css';
 
-// Register Handlebars helpers
-Handlebars.registerHelper('eq', function(a, b) {
-    return a === b;
-});
-
-Handlebars.registerHelper('lang', function(field, options) {
+// ---- Handlebars helpers (global) ----
+Handlebars.registerHelper('eq', function (a, b) { return a === b; });
+Handlebars.registerHelper('lang', function (field, options) {
     const lang = options.data.root._lang || 'en';
-    const value = this[`${field}_${lang}`] || this[field];
-    return new Handlebars.SafeString(value || '');
+    return new Handlebars.SafeString(this[`${field}_${lang}`] || this[field] || '');
 });
-
-Handlebars.registerHelper('ifCond', function(v1, operator, v2, options) {
+Handlebars.registerHelper('ifCond', function (v1, operator, v2, options) {
     switch (operator) {
         case '==': return (v1 == v2) ? options.fn(this) : options.inverse(this);
         case '===': return (v1 === v2) ? options.fn(this) : options.inverse(this);
@@ -29,744 +28,883 @@ Handlebars.registerHelper('ifCond', function(v1, operator, v2, options) {
         default: return options.inverse(this);
     }
 });
-
-Handlebars.registerHelper('formatDate', function(date) {
+Handlebars.registerHelper('formatDate', function (date) {
     if (!date) return '';
-    const d = new Date(date);
-    return d.toLocaleDateString();
+    return new Date(date).toLocaleDateString();
 });
+
+// ---- Media popup dimensions ----
+const MEDIA_POPUP_W = 480;
+const MEDIA_POPUP_H = 520;
 
 const RichTextEditor = ({
                             value,
                             onChange,
-                            language,
+                            language = 'el',
                             dataSource = null,
                             templateType = 'handlebars',
                             customCss = '',
-                            onCssChange
+                            onCssChange,
+                            onRender,
+                            renderedContent: renderedContentProp = '',
                         }) => {
-    const [showPreview, setShowPreview] = useState(false);
-    const [showHtmlMode, setShowHtmlMode] = useState(false);
-    const [showCssPanel, setShowCssPanel] = useState(false);
-    const [showJsonMode, setShowJsonMode] = useState(false);
-    const [localCustomCss, setLocalCustomCss] = useState(customCss || '');
-    const [htmlContent, setHtmlContent] = useState('');
-    const [jsonTemplate, setJsonTemplate] = useState('');
     const [jsonData, setJsonData] = useState(dataSource || {});
     const [compileError, setCompileError] = useState('');
-    const [renderedContent, setRenderedContent] = useState('');
-    const editorRef = useRef(null);
-    const htmlTextareaRef = useRef(null);
-    const previousValueRef = useRef(value);
+    const [zoom, setZoom] = useState(100);
+    const [contextMenu, setContextMenu] = useState(null);
+    const [showMediaToolbox, setShowMediaToolbox] = useState(false);
+    const [mediaPopupPos, setMediaPopupPos] = useState({ top: 100, left: 100 });
 
-    // Update JSON data when dataSource prop changes
+    // ✅ Image selection + live style state
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [imageState, setImageState] = useState(null);
+
+    const [mode, setMode] = useState('visual');
+    const [htmlContent, setHtmlContent] = useState('');
+    const [renderedContent, setRenderedContent] = useState(renderedContentProp);
+
+    const editorRef = useRef(null);
+    const previousValueRef = useRef(undefined);
+    const popupRef = useRef(null);
+
+    // ✅ Drag state για το media popup
+    const dragRef = useRef({
+        dragging: false,
+        startX: 0,
+        startY: 0,
+        origX: 0,
+        origY: 0,
+    });
+
+    // ---- Sync dataSource ----
     useEffect(() => {
-        if (dataSource && typeof dataSource === 'object') {
-            setJsonData(dataSource);
-        } else if (dataSource && typeof dataSource === 'string') {
-            try {
-                setJsonData(JSON.parse(dataSource));
-            } catch (e) {
-                console.error('Error parsing dataSource:', e);
-                setJsonData({});
-            }
+        if (dataSource && typeof dataSource === 'object') setJsonData(dataSource);
+        else if (typeof dataSource === 'string') {
+            try { setJsonData(JSON.parse(dataSource)); }
+            catch { setJsonData({}); }
         }
     }, [dataSource]);
 
-    // Load custom CSS from prop
     useEffect(() => {
-        if (customCss) {
-            setLocalCustomCss(customCss);
-            applyCustomCss(customCss);
-        }
-    }, [customCss]);
+        if (renderedContentProp) setRenderedContent(renderedContentProp);
+    }, [renderedContentProp]);
 
-    // Apply custom CSS to editor and preview
-    const applyCustomCss = (css) => {
-        let styleElement = document.getElementById('rich-editor-custom-styles');
-        if (!styleElement) {
-            styleElement = document.createElement('style');
-            styleElement.id = 'rich-editor-custom-styles';
-            document.head.appendChild(styleElement);
-        }
-        styleElement.textContent = css;
+    // ✅ Sync htmlContent όταν αλλάζει το value (initial load / external)
+    useEffect(() => {
+        if (!editorRef.current) return;
+        if (mode === 'html') setHtmlContent(value || '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value, mode]);
+
+    // ✅ HTML Beautify
+    const beautifyHtml = (html) => {
+        if (!html) return '';
+        let out = html
+            .replace(/></g, '>\n<')
+            .replace(/\/>/g, ' />');
+
+        const lines = out.split('\n');
+        let indent = 0;
+        const result = lines.map((line) => {
+            const trimmed = line.trim();
+            if (!trimmed) return '';
+            if (/^<\//.test(trimmed)) indent = Math.max(0, indent - 1);
+            const indented = '  '.repeat(indent) + trimmed;
+            if (
+                /^<[^/!][^>]*>$/.test(trimmed) &&
+                !/<\/[^>]+>$/.test(trimmed) &&
+                !/^<(img|br|hr|input|meta|link)/i.test(trimmed)
+            ) {
+                indent++;
+            }
+            return indented;
+        });
+
+        return result.join('\n');
     };
 
-    // Render Handlebars template
+    // ✅ HTML Minify
+    const minifyHtml = (html) => {
+        if (!html) return '';
+        return html
+            .replace(/\n\s*/g, '')
+            .replace(/>\s+</g, '><')
+            .trim();
+    };
+
+    const handleModeChange = (nextMode) => {
+        // ✅ Commit HTML → editor (με minify)
+        if (mode === 'html' && nextMode !== 'html') {
+            if (editorRef.current) {
+                const incoming = minifyHtml(htmlContent || '');
+                if (editorRef.current.innerHTML !== incoming) {
+                    editorRef.current.innerHTML = incoming;
+                    previousValueRef.current = incoming;
+                    onChange({ target: { value: incoming } });
+                }
+            }
+        }
+
+        // ✅ Φόρτωση τρέχοντος περιεχομένου όταν μπαίνεις σε HTML
+        if (nextMode === 'html') {
+            const raw = editorRef.current?.innerHTML || value || '';
+            setHtmlContent(beautifyHtml(raw));
+        }
+
+        setMode(nextMode);
+    };
+
     const renderHandlebarsTemplate = (template, data) => {
-        if (!template || !template.trim()) {
-            return template || '';
-        }
-
-        if (!template.includes('{{') && !template.includes('{{#')) {
-            return template;
-        }
-
+        if (!template || !template.trim()) return template || '';
+        if (!template.includes('{{') && !template.includes('{{#')) return template;
         try {
-            const context = {
-                ...data,
-                _lang: language,
-                _now: new Date().toISOString()
-            };
             const compiled = Handlebars.compile(template);
-            const rendered = compiled(context);
+            const rendered = compiled({ ...data, _lang: language, _now: new Date().toISOString() });
             setCompileError('');
             return rendered;
         } catch (error) {
             setCompileError(error.message);
-            console.error('Handlebars error:', error);
-            return `<div class="handlebars-error" style="color: red; padding: 12px; border: 1px solid red; border-radius: 8px; margin: 10px;">
-                        <strong>Template Error:</strong> ${error.message}
-                    </div>`;
+            return `<div class="handlebars-error"><strong>Template Error:</strong> ${error.message}</div>`;
         }
     };
-
-    // Process content based on template type
-    const processContent = (content) => {
-        if ((templateType === 'handlebars' || showJsonMode) && jsonData && Object.keys(jsonData).length > 0) {
-            if (content && (content.includes('{{') || content.includes('{{#'))) {
-                return renderHandlebarsTemplate(content, jsonData);
-            }
-        }
-        return content;
-    };
-
-    // Update displayed content
-    useEffect(() => {
-        if (!showHtmlMode && !showPreview && !showJsonMode && editorRef.current) {
-            const processed = processContent(value || '');
-            if (editorRef.current.innerHTML !== processed) {
-                const savedRange = saveCursorPosition();
-                editorRef.current.innerHTML = processed;
-                restoreCursorPosition(savedRange);
-            }
-        }
-    }, [value, jsonData, language, templateType, showHtmlMode, showPreview, showJsonMode]);
-
-    // Update editor content when value prop changes
-    useEffect(() => {
-        const editor = editorRef.current;
-        if (!editor) return;
-
-        if (previousValueRef.current !== value && !showHtmlMode && !showJsonMode) {
-            const savedRange = saveCursorPosition();
-            editor.innerHTML = value || '';
-            restoreCursorPosition(savedRange);
-            previousValueRef.current = value;
-        }
-
-        if (showHtmlMode && htmlContent !== value) {
-            setHtmlContent(value || '');
-        }
-    }, [value, showHtmlMode, showJsonMode]);
 
     const saveCursorPosition = () => {
         const selection = window.getSelection();
-        if (!selection || selection.rangeCount === 0) return null;
-
+        if (!selection || selection.rangeCount === 0 || !editorRef.current) return null;
         const range = selection.getRangeAt(0);
-        const preSelectionRange = range.cloneRange();
-        preSelectionRange.selectNodeContents(editorRef.current);
-        preSelectionRange.setEnd(range.startContainer, range.startOffset);
-        const start = preSelectionRange.toString().length;
-
+        const pre = range.cloneRange();
+        pre.selectNodeContents(editorRef.current);
+        pre.setEnd(range.startContainer, range.startOffset);
+        const start = pre.toString().length;
         return { start, end: start + range.toString().length };
     };
 
-    const restoreCursorPosition = (savedPosition) => {
-        if (!savedPosition || !editorRef.current) return;
-
-        const selection = window.getSelection();
-        if (!selection) return;
-
-        const charIndex = savedPosition.start;
+    const restoreCursorPosition = (pos) => {
+        if (!pos || !editorRef.current) return;
+        const sel = window.getSelection();
+        if (!sel) return;
         const range = document.createRange();
         range.selectNodeContents(editorRef.current);
-
-        let found = false;
-        let charCount = 0;
-        const walker = document.createTreeWalker(
-            editorRef.current,
-            NodeFilter.SHOW_TEXT,
-            null,
-            false
-        );
-
+        let found = false, count = 0;
+        const walker = document.createTreeWalker(editorRef.current, NodeFilter.SHOW_TEXT);
         while (walker.nextNode()) {
             const node = walker.currentNode;
-            const nodeText = node.textContent || '';
-            const nodeLength = nodeText.length;
-
-            if (charCount + nodeLength >= charIndex) {
-                const offset = charIndex - charCount;
-                range.setStart(node, Math.min(offset, nodeLength));
-                range.setEnd(node, Math.min(offset, nodeLength));
+            const len = (node.textContent || '').length;
+            if (count + len >= pos.start) {
+                const offset = Math.min(pos.start - count, len);
+                range.setStart(node, offset);
+                range.setEnd(node, offset);
                 range.collapse(true);
                 found = true;
                 break;
             }
-            charCount += nodeLength;
+            count += len;
         }
-
-        if (!found) {
-            range.selectNodeContents(editorRef.current);
-            range.collapse(false);
-        }
-
-        selection.removeAllRanges();
-        selection.addRange(range);
+        if (!found) { range.selectNodeContents(editorRef.current); range.collapse(false); }
+        sel.removeAllRanges();
+        sel.addRange(range);
     };
 
+    useEffect(() => {
+        const editor = editorRef.current;
+        if (!editor) return;
+        if (mode !== 'visual') return;
+
+        const incoming = value || '';
+        if (editor.innerHTML === incoming) {
+            previousValueRef.current = incoming;
+            return;
+        }
+
+        const isFocused = document.activeElement === editor;
+        const saved = isFocused ? saveCursorPosition() : null;
+        editor.innerHTML = incoming;
+        if (saved) restoreCursorPosition(saved);
+        previousValueRef.current = incoming;
+    }, [value, mode]);
+
     const handleInput = (e) => {
-        if (showJsonMode) return;
         const content = e.currentTarget.innerHTML;
         previousValueRef.current = content;
         onChange({ target: { value: content } });
+    };
 
-        if (showHtmlMode) {
-            setHtmlContent(content);
+    // ---- Commands ----
+    const execCommand = useCallback((command, val = null) => {
+        const editor = editorRef.current;
+        if (!editor) return;
+        editor.focus();
+        document.execCommand(command, false, val);
+        onChange({ target: { value: editor.innerHTML } });
+    }, [onChange]);
+
+    const formatBlock = useCallback((tag) => {
+        const editor = editorRef.current;
+        if (!editor) return;
+        editor.focus();
+        const normalized =
+            tag === 'P' ? '<P>' :
+                tag === 'BLOCKQUOTE' ? '<BLOCKQUOTE>' :
+                    `<${tag.toUpperCase()}>`;
+        document.execCommand('formatBlock', false, normalized);
+        onChange({ target: { value: editor.innerHTML } });
+    }, [onChange]);
+
+    const setFontSize = useCallback((px) => {
+        const editor = editorRef.current;
+        if (!editor) return;
+        editor.focus();
+        document.execCommand('fontSize', false, '7');
+        editor.querySelectorAll('font[size="7"]').forEach(el => {
+            const span = document.createElement('span');
+            span.style.fontSize = px + 'px';
+            span.innerHTML = el.innerHTML;
+            el.replaceWith(span);
+        });
+        onChange({ target: { value: editor.innerHTML } });
+    }, [onChange]);
+
+    const setFontFamily = useCallback((family) => {
+        if (!family) return;
+        execCommand('fontName', family);
+    }, [execCommand]);
+
+    // ✅ Line height (διάστιχο)
+    const handleLineHeight = useCallback((value) => {
+        const editor = editorRef.current;
+        if (!editor) return;
+        editor.focus();
+
+        if (!value) {
+            editor.style.lineHeight = '';
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount > 0) {
+                let node = sel.getRangeAt(0).startContainer;
+                if (node.nodeType === 3) node = node.parentElement;
+                while (node && node !== editor) {
+                    if (['P','DIV','H1','H2','H3','H4','LI','BLOCKQUOTE'].includes(node.tagName)) {
+                        node.style.lineHeight = '';
+                        break;
+                    }
+                    node = node.parentElement;
+                }
+            }
+            onChange({ target: { value: editor.innerHTML } });
+            return;
+        }
+
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+            let node = sel.getRangeAt(0).startContainer;
+            if (node.nodeType === 3) node = node.parentElement;
+
+            let block = node;
+            while (block && block !== editor) {
+                if (['P','DIV','H1','H2','H3','H4','LI','BLOCKQUOTE'].includes(block.tagName)) {
+                    block.style.lineHeight = value;
+                    break;
+                }
+                block = block.parentElement;
+            }
+
+            if (!block || block === editor) {
+                editor.style.lineHeight = value;
+            }
+        } else {
+            editor.style.lineHeight = value;
+        }
+
+        onChange({ target: { value: editor.innerHTML } });
+    }, [onChange]);
+
+    const insertHtml = (html) => {
+        const editor = editorRef.current;
+        if (!editor) return;
+        editor.focus();
+        const sel = window.getSelection();
+        if (!sel || !sel.rangeCount) return;
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        const frag = document.createDocumentFragment();
+        let n;
+        while ((n = div.firstChild)) frag.appendChild(n);
+        range.insertNode(frag);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        onChange({ target: { value: editor.innerHTML } });
+    };
+
+    const handleLink = () => {
+        const url = prompt('Enter URL:', 'https://');
+        if (url && url.startsWith('http')) execCommand('createLink', url);
+        else if (url) alert('Please enter a valid URL starting with http:// or https://');
+    };
+
+    // ============================================================
+    // ✅ MEDIA POPUP
+    // ============================================================
+    const openMediaPopup = useCallback(() => {
+        let top = window.innerHeight / 2 - MEDIA_POPUP_H / 2;
+        let left = window.innerWidth / 2 - MEDIA_POPUP_W / 2;
+
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+            const rect = sel.getRangeAt(0).getBoundingClientRect();
+            top = rect.bottom + 8;
+            left = rect.left;
+        } else if (editorRef.current) {
+            const editorRect = editorRef.current.getBoundingClientRect();
+            top = editorRect.top + 60;
+            left = editorRect.left + 40;
+        }
+
+        left = Math.max(8, Math.min(left, window.innerWidth - MEDIA_POPUP_W - 8));
+        top = Math.max(8, Math.min(top, window.innerHeight - MEDIA_POPUP_H - 8));
+
+        setMediaPopupPos({ top, left });
+        setShowMediaToolbox(true);
+    }, []);
+
+    const handleImageUpload = () => openMediaPopup();
+
+    const handleMediaSelect = (media) => {
+        const url = media?.url || media?.path || media?.filename || media;
+        if (typeof url === 'string' && url) {
+            const src = url.startsWith('http') ? url : `/media/${url}`;
+            editorRef.current?.focus();
+            insertHtml(`<img src="${src}" alt="Image" class="rte-img" />`);
+        }
+        setShowMediaToolbox(false);
+    };
+
+    // ============================================================
+    // ✅ DRAG-TO-MOVE για το Media popup
+    // ============================================================
+    const handlePopupMouseDown = (e) => {
+        if (!e.target.closest('.media-toolbox-header')) return;
+        if (e.target.closest('.media-toolbox-close')) return;
+
+        e.preventDefault();
+        dragRef.current = {
+            dragging: true,
+            startX: e.clientX,
+            startY: e.clientY,
+            origX: mediaPopupPos.left,
+            origY: mediaPopupPos.top,
+        };
+        document.addEventListener('mousemove', handlePopupMouseMove);
+        document.addEventListener('mouseup', handlePopupMouseUp);
+    };
+
+    const handlePopupMouseMove = (e) => {
+        const d = dragRef.current;
+        if (!d.dragging) return;
+        const dx = e.clientX - d.startX;
+        const dy = e.clientY - d.startY;
+        setMediaPopupPos({
+            left: Math.max(0, Math.min(d.origX + dx, window.innerWidth - MEDIA_POPUP_W)),
+            top: Math.max(0, Math.min(d.origY + dy, window.innerHeight - MEDIA_POPUP_H)),
+        });
+    };
+
+    const handlePopupMouseUp = () => {
+        dragRef.current.dragging = false;
+        document.removeEventListener('mousemove', handlePopupMouseMove);
+        document.removeEventListener('mouseup', handlePopupMouseUp);
+    };
+
+    useEffect(() => {
+        return () => {
+            document.removeEventListener('mousemove', handlePopupMouseMove);
+            document.removeEventListener('mouseup', handlePopupMouseUp);
+        };
+    }, []);
+
+    // ============================================================
+    // ✅ IMAGE: state read + handlers
+    // ============================================================
+    const readImageState = (img) => {
+        if (!img) return null;
+        const cs = img.style;
+        const editor = editorRef.current;
+        const editorWidth = editor ? editor.clientWidth : 800;
+        const rect = img.getBoundingClientRect();
+        const widthPct = editorWidth ? Math.round((rect.width / editorWidth) * 100) : 100;
+
+        return {
+            float: cs.float || 'none',
+            display: cs.display || 'inline',
+            marginTop: parseInt(cs.marginTop) || 0,
+            marginBottom: parseInt(cs.marginBottom) || 0,
+            marginLeft: parseInt(cs.marginLeft) || 0,
+            marginRight: parseInt(cs.marginRight) || 0,
+            width: widthPct,
+            textAlign: cs.textAlign || 'left',
+            verticalAlign: cs.verticalAlign || 'baseline',
+        };
+    };
+
+    const handleEditorClick = (e) => {
+        if (e.target.tagName === 'IMG') {
+            setSelectedImage(e.target);
+            setImageState(readImageState(e.target));
+        } else {
+            setSelectedImage(null);
+            setImageState(null);
         }
     };
 
-    const handleHtmlChange = (e) => {
-        const newHtml = e.target.value;
-        setHtmlContent(newHtml);
-        previousValueRef.current = newHtml;
-        onChange({ target: { value: newHtml } });
-    };
+    const handleImageStyleChange = (patch) => {
+        if (!selectedImage) return;
 
-    const handleCssChange = (e) => {
-        const css = e.target.value;
-        setLocalCustomCss(css);
-        applyCustomCss(css);
-        if (onCssChange) {
-            onCssChange(css);
+        if (patch.float !== undefined) selectedImage.style.float = patch.float;
+        if (patch.display !== undefined) selectedImage.style.display = patch.display;
+
+        if (patch.marginTop !== undefined) {
+            selectedImage.style.marginTop = typeof patch.marginTop === 'number'
+                ? `${patch.marginTop}px` : patch.marginTop;
         }
+        if (patch.marginBottom !== undefined) {
+            selectedImage.style.marginBottom = typeof patch.marginBottom === 'number'
+                ? `${patch.marginBottom}px` : patch.marginBottom;
+        }
+        if (patch.marginLeft !== undefined) {
+            selectedImage.style.marginLeft = typeof patch.marginLeft === 'number'
+                ? `${patch.marginLeft}px` : patch.marginLeft;
+        }
+        if (patch.marginRight !== undefined) {
+            selectedImage.style.marginRight = typeof patch.marginRight === 'number'
+                ? `${patch.marginRight}px` : patch.marginRight;
+        }
+
+        if (patch.textAlign !== undefined) selectedImage.style.textAlign = patch.textAlign;
+        if (patch.verticalAlign !== undefined) selectedImage.style.verticalAlign = patch.verticalAlign;
+        if (patch.width !== undefined) selectedImage.style.width = `${patch.width}%`;
+
+        setImageState(readImageState(selectedImage));
+        onChange({ target: { value: editorRef.current.innerHTML } });
     };
 
-    const handleJsonTemplateChange = (e) => {
-        setJsonTemplate(e.target.value);
+    const handleImageDelete = () => {
+        if (!selectedImage) return;
+        selectedImage.remove();
+        setSelectedImage(null);
+        setImageState(null);
+        onChange({ target: { value: editorRef.current.innerHTML } });
     };
 
-    const handleJsonDataChange = (e) => {
+    // ✅ Drag-to-resize
+    const startResize = (e) => {
+        if (!selectedImage) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const startX = e.clientX;
+        const startRect = selectedImage.getBoundingClientRect();
+        const editor = editorRef.current;
+        const editorWidth = editor.clientWidth;
+
+        const onMove = (ev) => {
+            const dx = ev.clientX - startX;
+            const newWidthPx = startRect.width + dx;
+            const newWidthPct = Math.max(10, Math.min(100, (newWidthPx / editorWidth) * 100));
+            selectedImage.style.width = newWidthPct + '%';
+            setImageState((prev) => prev ? { ...prev, width: Math.round(newWidthPct) } : prev);
+        };
+
+        const onUp = () => {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            setImageState(readImageState(selectedImage));
+            onChange({ target: { value: editorRef.current.innerHTML } });
+        };
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    };
+
+    // ✅ Drag-to-move εικόνας
+    const startImageDrag = (e) => {
+        if (!selectedImage) return;
+        if (e.button !== 0) return;
+        if (e.target.classList.contains('rte-img-resize-handle')) return;
+
+        e.preventDefault();
+
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startRect = selectedImage.getBoundingClientRect();
+        let dragging = false;
+        let ghost = null;
+
+        const onMove = (ev) => {
+            const dx = ev.clientX - startX;
+            const dy = ev.clientY - startY;
+
+            if (!dragging && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+                dragging = true;
+                ghost = selectedImage.cloneNode(true);
+                ghost.style.position = 'fixed';
+                ghost.style.pointerEvents = 'none';
+                ghost.style.opacity = '0.6';
+                ghost.style.zIndex = '1000000';
+                ghost.style.width = startRect.width + 'px';
+                ghost.style.height = startRect.height + 'px';
+                ghost.style.left = startRect.left + 'px';
+                ghost.style.top = startRect.top + 'px';
+                ghost.style.margin = '0';
+                ghost.style.transform = 'none';
+                document.body.appendChild(ghost);
+                selectedImage.style.opacity = '0.3';
+            }
+
+            if (dragging && ghost) {
+                ghost.style.left = (startRect.left + dx) + 'px';
+                ghost.style.top = (startRect.top + dy) + 'px';
+            }
+        };
+
+        const onUp = (ev) => {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+
+            if (ghost) ghost.remove();
+            if (selectedImage) selectedImage.style.opacity = '';
+
+            if (!dragging) return;
+
+            const range = document.caretRangeFromPoint
+                ? document.caretRangeFromPoint(ev.clientX, ev.clientY)
+                : (document.caretPositionFromPoint
+                    ? (() => {
+                        const p = document.caretPositionFromPoint(ev.clientX, ev.clientY);
+                        if (!p) return null;
+                        const r = document.createRange();
+                        r.setStart(p.offsetNode, p.offset);
+                        r.collapse(true);
+                        return r;
+                    })()
+                    : null);
+
+            if (range && editorRef.current && editorRef.current.contains(range.startContainer)) {
+                const editor = editorRef.current;
+                const img = selectedImage;
+
+                range.deleteContents();
+                range.insertNode(img);
+                range.collapse(false);
+
+                onChange({ target: { value: editor.innerHTML } });
+            }
+        };
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    };
+
+    useEffect(() => {
+        if (selectedImage) setImageState(readImageState(selectedImage));
+        else setImageState(null);
+    }, [selectedImage]);
+
+    // ============================================================
+    // ✅ Clean HTML / Render / JSON handlers
+    // ============================================================
+    const cleanHtml = useCallback(() => {
+        const editor = editorRef.current;
+        if (!editor) return;
+        let c = editor.innerHTML;
+        c = c.replace(/<span\s+style="[^"]*"><\/span>/g, '')
+            .replace(/<span\s+style="[^"]*">/g, '')
+            .replace(/<\/span>/g, '')
+            .replace(/style="[^"]*font-family[^"]*"/g, '')
+            .replace(/style="[^"]*font-size[^"]*"/g, '')
+            .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+            .replace(/<p>\s*<\/p>/g, '');
+        editor.innerHTML = c;
+        onChange({ target: { value: c } });
+    }, [onChange]);
+
+    // ✅ Render: template = το τρέχον HTML του editor, data = jsonData
+    const handleRender = useCallback(() => {
+        const editor = editorRef.current;
+        const template = editor?.innerHTML || value || '';
+        const out = renderHandlebarsTemplate(template, jsonData);
+        setRenderedContent(out);
+        if (onRender) onRender(out, template, jsonData);
+    }, [jsonData, onRender, value]);
+
+    const handleJsonDataChange = (val) => {
         try {
-            const newData = JSON.parse(e.target.value);
-            setJsonData(newData);
+            const parsed = JSON.parse(val);
+            setJsonData(parsed);
             setCompileError('');
         } catch (err) {
             setCompileError('Invalid JSON: ' + err.message);
         }
     };
 
-    const toggleJsonMode = () => {
-        if (!showJsonMode) {
-            const currentHtml = editorRef.current?.innerHTML || value || '';
-            setJsonTemplate(currentHtml);
-            const rendered = renderHandlebarsTemplate(currentHtml, jsonData);
-            setRenderedContent(rendered);
-        } else {
-            if (renderedContent) {
-                onChange({ target: { value: renderedContent } });
-                if (editorRef.current) {
-                    editorRef.current.innerHTML = renderedContent;
-                    previousValueRef.current = renderedContent;
-                }
-            }
-        }
-        setShowJsonMode(!showJsonMode);
-        setShowHtmlMode(false);
-        setShowPreview(false);
-        setShowCssPanel(false);
+    // ============================================================
+    // ✅ CONTEXT MENU HANDLERS
+    // ============================================================
+    const handleContextMenu = (e) => {
+        const target = e.target;
+        if (target.closest('a') || target.closest('img')) return;
+        e.preventDefault();
+
+        const sel = window.getSelection();
+        const hasSelection =
+            sel &&
+            !sel.isCollapsed &&
+            sel.rangeCount > 0 &&
+            editorRef.current?.contains(sel.getRangeAt(0).commonAncestorContainer);
+
+        setContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            hasSelection: Boolean(hasSelection),
+        });
     };
 
-    const updateRenderedContent = () => {
-        const rendered = renderHandlebarsTemplate(jsonTemplate, jsonData);
-        setRenderedContent(rendered);
-        if (!showHtmlMode && !showPreview) {
-            if (editorRef.current) {
-                editorRef.current.innerHTML = rendered;
-                previousValueRef.current = rendered;
-                onChange({ target: { value: rendered } });
-            }
-        }
-        onChange({ target: { value: rendered } });
-    };
+    const handleCut = () => { execCommand('cut'); setContextMenu(null); };
+    const handleCopy = () => { execCommand('copy'); setContextMenu(null); };
 
-    const toggleHtmlMode = () => {
-        if (!showHtmlMode) {
-            const currentHtml = editorRef.current?.innerHTML || value || '';
-            setHtmlContent(currentHtml);
-        } else {
-            if (editorRef.current && htmlContent !== editorRef.current.innerHTML) {
-                editorRef.current.innerHTML = htmlContent;
-                previousValueRef.current = htmlContent;
-                onChange({ target: { value: htmlContent } });
-            }
-        }
-        setShowHtmlMode(!showHtmlMode);
-        setShowPreview(false);
-        setShowCssPanel(false);
-        setShowJsonMode(false);
-    };
-
-    const toggleCssPanel = () => {
-        setShowCssPanel(!showCssPanel);
-        setShowPreview(false);
-        setShowHtmlMode(false);
-        setShowJsonMode(false);
-    };
-
-    const execCommand = (command, val = null) => {
-        if (showHtmlMode || showJsonMode) return;
-        const editor = editorRef.current;
-        if (!editor) return;
-        editor.focus();
-        document.execCommand(command, false, val);
-        const content = editor.innerHTML;
-        previousValueRef.current = content;
-        onChange({ target: { value: content } });
-    };
-
-    const formatBlock = (tag) => {
-        if (showHtmlMode || showJsonMode) return;
-        const editor = editorRef.current;
-        if (!editor) return;
-        editor.focus();
-        document.execCommand('formatBlock', false, tag);
-        const content = editor.innerHTML;
-        previousValueRef.current = content;
-        onChange({ target: { value: content } });
-    };
-
-    const insertHtml = (html) => {
-        if (showHtmlMode) {
-            setHtmlContent(prev => prev + html);
-            onChange({ target: { value: htmlContent + html } });
-            return;
-        }
-        if (showJsonMode) {
-            setJsonTemplate(prev => prev + html);
-            return;
-        }
-
-        const editor = editorRef.current;
-        if (!editor) return;
-        editor.focus();
-
-        const selection = window.getSelection();
-        if (!selection || !selection.rangeCount) return;
-
-        const range = selection.getRangeAt(0);
-        range.deleteContents();
-
-        const div = document.createElement('div');
-        div.innerHTML = html;
-        const fragment = document.createDocumentFragment();
-        let node;
-        while ((node = div.firstChild)) {
-            fragment.appendChild(node);
-        }
-
-        range.insertNode(fragment);
-        range.collapse(false);
-        selection.removeAllRanges();
-        selection.addRange(range);
-
-        const content = editor.innerHTML;
-        previousValueRef.current = content;
-        onChange({ target: { value: content } });
-    };
-
-    const handleImageUpload = () => {
-        const url = prompt('Enter image URL:', 'https://example.com/image.jpg');
-        if (url && url.startsWith('http')) {
-            insertHtml(`<img src="${url}" alt="Image" style="max-width:100%; border-radius:8px; margin:1rem 0;" />`);
-        } else if (url) {
-            alert('Please enter a valid URL starting with http:// or https://');
-        }
-    };
-
-    const handleLink = () => {
-        const url = prompt('Enter URL:', 'https://');
-        if (url && url.startsWith('http')) {
-            execCommand('createLink', url);
-        } else if (url) {
-            alert('Please enter a valid URL starting with http:// or https://');
-        }
-    };
-
-    const cleanHtml = () => {
-        if (showHtmlMode) {
-            let content = htmlContent;
-            content = content.replace(/<span\s+style="[^"]*"><\/span>/g, '');
-            content = content.replace(/<span\s+style="[^"]*">/g, '');
-            content = content.replace(/<\/span>/g, '');
-            content = content.replace(/style="[^"]*font-family[^"]*"/g, '');
-            content = content.replace(/style="[^"]*font-size[^"]*"/g, '');
-            content = content.replace(/&lt;/g, '<');
-            content = content.replace(/&gt;/g, '>');
-            content = content.replace(/&amp;/g, '&');
-            content = content.replace(/<p>\s*<\/p>/g, '');
-            setHtmlContent(content);
-            onChange({ target: { value: content } });
-            return;
-        }
-
-        const editor = editorRef.current;
-        if (!editor) return;
-        let content = editor.innerHTML;
-
-        content = content.replace(/<span\s+style="[^"]*"><\/span>/g, '');
-        content = content.replace(/<span\s+style="[^"]*">/g, '');
-        content = content.replace(/<\/span>/g, '');
-        content = content.replace(/style="[^"]*font-family[^"]*"/g, '');
-        content = content.replace(/style="[^"]*font-size[^"]*"/g, '');
-        content = content.replace(/&lt;/g, '<');
-        content = content.replace(/&gt;/g, '>');
-        content = content.replace(/&amp;/g, '&');
-        content = content.replace(/<p>\s*<\/p>/g, '');
-
-        editor.innerHTML = content;
-        previousValueRef.current = content;
-        onChange({ target: { value: content } });
-    };
-
-    const formatHtml = () => {
-        if (!showHtmlMode) return;
+    const handlePaste = async () => {
         try {
-            let content = htmlContent;
-            content = content.replace(/>\s+</g, '><');
-            setHtmlContent(content);
-            onChange({ target: { value: content } });
-        } catch (e) {
-            console.error('Error formatting HTML:', e);
+            const text = await navigator.clipboard.readText();
+            const editor = editorRef.current;
+            if (!editor) return;
+            editor.focus();
+            document.execCommand('insertText', false, text);
+        } catch (err) {
+            console.warn('Clipboard paste not available:', err);
         }
+        setContextMenu(null);
     };
 
-    const insertVariable = (variable) => {
-        if (showJsonMode) {
-            const varText = `{{${variable}}}`;
-            setJsonTemplate(prev => prev + varText);
-        }
+    const handleOpenMedia = () => {
+        setContextMenu(null);
+        openMediaPopup();
     };
 
-    const insertLoop = () => {
-        if (showJsonMode) {
-            const loopText = `{{#each items}}
-  <div class="item">
-    <h3>{{title}}</h3>
-    <p>{{description}}</p>
-  </div>
-{{/each}}`;
-            setJsonTemplate(prev => prev + loopText);
-        }
+    const handleLinkContext = () => {
+        setContextMenu(null);
+        handleLink();
     };
 
-    const toolbarStyles = {
-        display: 'flex', gap: '4px', padding: '8px', background: '#f8fafc',
-        borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap',
-        borderTopLeftRadius: '8px', borderTopRightRadius: '8px'
+    const handleClearFormatContext = () => {
+        setContextMenu(null);
+        execCommand('removeFormat');
     };
 
-    const buttonStyles = {
-        padding: '6px 10px', background: 'white', border: '1px solid #cbd5e1',
-        borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '500',
-        transition: 'all 0.2s', fontFamily: 'inherit'
-    };
+    // ============================================================
+    // ✅ Resize handle position
+    // ============================================================
+    const resizeHandlePos = selectedImage
+        ? (() => {
+            const r = selectedImage.getBoundingClientRect();
+            return {
+                top: r.bottom - 8,
+                left: r.right - 8,
+            };
+        })()
+        : null;
 
-    const activeButtonStyles = {
-        ...buttonStyles,
-        background: '#3b82f6',
-        color: 'white',
-        borderColor: '#3b82f6'
-    };
+    // ✅ Zoom με Ctrl/Cmd/Alt + wheel (μόνο πάνω στον editor)
+    useEffect(() => {
+        const editor = editorRef.current;
+        if (!editor) return;
 
-    const panelStyles = {
-        padding: '12px',
-        background: '#f8fafc',
-        borderBottom: '1px solid #e2e8f0'
-    };
+        const handleWheel = (e) => {
+            // Μόνο όταν ο κέρσορας είναι πάνω στον editor
+            if (!editor.contains(e.target)) return;
+
+            // Μόνο με Ctrl/Cmd/Alt
+            if (!(e.ctrlKey || e.metaKey || e.altKey)) return;
+
+            e.preventDefault();
+
+            // Δέλτα (πάνω = zoom in, κάτω = zoom out)
+            const step = 5;
+            const direction = e.deltaY < 0 ? 1 : -1;
+
+            setZoom((prev) => {
+                const next = prev + direction * step;
+                return Math.max(50, Math.min(200, next));
+            });
+        };
+
+        // passive: false για να μπορούμε preventDefault
+        editor.addEventListener('wheel', handleWheel, { passive: false });
+
+        return () => {
+            editor.removeEventListener('wheel', handleWheel);
+        };
+    }, []);
 
     return (
-        <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden', background: 'white' }}>
-            <div style={toolbarStyles}>
-                {!showHtmlMode && !showCssPanel && !showJsonMode && (
-                    <>
-                        <button type="button" onClick={() => execCommand('bold')} style={buttonStyles} title="Bold"><b>B</b></button>
-                        <button type="button" onClick={() => execCommand('italic')} style={buttonStyles} title="Italic"><i>I</i></button>
-                        <button type="button" onClick={() => execCommand('underline')} style={buttonStyles} title="Underline"><u>U</u></button>
-                        <span style={{ width: '1px', background: '#cbd5e1', margin: '0 4px' }}></span>
-                        <button type="button" onClick={() => formatBlock('H2')} style={buttonStyles} title="Heading 2">H2</button>
-                        <button type="button" onClick={() => formatBlock('H3')} style={buttonStyles} title="Heading 3">H3</button>
-                        <span style={{ width: '1px', background: '#cbd5e1', margin: '0 4px' }}></span>
-                        <button type="button" onClick={() => execCommand('insertUnorderedList')} style={buttonStyles} title="Bullet List">• UL</button>
-                        <button type="button" onClick={() => execCommand('insertOrderedList')} style={buttonStyles} title="Numbered List">1. OL</button>
-                        <span style={{ width: '1px', background: '#cbd5e1', margin: '0 4px' }}></span>
-                        <button type="button" onClick={() => execCommand('justifyLeft')} style={buttonStyles} title="Align Left">⬅️</button>
-                        <button type="button" onClick={() => execCommand('justifyCenter')} style={buttonStyles} title="Align Center">⬌</button>
-                        <button type="button" onClick={() => execCommand('justifyRight')} style={buttonStyles} title="Align Right">➡️</button>
-                        <span style={{ width: '1px', background: '#cbd5e1', margin: '0 4px' }}></span>
-                        <button type="button" onClick={handleLink} style={buttonStyles} title="Add Link">🔗 Link</button>
-                        <button type="button" onClick={handleImageUpload} style={buttonStyles} title="Add Image">🖼 Image</button>
-                        <button type="button" onClick={() => execCommand('removeFormat')} style={buttonStyles} title="Clear Formatting">✖️ Clear</button>
-                        <button type="button" onClick={cleanHtml} style={{ ...buttonStyles, background: '#fef3c7' }} title="Clean HTML">🧹 Clean</button>
-                        <div style={{ flex: 1 }}></div>
-                    </>
-                )}
-
-                {showHtmlMode && (
-                    <>
-                        <button type="button" onClick={formatHtml} style={buttonStyles} title="Format HTML">✨ Format</button>
-                        <button type="button" onClick={cleanHtml} style={{ ...buttonStyles, background: '#fef3c7' }} title="Clean HTML">🧹 Clean</button>
-                        <div style={{ flex: 1 }}></div>
-                    </>
-                )}
-
-                {showJsonMode && (
-                    <>
-                        <button type="button" onClick={() => insertVariable('personal.name')} style={buttonStyles}>➕ Var</button>
-                        <button type="button" onClick={insertLoop} style={buttonStyles}>🔄 Loop</button>
-                        <div style={{ flex: 1 }}></div>
-                    </>
-                )}
-
-                <button
-                    type="button"
-                    onClick={toggleJsonMode}
-                    style={showJsonMode ? activeButtonStyles : buttonStyles}
-                    title="JSON Template Mode"
-                >
-                    🔄 JSON
-                </button>
-
-                <button
-                    type="button"
-                    onClick={toggleCssPanel}
-                    style={showCssPanel ? activeButtonStyles : buttonStyles}
-                    title="Custom CSS"
-                >
-                    🎨 CSS
-                </button>
-
-                <button
-                    type="button"
-                    onClick={toggleHtmlMode}
-                    style={showHtmlMode ? activeButtonStyles : buttonStyles}
-                    title="HTML Mode"
-                >
-                    {showHtmlMode ? '📝 Visual' : '💻 HTML'}
-                </button>
-
-                {!showHtmlMode && !showCssPanel && !showJsonMode && (
-                    <button
-                        type="button"
-                        onClick={() => setShowPreview(!showPreview)}
-                        style={{ ...buttonStyles, background: showPreview ? '#3b82f6' : '#e2e8f0', color: showPreview ? 'white' : '#334155' }}
-                        title="Preview"
-                    >
-                        {showPreview ? '✏️ Edit' : '👁 Preview'}
-                    </button>
-                )}
+        <div className="rte-root">
+            {/* ✅ Global header */}
+            <div className="rte-global-header">
+                <span className="rte-global-label-title">
+                    Content <span className="required">*</span>
+                </span>
+                <RichTextEditorGlobalTools
+                    mode={mode}
+                    onModeChange={handleModeChange}
+                    htmlContent={htmlContent}
+                    onHtmlChange={setHtmlContent}
+                    jsonData={jsonData}
+                    onJsonDataChange={handleJsonDataChange}
+                    jsonError={compileError}
+                    customCss={customCss}
+                    onCssChange={onCssChange}
+                    onRender={handleRender}
+                    renderedContent={renderedContent}
+                    onCleanHtml={cleanHtml}
+                    gContent={jsonData?.GContent || {}}
+                    onSettingsSave={(newGContent) => {
+                        setJsonData((prev) => ({
+                            ...prev,
+                            GContent: newGContent,
+                        }));
+                        // Ενημέρωση parent για save στο content.json
+                        if (onRender) {
+                            const editor = editorRef.current;
+                            const template = editor?.innerHTML || value || '';
+                            onRender(renderedContent, template, { ...jsonData, GContent: newGContent });
+                        }
+                    }}
+                />
             </div>
 
-            {/* JSON Mode Panel */}
-            {showJsonMode && (
-                <div style={panelStyles}>
-                    <div style={{ marginBottom: '12px' }}>
-                        <strong>🔄 Handlebars Template Mode</strong>
-                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-                            Use <code>{'{{variable}}'}</code> syntax with your JSON data
-                        </div>
-                    </div>
-
-                    <div style={{ marginBottom: '12px' }}>
-                        <div style={{ fontSize: '12px', marginBottom: '4px', color: '#475569' }}>Template:</div>
-                        <textarea
-                            value={jsonTemplate}
-                            onChange={handleJsonTemplateChange}
-                            style={{
-                                width: '100%',
-                                padding: '12px',
-                                minHeight: '150px',
-                                fontFamily: 'monospace',
-                                fontSize: '12px',
-                                border: '1px solid #cbd5e1',
-                                borderRadius: '6px',
-                                background: '#1e1e2e',
-                                color: '#e2e8f0',
-                                resize: 'vertical'
-                            }}
-                            placeholder="{{#each items}}<div>{{property}}</div>{{/each}}"
+            {/* ✅ Visual mode */}
+            {mode === 'visual' && (
+                <div className="rte-body">
+                    <aside className="rte-sidebar">
+                        <RichTextEditorTools
+                            onCommand={execCommand}
+                            onFormatBlock={formatBlock}
+                            onSetLineHeight={handleLineHeight}
+                            onCleanHtml={cleanHtml}
+                            onSetFontSize={setFontSize}
+                            onSetFontFamily={setFontFamily}
+                            zoom={zoom}
+                            onZoomChange={setZoom}
                         />
-                    </div>
+                    </aside>
 
-                    <div style={{ marginBottom: '12px' }}>
-                        <div style={{ fontSize: '12px', marginBottom: '4px', color: '#475569' }}>JSON Data:</div>
-                        <textarea
-                            value={JSON.stringify(jsonData, null, 2)}
-                            onChange={handleJsonDataChange}
-                            style={{
-                                width: '100%',
-                                padding: '12px',
-                                minHeight: '200px',
-                                fontFamily: 'monospace',
-                                fontSize: '12px',
-                                border: '1px solid #cbd5e1',
-                                borderRadius: '6px',
-                                background: '#1e1e2e',
-                                color: '#e2e8f0',
-                                resize: 'vertical'
-                            }}
-                        />
-                    </div>
-
-                    {compileError && (
-                        <div style={{ marginBottom: '12px', padding: '8px', background: '#fee2e2', color: '#991b1b', borderRadius: '6px', fontSize: '12px' }}>
-                            ⚠️ {compileError}
-                        </div>
-                    )}
-
-                    <button
-                        onClick={updateRenderedContent}
-                        style={{
-                            padding: '8px 16px',
-                            background: '#10b981',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            marginRight: '8px'
-                        }}
-                    >
-                        ▶ Render Template
-                    </button>
-
-                    {renderedContent && (
-                        <div style={{ marginTop: '16px' }}>
-                            <div style={{ fontSize: '12px', marginBottom: '4px', color: '#475569' }}>Rendered Output:</div>
-                            <div style={{
-                                padding: '16px',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '6px',
-                                background: 'white',
-                                maxHeight: '250px',
-                                overflow: 'auto'
-                            }}>
-                                <div dangerouslySetInnerHTML={{ __html: renderedContent }} />
+                    <main className="rte-main">
+                        <div className="rte-page-scroll">
+                            <div
+                                className="rte-page"
+                                style={{
+                                    transform: `scale(${zoom / 100})`,
+                                    transformOrigin: 'top center',
+                                }}
+                            >
+                                <div
+                                    ref={editorRef}
+                                    className={`rte-editor ${language === 'el' ? 'rte-editor-el' : ''}`}
+                                    contentEditable="true"
+                                    onInput={handleInput}
+                                    onClick={handleEditorClick}
+                                    onContextMenu={handleContextMenu}
+                                    suppressContentEditableWarning
+                                    spellCheck={false}
+                                />
                             </div>
                         </div>
-                    )}
+                    </main>
                 </div>
             )}
 
-            {/* CSS Panel */}
-            {showCssPanel && (
-                <div style={panelStyles}>
-                    <div style={{ marginBottom: '12px' }}>
-                        <strong>🎨 Custom CSS</strong>
-                        <button
-                            type="button"
-                            onClick={() => applyCustomCss(localCustomCss)}
-                            style={{ ...buttonStyles, marginLeft: '8px', padding: '4px 8px' }}
-                        >
-                            Apply
-                        </button>
-                    </div>
-
-                    <textarea
-                        value={localCustomCss}
-                        onChange={handleCssChange}
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            minHeight: '200px',
-                            fontFamily: 'monospace',
-                            fontSize: '12px',
-                            border: '1px solid #cbd5e1',
-                            borderRadius: '6px',
-                            background: '#1e1e2e',
-                            color: '#e2e8f0',
-                            resize: 'vertical'
-                        }}
-                        placeholder="/* Enter your custom CSS here */"
-                    />
-
-                    <div style={{ marginTop: '12px', padding: '12px', background: 'white', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                        <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '8px' }}>Live Preview:</div>
-                        <div className="css-preview" style={{ padding: '8px' }}>
-                            <div className="card" style={{ background: '#f8fafc', padding: '12px', borderRadius: '6px' }}>
-                                <p>This element will reflect your custom CSS if you have .card styles defined.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showHtmlMode ? (
-                <textarea
-                    ref={htmlTextareaRef}
-                    value={htmlContent}
-                    onChange={handleHtmlChange}
+            {/* ✅ Resize handle */}
+            {selectedImage && resizeHandlePos && mode === 'visual' && (
+                <div
+                    className="rte-img-resize-handle"
                     style={{
-                        width: '100%',
-                        padding: '16px',
-                        minHeight: '400px',
-                        border: 'none',
-                        fontSize: '13px',
-                        fontFamily: 'monospace',
-                        lineHeight: '1.5',
-                        outline: 'none',
-                        resize: 'vertical',
-                        background: '#1e1e2e',
-                        color: '#e2e8f0',
-                        tabSize: 4
+                        position: 'fixed',
+                        top: resizeHandlePos.top,
+                        left: resizeHandlePos.left,
+                        width: 16,
+                        height: 16,
+                        zIndex: 999999,
+                        cursor: 'nwse-resize',
                     }}
-                    placeholder="<div>Enter HTML here...</div>"
-                    spellCheck={false}
+                    onMouseDown={startResize}
+                    title="Drag για αλλαγή μεγέθους"
                 />
-            ) : showPreview ? (
-                <div
-                    style={{ padding: '16px', minHeight: '400px', maxHeight: '500px', overflow: 'auto', background: 'white', lineHeight: '1.6' }}
-                    dangerouslySetInnerHTML={{ __html: processContent(value) || '<em>No content</em>' }}
+            )}
+
+            {/* ✅ Image menu */}
+            {selectedImage && imageState && (
+                <RichTextEditorImageMenu
+                    imageEl={selectedImage}
+                    imageState={imageState}
+                    onChangeStyle={handleImageStyleChange}
+                    onDelete={handleImageDelete}
+                    onClose={() => { setSelectedImage(null); setImageState(null); }}
                 />
-            ) : showJsonMode ? (
+            )}
+
+            {/* ✅ Context menu */}
+            {contextMenu && (
+                <RichTextEditorContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    hasSelection={contextMenu.hasSelection}
+                    onClose={() => setContextMenu(null)}
+                    onCommand={(cmd) => { execCommand(cmd); setContextMenu(null); }}
+                    onOpenMedia={handleOpenMedia}
+                    onLink={handleLinkContext}
+                    onClearFormat={handleClearFormatContext}
+                    onCut={handleCut}
+                    onCopy={handleCopy}
+                    onPaste={handlePaste}
+                />
+            )}
+
+            {/* Bubble menu */}
+            {mode === 'visual' && (
+                <RichTextEditorBubbleMenu
+                    editorRef={editorRef}
+                    onCommand={execCommand}
+                    onLink={handleLink}
+                    onImage={handleImageUpload}
+                    onComment={() => alert('Comments coming soon')}
+                    onClearFormat={() => execCommand('removeFormat')}
+                />
+            )}
+
+            {/* ✅ MediaToolbox */}
+            {showMediaToolbox && (
                 <div
-                    style={{ padding: '16px', minHeight: '400px', background: '#f8fafc', overflow: 'auto' }}
+                    ref={popupRef}
+                    className="rte-media-popup"
+                    style={{
+                        position: 'fixed',
+                        top: mediaPopupPos.top,
+                        left: mediaPopupPos.left,
+                        width: MEDIA_POPUP_W,
+                        height: MEDIA_POPUP_H,
+                        zIndex: 999998,
+                    }}
+                    onMouseDown={handlePopupMouseDown}
                 >
-                    {renderedContent ? (
-                        <div dangerouslySetInnerHTML={{ __html: renderedContent }} />
-                    ) : (
-                        <div style={{ color: '#94a3b8', textAlign: 'center', padding: '48px' }}>
-                            <p>Enter a template with <code>{'{{variable}}'}</code> syntax and click Render</p>
-                            <p style={{ marginTop: '8px' }}>Example: <code>{'<h1>{{personal.name}}</h1>'}</code></p>
-                        </div>
-                    )}
+                    <MediaToolbox
+                        onSelect={handleMediaSelect}
+                        onClose={() => setShowMediaToolbox(false)}
+                        selectedValue={null}
+                    />
                 </div>
-            ) : (
-                <div
-                    ref={editorRef}
-                    contentEditable="true"
-                    onInput={handleInput}
-                    suppressContentEditableWarning
-                    style={{
-                        width: '100%',
-                        direction: language === 'el' ? 'rtl' : 'ltr',
-                        textAlign: language === 'el' ? 'right' : 'left',
-                        unicodeBidi: language === 'el' ? 'embed' : 'normal',
-                        padding: '16px',
-                        minHeight: '200px',
-                        border: 'none',
-                        fontSize: '14px',
-                        fontFamily: 'inherit',
-                        lineHeight: '1.6',
-                        outline: 'none',
-                        overflowY: 'auto',
-                        background: 'white',
-                        whiteSpace: 'pre-wrap',
-                        wordWrap: 'break-word',
-                        cursor: 'text'
-                    }}
-                />
+            )}
+
+            {compileError && mode === 'visual' && (
+                <div className="rte-error">⚠️ {compileError}</div>
             )}
         </div>
     );

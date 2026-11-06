@@ -1,10 +1,29 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+// /src/main.jsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+import { GProvider } from "./GContext";
+import { ThemeProvider } from "./ThemeContext";
+
+import App from "./App";
+import ErrorBoundary from "./ErrorBoundary";
+
+ReactDOM.createRoot(
+    document.getElementById("root")
+).render(
+    <React.StrictMode>
+        <BrowserRouter>
+            <ErrorBoundary>
+                <GProvider>
+                    <HelmetProvider>
+                        <ThemeProvider>
+                            <App />
+                        </ThemeProvider>
+                    </HelmetProvider>
+                </GProvider>
+            </ErrorBoundary>
+        </BrowserRouter>
+    </React.StrictMode>
+);

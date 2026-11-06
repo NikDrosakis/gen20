@@ -1,12 +1,12 @@
 #include <iostream>
 #include <fstream>
-#include "core/Maria.h"
-#include "core/Cubo.h"
+#include "Maria.h"
+#include "Cubo.h"
 //#include "core/FS.h"
 #include <yaml-cpp/yaml.h>
 #include <nlohmann/json.hpp>
-#include "core/Yaml.h"
-#include "core/Ws.h"
+#include "Yaml.h"
+#include "Ws.h"
 //#include "core/Gredis.h"
 #include <thread>
 #include <map>
@@ -16,7 +16,7 @@
 #include <chrono>
 #include <functional>
 #include <boost/asio/io_context.hpp>
-//#include "core/server.h"
+//#include "server.h"
 
 int main(int argc, char* argv[]) {
   //RunServer();
@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
         net::io_context ioc;
 
         // Create a WebSocket client
-        Ws ws(ioc, "wss://vivalibro.com:3010/?userid=mars");
+        Ws ws(ioc, "wss://gen20.get:3010/?userid=mars");
 
         // Set up the message handler
         ws.setOnMessageHandler([](const std::string& message) {

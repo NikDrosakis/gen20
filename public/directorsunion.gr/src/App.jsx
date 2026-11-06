@@ -1,10 +1,10 @@
 // App.js
 import { Outlet } from 'react-router-dom';
-import Header from './components/layout/Header';
-import { ThemeProvider } from "./contexts/ThemeContext";
-import ErrorBoundary from "./components/ErrorBoundary";
-import Contact from './pages/Contact';
-import FootMenu from './components/layout/FootMenu';
+import Header from './Header';
+import { ThemeProvider } from "./ThemeContext";
+import ErrorBoundary from "./ErrorBoundary";
+import Contact from './Contact';
+import FootMenu from './FootMenu';
 import './App.css';
 export default function App() {
     return (

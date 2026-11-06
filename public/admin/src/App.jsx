@@ -19,7 +19,6 @@ import Settings from "./pages/Settings";
 import Media from "./pages/Media";
 import Doc from "./pages/Doc";
 import { useG } from './GContext';
-import SetupToolbox from './components/SetupToolbox';
 
 function BuildButton() {
   const { send, connection } = useMessaging();
@@ -311,12 +310,6 @@ const App = () => {
           </div>
         </div>
 
-        {/* Το Toolbox εμφανίζεται μετά από 5 δευτερόλεπτα (αν χρειάζεται) */}
-        {showSetup && (
-            <SetupToolbox
-                onComplete={() => setShowSetup(false)}
-            />
-        )}
         <MessagingDebug />
       </MessagingProvider>
   );

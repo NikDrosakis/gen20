@@ -541,26 +541,6 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
             {skeletonDressOpen && (
                 <div className="form-card" style={{position: 'relative',maxHeight: '570px',
                     overflow: 'auto'}}>
-                    <button
-                        onClick={closeSkeletonDress}
-                        style={{
-                            position: 'absolute',
-                            top: '10px',
-                            right: '10px',
-                            background: 'red',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '50%',
-                            width: '30px',
-                            height: '30px',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            zIndex: 10
-                        }}
-                        title="Close"
-                    >
-                        ✕
-                    </button>
                     <Layout
                         onClose={closeSkeletonDress}
                         domain={window.location.hostname}
@@ -574,26 +554,6 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
             {/* === MEDIA TOOLBOX FORM CARD === */}
             {showMediaToolbox && (
                 <div className="form-card" style={{ position: 'relative' }}>
-                    <button
-                        onClick={() => setShowMediaToolbox(false)}
-                        style={{
-                            position: 'absolute',
-                            top: '10px',
-                            right: '10px',
-                            background: 'red',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '50%',
-                            width: '30px',
-                            height: '30px',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            zIndex: 10
-                        }}
-                        title="Close"
-                    >
-                        ✕
-                    </button>
                     <MediaToolbox
                         onSelect={handleMediaSelect}
                         onClose={() => setShowMediaToolbox(false)}
@@ -703,7 +663,6 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
             </div>
 
                 <div className="form-group">
-                    <label className="form-label">Content <span className="required">*</span></label>
                     <RichTextEditor
                         value={formData.description}
                         onChange={(e) => setFormData({...formData, description: e.target.value})}

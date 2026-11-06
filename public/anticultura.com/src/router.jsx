@@ -1,12 +1,12 @@
 // /router.jsx
 import { createBrowserRouter,useParams } from "react-router-dom";
 import App from "./App";
-import Home from "./pages/Home";
-import Blog from "./pages/Blog";
-import ContentOne from "./components/content/ContentOne";
-import Contact from "./pages/Contact";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+import Home from "./Home";
+import Blog from "./Blog";
+import ContentOne from "./ContentOne";
+import Contact from "./Contact";
+import Login from "./Login";
+import Signup from "./Signup";
 
 const router = createBrowserRouter([
     {

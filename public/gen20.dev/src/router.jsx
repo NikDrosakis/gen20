@@ -1,8 +1,7 @@
-
 import { createBrowserRouter } from "react-router-dom";
 import App from "./App";
-import Home from "./pages/Home.jsx";
-import Postpage from "./pages/Postpage.jsx";
+import Home from "./Home.jsx";
+import Postpage from "./Postpage.jsx";
 
 
 

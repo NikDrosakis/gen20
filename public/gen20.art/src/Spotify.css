@@ -1,0 +1,24 @@
+/* Spotify.css */
+.spotify-container {
+    display: flex;
+    height: 100%;
+    background-color: #121212;
+    color: #fff;
+    font-family: system-ui, sans-serif;
+}
+
+.spotify-login {
+    margin: auto;
+    padding: 2rem;
+    background: #1db954;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.spotify-main {
+    display: grid;
+    grid-template-columns: 240px 1fr; /* Προσαρμογή στο πλέγμα του gen20 */
+    gap: 1rem;
+    width: 100%;
+    padding: 1rem;
+}
