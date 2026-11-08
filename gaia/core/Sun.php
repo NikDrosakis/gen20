@@ -1,37 +1,25 @@
 <?php
 //Cli.php
 namespace Core;
-
 use ReflectionClass;
+
 use Exception;
-use Core\Traits\Doc;
 use Core\Traits\Url;
-use Core\Traits\System;
-use Core\Traits\Meta;
 use Core\Traits\Manifest;
-use Core\Traits\Head;
-use Core\Traits\Ermis;
 use Core\Traits\Lang;
 use Core\Traits\Tree;
 use Core\Traits\Form;
 use Core\Traits\Domain;
 use Core\Traits\DomainFS;
 use Core\Traits\DomainDB;
-use Core\Traits\Kronos;
-use Core\Traits\Sketch;
-use Core\Traits\WS;
-use Core\Traits\Action;
-use Core\Traits\Template;
 use Core\Traits\Media;
 use Core\Traits\Filemeta;
-use Core\Traits\My;
-use Core\Traits\Watch;
+use Core\Traits\Filesystem;
 use Core\Traits\CuboPublic;
 use Core\Traits\CuboAdmin;
-use Core\Cubo\Book;
 
 class Sun extends Gaia {
-use  Watch, Doc, Url, System,Meta, Manifest, Head, Ermis, Lang, Tree, Form,Domain,DomainFS,DomainDB,Kronos, Sketch, WS, Action, Template, Media, Filemeta, My, CuboPublic, CuboAdmin, Template,Book;
+use  Url, Manifest, Tree, Form,Domain,DomainFS,DomainDB,Media, Filemeta, CuboPublic, CuboAdmin;
 
 public $argv=[]; // To store the arguments passed to the script
 public $argc; // Store the argument count

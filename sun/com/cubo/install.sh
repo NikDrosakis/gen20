@@ -1,56 +1,174 @@
 #!/bin/bash
+# /var/www/gs/sun/com/cubo/install.sh
+# Πλήρες cubos installation: sync aggregator + checks + build + restart + verify
 
-# Load utilities
-source "$(dirname "$0")/../utils.sh"
+set -uo pipefail
 
-log "Processing Cubo operations..."
+source "$(dirname "$0")/../../init.sh"
 
-check_dir_exists "$CUBO_DIR"
+# ============================================================
+# CONFIG
+# ============================================================
+GOD_ROOT="/var/www/gs/god"
+MANIFEST="$GOD_ROOT/cubos/manifest.json"
+AGGREGATOR="$GOD_ROOT/cubos/aggregator.go"
 
-for CUBO_NAME in $(ls "$CUBO_DIR"); do
-    log "Processing Cubo: $CUBO_NAME"
+# ============================================================
+# Έλεγχοι
+# ============================================================
+log_action "=== CUBO INSTALL ==="
+log_action "god root: $GOD_ROOT"
 
-    # Ensure it's a directory
-    if [ ! -d "$CUBO_DIR/$CUBO_NAME" ]; then
-        log "Skipping: $CUBO_NAME is not a directory."
+[ -d "$GOD_ROOT" ] || { log_action "ERROR: god root not found"; exit 1; }
+[ -f "$MANIFEST" ] || { log_action "ERROR: manifest not found: $MANIFEST"; exit 1; }
+[ -f "$AGGREGATOR" ] || { log_action "ERROR: aggregator not found: $AGGREGATOR"; exit 1; }
+
+command -v jq &>/dev/null || { log_action "ERROR: jq required"; exit 1; }
+command -v python3 &>/dev/null || { log_action "ERROR: python3 required"; exit 1; }
+
+# ============================================================
+# 0. SYNC AGGREGATOR
+# ============================================================
+echo ""
+echo "🔄 Syncing aggregator from manifest..."
+
+NEW_BLOCK=$'\t// === CUBOS:START === (auto-generated από cubo/install.sh — μην αλλάξεις χειροκίνητα)\n'
+
+while IFS= read -r row; do
+    name=$(echo "$row" | jq -r '.name')
+    line=$(echo "$row" | jq -r '.register_line // empty')
+
+    if [[ -z "$line" ]]; then
+        echo "  ⚠️  $name — no register_line, skipping"
         continue
     fi
 
-    # Insert into DB if not exists
-    mariadb_exec "INSERT IGNORE INTO gen_admin.cubo (name) VALUES ('$CUBO_NAME');"
+    NEW_BLOCK+=$'\t'"$line"$'\n'
+    echo "  ✓ $name → $line"
+done < <(jq -c '.cubos[] | select(.enabled)' "$MANIFEST")
 
-    # Get tables associated with Cubo
-    CUBO_TABLES=$(mariadb_exec "SELECT tables FROM gen_admin.cubo WHERE name = '$CUBO_NAME';" | tr -d '\n' | tr -d '"')
+NEW_BLOCK+=$'\t// === CUBOS:END ==='
 
-    if [ -z "$CUBO_TABLES" ]; then
-        log "No tables found for $CUBO_NAME."
-        continue
-    fi
+python3 - "$AGGREGATOR" "$NEW_BLOCK" << 'PYEOF'
+import sys
 
-    IFS=',' read -r -a TABLE_ARRAY <<< "$CUBO_TABLES"
+path = sys.argv[1]
+new_block = sys.argv[2]
 
-    for TABLE in "${TABLE_ARRAY[@]}"; do
-        TABLE="c_$(echo "$TABLE" | xargs)"
-        EXISTS=$(mariadb_exec "SELECT 1 FROM information_schema.tables WHERE table_schema = '$DB_NAME' AND table_name = '$TABLE' LIMIT 1;")
+with open(path) as f:
+    content = f.read()
 
-        if [ -n "$EXISTS" ]; then
-            log "Table $TABLE exists."
-        else
-            log "Table $TABLE missing!"
+start_marker = "// === CUBOS:START ==="
+end_marker = "// === CUBOS:END ==="
+
+start = content.find(start_marker)
+end = content.find(end_marker)
+
+if start == -1 or end == -1:
+    print("  ❌ markers not found in aggregator.go")
+    print("  💡 Πρόσθεσε τα σχόλια μέσα στη function RegisterAll():")
+    print("       // === CUBOS:START ===")
+    print("       // === CUBOS:END ===")
+    sys.exit(1)
+
+end = content.find("\n", end) + 1
+new_content = content[:start] + new_block + content[end:]
+
+if new_content == content:
+    print("  ⏭  no changes")
+else:
+    with open(path, "w") as f:
+        f.write(new_content)
+    print("  ✅ aggregator updated")
+PYEOF
+
+# ============================================================
+# 1. ΕΛΕΓΧΟΣ FILES
+# ============================================================
+echo ""
+echo "🔍 Checking files..."
+missing=0
+
+while IFS= read -r row; do
+    name=$(echo "$row" | jq -r '.name')
+
+    while IFS= read -r file; do
+        if [[ ! -f "$GOD_ROOT/$file" ]]; then
+            echo "  ❌ $name/$file missing"
+            missing=$((missing + 1))
         fi
-    done
-done
+    done < <(echo "$row" | jq -r '.files[]')
 
-# Reverse check: Disable missing Cubos
-EXISTING_CUBOS=$(ls "$CUBO_DIR" | sed "s/^/'/" | sed "s/$/'/" | tr '\n' ',' | sed 's/,$//')
+    echo "  ✓ $name"
+done < <(jq -c '.cubos[] | select(.enabled)' "$MANIFEST")
 
-if [ -n "$EXISTING_CUBOS" ]; then
-    mariadb_exec "UPDATE gen_admin.cubo SET status = 0 WHERE name NOT IN ($EXISTING_CUBOS);"
-else
-    log "No Cubo directories found. Disabling all."
-    mariadb_exec "UPDATE gen_admin.cubo SET status = 0;"
+[[ "$missing" -eq 0 ]] || { log_action "ERROR: $missing file(s) missing"; exit 1; }
+
+# ============================================================
+# 2. ΕΛΕΓΧΟΣ REGISTER FUNCTIONS
+# ============================================================
+echo ""
+echo "🔧 Checking Register functions..."
+while IFS= read -r row; do
+    name=$(echo "$row" | jq -r '.name')
+    register=$(echo "$row" | jq -r '.register')
+    package=$(echo "$row" | jq -r '.package')
+
+    dir="$GOD_ROOT/${package#god/}"
+    if grep -rq "func $register" "$dir" 2>/dev/null; then
+        echo "  ✓ $name → $register"
+    else
+        echo "  ⚠️  $name → $register NOT FOUND in $dir"
+    fi
+done < <(jq -c '.cubos[] | select(.enabled)' "$MANIFEST")
+
+# ============================================================
+# 3. BUILD
+# ============================================================
+echo ""
+echo "🔨 Building..."
+cd "$GOD_ROOT"
+[[ -f ".env" ]] && { set -a; source .env; set +a; }
+
+go build -o god . 2>&1 | tee -a "$GEN_LOG_FILE"
+[[ "${PIPESTATUS[0]}" -eq 0 ]] || { log_action "ERROR: build failed"; exit 1; }
+echo "✅ build OK → $GOD_ROOT/god"
+
+# ============================================================
+# 4. RESTART
+# ============================================================
+echo ""
+read -rp "Restart god service? [y/N] " ans
+if [[ "${ans,,}" == "y" ]]; then
+    systemctl restart god
+    sleep 1
+    systemctl status god --no-pager | head -15
 fi
 
-log "Cubo operations completed!"
+# ============================================================
+# 5. VERIFY ROUTES
+# ============================================================
+echo ""
+echo "🌐 Checking routes..."
+port="${PORT:-3008}"
+if curl -sf "http://127.0.0.1:$port/god/v1/routes" > /tmp/god-routes.json; then
+    total=$(jq '.routes | length' /tmp/god-routes.json)
+    echo "  ✅ $total routes registered"
 
+    while IFS= read -r ep; do
+        method=$(echo "$ep" | awk '{print $1}')
+        path=$(echo "$ep" | awk '{print $2}')
+        [[ "$path" == *"*"* ]] && continue
 
+        if ! jq -e --arg m "$method" --arg p "$path" \
+            '.routes[] | select(.method == $m and .path == $p)' \
+            /tmp/god-routes.json > /dev/null; then
+            echo "  ⚠️  missing: $method $path"
+        fi
+    done < <(jq -r '.cubos[] | select(.enabled) | .endpoints[]' "$MANIFEST")
+else
+    echo "  ⚠️  could not reach /god/v1/routes (port $port)"
+fi
+
+echo ""
+log_action "OK: cubo install completed"

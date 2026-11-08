@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import './App.css';
 import { Outlet } from "react-router-dom";
-import Skeleton from "./contexts/Skeleton";
-import Navigation from "./components/Navigation";
-import { ThemeProvider } from './contexts/ThemeContext';
-import { WebSocketProvider } from './contexts/WebSocketContext';
-import ChatList from './components/ChatList';
-import Chat from './components/Chat';
+import Skeleton from "./Skeleton";
+import Navigation from "./Navigation";
+import { ThemeProvider } from './ThemeContext';
+import { WebSocketProvider } from './WebSocketContext';
+import ChatList from './ChatList';
+import Chat from './Chat';
 function App() {
     const [activeChat, setActiveChat] = useState(null);
     console.log('App rendering with ThemeProvider');  // ← Debug

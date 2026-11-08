@@ -1,4 +1,4 @@
-// src/components/ChatList.jsx
+// src/ChatList.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useWebSocket } from './WebSocketContext';
 import './ChatList.css';

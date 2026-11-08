@@ -10,7 +10,7 @@ source "$(dirname "$0")/init.sh"
 # Λίστα first-level commands (χειροκίνητα)
 # ==============================================
 FIRST_LEVELS=(
-    "gaia" "db" "redis" "elastic" "arango" "status"
+    "cubo" "gaia" "db" "redis" "elastic" "arango" "status"
     "god" "kronos" "mars" "npm" "composer"
     "build" "permissions" "tree" "top" "performance" "ports" "help"
 )
@@ -23,6 +23,7 @@ list_subcommands() {
     local dir=""
 
     case "$level" in
+         cubo)       dir="$SUN_DIR/com/cubo" ;;      # ← ΝΕΟ
         gaia)       dir="$SUN_DIR/com/gaia" ;;
         db)         dir="$SUN_DIR/com/db" ;;
         redis)      echo "  (χωρίς subcommands — τρέχει απευθείας)"; return ;;

@@ -1,15 +1,15 @@
+// god/core/hub.go
 package core
 
 import (
 	"encoding/json"
 	"sync"
 	"time"
-"fmt"
+
 	"github.com/gorilla/websocket"
 )
 
-// Message είναι το protocol που έστελνε το god στο ermis.
-// Τώρα το god το δέχεται και το προωθεί.
+// Message είναι το generic protocol του hub.
 type Message struct {
 	System    string `json:"system"`
 	DomAffect string `json:"domaffect"`
@@ -18,45 +18,50 @@ type Message struct {
 	UserID    string `json:"userid"`
 	To        string `json:"to"`
 	Cast      string `json:"cast"`
-	Domain    string `json:"domain,omitempty"`  // ← ΝΕΟ
+	Domain    string `json:"domain,omitempty"`
 	Timestamp int64  `json:"timestamp,omitempty"`
 }
 
 // Client είναι ένα συνδεδεμένο WebSocket.
 type Client struct {
-	ID        string
-	UserID    string
-	Domains   map[string]bool  // σε ποια domains έχει subscribe
-	Conn      *websocket.Conn
-	Send      chan []byte
-	Hub       *Hub
-	mu        sync.RWMutex
+	ID      string
+	UserID  string
+	Domains map[string]bool
+	Conn    *websocket.Conn
+	Send    chan []byte
+	Hub     *Hub
+	mu      sync.RWMutex
 }
 
 // Hub διαχειρίζεται όλες τις ενεργές συνδέσεις.
 type Hub struct {
 	clients    map[*Client]bool
-	byUser     map[string]map[*Client]bool  // userID → clients
-	byDomain   map[string]map[*Client]bool  // domain → clients
+	byUser     map[string]map[*Client]bool
+	byDomain   map[string]map[*Client]bool
 	register   chan *Client
 	unregister chan *Client
 	broadcast  chan *Message
 	mu         sync.RWMutex
 	redis      *Gredis
+	couch      *Gcouch
 }
 
 func NewHub(redis *Gredis) *Hub {
-    return &Hub{
-        clients:    make(map[*Client]bool),
-        byUser:     make(map[string]map[*Client]bool),
-        byDomain:   make(map[string]map[*Client]bool),
-        register:   make(chan *Client, 64),
-        unregister: make(chan *Client, 64),
-        broadcast:  make(chan *Message, 256),
-        redis:      redis,  // ← πρόσθεσε αυτό
-    }
+	return &Hub{
+		clients:    make(map[*Client]bool),
+		byUser:     make(map[string]map[*Client]bool),
+		byDomain:   make(map[string]map[*Client]bool),
+		register:   make(chan *Client, 64),
+		unregister: make(chan *Client, 64),
+		broadcast:  make(chan *Message, 256),
+		redis:      redis,
+	}
 }
-// Run είναι ο κεντρικός loop — πρέπει να τρέχει σε goroutine.
+
+// SetCouch — εισάγει το Gcouch (generic).
+func (h *Hub) SetCouch(g *Gcouch) { h.couch = g }
+
+// Run — κεντρικός loop.
 func (h *Hub) Run() {
 	for {
 		select {
@@ -93,7 +98,7 @@ func (h *Hub) Run() {
 	}
 }
 
-// dispatch στέλνει το μήνυμα στους σωστούς clients.
+// dispatch — στέλνει το μήνυμα στους σωστούς clients.
 func (h *Hub) dispatch(msg *Message) {
 	msg.Timestamp = time.Now().Unix()
 
@@ -105,32 +110,24 @@ func (h *Hub) dispatch(msg *Message) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
-	// Επιλογή παραληπτών με βάση cast + to + domaffect
 	var targets []*Client
 
 	switch msg.Cast {
 	case "one":
-		// 1-1: μόνο στον συγκεκριμένο user
 		for c := range h.byUser[msg.To] {
 			targets = append(targets, c)
 		}
-
 	case "all":
-		// Broadcast σε όλους όσοι ταιριάζουν με domaffect
 		for c := range h.clients {
 			if msg.DomAffect == "*" || c.Domains[msg.DomAffect] {
 				targets = append(targets, c)
 			}
 		}
-
 	case "system":
-		// System notification: πάει σε όλους
 		for c := range h.clients {
 			targets = append(targets, c)
 		}
-
 	default:
-		// fallback: σαν "all"
 		for c := range h.clients {
 			if msg.DomAffect == "*" || c.Domains[msg.DomAffect] {
 				targets = append(targets, c)
@@ -142,12 +139,12 @@ func (h *Hub) dispatch(msg *Message) {
 		select {
 		case c.Send <- data:
 		default:
-			// Client αργός — drop το μήνυμα, μην μπλοκάρεις
+			// Client αργός — drop
 		}
 	}
 }
 
-// Broadcast στέλνει μήνυμα στο hub (από HTTP handler ή εξωτερικό).
+// Broadcast — στέλνει μήνυμα στο hub.
 func (h *Hub) Broadcast(msg *Message) {
 	select {
 	case h.broadcast <- msg:
@@ -156,22 +153,12 @@ func (h *Hub) Broadcast(msg *Message) {
 	}
 }
 
-// Register προσθέτει client.
+// Register — προσθέτει client.
 func (h *Hub) Register(c *Client) {
 	h.register <- c
 }
 
-// Unregister αφαιρεί client.
+// Unregister — αφαιρεί client.
 func (h *Hub) Unregister(c *Client) {
 	h.unregister <- c
-}
-
-func (h *Hub) BroadcastConversation(cid int, msg ChatMessage) {
-    // Μετατροπή σε Message και broadcast (ή απλό log για τώρα)
-    h.Broadcast(&Message{
-        Type:      "chat",
-        Verba:     msg.C,
-        UserID:    fmt.Sprintf("%d", msg.UID),
-        Timestamp: time.Now().Unix(),
-    })
 }

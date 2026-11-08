@@ -28,15 +28,14 @@ const Navigation = ({ lang }) => {
         const fetchMenuItems = async () => {
             try {
                 // ✅ Include id and parent fields
-                const response = await fetch(`/api/v1/maria/fa?q=select id, name, parent, type, title, title_el from ${publicdb}.content where type="page" order by sort asc`);
+                const response = await fetch(`/api/v1/maria/fa?q=select id, name, parent, type, title from ${publicdb}.content where type="page" order by sort asc`);
                 const data = await response.json();
 
                 if (data.success && data.data) {
                     const items = data.data.map(page => ({
                         id: page.id,                    // ✅ Store the ID
                         key: page.name,
-                        label_en: page.title || page.name,
-                        label_el: page.title_el || page.name,
+                        label: page.title || page.name,
                         path: `/${page.name}`,
                         type: page.type,
                         parent: page.parent || 0        // ✅ parent=0 for root items
@@ -128,16 +127,10 @@ const Navigation = ({ lang }) => {
         }
     };
 
-    // Get label based on current language
-    const getLabel = (item) => {
-        return lang === 'el' ? (item.label_el || item.label_en) : (item.label_en || item.label_el);
-    };
-
     // ✅ Recursive function to render menu items with dropdown support
     const renderMenuItem = (item) => {
         const hasChildren = item.children && item.children.length > 0;
         const isActive = isActiveOrChildActive(item, activeKey);
-        const label = getLabel(item);
 
         // Handle special cases (login/logout)
         if (userid && item.key === 'login') {
@@ -153,7 +146,7 @@ const Navigation = ({ lang }) => {
         return (
             <li key={item.id} className={isActive ? 'active' : ''}>
                 <Link to={item.path} onClick={() => handleClick(item.key)}>
-                    {label}
+                    {item.label}
                 </Link>
                 {/* ✅ Render dropdown if item has children */}
                 {hasChildren && (

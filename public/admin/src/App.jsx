@@ -19,6 +19,8 @@ import Settings from "./pages/Settings";
 import Media from "./pages/Media";
 import Doc from "./pages/Doc";
 import { useG } from './GContext';
+import ChatBox from './ChatBox';
+import ChatList from './ChatList';
 
 function BuildButton() {
   const { send, connection } = useMessaging();
@@ -310,6 +312,8 @@ const App = () => {
           </div>
         </div>
 
+
+        <ChatBox cid="a1b2c3d4-0000-4000-8000-000000000001" meUid="a1f3" peerUid="b7c9" peerName="Venus" />
         <MessagingDebug />
       </MessagingProvider>
   );

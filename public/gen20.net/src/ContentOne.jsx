@@ -87,8 +87,6 @@ export default function ContentOne({
     const [error, setError] = useState(null);
     const [relatedPosts, setRelatedPosts] = useState([]);
     const [language, setLanguage] = useState(lang || Cookies.get('lang') || 'en');
-    const currentLang = lang || Cookies.get('lang') || 'en';
-    const isGreek = currentLang === 'el';
 
     useEffect(() => {
         Cookies.set('lang', language, { path: '/' });
@@ -242,9 +240,7 @@ export default function ContentOne({
     // --------------------------------------------------
     // Helpers
     // --------------------------------------------------
-    const getPostTitle = (post) => {
-        return isGreek ? (post.title || post.title_en) : (post.title_en || post.title);
-    };
+    // Αφαιρέθηκε το getPostTitle (χρησιμοποιούσε title_en)
 
     const formatDate = (dateString) => {
         if (!dateString) return t('recent');
@@ -387,7 +383,7 @@ export default function ContentOne({
                                         <img
                                             className="user-avatar"
                                             src={content?.author_img ? getImageSrc(content.author_img) : assets.avatar}
-                                            alt={getPostTitle(content)}
+                                            alt={currentTitle}
                                             onError={(e) => {
                                                 e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="%23999" stroke-width="2"%3E%3Ccircle cx="12" cy="8" r="4"%3E%3C/circle%3E%3Cpath d="M5 20v-2a7 7 0 0 1 14 0v2"%3E%3C/path%3E%3C/svg%3E';
                                                 e.target.onerror = null;
@@ -473,7 +469,7 @@ export default function ContentOne({
                                             <div className="related-image">
                                                 <img
                                                     src={getImageSrc(post.img)}
-                                                    alt={language === 'en' ? post?.title_en : post?.title}
+                                                    alt={post?.title}
                                                 />
                                             </div>
                                         )}
@@ -481,9 +477,9 @@ export default function ContentOne({
                                             <span className="related-category">
                                                 {post?.category_title || t('article')}
                                             </span>
-                                            <h4>{language === 'en' ? (post?.title_en || post?.title) : (post?.title || post?.title_en)}</h4>
+                                            <h4>{post?.title}</h4>
                                             <p>
-                                                {((language === 'en' ? post?.excerpt_en : post?.excerpt) || t('read_more'))?.substring(0, 80)}...
+                                                {(post?.excerpt || t('read_more'))?.substring(0, 80)}...
                                             </p>
                                             <span className="read-more">
                                                 {t('read_more')}

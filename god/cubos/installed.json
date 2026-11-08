@@ -1,0 +1,28 @@
+cat > /var/www/gs/god/cubos/installed.json << 'GOEOF'
+{
+  "version": 1,
+  "updated": "2026-11-08T00:00:00Z",
+  "cubos": {
+    "core": {
+      "installed": true,
+      "aggregator_line": "core.Register(a.router)"
+    },
+    "build": {
+      "installed": true,
+      "aggregator_line": "core.RegisterBuildRoutes(a.router, a.base)"
+    },
+    "chat": {
+      "installed": true,
+      "aggregator_line": "chat.Register(a.router, a.hub, a.couch)"
+    },
+    "mermaid": {
+      "installed": true,
+      "aggregator_line": "mermaid.RegisterRoutes(a.router)"
+    },
+    "terminal": {
+      "installed": true,
+      "aggregator_line": "terminal.RegisterRoutes(a.router)"
+    }
+  }
+}
+GOEOF

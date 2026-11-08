@@ -96,6 +96,39 @@ execute_command() {
         # ==============================================
         # COMPONENTS (σύνθετα)
         # ==============================================
+        "cubo")
+            # gen cubo                     → status.sh (όλα)
+            # gen cubo status [cuboname]   → status.sh [cuboname]
+            # gen cubo install [cuboname]  → install.sh [cuboname]
+            # gen cubo list                → list.sh
+
+            if [ -z "$target" ]; then
+                run_step "$SUN_DIR/com/cubo/status.sh" "cubo/status"
+            else
+                case "$target" in
+                    status|install|list)
+                        script="$SUN_DIR/com/cubo/$target.sh"
+                        if [ ! -x "$script" ]; then
+                            log_action "ERROR: $script not found/executable"
+                            return 1
+                        fi
+                        log_action "RUN: cubo/$target ${args[*]:-}"
+                        if "$script" "${args[@]}" 2>&1 | tee -a "$GEN_LOG_FILE"; then
+                            log_action "OK: cubo/$target"
+                            return 0
+                        else
+                            log_action "FAIL: cubo/$target"
+                            return 1
+                        fi
+                        ;;
+                    *)
+                        log_action "ERROR: unknown cubo subcommand: $target"
+                        echo "Usage: gen cubo [status|install|list] [cuboname]"
+                        return 1
+                        ;;
+                esac
+            fi
+            ;;
         "build")
             log_action "Building component: $target..."
             if [ -f "$SUN_DIR/com/$target/install.sh" ]; then

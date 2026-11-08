@@ -6,34 +6,25 @@ use ReflectionClass;
 use ReflectionMethod;
 use Symfony\Component\Security\Core\Security;
 
-use Core\Traits\Kronos;
-use Core\Traits\Sketch;
-use Core\Traits\Action;
-use Core\Traits\Deepseek;
-use Core\Traits\Email;
-use Core\Traits\Mail;
-use Core\Traits\My;
 use Core\Traits\Media;
 use Core\Traits\Tree;
 use Core\Traits\Form;
 use Core\Traits\Domain;
 use Core\Traits\DomainFS;
 use Core\Traits\DomainDB;
-//use Core\Traits\DomainHost;
 use Core\Traits\CuboAdmin;
 use Core\Traits\CuboPublic;
 use Core\Traits\Lang;
-use Core\Traits\Manifest;
 use Core\Traits\Share;
-use Core\Traits\Oxygen;
 use Core\Traits\Url;
 use Core\Traits\Content;
 use Core\Traits\GA;
 use Core\Traits\Xml;
 use Core\Traits\Filesystem;
 use Core\Traits\Filemeta;
-use Core\Traits\Poeta;
-
+use Core\Traits\Manifest;
+use Core\Traits\Deepseek;
+use Core\Cubos\Packages;
 
 /*
  * API CLASS
@@ -41,7 +32,7 @@ use Core\Traits\Poeta;
  * */
 
 class API extends Gaia{
-	 use Action, Share,Content, Poeta, Deepseek, My, Xml, GA,Filesystem,Filemeta, Media, Email, Mail, Tree,Form, Domain,DomainDB, DomainFS, CuboAdmin, CuboPublic, Lang, Manifest, Kronos, Sketch, Oxygen, Url;
+	 use Share,Content, Packages, Xml, GA,Manifest,Filesystem,Filemeta, Media, Tree,Form, Domain,DomainDB, DomainFS, CuboAdmin, CuboPublic, Lang, Url, Deepseek;
    private $security;
 
    public function __construct() {
