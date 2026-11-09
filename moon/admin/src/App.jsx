@@ -24,7 +24,7 @@ import ChatList from './ChatList';
 import Cookies from 'js-cookie';
 
 function MessagingDebug() {
-    const { connection, messages, sendSystem,sendGetConversations, getConversations  } = useMessaging();
+    const { connection, messages, sendSystem } = useMessaging();
     return (
         <div style={{
             position: "fixed", bottom: 0, left: 0,
@@ -43,7 +43,7 @@ function MessagingDebug() {
     );
 }
 
-function AutoOpenChat({ userID, activeChat, setActiveChat }) {
+function AutoOpenChat({ userID, activeChats, setActiveChats }) {
     const { messages } = useMessaging();
 
     useEffect(() => {
@@ -54,24 +54,20 @@ function AutoOpenChat({ userID, activeChat, setActiveChat }) {
         // --- Case 1: insert → άνοιξε το chat ΑΜΕΣΩΣ ---
         if (last.type === "insert" || last.type === "message") {
             if (last.system !== "chat") return;
-
-            // Είναι για μένα; (to === userID)
             if (last.to !== userID) return;
 
             const peer = last.userid;
             if (!peer || peer === userID) return;
 
             // Αν είναι ήδη ανοιχτό το ίδιο, μην το ξανανοίξεις
-            if (activeChat?.userId === peer) return;
+            if (activeChats.some((c) => c.userId === peer)) return;
 
             const cid = [userID, peer].sort().join("-");
             console.log("[AutoOpenChat] OPEN from insert:", { cid, peer });
-            setActiveChat({
-                cid,
-                userId: peer,
-                userName: peer,
-                status: "active",
-            });
+            setActiveChats((prev) => [
+                ...prev,
+                { cid, userId: peer, userName: peer, status: "active" },
+            ]);
             return;
         }
 
@@ -81,29 +77,27 @@ function AutoOpenChat({ userID, activeChat, setActiveChat }) {
                 const peers = JSON.parse(last.c || last.verba || "[]");
                 const peer = peers.find((p) => p && p !== userID);
                 if (!peer) return;
-                if (activeChat?.userId === peer) return;
+                if (activeChats.some((c) => c.userId === peer)) return;
 
                 const cid = [userID, peer].sort().join("-");
                 console.log("[AutoOpenChat] OPEN from reslist:", { cid, peer });
-                setActiveChat({
-                    cid,
-                    userId: peer,
-                    userName: peer,
-                    status: "active",
-                });
+                setActiveChats((prev) => [
+                    ...prev,
+                    { cid, userId: peer, userName: peer, status: "active" },
+                ]);
             } catch (err) {
                 console.warn("[AutoOpenChat] bad reslist:", err);
             }
             return;
         }
-    }, [messages, userID, activeChat, setActiveChat]);
+    }, [messages, userID, activeChats, setActiveChats]);
 
     return null;
 }
 
 const App = () => {
-    // Μετά το useState(activeChat)
-    const [activeChat, setActiveChat] = useState(null);
+    // ✅ activeChats (array) αντί activeChat (single)
+    const [activeChats, setActiveChats] = useState([]);
     const [currentPage, setCurrentPage] = useState('home');
     const [loading, setLoading] = useState(true);
     const [editId, setEditId] = useState(null);
@@ -117,12 +111,21 @@ const App = () => {
     const genUid = Cookies.get('GENUID');
     const userID = useMemo(() => {
         if (!genUid) return "guest";
-        const domain = window.location.host;  // "gen20.net" ή "nikimourtzi.com"
-        return `${domain}:${genUid}`;          // "gen20.net:38"
+        const domain = window.location.host;
+        return `${domain}:${genUid}`;
     }, [genUid]);
 
+    // ✅ Προσθήκη νέου chat (αν δεν υπάρχει)
     const handleOpenChat = (session) => {
-        setActiveChat(session);
+        setActiveChats((prev) => {
+            if (prev.some((c) => c.cid === session.cid)) return prev;
+            return [...prev, session];
+        });
+    };
+
+    // ✅ Κλείσιμο συγκεκριμένου chat
+    const handleCloseChat = (cid) => {
+        setActiveChats((prev) => prev.filter((c) => c.cid !== cid));
     };
 
     // Setup check
@@ -255,26 +258,27 @@ const App = () => {
 
             <AutoOpenChat
                 userID={userID}
-                activeChat={activeChat}
-                setActiveChat={setActiveChat}
+                activeChats={activeChats}
+                setActiveChats={setActiveChats}
             />
 
             <div className="chat-widget">
                 <ChatList
                     onOpenChat={handleOpenChat}
-                    activeChat={activeChat}
+                    activeChat={activeChats[0]}
                     meUid={userID}
                 />
-                {activeChat && (
+                {activeChats.map((chat) => (
                     <ChatBox
-                        cid={activeChat.cid}
+                        key={chat.cid}
+                        cid={chat.cid}
                         meUid={userID}
-                        peerUid={activeChat.userId}
-                        peerName={activeChat.userName}
+                        peerUid={chat.userId}
+                        peerName={chat.userName}
+                        onClose={() => handleCloseChat(chat.cid)}
                     />
-                )}
+                ))}
             </div>
-
 
         </MessagingProvider>
     );

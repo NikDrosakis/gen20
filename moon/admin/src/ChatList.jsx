@@ -1,7 +1,7 @@
 // src/ChatList.jsx
 import React, { useEffect, useMemo } from 'react';
 import { useMessaging } from './MessagingContext';
-import './ChatList.css';
+import './Chat.css';
 
 const CHAT = "chat";
 

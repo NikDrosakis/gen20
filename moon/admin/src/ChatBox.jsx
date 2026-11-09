@@ -10,14 +10,46 @@ export default function ChatBox({
     meUid,
     peerUid,
     peerName = "Peer",
+    onClose,
 }) {
     const { connection, messages, send, userID } = useMessaging();
 
     const [text, setText] = useState("");
     const [localMsgs, setLocalMsgs] = useState([]);
+    const [minimized, setMinimized] = useState(false);
+    const [userInfo, setUserInfo] = useState(null);
     const bottomRef = useRef(null);
 
     const myUid = meUid ?? userID;
+
+    // --- Fetch user info ---
+    useEffect(() => {
+        if (!peerUid) return;
+
+        const domain = peerUid.split(":")[0];
+        const userid = peerUid.split(":")[1] || peerUid;
+
+        const url = `/api/v1/maria/f?q=${encodeURIComponent(
+            `select * from user where userdomain='${domain}' and userid='${userid}'`
+        )}`;
+
+        console.log("[ChatBox] fetching user:", url);
+
+        fetch(url)
+            .then((r) => r.json())
+            .then((data) => {
+                console.log("[ChatBox] user data:", data);
+                if (data?.fullname || data?.img) {
+                    setUserInfo({
+                        fullname: data.fullname || peerName,
+                        img: data.img || null,
+                    });
+                }
+            })
+            .catch((err) => {
+                console.warn("[ChatBox] user fetch error:", err);
+            });
+    }, [peerUid, peerName]);
 
     // --- helpers ---
     const sendInsert = (body) => {
@@ -42,14 +74,15 @@ export default function ChatBox({
     };
 
     const getWsMsgs = () => {
-        if (!cid || !Array.isArray(messages)) return [];
-
-        return messages.filter((m) =>
-            m.system === CHAT &&
-            ["insert", "message"].includes(m.type) &&
-            m.cid === cid
+        if (!cid) return [];
+        return messages.filter(
+            (m) =>
+                m.system === CHAT &&
+                (m.type === "insert" || m.type === "message") &&
+                m.cid === cid
         );
     };
+
     const getHistory = () => {
         if (!cid || !Array.isArray(messages)) return [];
 
@@ -69,12 +102,8 @@ export default function ChatBox({
                 : raw;
 
             if (Array.isArray(parsed)) return parsed;
-
-            // Υποστήριξη και envelope response
             if (Array.isArray(parsed?.messages)) return parsed.messages;
             if (Array.isArray(parsed?.rows)) return parsed.rows;
-
-            console.error("[ChatBox] Invalid history response:", parsed);
             return [];
         } catch (err) {
             console.error("[ChatBox] History parse error:", err);
@@ -99,11 +128,7 @@ export default function ChatBox({
         const safeWsMsgs = Array.isArray(wsMsgs) ? wsMsgs : [];
         const safeLocalMsgs = Array.isArray(localMsgs) ? localMsgs : [];
 
-        const all = [
-            ...safeHistory,
-            ...safeWsMsgs,
-            ...safeLocalMsgs
-        ];
+        const all = [...safeHistory, ...safeWsMsgs, ...safeLocalMsgs];
 
         const seen = new Set();
         const out = [];
@@ -120,6 +145,7 @@ export default function ChatBox({
                 (b.modified ?? b.t ?? 0)
         );
     }, [history, wsMsgs, localMsgs]);
+
     // 4. Καθάρισε localMsgs όταν έρθει από WS
     useEffect(() => {
         if (wsMsgs.length === 0) return;
@@ -136,8 +162,10 @@ export default function ChatBox({
     }, [wsMsgs]);
 
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [msgs.length]);
+        if (!minimized) {
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [msgs.length, minimized]);
 
     function send_() {
         const body = text.trim();
@@ -160,82 +188,120 @@ export default function ChatBox({
         setText("");
     }
 
+    // --- Display name / avatar ---
+    const displayName = userInfo?.fullname || peerName;
+    const avatarLetter = displayName[0]?.toUpperCase() || "?";
+
+    // --- Domain:id ---
+    const domain = peerUid?.split(":")[0] || "";
+    const userId = peerUid?.split(":")[1] || peerUid || "";
+
     return (
-        <div className="chat-container">
+        <div className={`chat-container ${minimized ? "minimized" : ""}`}>
             <div className="chat-header">
                 <div className="chat-header-left">
-                    <div className="chat-avatar">{peerName[0]?.toUpperCase()}</div>
+                    {userInfo?.img ? (
+                        <img
+                            src={userInfo.img}
+                            alt={displayName}
+                            className="chat-avatar-img"
+                        />
+                    ) : (
+                        <div className="chat-avatar">{avatarLetter}</div>
+                    )}
                     <div className="chat-header-info">
-                        <h3>{peerName}</h3>
-                        <p>
+                        <h3>{displayName}</h3>
+                        <p className="chat-header-domain">
                             <span className={`status-dot ${connection === "open" ? "online" : "offline"}`} />
-                            {connection === "open" ? "online" : connection}
-                            {cid && ` · ${cid.slice(0, 8)}`}
+                            <span className="domain-blur">{domain}</span>
+                            <span className="domain-sep">:</span>
+                            <span className="domain-blur">{userId}</span>
                         </p>
                     </div>
                 </div>
-            </div>
 
-            <div className="chat-messages">
-                {msgs.length === 0 && (
-                    <div className="empty-state">
-                        <div className="empty-icon">💬</div>
-                        <div className="empty-title">No messages yet</div>
-                        <div className="empty-sub">Say hi to start the conversation</div>
-                    </div>
-                )}
-                {msgs.map((m) => {
-                    const mine = m.uid === myUid;
-                    const isLocal = m._id?.startsWith("local:");
-                    return (
-                        <div
-                            key={m._id}
-                            className={`message ${mine ? "user" : "assistant"} ${isLocal ? "local" : ""}`}
-                        >
-                            {!mine && <div className="message-role">{m.uid}</div>}
-                            <div
-                                className="message-content"
-                                dangerouslySetInnerHTML={{ __html: m.c ?? m.verba }}
-                            />
-                            <div className="message-time">
-                                {new Date((m.modified ?? m.t ?? 0) * 1000).toLocaleTimeString([], {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                })}
-                                {isLocal && " · sending"}
-                            </div>
-                        </div>
-                    );
-                })}
-                <div ref={bottomRef} />
-            </div>
-
-            <div className="chat-input-area">
-                <div className="chat-input-wrapper">
-                    <textarea
-                        rows={1}
-                        value={text}
-                        placeholder={connection === "open" ? "Type a message…" : "Connecting…"}
-                        disabled={connection !== "open"}
-                        onChange={(e) => setText(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                send_();
-                            }
-                        }}
-                    />
-                    <div className="chat-input-actions">
-                        <button
-                            className="send-btn"
-                            onClick={send_}
-                            disabled={!text.trim() || connection !== "open"}
-                        >
-                            ➤
-                        </button>
-                    </div>
+                <div className="chat-header-actions">
+                    <button
+                        className="chat-header-btn"
+                        onClick={() => setMinimized((v) => !v)}
+                        title={minimized ? "Expand" : "Minimize"}
+                    >
+                        {minimized ? "▲" : "▼"}
+                    </button>
+                    <button
+                        className="chat-header-btn"
+                        onClick={() => onClose?.()}
+                        title="Close"
+                    >
+                        ✕
+                    </button>
                 </div>
             </div>
+
+            {!minimized && (
+                <>
+                    <div className="chat-messages">
+                        {msgs.length === 0 && (
+                            <div className="empty-state">
+                                <div className="empty-icon">💬</div>
+                                <div className="empty-title">No messages yet</div>
+                                <div className="empty-sub">Say hi to start the conversation</div>
+                            </div>
+                        )}
+                        {msgs.map((m) => {
+                            const mine = m.uid === myUid;
+                            const isLocal = m._id?.startsWith("local:");
+                            return (
+                                <div
+                                    key={m._id}
+                                    className={`message ${mine ? "user" : "assistant"} ${isLocal ? "local" : ""}`}
+                                >
+                                    {!mine && <div className="message-role">{m.uid}</div>}
+                                    <div
+                                        className="message-content"
+                                        dangerouslySetInnerHTML={{ __html: m.c ?? m.verba }}
+                                    />
+                                    <div className="message-time">
+                                        {new Date((m.modified ?? m.t ?? 0) * 1000).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })}
+                                        {isLocal && " · sending"}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        <div ref={bottomRef} />
+                    </div>
+
+                    <div className="chat-input-area">
+                        <div className="chat-input-wrapper">
+                            <textarea
+                                rows={1}
+                                value={text}
+                                placeholder={connection === "open" ? "Type a message…" : "Connecting…"}
+                                disabled={connection !== "open"}
+                                onChange={(e) => setText(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" && !e.shiftKey) {
+                                        e.preventDefault();
+                                        send_();
+                                    }
+                                }}
+                            />
+                            <div className="chat-input-actions">
+                                <button
+                                    className="send-btn"
+                                    onClick={send_}
+                                    disabled={!text.trim() || connection !== "open"}
+                                >
+                                    ➤
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }
