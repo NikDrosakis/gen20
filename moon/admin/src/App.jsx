@@ -50,20 +50,28 @@ function AutoOpenChat({ userID, activeChat, setActiveChat }) {
         if (messages.length === 0) return;
 
         const last = messages[messages.length - 1];
-        console.log("[AutoOpenChat] last:", last.type, last);
 
-        // --- Case 1: insert → άνοιξε το chat με τον peer ---
+        // --- Case 1: insert → άνοιξε το chat ΑΜΕΣΩΣ ---
         if (last.type === "insert" || last.type === "message") {
             if (last.system !== "chat") return;
+
+            // Είναι για μένα; (to === userID)
             if (last.to !== userID) return;
 
             const peer = last.userid;
             if (!peer || peer === userID) return;
+
+            // Αν είναι ήδη ανοιχτό το ίδιο, μην το ξανανοίξεις
             if (activeChat?.userId === peer) return;
 
             const cid = [userID, peer].sort().join("-");
             console.log("[AutoOpenChat] OPEN from insert:", { cid, peer });
-            setActiveChat({ cid, userId: peer, userName: peer, status: "active" });
+            setActiveChat({
+                cid,
+                userId: peer,
+                userName: peer,
+                status: "active",
+            });
             return;
         }
 
@@ -71,21 +79,18 @@ function AutoOpenChat({ userID, activeChat, setActiveChat }) {
         if (last.type === "reslist" && last.system === "chat") {
             try {
                 const peers = JSON.parse(last.c || last.verba || "[]");
-                console.log("[AutoOpenChat] reslist peers:", peers);
-
                 const peer = peers.find((p) => p && p !== userID);
-                if (!peer) {
-                    console.log("[AutoOpenChat] no peer (only me)");
-                    return;
-                }
-                if (activeChat?.userId === peer) {
-                    console.log("[AutoOpenChat] already open:", peer);
-                    return;
-                }
+                if (!peer) return;
+                if (activeChat?.userId === peer) return;
 
                 const cid = [userID, peer].sort().join("-");
                 console.log("[AutoOpenChat] OPEN from reslist:", { cid, peer });
-                setActiveChat({ cid, userId: peer, userName: peer, status: "active" });
+                setActiveChat({
+                    cid,
+                    userId: peer,
+                    userName: peer,
+                    status: "active",
+                });
             } catch (err) {
                 console.warn("[AutoOpenChat] bad reslist:", err);
             }

@@ -42,24 +42,42 @@ export default function ChatBox({
     };
 
     const getWsMsgs = () => {
-        if (!cid) return [];
-        return messages.filter(
-            (m) =>
-                m.system === CHAT &&
-                (m.type === "insert" || m.type === "message") &&
-                m.cid === cid
+        if (!cid || !Array.isArray(messages)) return [];
+
+        return messages.filter((m) =>
+            m.system === CHAT &&
+            ["insert", "message"].includes(m.type) &&
+            m.cid === cid
         );
     };
-
     const getHistory = () => {
-        if (!cid) return [];
+        if (!cid || !Array.isArray(messages)) return [];
+
         const res = messages.filter(
             (m) => m.system === CHAT && m.type === "res" && m.cid === cid
         );
-        if (res.length === 0) return [];
+
+        if (!res.length) return [];
+
         try {
-            return JSON.parse(res[res.length - 1].c || res[res.length - 1].verba || "[]");
-        } catch {
+            const raw = res[res.length - 1].c
+                || res[res.length - 1].verba
+                || "[]";
+
+            const parsed = typeof raw === "string"
+                ? JSON.parse(raw)
+                : raw;
+
+            if (Array.isArray(parsed)) return parsed;
+
+            // Υποστήριξη και envelope response
+            if (Array.isArray(parsed?.messages)) return parsed.messages;
+            if (Array.isArray(parsed?.rows)) return parsed.rows;
+
+            console.error("[ChatBox] Invalid history response:", parsed);
+            return [];
+        } catch (err) {
+            console.error("[ChatBox] History parse error:", err);
             return [];
         }
     };
@@ -77,17 +95,31 @@ export default function ChatBox({
 
     // 3. Merge
     const msgs = useMemo(() => {
-        const all = [...history, ...wsMsgs, ...localMsgs];
+        const safeHistory = Array.isArray(history) ? history : [];
+        const safeWsMsgs = Array.isArray(wsMsgs) ? wsMsgs : [];
+        const safeLocalMsgs = Array.isArray(localMsgs) ? localMsgs : [];
+
+        const all = [
+            ...safeHistory,
+            ...safeWsMsgs,
+            ...safeLocalMsgs
+        ];
+
         const seen = new Set();
         const out = [];
+
         for (const m of all) {
-            if (!m._id || seen.has(m._id)) continue;
+            if (!m?._id || seen.has(m._id)) continue;
             seen.add(m._id);
             out.push(m);
         }
-        return out.sort((a, b) => (a.modified ?? a.t ?? 0) - (b.modified ?? b.t ?? 0));
-    }, [history, wsMsgs, localMsgs]);
 
+        return out.sort(
+            (a, b) =>
+                (a.modified ?? a.t ?? 0) -
+                (b.modified ?? b.t ?? 0)
+        );
+    }, [history, wsMsgs, localMsgs]);
     // 4. Καθάρισε localMsgs όταν έρθει από WS
     useEffect(() => {
         if (wsMsgs.length === 0) return;

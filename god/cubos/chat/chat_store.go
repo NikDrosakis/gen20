@@ -83,29 +83,40 @@ func SaveMessage(ctx context.Context, db *kivik.DB, cid, uid, content string) (*
 }
 
 // ListMessages — όλα τα μηνύματα ενός cid, order by modified asc
+// ΧΩΡΙΣ sort στο _find (sort in-memory) — δεν χρειάζεται index για modified.
+// ListMessages — όλα τα μηνύματα ενός cid, order by modified asc
 func ListMessages(ctx context.Context, db *kivik.DB, cid string) ([]MsgDoc, error) {
-	if db == nil {
-		return nil, fmt.Errorf("ListMessages: db not initialized")
-	}
+    if db == nil {
+        return nil, fmt.Errorf("ListMessages: db not initialized")
+    }
 
-	selector := map[string]any{
-		"cid": cid,
-	}
-	result := db.Find(ctx, selector)
-	defer result.Close()
+    query := map[string]any{
+        "selector": map[string]any{
+            "type": "message",
+            "cid":  cid,
+        },
+    }
 
-	var out []MsgDoc
-	for result.Next() {
-		var m MsgDoc
-		if err := result.ScanDoc(&m); err != nil {
-			continue
-		}
-		out = append(out, m)
-	}
+    result := db.Find(ctx, query)
+    defer result.Close()
 
-	sort.Slice(out, func(i, j int) bool {
-		return out[i].Modified < out[j].Modified
-	})
+    var out []MsgDoc
 
-	return out, result.Err()
+    for result.Next() {
+        var m MsgDoc
+        if err := result.ScanDoc(&m); err != nil {
+            continue
+        }
+        out = append(out, m)
+    }
+
+    if err := result.Err(); err != nil {
+        return nil, fmt.Errorf("ListMessages: find: %w", err)
+    }
+
+    sort.Slice(out, func(i, j int) bool {
+        return out[i].Modified < out[j].Modified
+    })
+
+    return out, nil
 }
