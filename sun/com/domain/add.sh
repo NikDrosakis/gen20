@@ -28,7 +28,7 @@ LOG_FILE="/var/www/gs/log/domain-new.log"
 # Default values
 DEFAULT_TYPE="public"
 DEFAULT_TEMPLATE="default"
-DEFAULT_WEB_ROOT="/var/www/gs/public"
+DEFAULT_WEB_ROOT="/var/www/gs/moon"
 DEFAULT_NGINX_CONF_DIR="/etc/nginx/conf.d"
 DEFAULT_BIND_ZONES_DIR="/etc/bind/zones"
 DEFAULT_NAMED_CONF="/etc/bind/named.conf.remote"
@@ -210,7 +210,7 @@ location = /favicon.ico {
 
 location / {
     index index.html;
-    root /var/www/gs/public/gen20.art/dist;
+    root /var/www/gs/moon/gen20.art/dist;
 
     add_header 'Access-Control-Allow-Origin' '*';
     add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
@@ -349,7 +349,7 @@ create_filesystem() {
     local domain="$1"
     local web_root="${2:-$DEFAULT_WEB_ROOT}"
     local template="${3:-simple}"
-    local template_dir="/var/www/gs/public/admin/templates/${template}"
+    local template_dir="/var/www/gs/moon/admin/templates/${template}"
 
     log "INFO" "Creating React/Vite filesystem for $domain..."
     local path="${web_root}/${domain}"
@@ -462,7 +462,7 @@ create_database() {
     }
 
     # Import template if exists
-    local template_file=" /var/www/gs/public/template.sql"
+    local template_file="/var/www/gs/moon/template.sql"
     if [[ -f "$template_file" ]]; then
         mariadb -uroot -pn130177! -D "$db_name" < "$template_file" 2>/dev/null || {
             log "WARN" "Failed to import template SQL"
@@ -501,7 +501,7 @@ location = /favicon.ico {
 
 location / {
     index index.html;
-    root /var/www/gs/public/${domain}/dist;
+    root /var/www/gs/moon/${domain}/dist;
 
     add_header 'Access-Control-Allow-Origin' '*';
     add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
