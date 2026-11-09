@@ -10,29 +10,12 @@ import React, {
 
 const MessagingContext = createContext(null);
 
-/* ---------------------------------------------------------------
- * ULID-like generator (sortable, μονοτονικό, Couch-friendly)
- * Χρησιμοποιείται για το _id του message: msg:<cid>:<ULID>
- * ------------------------------------------------------------- */
-function ulid(now = Date.now()) {
-    const t = now.toString(36).toUpperCase().padStart(10, "0");
-    const alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-    let r = "";
-    for (let i = 0; i < 16; i++) {
-        r += alphabet[(Math.random() * 32) | 0];
-    }
-    return t + r;
-}
-
 export function MessagingProvider({ userID, domains = [], children }) {
     const wsRef = useRef(null);
     const [connection, setConnection] = useState("connecting");
     const [messages, setMessages] = useState([]);
     const listenersRef = useRef(new Set());
 
-    /* ---------------------------------------------------------------
-     * Connect / reconnect
-     * ------------------------------------------------------------- */
     const connect = useCallback(() => {
         setConnection("connecting");
         console.log("[messaging] connecting…");
@@ -49,7 +32,6 @@ export function MessagingProvider({ userID, domains = [], children }) {
         ws.onopen = () => {
             setConnection("open");
             console.log("[messaging] open…");
-            // Subscribe στα domains
             domains.forEach((d) => {
                 ws.send(JSON.stringify({ type: "subscribe", domaffect: d }));
             });
@@ -81,9 +63,6 @@ export function MessagingProvider({ userID, domains = [], children }) {
         return () => wsRef.current?.close(1000, "unmount");
     }, [connect]);
 
-    /* ---------------------------------------------------------------
-     * Low-level send
-     * ------------------------------------------------------------- */
     const send = useCallback(
         (msg) => {
             const ws = wsRef.current;
@@ -94,9 +73,6 @@ export function MessagingProvider({ userID, domains = [], children }) {
         [userID]
     );
 
-    /* ---------------------------------------------------------------
-     * System notifications
-     * ------------------------------------------------------------- */
     const sendSystem = useCallback(
         (verba, domaffect = "*") => {
             return send({
@@ -111,64 +87,6 @@ export function MessagingProvider({ userID, domains = [], children }) {
         [send]
     );
 
-    /* ---------------------------------------------------------------
-     * Chat — Couch-ready schema:
-     * {
-     *   _id: "msg:<cid>:<ULID>",
-     *   type: "message",
-     *   uid: "<userID>",
-     *   c:   "<text>",
-     *   t:   <unix seconds>,
-     *   // routing / envelope:
-     *   to, cid, system: "chat", cast: "one", domaffect
-     * }
-     * ------------------------------------------------------------- */
-    const sendChat = useCallback(
-        (to, text, cid) => {
-            if (!cid) {
-                console.warn("[messaging] sendChat: cid required");
-                return false;
-            }
-            if (!text || !text.trim()) return false;
-
-            const msg = {
-                _id: `msg:${cid}:${ulid()}`,
-                type: "message",
-                uid: userID,
-                c: text,
-                t: Math.floor(Date.now() / 1000),
-
-                // routing / envelope
-                to,
-                cid,
-                system: "chat",
-                cast: "one",
-                domaffect: "*",
-            };
-
-            return send(msg);
-        },
-        [send, userID]
-    );
-
-    /* ---------------------------------------------------------------
-     * Selector: μηνύματα για ένα cid
-     * ------------------------------------------------------------- */
-    const getChatMessages = useCallback(
-        (cid) => {
-            if (!cid) return [];
-            return messages.filter(
-                (m) =>
-                    m.type === "message" &&
-                    (m.cid === cid || m._id?.startsWith(`msg:${cid}:`))
-            );
-        },
-        [messages]
-    );
-
-    /* ---------------------------------------------------------------
-     * External subscription
-     * ------------------------------------------------------------- */
     const subscribe = useCallback((fn) => {
         listenersRef.current.add(fn);
         return () => listenersRef.current.delete(fn);
@@ -181,9 +99,8 @@ export function MessagingProvider({ userID, domains = [], children }) {
                 messages,
                 send,
                 sendSystem,
-                sendChat,
                 subscribe,
-                getChatMessages,
+                userID,
             }}
         >
             {children}

@@ -20,7 +20,10 @@ mkdir -p "$ASTRA_HELLO"
 # --- 2. Μετακίνησε τα hello από κάθε σύστημα ---
 declare -A MOVED
 
-for sys in god kronos gaia mars sun; do
+# ΟΛΑ τα systems (συμπεριλαμβανομένου moon)
+ALL_SYSTEMS=(god kronos gaia mars sun moon)
+
+for sys in "${ALL_SYSTEMS[@]}"; do
     echo ""
     echo "=== $sys ==="
 
@@ -30,50 +33,79 @@ for sys in god kronos gaia mars sun; do
         gaia)   SRC="$GS_ROOT/gaia/core/cubos/Hello" ;;
         mars)   SRC="$GS_ROOT/mars/cubos/hello" ;;
         sun)    SRC="$GS_ROOT/sun/cubos/hello" ;;
-        moon)    SRC="$GS_ROOT/moon/cubos/hello" ;;
+        moon)   SRC="$GS_ROOT/moon/gaia.net/cubos/Hello" ;;
+        *)      echo "  ⚠️  unknown system: $sys"; continue ;;
     esac
 
     DST="$ASTRA_HELLO/$sys"
 
+    # Έλεγχος αν υπάρχει (directory ή file)
     if [ -d "$SRC" ]; then
-        echo "  src: $SRC"
-        echo "  dst: $DST"
+        echo "  src: $SRC (directory)"
+        mkdir -p "$DST"
 
-        # Μετακίνηση
-        if [ -d "$DST" ]; then
-            echo "  ⚠️  $DST already exists — merging..."
+        if [ -d "$DST" ] && [ "$(ls -A "$DST" 2>/dev/null)" ]; then
+            echo "  ⚠️  $DST already has files — merging..."
             cp -r "$SRC"/* "$DST"/ 2>/dev/null || true
-            rm -rf "$SRC"
         else
-            mkdir -p "$(dirname "$DST")"
-            mv "$SRC" "$DST"
+            cp -r "$SRC"/* "$DST"/ 2>/dev/null || true
         fi
-
+        rm -rf "$SRC"
         MOVED["$sys"]=1
-        echo "  ✅ moved"
+        echo "  ✅ moved (directory)"
+
+    elif [ -f "$SRC" ]; then
+        # Είναι single file (π.χ. Hello.php)
+        echo "  src: $SRC (file)"
+        mkdir -p "$DST"
+        mv "$SRC" "$DST/"
+        MOVED["$sys"]=1
+        echo "  ✅ moved (file)"
+
     else
-        echo "  ⏭  no hello found at $SRC"
-        MOVED["$sys"]=0
+        # Ψάξε για Hello*.php (moon case)
+        if [ "$sys" = "moon" ]; then
+            MOON_HELLO=$(find "$GS_ROOT/moon" -maxdepth 4 -name "Hello*.php" -not -path "*/vendor/*" 2>/dev/null | head -1)
+            if [ -n "$MOON_HELLO" ]; then
+                echo "  found via search: $MOON_HELLO"
+                mkdir -p "$DST"
+                mv "$MOON_HELLO" "$DST/"
+                MOVED["$sys"]=1
+                echo "  ✅ moved (file, via find)"
+            else
+                echo "  ⏭  no Hello*.php found in moon"
+                MOVED["$sys"]=0
+            fi
+        else
+            echo "  ⏭  no hello found at $SRC"
+            MOVED["$sys"]=0
+        fi
     fi
 done
 
-# --- 3. Καθάρισμα manifests (αφαίρεση hello entry) ---
+# --- 3. Καθάρισμα manifests ---
 echo ""
 echo "=========================================="
 echo "  CLEANING MANIFESTS"
 echo "=========================================="
 
-for sys in god kronos gaia mars sun; do
+for sys in "${ALL_SYSTEMS[@]}"; do
     case "$sys" in
         god)    MANIFEST="$GS_ROOT/god/cubos/manifest.json" ;;
         kronos) MANIFEST="$GS_ROOT/kronos/cubos/manifest.json" ;;
         gaia)   MANIFEST="$GS_ROOT/gaia/cubos/manifest.json" ;;
         mars)   MANIFEST="$GS_ROOT/mars/cubos/manifest.json" ;;
         sun)    MANIFEST="$GS_ROOT/sun/cubos/manifest.json" ;;
+        moon)   MANIFEST="" ;;  # moon δεν έχει δικό του manifest
     esac
 
     echo ""
     echo "=== $sys ==="
+
+    if [ -z "$MANIFEST" ]; then
+        echo "  ⏭  no manifest for $sys"
+        continue
+    fi
 
     if [ ! -f "$MANIFEST" ]; then
         echo "  ⏭  no manifest at $MANIFEST"
@@ -135,6 +167,12 @@ cat > "$ASTRA_HELLO/manifest.json" << 'JSONEOF'
       "path": "sun",
       "files": ["sun/hello.sh"],
       "register_line": "cubos_register \"hello\" hello_register"
+    },
+    "moon": {
+      "language": "jsx",
+      "path": "moon",
+      "files": ["moon/Hello.jsx"],
+      "register_line": "import Hello from './Hello';"
     }
   }
 }
@@ -168,15 +206,16 @@ find "$ASTRA_HELLO" -type f 2>/dev/null | sort | sed 's/^/    /'
 
 echo ""
 echo "  Manifests cleaned:"
-for sys in god kronos gaia mars sun; do
+for sys in "${ALL_SYSTEMS[@]}"; do
     case "$sys" in
         god)    MANIFEST="$GS_ROOT/god/cubos/manifest.json" ;;
         kronos) MANIFEST="$GS_ROOT/kronos/cubos/manifest.json" ;;
-        gaia)   MANIFEST="$GS_ROOT/gaia/core/cubos/manifest.json" ;;
+        gaia)   MANIFEST="$GS_ROOT/gaia/cubos/manifest.json" ;;
         mars)   MANIFEST="$GS_ROOT/mars/cubos/manifest.json" ;;
         sun)    MANIFEST="$GS_ROOT/sun/cubos/manifest.json" ;;
+        moon)   MANIFEST="" ;;
     esac
-    if [ -f "$MANIFEST" ]; then
+    if [ -n "$MANIFEST" ] && [ -f "$MANIFEST" ]; then
         count=$(jq '.cubos | length' "$MANIFEST" 2>/dev/null || echo 0)
         printf "    %-10s cubos: %s\n" "$sys" "$count"
     fi
@@ -184,4 +223,3 @@ done
 
 echo ""
 echo "🎉 Done"
-GOEOF

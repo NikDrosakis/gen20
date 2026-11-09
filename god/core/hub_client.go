@@ -54,6 +54,10 @@ func (c *Client) ReadPump() {
 		}
 
 		// Subscribe
+		if DispatchWS(c, msg) {
+            continue
+        }
+
 		if msg.Type == "subscribe" && msg.DomAffect != "" {
 			c.mu.Lock()
 			c.Domains[msg.DomAffect] = true

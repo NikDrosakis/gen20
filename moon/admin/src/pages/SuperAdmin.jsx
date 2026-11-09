@@ -12,6 +12,7 @@ import DBTree from '../components/DBTree';
 import Lab from '../components/Lab';
 import Terminal from '../components/Terminal';
 import NewDomain from '../components/NewDomain';
+
 import './SuperAdmin.css';
 
 const SuperAdmin = () => {

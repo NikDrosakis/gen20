@@ -17,36 +17,48 @@
         "POST /god/v1/ssl/action",
         "POST /god/v1/setup/domain"
       ],
-      "files": ["core/api.go", "core/hosts.go", "core/bind.go", "core/ssl.go"]
+      "files": [
+        "core/api.go",
+        "core/hosts.go",
+        "core/bind.go",
+        "core/ssl.go"
+      ]
     },
     {
       "name": "build",
       "enabled": true,
       "register_line": "core.RegisterBuildRoutes(a.router, a.base)",
-      "files": ["core/build.go"]
+      "files": [
+        "core/build.go"
+      ]
     },
     {
       "name": "chat",
       "enabled": true,
-      "register_line": "chat.Register(a.router, a.hub, a.couch)",
+      "register_line": "chat.Register(a.hub, a.couch)",
       "files": [
         "cubos/chat/chat.go",
         "cubos/chat/chat_store.go",
         "cubos/chat/chat_cache.go",
-        "cubos/chat/couchdb.go"
+        "cubos/chat/couchdb.go",
+        "cubos/chat/ws.go"
       ]
     },
     {
       "name": "mermaid",
       "enabled": true,
       "register_line": "mermaid.RegisterRoutes(a.router)",
-      "files": ["cubos/mermaid/routes.go"]
+      "files": [
+        "cubos/mermaid/routes.go"
+      ]
     },
     {
       "name": "terminal",
       "enabled": true,
       "register_line": "terminal.RegisterRoutes(a.router)",
-      "files": ["cubos/terminal/terminal.go"]
+      "files": [
+        "cubos/terminal/terminal.go"
+      ]
     }
   ]
 }

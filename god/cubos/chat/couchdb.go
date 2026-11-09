@@ -10,7 +10,7 @@ import (
     "god/core"
 )
 
-const chatDBName = "gen20_chat"
+const chatDBName = "gen_chat"
 
 var (
     chatDBOnce sync.Once

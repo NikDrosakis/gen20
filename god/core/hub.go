@@ -11,15 +11,17 @@ import (
 
 // Message είναι το generic protocol του hub.
 type Message struct {
-	System    string `json:"system"`
-	DomAffect string `json:"domaffect"`
-	Type      string `json:"type"`
-	Verba     string `json:"verba"`
-	UserID    string `json:"userid"`
-	To        string `json:"to"`
-	Cast      string `json:"cast"`
-	Domain    string `json:"domain,omitempty"`
-	Timestamp int64  `json:"timestamp,omitempty"`
+    System    string `json:"system"`
+    DomAffect string `json:"domaffect"`
+    Type      string `json:"type"`
+    Verba     string `json:"verba,omitempty"`   // deprecated
+    C         string `json:"c,omitempty"`       // content (HTML OK)
+    UserID    string `json:"userid"`
+    To        string `json:"to"`
+    Cast      string `json:"cast"`
+    Domain    string `json:"domain,omitempty"`
+    Timestamp int64  `json:"timestamp,omitempty"`
+	CID       string `json:"cid,omitempty"`
 }
 
 // Client είναι ένα συνδεδεμένο WebSocket.
@@ -112,24 +114,15 @@ func (h *Hub) dispatch(msg *Message) {
 
 	var targets []*Client
 
-	switch msg.Cast {
-	case "one":
+	// Αν έχει To → στείλε σε αυτόν
+	if msg.To != "" && msg.To != "*" {
 		for c := range h.byUser[msg.To] {
 			targets = append(targets, c)
 		}
-	case "all":
+	} else {
+		// Αλλιώς → broadcast σε όλους (ή σε domain)
 		for c := range h.clients {
-			if msg.DomAffect == "*" || c.Domains[msg.DomAffect] {
-				targets = append(targets, c)
-			}
-		}
-	case "system":
-		for c := range h.clients {
-			targets = append(targets, c)
-		}
-	default:
-		for c := range h.clients {
-			if msg.DomAffect == "*" || c.Domains[msg.DomAffect] {
+			if msg.DomAffect == "*" || msg.DomAffect == "" || c.Domains[msg.DomAffect] {
 				targets = append(targets, c)
 			}
 		}
@@ -139,7 +132,6 @@ func (h *Hub) dispatch(msg *Message) {
 		select {
 		case c.Send <- data:
 		default:
-			// Client αργός — drop
 		}
 	}
 }
@@ -161,4 +153,62 @@ func (h *Hub) Register(c *Client) {
 // Unregister — αφαιρεί client.
 func (h *Hub) Unregister(c *Client) {
 	h.unregister <- c
+}
+
+// core/hub.go — προσθήκη στο τέλος (όχι αλλαγή σε υπάρχοντα)
+
+// ============================================================
+//  CUBO WS HOOKS (generic — για όλα τα cubos)
+// ============================================================
+
+// WSHook — interface για cubos που θέλουν να χειρίζονται WS μηνύματα
+type WSHook interface {
+    HandleWS(c *Client, msg Message) bool
+}
+
+var wsHooks []WSHook
+
+// RegisterWSHook — καλείται από cubos (π.χ. chat.Register)
+func RegisterWSHook(h WSHook) {
+    wsHooks = append(wsHooks, h)
+}
+
+// DispatchWS — καλείται από το hub_client.go
+// Επιστρέφει true αν κάποιο cubo το χειρίστηκε
+func DispatchWS(c *Client, msg Message) bool {
+    for _, h := range wsHooks {
+        if h.HandleWS(c, msg) {
+            return true
+        }
+    }
+    return false
+}
+// ============================================================
+//  ACCESSORS (για cubos)
+// ============================================================
+
+// Couch — accessor για το Gcouch
+
+// Redis — accessor για το Gredis
+
+
+
+
+
+// Couch — accessor για το Gcouch (για cubos)
+func (h *Hub) Couch() *Gcouch { return h.couch }
+
+// Redis — accessor για το Gredis (για cubos)
+func (h *Hub) Redis() *Gredis { return h.redis }
+
+// OnlineUsers — επιστρέφει όλα τα ενεργά userids
+func (h *Hub) OnlineUsers() []string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	users := make([]string, 0, len(h.byUser))
+	for uid := range h.byUser {
+		users = append(users, uid)
+	}
+	return users
 }

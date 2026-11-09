@@ -2,230 +2,179 @@
 package chat
 
 import (
-	"context"
-	"crypto/rand"
-	"fmt"
-	"sort"
-	"strings"
-	"time"
+    "context"
+    "crypto/rand"
+    "fmt"
+    "sort"
+    "time"
 
-	kivik "github.com/go-kivik/kivik/v4"
+    kivik "github.com/go-kivik/kivik/v4"
 )
 
 // ============================================================
-//  TYPES (CouchDB documents)
+//  TYPES
 // ============================================================
 
 type ConvDoc struct {
-	ID       string    `json:"_id"`
-	Rev      string    `json:"_rev,omitempty"`
-	Type     string    `json:"type"`
-	IDs      []string  `json:"ids"`
-	Modified int64     `json:"modified"`
-	Last     *ConvLast `json:"last,omitempty"`
-}
-
-type ConvLast struct {
-	UID   string `json:"uid"`
-	Verba string `json:"verba"`
-	C     string `json:"c"`
-	T     int64  `json:"t"`
+    ID       string   `json:"_id"`
+    Rev      string   `json:"_rev,omitempty"`
+    Type     string   `json:"type"`
+    CID      string   `json:"cid"`
+    IDs      []string `json:"ids"`
+    Modified int64    `json:"modified"`
 }
 
 type MsgDoc struct {
-	ID   string `json:"_id"`
-	Rev  string `json:"_rev,omitempty"`
-	Type string `json:"type"`
-	UID  string `json:"uid"`
-	C    string `json:"c"`
-	T    int64  `json:"t"`
+    ID       string `json:"_id"`
+    Rev      string `json:"_rev,omitempty"`
+    Type     string `json:"type"`
+    CID      string `json:"cid"`
+    UID      string `json:"uid"`
+    C        string `json:"c"`
+    Modified int64  `json:"modified"`
 }
 
 // ============================================================
 //  HELPERS
 // ============================================================
 
-// newULID — sortable, monotonic, CouchDB-friendly message id suffix
-func newULID() string {
-	ms := time.Now().UnixMilli()
-	var rnd [10]byte
-	_, _ = rand.Read(rnd[:])
-	const alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
-	var out [26]byte
-	t := ms
-	for i := 9; i >= 0; i-- {
-		out[i] = alphabet[t&0x1f]
-		t >>= 5
-	}
-	for i := 0; i < 16; i++ {
-		out[10+i] = alphabet[rnd[i%len(rnd)]&0x1f]
-	}
-	return string(out[:])
+// CID — deterministic από 2 uids
+func CID(uids []string) string {
+    if len(uids) == 2 {
+        sorted := make([]string, 2)
+        copy(sorted, uids)
+        sort.Strings(sorted)
+        return fmt.Sprintf("%s-%s", sorted[0], sorted[1])
+    }
+    return ""
 }
 
-// newUUID — για group conversations
-func newUUID() string {
-	b := make([]byte, 16)
-	_, _ = rand.Read(b)
-	b[6] = (b[6] & 0x0f) | 0x40
-	b[8] = (b[8] & 0x3f) | 0x80
-	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x",
-		b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
+// genID — τυχαίο hex id (32 chars, CouchDB-friendly)
+func genID() string {
+    b := make([]byte, 16)
+    _, _ = rand.Read(b)
+    return fmt.Sprintf("%032x", b)
 }
 
-// ConvID — deterministic για 1-1 (sorted), random για groups
-func ConvID(uids []string) string {
-	if len(uids) == 2 {
-		sorted := make([]string, 2)
-		copy(sorted, uids)
-		sort.Strings(sorted)
-		return fmt.Sprintf("conv:%s-%s", sorted[0], sorted[1])
-	}
-	return fmt.Sprintf("conv:%s", newUUID())
-}
-
-// MsgID — "msg:<short-cid>:<ULID>"
-func MsgID(convID, ulidStr string) string {
-	short := strings.TrimPrefix(convID, "conv:")
-	return fmt.Sprintf("msg:%s:%s", short, ulidStr)
-}
-
-func truncate(s string, n int) string {
-	r := []rune(s)
-	if len(r) <= n {
-		return s
-	}
-	return string(r[:n]) + "…"
-}
-
-func isNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), "not_found") ||
-		strings.Contains(err.Error(), "missing")
-}
-
-func isConflict(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), "conflict")
+// nowUnix
+func nowUnix() int64 {
+    return time.Now().Unix()
 }
 
 // ============================================================
-//  COUCHDB STORE
+//  STORE
 // ============================================================
 
-// SaveMessage — γράφει msg doc + ενημερώνει conv.last (με retry για conflicts)
-func SaveMessage(ctx context.Context, db *kivik.DB, convID, uid, text string) (*MsgDoc, error) {
-	if db == nil {
-		return nil, fmt.Errorf("SaveMessage: db not initialized")
-	}
-
-	now := time.Now().Unix()
-	ulidStr := newULID()
-	msgID := MsgID(convID, ulidStr)
-
-	msg := &MsgDoc{
-		ID:   msgID,
-		Type: "message",
-		UID:  uid,
-		C:    text,
-		T:    now,
-	}
-	if _, err := db.Put(ctx, msgID, msg); err != nil {
-		return nil, fmt.Errorf("SaveMessage: put msg: %w", err)
-	}
-
-	for attempt := 0; attempt < 3; attempt++ {
-		conv, err := GetConv(ctx, db, convID)
-		if err != nil {
-			return msg, fmt.Errorf("SaveMessage: get conv: %w", err)
-		}
-		if conv == nil {
-			return msg, fmt.Errorf("SaveMessage: conv %s not found", convID)
-		}
-		conv.Last = &ConvLast{
-			UID:   uid,
-			Verba: text,
-			C:     truncate(text, 80),
-			T:     now,
-		}
-		conv.Modified = now
-		if _, err := db.Put(ctx, conv.ID, conv); err != nil {
-			if isConflict(err) {
-				time.Sleep(time.Duration(10*(attempt+1)) * time.Millisecond)
-				continue
-			}
-			return msg, fmt.Errorf("SaveMessage: put conv: %w", err)
-		}
-		return msg, nil
-	}
-	return msg, fmt.Errorf("SaveMessage: conv update conflict after 3 retries")
-}
-
-// EnsureConv — επιστρέφει υπάρχουσα ή δημιουργεί νέα conversation
+// EnsureConv — δημιουργεί ή επιστρέφει conversation
 func EnsureConv(ctx context.Context, db *kivik.DB, ids []string) (*ConvDoc, error) {
-	id := ConvID(ids)
-	existing, err := GetConv(ctx, db, id)
-	if err != nil {
-		return nil, err
-	}
-	if existing != nil {
-		return existing, nil
-	}
-	conv := &ConvDoc{
-		ID:       id,
-		Type:     "conversation",
-		IDs:      ids,
-		Modified: time.Now().Unix(),
-	}
-	if _, err := db.Put(ctx, conv.ID, conv); err != nil {
-		if isConflict(err) {
-			return GetConv(ctx, db, id)
-		}
-		return nil, err
-	}
-	return conv, nil
+    if db == nil {
+        return nil, fmt.Errorf("EnsureConv: db not initialized")
+    }
+
+    cid := CID(ids)
+    if cid == "" {
+        return nil, fmt.Errorf("EnsureConv: need 2 uids")
+    }
+
+    // Ψάξε υπάρχον με _find
+    selector := map[string]any{
+        "type": "conversation",
+        "cid":  cid,
+    }
+    result := db.Find(ctx, selector)
+
+    var existing ConvDoc
+    if result.Next() {
+        if err := result.ScanDoc(&existing); err == nil && existing.ID != "" {
+            result.Close()
+            return &existing, nil
+        }
+    }
+    result.Close()
+
+    // Δεν βρέθηκε — δημιούργησε με _id
+    conv := &ConvDoc{
+        ID:       genID(),
+        Type:     "conversation",
+        CID:      cid,
+        IDs:      ids,
+        Modified: nowUnix(),
+    }
+    if _, err := db.Put(ctx, conv.ID, conv); err != nil {
+        return nil, fmt.Errorf("EnsureConv: put: %w", err)
+    }
+    return conv, nil
 }
 
-// GetConv — επιστρέφει (nil, nil) αν δεν υπάρχει
-func GetConv(ctx context.Context, db *kivik.DB, id string) (*ConvDoc, error) {
-	var doc ConvDoc
-	err := db.Get(ctx, id).ScanDoc(&doc)
-	if err != nil {
-		if isNotFound(err) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &doc, nil
+// SaveMessage — προσθέτει μήνυμα
+func SaveMessage(ctx context.Context, db *kivik.DB, cid, uid, content string) (*MsgDoc, error) {
+    if db == nil {
+        return nil, fmt.Errorf("SaveMessage: db not initialized")
+    }
+    if cid == "" {
+        return nil, fmt.Errorf("SaveMessage: cid required")
+    }
+
+    now := nowUnix()
+
+    msg := &MsgDoc{
+        ID:       genID(),
+        Type:     "message",
+        CID:      cid,
+        UID:      uid,
+        C:        content,
+        Modified: now,
+    }
+    if _, err := db.Put(ctx, msg.ID, msg); err != nil {
+        return nil, fmt.Errorf("SaveMessage: put: %w", err)
+    }
+
+    return msg, nil
 }
 
-// ListMessages — όλα τα μηνύματα ενός conversation, ταξινομημένα
-func ListMessages(ctx context.Context, db *kivik.DB, convID string) ([]MsgDoc, error) {
-	if db == nil {
-		return nil, fmt.Errorf("ListMessages: db not initialized")
-	}
-	short := strings.TrimPrefix(convID, "conv:")
-	startKey := fmt.Sprintf("msg:%s:", short)
-	endKey := startKey + "\uffff"
+// ListMessages — όλα τα μηνύματα ενός cid, order by modified asc
+func ListMessages(ctx context.Context, db *kivik.DB, cid string) ([]MsgDoc, error) {
+    if db == nil {
+        return nil, fmt.Errorf("ListMessages: db not initialized")
+    }
 
-	rows := db.AllDocs(ctx, kivik.Params(map[string]any{
-		"startkey":     startKey,
-		"endkey":       endKey,
-		"include_docs": true,
-	}))
-	defer rows.Close()
+    selector := map[string]any{
+        "type": "message",
+        "cid":  cid,
+    }
+    result := db.Find(ctx, selector)
+    defer result.Close()
 
-	var out []MsgDoc
-	for rows.Next() {
-		var m MsgDoc
-		if err := rows.ScanDoc(&m); err != nil {
-			continue
-		}
-		out = append(out, m)
-	}
-	return out, rows.Err()
+    var out []MsgDoc
+    for result.Next() {
+        var m MsgDoc
+        if err := result.ScanDoc(&m); err != nil {
+            continue
+        }
+        out = append(out, m)
+    }
+
+    sort.Slice(out, func(i, j int) bool {
+        return out[i].Modified < out[j].Modified
+    })
+
+    return out, result.Err()
+}
+
+// GetConversation — φέρνει conversation από cid
+func GetConversation(ctx context.Context, db *kivik.DB, cid string) (*ConvDoc, error) {
+    selector := map[string]any{
+        "type": "conversation",
+        "cid":  cid,
+    }
+    result := db.Find(ctx, selector)
+    defer result.Close()
+
+    if result.Next() {
+        var conv ConvDoc
+        if err := result.ScanDoc(&conv); err == nil {
+            return &conv, nil
+        }
+    }
+    return nil, nil
 }

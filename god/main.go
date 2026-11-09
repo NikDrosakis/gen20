@@ -16,6 +16,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"god/core"
 	"god/cubos"
+	_ "god/cubos/chat"
 )
 
 var logFile *os.File
@@ -222,6 +223,7 @@ func main() {
 	router.LoadHTMLGlob("public/*")
 
 	// ✅ Ο aggregator κάνει τα πάντα
+	core.RegisterRoutes(router, hub)
 	cubos.RegisterAll(router, hub, couch)
 
 	v1 := router.Group("/god/v1")
