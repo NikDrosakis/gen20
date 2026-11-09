@@ -1,5 +1,5 @@
 #!/bin/bash
-# /var/www/gs/cli/com/domain/add.sh
+# /var/www/gs/sun/com/domain/add.sh
 # Domain creation command for gen CLI
 # Usage: gen domain add [domain] [options]
 # Examples:
@@ -21,14 +21,14 @@ NC='\033[0m' # No Color
 # Script configuration
 SCRIPT_NAME="createDomain"
 VERSION="1.0.0"
-LOG_FILE="/var/www/gs/log/domain-new.log"
+LOG_FILE="/var/www/gs/data/gen20.net/domain-new.txt"
 #CONFIG_DIR="/etc/domain-manager"
 #CONFIG_FILE="${CONFIG_DIR}/config.conf"
 
 # Default values
-DEFAULT_TYPE="public"
+DEFAULT_TYPE="moon"
 DEFAULT_TEMPLATE="default"
-DEFAULT_WEB_ROOT="/var/www/gs/public"
+DEFAULT_WEB_ROOT="/var/www/gs/moon"
 DEFAULT_NGINX_CONF_DIR="/etc/nginx/conf.d"
 DEFAULT_BIND_ZONES_DIR="/etc/bind/zones"
 DEFAULT_NAMED_CONF="/etc/bind/named.conf.remote"
@@ -210,7 +210,7 @@ location = /favicon.ico {
 
 location / {
     index index.html;
-    root /var/www/gs/public/gen20.art/dist;
+    root /var/www/gs/moon/gen20.art/dist;
 
     add_header 'Access-Control-Allow-Origin' '*';
     add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
@@ -284,7 +284,7 @@ validate_domain() {
             log "INFO" "✅ Tor domain accepted: $domain (${#name} chars)"
             ;;
 
-        "public"|"internal")
+        "moon"|"internal")
             # ✅ Χωρίς σύνθετα regex - απλοί έλεγχοι
 
             # 1. Μήκος
@@ -322,7 +322,7 @@ validate_domain() {
             ;;
 
         *)
-            error_exit "Invalid domain type: $type. Must be 'public', 'tor', or 'internal'"
+            error_exit "Invalid domain type: $type. Must be 'moon', 'tor', or 'internal'"
             ;;
     esac
 
@@ -349,7 +349,7 @@ create_filesystem() {
     local domain="$1"
     local web_root="${2:-$DEFAULT_WEB_ROOT}"
     local template="${3:-simple}"
-    local template_dir="/var/www/gs/public/admin/templates/${template}"
+    local template_dir="/var/www/gs/moon/admin/templates/${template}"
 
     log "INFO" "Creating React/Vite filesystem for $domain..."
     local path="${web_root}/${domain}"
@@ -462,7 +462,7 @@ create_database() {
     }
 
     # Import template if exists
-    local template_file=" /var/www/gs/public/template.sql"
+    local template_file=" /var/www/gs/moon/template.sql"
     if [[ -f "$template_file" ]]; then
         mariadb -uroot -pn130177! -D "$db_name" < "$template_file" 2>/dev/null || {
             log "WARN" "Failed to import template SQL"
@@ -501,7 +501,7 @@ location = /favicon.ico {
 
 location / {
     index index.html;
-    root /var/www/gs/public/${domain}/dist;
+    root /var/www/gs/moon/${domain}/dist;
 
     add_header 'Access-Control-Allow-Origin' '*';
     add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
@@ -857,7 +857,7 @@ $SCRIPT_NAME v$VERSION - Debian Domain Creation Tool
 Usage: $0 [OPTIONS] <domain>
 
 OPTIONS:
-    -t, --type TYPE        Domain type: public (default), tor, internal
+    -t, --type TYPE        Domain type: moon (default), tor, internal
     -T, --template TEMPL   Template: default (default), php, static, api, minimal
     -o, --options OPTS     Comma-separated options: no-fs,no-db,no-nginx,no-dns,ssl
 
@@ -881,7 +881,7 @@ EXAMPLES:
     $0 --type internal --template static internal.example.com
 
 DOMAIN VALIDATION:
-    Public:   example.com, subdomain.example.com
+    moon:   example.com, subdomain.example.com
     Tor:      16-56 chars a-z2-7 + .onion
     Internal: Any valid domain format (no external validation)
 

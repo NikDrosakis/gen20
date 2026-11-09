@@ -1,10 +1,10 @@
 #!/bin/bash
 ROOT="/var/www/gs"
-CLI_DIR="$ROOT/cli"
-COMMON="$CLI_DIR/utils.sh"
-BG_DIR="$CLI_DIR/bg"
+SUN_DIR="$ROOT/sun"
+COMMON="$SUN_DIR/utils.sh"
+BG_DIR="$SUN_DIR/bg"
 LOG_FILE="$ROOT/log/gen.log"
-COM_DIR="$CLI_DIR/com"
+COM_DIR="$SUN_DIR/com"
 
 # Standardized log function
 log() {
@@ -214,7 +214,7 @@ _gen_autocomplete() {
         if [[ " ${GEN_COMMANDS[*]} " =~ " ${selected_group} " ]]; then
             # Εδώ μπορείς να προσθέσεις έλεγχο για αρχεία μέσα στον φάκελο της ομάδας
             # Π.χ. να προσφέρεις αρχεία με την κατάληξη '.sh' στον φάκελο της ομάδας
-            COMPREPLY=( $(compgen -W "$(ls "$CLI_DIR/com/$selected_group"/*.sh 2>/dev/null)" -- "$cur") )
+            COMPREPLY=( $(compgen -W "$(ls "$SUN_DIR/com/$selected_group"/*.sh 2>/dev/null)" -- "$cur") )
         fi
     fi
     return 0

@@ -2,7 +2,7 @@
 
 # Directory to monitor (recursively)
 ROOT="/var/www/gs"
-MONITOR_DIR="/var/www/gs/cubos"
+MONITOR_DIR="/var/www/gs/astra"
 # Load environment variables
 source /var/www/gs/.env
 # Process file changes

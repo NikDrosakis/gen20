@@ -6,13 +6,13 @@ trait DomainFS {
 
 // Στο trait Filesystem.php
 protected function getPublicFolders() {
-    $publicPath = "/var/www/gs/public/";
+    $publicPath = "/var/www/gs/moon/";
 
     if (!is_dir($publicPath)) {
         return ['success' => false, 'error' => 'Public directory not found'];
     }
 
-    // Get all directories in /var/www/gs/public/
+    // Get all directories in /var/www/gs/moon/
     $folders = array_filter(glob($publicPath . '*'), 'is_dir');
 
     $results = [];
@@ -43,7 +43,7 @@ protected function getPublicFolders() {
        }
 
        // Check if folder exists
-       $folderPath = "/var/www/gs/public/{$domain}";
+       $folderPath = "/var/www/gs/moon/{$domain}";
        $exists = is_dir($folderPath);
 
        // Update gen_admin.domain table
@@ -64,7 +64,7 @@ protected function getPublicFolders() {
      */
     protected function addFS($domainName): array {
         $domain = $domainName ?: DOMAIN;
-        $publicPath = "/var/www/gs/public/{$domain}";
+        $publicPath = "/var/www/gs/moon/{$domain}";
 
         // Create directory structure
         if (!mkdir($publicPath, 0755, true)) {
@@ -170,7 +170,7 @@ protected function createFile($params = null): array {
         return ['success' => false, 'error' => 'File type not allowed: ' . $ext];
     }
 
-    $publicRoot     = '/var/www/gs/public';
+    $publicRoot     = '/var/www/gs/moon';
     $parentPath     = $publicRoot . '/' . ltrim($parent, '/');
     $realParent     = realpath($parentPath);
     $publicRootReal = realpath($publicRoot);
@@ -230,7 +230,7 @@ protected function createFolderInDomain($params = null): array {
         return ['success' => false, 'error' => 'Invalid folder name'];
     }
 
-    $publicRoot = '/var/www/gs/public';
+    $publicRoot = '/var/www/gs/moon';
     $parentPath = $publicRoot . '/' . ltrim($parent, '/');
     $realParent = realpath($parentPath);
 
@@ -275,7 +275,7 @@ protected function renameItem($params = null): array {
         return ['success' => false, 'error' => 'Invalid name'];
     }
 
-    $publicRoot = '/var/www/gs/public';
+    $publicRoot = '/var/www/gs/moon';
     $fullPath = $publicRoot . '/' . ltrim($path, '/');
     $realPath = realpath($fullPath);
 
@@ -317,7 +317,7 @@ protected function deleteItem($params = null): array {
         return ['success' => false, 'error' => 'Path required'];
     }
 
-    $publicRoot = '/var/www/gs/public';
+    $publicRoot = '/var/www/gs/moon';
     $fullPath = $publicRoot . '/' . ltrim($path, '/');
     $realPath = realpath($fullPath);
 
@@ -364,7 +364,7 @@ protected function moveFile($params = null): array {
         return ['success' => false, 'error' => 'Source and target required'];
     }
 
-    $publicRoot = '/var/www/gs/public';
+    $publicRoot = '/var/www/gs/moon';
     $srcReal = realpath($publicRoot . '/' . ltrim($source, '/'));
     $tgtReal = realpath($publicRoot . '/' . ltrim($target, '/'));
 
@@ -418,7 +418,7 @@ protected function moveFile($params = null): array {
      * 1. FILE METADATA + CONTENT
      * ========================================================= */
     protected function getFileMeta($params = []): array {
-    $publicRoot='/var/www/gs/public';
+    $publicRoot='/var/www/gs/moon';
         $displayPath = $params['path'] ?? $_POST['path'] ?? null;
         if (!$displayPath) return ['success' => false, 'error' => 'path required'];
 
@@ -479,7 +479,7 @@ protected function moveFile($params = null): array {
      * 2. CROSS-DOMAIN SIMILARITY SEARCH
      * ========================================================= */
     protected function findSimilarComponents($params = []): array {
-    $publicRoot = '/var/www/gs/public';
+    $publicRoot = '/var/www/gs/moon';
         $targetPath = $params['path'] ?? $_POST['path'] ?? null;
         $threshold  = (float)($params['threshold'] ?? 0.55);
 
@@ -882,7 +882,7 @@ protected function listCubos($params = []): array {
      * 5. UPDATE FILE CONTENT (για edit drawer)
      * ========================================================= */
       protected function saveFSContent($params = []): array {
-      $publicRoot = '/var/www/gs/public';
+      $publicRoot = '/var/www/gs/moon';
           $path    = $params['path']    ?? $_POST['path']    ?? null;
           $content = array_key_exists('content', (array)$params)
               ? $params['content']
@@ -973,7 +973,7 @@ protected function extractJsxDependencies(string $filePath): array {
 }
 
 protected function getComponentFiles(): array {
-    $publicRoot = '/var/www/gs/public';
+    $publicRoot = '/var/www/gs/moon';
     if (!is_dir($publicRoot)) {
         return ['success' => false, 'error' => 'Public directory not found'];
     }
@@ -1095,7 +1095,7 @@ protected function getCuboFilesList(): array {
 }
 
 protected function fileExistsInTree(string $path, string $domain): bool {
-    $publicRoot = '/var/www/gs/public';
+    $publicRoot = '/var/www/gs/moon';
     $fullPath = $publicRoot . '/' . $domain . '/src/' . ltrim($path, '/');
 
     // Δοκίμασε ως έχει
@@ -1670,7 +1670,7 @@ protected function copyComponentToDomain($params = []): array {
         return ['success' => false, 'error' => 'source_path and target_domain required'];
     }
 
-    $publicRoot = '/var/www/gs/public';
+    $publicRoot = '/var/www/gs/moon';
 
     // 1. Βρες το source component
     $srcRows = $this->db->flist(
@@ -1911,7 +1911,7 @@ protected function listCubosWithCounts($params = []): array {
 }
 
 protected function readFile($params = []): array {
-    $publicRoot = '/var/www/gs/public';
+    $publicRoot = '/var/www/gs/moon';
     $path = $params['path'] ?? $_POST['path'] ?? $_GET['path'] ?? null;
 
     if (!$path) {
