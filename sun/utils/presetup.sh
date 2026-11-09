@@ -259,7 +259,7 @@ else
     exit 1
 fi
 
-#6. PUBLIC Choose system php|react Create public filesystem public/${DOMAIN}
+#6. PUBLIC Choose system php|react Create public filesystem moon/${DOMAIN}
 # if php just insert this <?php
                           #define('DOMAIN',$_SERVER['SERVER_NAME']);
                           #$servernameArray=explode('.',${DOMAIN});
@@ -275,8 +275,8 @@ fi
 echo "Choose system (php/react): "
 read SYSTEM
 if [[ "$SYSTEM" == "php" ]]; then
-    mkdir -p "public/${DOMAIN}"
-    # PHP setup: Insert PHP code into the public/${DOMAIN} folder
+    mkdir -p "moon/${DOMAIN}"
+    # PHP setup: Insert PHP code into the moon/${DOMAIN} folder
     echo "<?php
     define('DOMAIN', \$_SERVER['SERVER_NAME']);
     \$servernameArray = explode('.', \${DOMAIN});
@@ -286,8 +286,8 @@ if [[ "$SYSTEM" == "php" ]]; then
     require '/var/www/gs/vendor/autoload.php';
     use Core\Gen;
     \$gaia = new Gen();
-    ?>" > "public/${DOMAIN}/index.php"
-    echo "${DOMAIN} powered by Gen20, completed for ${DOMAIN} in 'public/${DOMAIN}/index.php'."
+    ?>" > "moon/${DOMAIN}/index.php"
+    echo "${DOMAIN} powered by Gen20, completed for ${DOMAIN} in 'moon/${DOMAIN}/index.php'."
 
 elif [[ "$SYSTEM" == "react" ]]; then
   NODE_VERSION=$(node -v 2>/dev/null)
@@ -313,9 +313,9 @@ elif [[ "$SYSTEM" == "react" ]]; then
           echo "Node.js version $NODE_VERSION is sufficient."
       fi
 
-    # React setup: Create a new React app in the public/${DOMAIN} folder
-    cd "public" && yarn create react-app "${DOMAIN}"
-    echo "React app setup completed for ${DOMAIN} in 'public/${DOMAIN}'."
+    # React setup: Create a new React app in the moon/${DOMAIN} folder
+    cd "moon" && yarn create react-app "${DOMAIN}"
+    echo "React app setup completed for ${DOMAIN} in 'moon/${DOMAIN}'."
 
 else
     echo "Invalid system choice. Please choose 'php' or 'react'."
