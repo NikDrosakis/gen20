@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "module": "kronos",
+  "language": "python",
+  "aggregator": "aggregator.py",
+  "cubos": [
+    {
+      "name": "hello",
+      "enabled": true,
+      "location": "cubos",
+      "package": "kronos/cubos/hello",
+      "source": "cubos/hello/hello.py",
+      "register": "register_routes",
+      "register_line": "_REGISTRY.append((\"hello\", cubo_hello.register_routes))",
+      "forward_decl": "from .hello import hello as cubo_hello",
+      "files": [
+        "cubos/hello/__init__.py",
+        "cubos/hello/hello.py"
+      ]
+    }
+  ]
+}

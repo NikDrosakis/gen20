@@ -1,0 +1,7 @@
+{
+  "version": "1.0.0",
+  "module": "kronos",
+  "language": "python",
+  "aggregator": "aggregator.py",
+  "cubos": []
+}

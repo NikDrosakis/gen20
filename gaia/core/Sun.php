@@ -17,9 +17,10 @@ use Core\Traits\Filemeta;
 use Core\Traits\Filesystem;
 use Core\Traits\CuboPublic;
 use Core\Traits\CuboAdmin;
+use Core\Cubos\Aggregator;
 
 class Sun extends Gaia {
-use  Url, Manifest, Tree, Form,Domain,DomainFS,DomainDB,Media, Filemeta, CuboPublic, CuboAdmin;
+use  Url, Manifest, Tree, Aggregator, Form,Domain,DomainFS,DomainDB,Media, Filemeta, CuboPublic, CuboAdmin;
 
 public $argv=[]; // To store the arguments passed to the script
 public $argc; // Store the argument count

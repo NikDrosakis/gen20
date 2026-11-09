@@ -1,0 +1,38 @@
+{
+  "version": "1.0.0",
+  "name": "hello",
+  "description": "Multi-system Hello cubo",
+  "systems": {
+    "god": {
+      "language": "go",
+      "path": "god",
+      "files": ["god/hello.go"],
+      "register_line": "hello.Register(a.router)"
+    },
+    "kronos": {
+      "language": "python",
+      "path": "kronos",
+      "files": ["kronos/hello.py", "kronos/__init__.py"],
+      "register_line": "_REGISTRY.append((\"hello\", cubo_hello.register_routes))"
+    },
+    "gaia": {
+      "language": "php",
+      "path": "gaia",
+      "files": ["gaia/Hello.php"],
+      "register_line": "use Hello;",
+      "trait": "Hello"
+    },
+    "mars": {
+      "language": "cpp",
+      "path": "mars",
+      "files": ["mars/hello.cpp", "mars/hello.h"],
+      "register_line": "registry().push_back({\"hello\", cubo_hello::register_routes});"
+    },
+    "sun": {
+      "language": "bash",
+      "path": "sun",
+      "files": ["sun/hello.sh"],
+      "register_line": "cubos_register \"hello\" hello_register"
+    }
+  }
+}

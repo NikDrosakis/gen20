@@ -1,5 +1,5 @@
 <?php
-namespace Core\Traits;
+namespace Core\Cubos;
 
 trait Meta {
 /**

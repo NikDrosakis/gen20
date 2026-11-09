@@ -1,3 +1,4 @@
+cd /var/www/gs/mars
 sudo apt install build-essential
 sudo apt install libmariadb-dev
 sudo apt update

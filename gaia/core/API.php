@@ -24,7 +24,7 @@ use Core\Traits\Filesystem;
 use Core\Traits\Filemeta;
 use Core\Traits\Manifest;
 use Core\Traits\Deepseek;
-use Core\Cubos\Packages;
+use Core\Cubos\Aggregator;
 
 /*
  * API CLASS
@@ -32,7 +32,7 @@ use Core\Cubos\Packages;
  * */
 
 class API extends Gaia{
-	 use Share,Content, Packages, Xml, GA,Manifest,Filesystem,Filemeta, Media, Tree,Form, Domain,DomainDB, DomainFS, CuboAdmin, CuboPublic, Lang, Url, Deepseek;
+	 use Share,Content, Aggregator, Xml, GA,Manifest,Filesystem,Filemeta, Media, Tree,Form, Domain,DomainDB, DomainFS, CuboAdmin, CuboPublic, Lang, Url, Deepseek;
    private $security;
 
    public function __construct() {

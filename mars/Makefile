@@ -1,49 +1,59 @@
-# Compiler and flags
+# /var/www/gs/mars/Makefile
 CXX = g++
 CXXFLAGS = -Wall -std=c++17 -pthread
 
-# Define paths
-INC_DIR = /usr/include
-LIB_DIR = /usr/lib/x86_64-linux-gnu
+INC = -I./core -I./cubos -I/usr/include
 
-# Explicit include paths
-INC = -I./core -I/usr/include
-
-# Get the correct lib path from mariadb_config
-MYSQL_LIB_DIR := $(shell mariadb_config --libs)
-
-# Library directories and dependencies for linking
 LIB = -lyaml-cpp -L/usr/lib/x86_64-linux-gnu/ -L/usr/local/lib \
       -lmariadb -lmariadbcpp \
-      -pthread -lssl -lcrypto
+      -pthread -lssl -lcrypto \
+      -lboost_system -lboost_thread
 
-# Source and object files
-VPATH = core core/build
+VPATH = core core/build cubos cubos/build
 
-SOURCES = core/Maria.cpp core/Yaml.cpp core/FS.cpp core/Cubo.cpp core/Ws.cpp
+SOURCES = core/Maria.cpp core/Yaml.cpp core/FS.cpp core/Ws.cpp
 
-OBJECTS = core/build/Maria.o core/build/Yaml.o core/build/FS.o core/build/Ws.o core/build/Cubo.o
+# === CUBOS:START ===
+CUBO_SOURCES = cubos/aggregator.cpp
+# === CUBOS:END ===
 
-# Executable name
+OBJECTS = core/build/Maria.o core/build/Yaml.o core/build/FS.o core/build/Ws.o
+
+# === CUBOS:START ===
+CUBO_OBJECTS = cubos/build/aggregator.o
+# === CUBOS:END ===
+
 TARGET = main
 
-# Ensure build directory exists and compile all sources
-all: create_build_dir $(TARGET)
+all: create_build_dirs $(TARGET)
 
-create_build_dir:
-	mkdir -p core/build
+create_build_dirs:
+	mkdir -p core/build cubos/build
 
-# Link object files into the final executable
-$(TARGET): main.o $(OBJECTS)
+$(TARGET): main.o $(OBJECTS) $(CUBO_OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIB)
 
-# Rule to compile main.cpp to main.o
 main.o: main.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INC)
 
-# Specific rules to compile .cpp files to object files in the core/build directory
 core/build/%.o: core/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INC)
 
+# === CUBOS:START ===
+cubos/build/%.o: cubos/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INC)
+# === CUBOS:END ===
+
 clean:
-	rm -f $(OBJECTS) $(TARGET) core/build/*.o main.o
+	rm -f $(OBJECTS) $(CUBO_OBJECTS) $(TARGET) main.o
+	rm -rf core/build cubos/build
+
+build: all
+quick:
+	$(MAKE) -j$$(nproc)
+info:
+	@echo "=== Mars ==="
+	@echo "  target:  $(TARGET)"
+	@echo "  sources: $(SOURCES)"
+	@echo "  cubos:   $(CUBO_SOURCES)"

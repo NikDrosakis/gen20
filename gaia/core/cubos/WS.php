@@ -1,5 +1,5 @@
 <?php
-namespace Core\Traits;
+namespace Core\Cubos;
 
 use Ratchet\Client\WebSocket;
 use Ratchet\Client\connect;

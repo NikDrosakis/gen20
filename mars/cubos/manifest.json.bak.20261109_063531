@@ -1,0 +1,7 @@
+{
+  "version": "1.0.0",
+  "module": "mars",
+  "language": "cpp",
+  "aggregator": "aggregator.cpp",
+  "cubos": []
+}

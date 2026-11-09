@@ -15,7 +15,7 @@ import os
 import io
 
 # Logging setup
-log_file_path = 'kronos.log'
+log_file_path = '/var/www/gs/data/gen20.net/kronos.text'
 log_file = open(log_file_path, 'a')
 logger = logging.getLogger('kronos')
 logger.setLevel(logging.INFO)
@@ -104,20 +104,13 @@ async def startup():
     log("running startup")
     app.state.maria = Mari()
     log("Mari connection initialized")
-    #app.state.solr = Solr(settings.DATABASE_SOLR_VIVALIBRO)
-    # Send the notification asynchronously
-    # Fetch actions from the database (using maria_admin instance)
-    #logging.info("Executing Actions on startup...")
-    #await action_loop()
-     # Start watching the YAML file for changes
-    #json= Yaml.read_yaml_and_convert_to_json("manifest.yml")
-    #Watch.start_watching("manifest.yml", "systems", "yaml")
-    # Start watching the YAML file for changes
-    #await asyncio.gather(handle_shortcuts())
-    # Start the periodic ping task
-    #asyncio.create_task(periodic_ping())
+
+    # === CUBOS:START === (auto-generated)
+    from cubos import aggregator as cubos
+    cubos.register_all()
+    # === CUBOS:END ===
+
     log("\n".join([str(route) for route in app.routes]))
-   # You can import additional modules here, but no need to instantiate `Mari` again
     await wsinit()
     log("Startup completed")
 

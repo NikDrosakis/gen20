@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "module": "mars",
+  "language": "cpp",
+  "aggregator": "aggregator.cpp",
+  "cubos": [
+    {
+      "name": "hello",
+      "enabled": true,
+      "location": "cubos",
+      "package": "mars/cubos/hello",
+      "register": "register_routes",
+      "register_line": "registry().push_back({\"hello\", cubo_hello::register_routes});",
+      "endpoints": [
+        "GET /god/v1/hello"
+      ],
+      "files": [
+        "cubos/hello/hello.cpp"
+      ]
+    }
+  ]
+}
