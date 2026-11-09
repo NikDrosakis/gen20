@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Directory to monitor (recursively)
-MONITOR_DIR="/var/www/gs/public/cubos"
+MONITOR_DIR="/var/www/gs/astra/cubos"
 
 # Database credentials
 DB_USER="root"
