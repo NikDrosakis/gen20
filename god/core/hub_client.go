@@ -47,28 +47,14 @@ func (c *Client) ReadPump() {
 		if msg.Type == "terminal" {
 			domain := msg.Domain
 			if domain == "" {
-				domain = msg.DomAffect
+				domain = "gen20.gr"
 			}
 			go c.handleTerminalCommand(msg.Verba, domain)
 			continue
 		}
 
-		// Subscribe
+		// Cubo WS hooks (chat, κ.λπ.)
 		if DispatchWS(c, msg) {
-            continue
-        }
-
-		if msg.Type == "subscribe" && msg.DomAffect != "" {
-			c.mu.Lock()
-			c.Domains[msg.DomAffect] = true
-			c.mu.Unlock()
-
-			c.Hub.mu.Lock()
-			if c.Hub.byDomain[msg.DomAffect] == nil {
-				c.Hub.byDomain[msg.DomAffect] = make(map[*Client]bool)
-			}
-			c.Hub.byDomain[msg.DomAffect][c] = true
-			c.Hub.mu.Unlock()
 			continue
 		}
 
@@ -109,10 +95,8 @@ func (c *Client) WritePump() {
 	}
 }
 
-// handleTerminalCommand εκτελεί μια bash εντολή και στέλνει το output
-// πίσω στον client ως Message{type: "terminal_output"}.
+// handleTerminalCommand εκτελεί bash εντολή και στέλνει output πίσω.
 func (c *Client) handleTerminalCommand(command string, domain string) {
-	// Whitelist
 	allowed := []string{
 		"yarn build", "yarn install", "yarn dev",
 		"git pull", "git status", "git log",
@@ -130,13 +114,11 @@ func (c *Client) handleTerminalCommand(command string, domain string) {
 			Type:   "terminal_output",
 			Verba:  "[denied] command not allowed: " + command,
 			UserID: "system",
-			Cast:   "one",
 			To:     c.UserID,
 		})
 		return
 	}
 
-	// Domain → folder
 	if domain == "" {
 		domain = "gen20.gr"
 	}
@@ -146,7 +128,6 @@ func (c *Client) handleTerminalCommand(command string, domain string) {
 			Type:   "terminal_output",
 			Verba:  "[denied] invalid domain: " + domain,
 			UserID: "system",
-			Cast:   "one",
 			To:     c.UserID,
 		})
 		return
@@ -159,7 +140,6 @@ func (c *Client) handleTerminalCommand(command string, domain string) {
 			Type:   "terminal_output",
 			Verba:  "[error] folder does not exist: " + workDir,
 			UserID: "system",
-			Cast:   "one",
 			To:     c.UserID,
 		})
 		return
@@ -174,7 +154,6 @@ func (c *Client) handleTerminalCommand(command string, domain string) {
 		Type:   "terminal_output",
 		Verba:  string(output),
 		UserID: "system",
-		Cast:   "one",
 		To:     c.UserID,
 	}
 	if err != nil {
