@@ -43,6 +43,59 @@ function MessagingDebug() {
     );
 }
 
+function AutoOpenChat({ userID, activeChat, setActiveChat }) {
+    const { messages } = useMessaging();
+
+    useEffect(() => {
+        if (messages.length === 0) return;
+
+        const last = messages[messages.length - 1];
+        console.log("[AutoOpenChat] last:", last.type, last);
+
+        // --- Case 1: insert → άνοιξε το chat με τον peer ---
+        if (last.type === "insert" || last.type === "message") {
+            if (last.system !== "chat") return;
+            if (last.to !== userID) return;
+
+            const peer = last.userid;
+            if (!peer || peer === userID) return;
+            if (activeChat?.userId === peer) return;
+
+            const cid = [userID, peer].sort().join("-");
+            console.log("[AutoOpenChat] OPEN from insert:", { cid, peer });
+            setActiveChat({ cid, userId: peer, userName: peer, status: "active" });
+            return;
+        }
+
+        // --- Case 2: reslist → άνοιξε το chat με τον πρώτο online peer ---
+        if (last.type === "reslist" && last.system === "chat") {
+            try {
+                const peers = JSON.parse(last.c || last.verba || "[]");
+                console.log("[AutoOpenChat] reslist peers:", peers);
+
+                const peer = peers.find((p) => p && p !== userID);
+                if (!peer) {
+                    console.log("[AutoOpenChat] no peer (only me)");
+                    return;
+                }
+                if (activeChat?.userId === peer) {
+                    console.log("[AutoOpenChat] already open:", peer);
+                    return;
+                }
+
+                const cid = [userID, peer].sort().join("-");
+                console.log("[AutoOpenChat] OPEN from reslist:", { cid, peer });
+                setActiveChat({ cid, userId: peer, userName: peer, status: "active" });
+            } catch (err) {
+                console.warn("[AutoOpenChat] bad reslist:", err);
+            }
+            return;
+        }
+    }, [messages, userID, activeChat, setActiveChat]);
+
+    return null;
+}
+
 const App = () => {
     // Μετά το useState(activeChat)
     const [activeChat, setActiveChat] = useState(null);
@@ -194,6 +247,12 @@ const App = () => {
                     {renderPage()}
                 </div>
             </div>
+
+            <AutoOpenChat
+                userID={userID}
+                activeChat={activeChat}
+                setActiveChat={setActiveChat}
+            />
 
             <div className="chat-widget">
                 <ChatList
