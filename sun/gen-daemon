@@ -10,7 +10,7 @@ SUN_DIR="$ROOT/sun"
 ENV_FILE="$ROOT/.env"
 BG_DIR="$SUN_DIR/bg"                    # ✅ sun/bg
 LOG_DIR="$ROOT/log"
-PUBLIC_DIR="$ROOT/public"
+MOON_DIR="$ROOT/moon"
 SOURCE_DIR="$ROOT/gaia/core"
 GEN_BIN="$SUN_DIR/gen.sh"
 WATCH_FLAG="$SUN_DIR/.watch_enabled"
@@ -180,11 +180,11 @@ start_watcher() {
     if ! command -v inotifywait >/dev/null 2>&1; then
         log "WARN: inotifywait not installed, watcher disabled"; return
     fi
-    log "Starting watcher on $PUBLIC_DIR, $SOURCE_DIR"
+    log "Starting watcher on $MOON_DIR, $SOURCE_DIR"
     (
         inotifywait -m -r -e modify,create,delete \
             --exclude '(\.sw[px]|~$|\.tmp$|\.log$|/\.git/|/node_modules/)' \
-            "$PUBLIC_DIR" "$SOURCE_DIR" --format '%w%f' 2>>"$LOG_DIR/inotify.err" | \
+            "$MOON_DIR" "$SOURCE_DIR" --format '%w%f' 2>>"$LOG_DIR/inotify.err" | \
         while read -r f; do process_change "$f"; done
     ) &
     WATCH_PID=$!
