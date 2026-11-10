@@ -1,25 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{{ .title }}</title>
+    <title>GEN20 - GALAXY</title>
     <style>
-        body { font-family: sans-serif; margin: 20px; }
-        h1 { color: #333; }
-        ul { list-style-type: none; padding: 0; }
-        li { margin-bottom: 10px; border: 1px solid #ddd; padding: 10px; }
-        a { color: #007bff; text-decoration: none;}
-        a:hover { text-decoration: underline; }
+        body { background: #000; color: #0f0; font-family: monospace; }
+        #galaxy { width: 100vw; height: 100vh; }
+        .planet { cursor: pointer; }
+        #terminal { position: fixed; bottom: 0; width: 100%; background: #111; }
     </style>
 </head>
 <body>
-<h1>{{ .title }}</h1>
-<p>API endpoints:</p>
-<ul>
-    {{ range .endpoints }}
-    <li><a href="{{ .Path }}">{{ .Path }}</a> - {{ .Method }} method</li>
-    {{ else }}
-    <li>No endpoints available</li>
-    {{ end }}
-</ul>
+<svg id="galaxy"></svg>
+<div id="terminal">
+    <input type="text" id="sol-cmd" placeholder="sol god esti" autofocus>
+</div>
+<script>
+    // 1. Σύνδεση στο GOD
+    const ws = new WebSocket('ws://localhost:8080/ws/galaxy');
+
+    // 2. Όταν το GOD στείλει κατάσταση, ζωγράφισε
+    ws.onmessage = (event) => {
+        const state = JSON.parse(event.data);
+        // π.χ. state = { god: "running", moon: "building", sun: "active" }
+        renderGalaxy(state);
+    };
+
+    // 3. Όταν γράψεις στο τερματικό, στείλε το στο GOD
+    document.getElementById('sol-cmd').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const cmd = e.target.value;
+            ws.send(JSON.stringify({ action: 'sol', cmd: cmd }));
+            e.target.value = '';
+        }
+    });
+
+    function renderGalaxy(state) {
+        // Εδώ γίνεται η μαγεία. Ζωγραφίζεις τους κύκλους με βάση το state.
+        console.log("State received:", state);
+    }
+</script>
 </body>
 </html>

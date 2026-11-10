@@ -1,23 +1,306 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-
-    <title>Gen20 God API</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEN20 — GALAXY (SOL Interface)</title>
     <style>
-        body { font-family: sans-serif; margin: 20px; }
-        h1 { color: #333; }
-        ul { list-style-type: none; padding: 0; }
-        li { margin-bottom: 10px; border: 1px solid #ddd; padding: 10px; }
-        a { color: #007bff; text-decoration: none;}
-        a:hover { text-decoration: underline; }
+        :root {
+            --bg: #05050a;
+            --fg: #00ff41;
+            --accent: #ff0055;
+            --dim: #003b0f;
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #galaxy-container {
+            flex-grow: 1;
+            position: relative;
+            background: radial-gradient(circle at center, #0a0a1a 0%, #000 100%);
+        }
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+        /* Στυλ για τους Πλανήτες */
+        .planet {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .planet circle {
+            stroke-width: 2px;
+            fill: #111;
+            transition: fill 0.3s, stroke 0.3s;
+        }
+        .planet text {
+            fill: var(--fg);
+            font-size: 12px;
+            text-anchor: middle;
+            pointer-events: none;
+        }
+        /* Καταστάσεις Πλανητών */
+        .planet.running circle { stroke: var(--fg); fill: rgba(0, 255, 65, 0.1); }
+        .planet.stopped circle { stroke: var(--accent); fill: rgba(255, 0, 85, 0.1); }
+        .planet.degraded circle { stroke: #ffaa00; fill: rgba(255, 170, 0, 0.1); }
+
+        /* Στυλ για τις Τροχιές (Συνδέσεις) */
+        .orbit {
+            stroke: var(--dim);
+            stroke-width: 1.5px;
+            stroke-dasharray: 5, 5;
+            fill: none;
+            transition: stroke 0.3s;
+        }
+        .orbit.active {
+            stroke: var(--fg);
+            stroke-dasharray: 10, 5;
+            animation: dash 1s linear infinite;
+        }
+        @keyframes dash {
+            to { stroke-dashoffset: -15; }
+        }
+
+        /* Τερματικό SOL */
+        #terminal {
+            height: 30%;
+            background: #000;
+            border-top: 1px solid var(--dim);
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        #sol-log {
+            flex-grow: 1;
+            overflow-y: auto;
+            font-size: 14px;
+            white-space: pre-wrap;
+            color: #888;
+        }
+        #sol-input-wrapper {
+            display: flex;
+            align-items: center;
+            border-top: 1px solid #222;
+            padding-top: 5px;
+        }
+        #sol-prompt { color: var(--fg); margin-right: 10px; }
+        #sol-input {
+            background: transparent;
+            border: none;
+            color: var(--fg);
+            font-family: inherit;
+            font-size: 14px;
+            flex-grow: 1;
+            outline: none;
+        }
     </style>
 </head>
 <body>
-<h1>Welcome to My Gin App</h1>
-<p>API endpoints:</p>
-<ul>
-    <li><a href="/ping">/ping</a> - Simple health check.</li>
-    <li><a href="/items">/items</a> - Get a list of items.</li>
-</ul>
+
+<!-- Ο Γαλαξίας (SVG) -->
+<div id="galaxy-container">
+    <svg id="galaxy-svg">
+        <!-- Οι τροχιές θα μπουν εδώ μέσω JS -->
+        <g id="orbits"></g>
+        <!-- Οι πλανήτες θα μπουν εδώ μέσω JS -->
+        <g id="planets"></g>
+        <g id="center">
+            <circle cx="50%" cy="50%" r="15" fill="var(--fg)" />
+            <text x="50%" y="45%" fill="#000" font-size="10" font-weight="bold" text-anchor="middle">SUN</text>
+        </g>
+    </svg>
+</div>
+
+<!-- Το Τερματικό του SOL -->
+<div id="terminal">
+    <div id="sol-log">System initialized. Waiting for GOD...</div>
+    <div id="sol-input-wrapper">
+        <span id="sol-prompt">sol></span>
+        <input type="text" id="sol-input" autocomplete="off" autofocus placeholder="god esti, moon start, etc...">
+    </div>
+</div>
+
+<script>
+    // 1. Η Τοπολογία του Γαλαξία (Hardcoded για τώρα, μελλοντικά από GOD)
+    // Ακτίνα (r) = απόσταση από το κέντρο. Γωνία (angle) = μοίρες.
+    const systems = [
+        { id: 'god',      name: 'GOD',      r: 150, angle: 270, state: 'stopped' }, // Πάνω
+        { id: 'moon',     name: 'MOON',     r: 150, angle: 330, state: 'stopped' }, // Πάνω-Δεξιά
+        { id: 'gaia',     name: 'GAIA',     r: 150, angle: 30,  state: 'stopped' }, // Κάτω-Δεξιά
+        { id: 'kronos',   name: 'KRONOS',   r: 150, angle: 90,  state: 'stopped' }, // Κάτω
+        { id: 'mars',     name: 'MARS',     r: 150, angle: 150, state: 'stopped' }, // Κάτω-Αριστερά
+        { id: 'database', name: 'DATABASE', r: 150, angle: 210, state: 'stopped' }  // Πάνω-Αριστερά
+    ];
+
+    // 2. Οι Συνδέσεις (Τροχιές)
+    const connections = [
+        { from: 'god', to: 'moon' },
+        { from: 'god', to: 'database' },
+        { from: 'gaia', to: 'database' },
+        { from: 'kronos', to: 'god' },
+        { from: 'moon', to: 'gaia' }
+    ];
+
+    const svg = document.getElementById('galaxy-svg');
+    const planetsGroup = document.getElementById('planets');
+    const orbitsGroup = document.getElementById('orbits');
+    const logOutput = document.getElementById('sol-log');
+    const inputField = document.getElementById('sol-input');
+
+    let ws;
+    let isConnected = false;
+
+    // Υπολογισμός Συντεταγμένων
+    function getCoordinates(r, angleDeg) {
+        const angleRad = (angleDeg - 90) * (Math.PI / 180);
+        return {
+            x: 50 + (r * Math.cos(angleRad)) / 10, // 50% = κέντρο
+            y: 50 + (r * Math.sin(angleRad)) / 10
+        };
+    }
+
+    // Σχεδίαση Πλανητών
+    function drawPlanets() {
+        planetsGroup.innerHTML = '';
+        systems.forEach(sys => {
+            const pos = getCoordinates(sys.r, sys.angle);
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            g.setAttribute('class', `planet ${sys.state}`);
+            g.setAttribute('id', `planet-${sys.id}`);
+
+            // Κύκλος
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', `${pos.x}%`);
+            circle.setAttribute('cy', `${pos.y}%`);
+            circle.setAttribute('r', '30');
+            g.appendChild(circle);
+
+            // Κείμενο
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', `${pos.x}%`);
+            text.setAttribute('y', `${pos.y}%`);
+            text.setAttribute('dy', '5');
+            text.textContent = sys.name;
+            g.appendChild(text);
+
+            // Click Event
+            g.addEventListener('click', () => {
+                logOutput.innerHTML += `\n<span style="color:#fff">[INFO] Selected ${sys.name}</span>`;
+                inputField.value = `${sys.id} esti`;
+                inputField.focus();
+            });
+
+            planetsGroup.appendChild(g);
+        });
+    }
+
+    // Σχεδίαση Τροχιών
+    function drawOrbits() {
+        orbitsGroup.innerHTML = '';
+        connections.forEach(conn => {
+            const sysFrom = systems.find(s => s.id === conn.from);
+            const sysTo = systems.find(s => s.id === conn.to);
+            if(!sysFrom || !sysTo) return;
+
+            const posFrom = getCoordinates(sysFrom.r, sysFrom.angle);
+            const posTo = getCoordinates(sysTo.r, sysTo.angle);
+
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', `${posFrom.x}%`);
+            line.setAttribute('y1', `${posFrom.y}%`);
+            line.setAttribute('x2', `${posTo.x}%`);
+            line.setAttribute('y2', `${posTo.y}%`);
+            line.setAttribute('class', 'orbit');
+            // Αν και οι δύο είναι running, η τροχιά είναι active
+            if(sysFrom.state === 'running' && sysTo.state === 'running') {
+                line.classList.add('active');
+            }
+            orbitsGroup.appendChild(line);
+        });
+    }
+
+    function updateGalaxyState(newState) {
+        // newState = { god: 'running', moon: 'stopped', ... }
+        systems.forEach(sys => {
+            if(newState[sys.id]) {
+                sys.state = newState[sys.id];
+                const planetEl = document.getElementById(`planet-${sys.id}`);
+                if(planetEl) {
+                    planetEl.setAttribute('class', `planet ${sys.state}`);
+                }
+            }
+        });
+        drawOrbits(); // Επανασχεδίαση τροχιών για τα animations
+    }
+
+    // WebSocket Σύνδεση
+    function connectWebSocket() {
+        // Σύνδεση στο GOD (προσάρμοσε το URL αν χρειάζεται)
+        ws = new WebSocket('ws://localhost:8080/ws/galaxy');
+
+        ws.onopen = () => {
+            isConnected = true;
+            logOutput.innerHTML += `\n<span style="color:var(--fg)">[WS] Connected to GOD</span>`;
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if(data.type === 'state') {
+                    updateGalaxyState(data.systems);
+                } else if(data.type === 'sol_output') {
+                    logOutput.innerHTML += `\n<span style="color:#ccc">${data.output}</span>`;
+                    logOutput.scrollTop = logOutput.scrollHeight;
+                }
+            } catch(e) {
+                console.error("Parse error", e);
+            }
+        };
+
+        ws.onclose = () => {
+            isConnected = false;
+            logOutput.innerHTML += `\n<span style="color:var(--accent)">[WS] Disconnected. Retrying...</span>`;
+            setTimeout(connectWebSocket, 3000); // Επανασύνδεση σε 3 δευτερόλεπτα
+        };
+    }
+
+    // Χειρισμός εισόδου SOL
+    inputField.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const cmd = inputField.value.trim();
+            if(cmd && isConnected) {
+                logOutput.innerHTML += `\n<span style="color:var(--fg)">sol> ${cmd}</span>`;
+                ws.send(JSON.stringify({ action: 'sol', cmd: cmd }));
+                inputField.value = '';
+            } else if(!isConnected) {
+                logOutput.innerHTML += `\n<span style="color:var(--accent)">Error: WebSocket not connected.</span>`;
+            }
+        }
+    });
+
+    // Αρχικοποίηση
+    drawPlanets();
+    drawOrbits();
+    connectWebSocket();
+
+    // Προσομοίωση αλλαγής κατάστασης (για δοκιμή χωρίς backend)
+    /*
+    setInterval(() => {
+        const randomSys = systems[Math.floor(Math.random() * systems.length)].id;
+        const states = ['running', 'stopped', 'degraded'];
+        const randomState = states[Math.floor(Math.random() * states.length)];
+        updateGalaxyState({ [randomSys]: randomState });
+    }, 3000);
+    */
+</script>
 </body>
 </html>

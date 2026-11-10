@@ -1,7 +1,0 @@
-{
-  "version": "1.0.0",
-  "module": "sun",
-  "language": "bash",
-  "aggregator": "aggregator.sh",
-  "cubos": []
-}

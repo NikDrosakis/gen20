@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 # SOL Action: Preflight
 # Writes the complete execution output to the GEN20 platform log.
-
-preflight_about() {
-    printf '%s\n' 'PREFLIGHT | System inventory'
-}
-
 preflight_probe() {
     local label="$1"
     shift

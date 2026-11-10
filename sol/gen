@@ -305,6 +305,11 @@ PS1="$SOL_PROMPT"
 # --------------------------------------------------
 
 if [[ $- == *i* ]]; then
+    if [[ -r "$SOL_DIR/banner.sh" ]]; then
+        # shellcheck source=/dev/null
+        source "$SOL_DIR/banner.sh"
+        show_banner
+    fi
     printf 'SOL %s | GEN20 language environment\n' "$SOL_VERSION"
     printf 'Type help for expressions. Native Bash is available.\n'
     return 0 2>/dev/null || exit 0
