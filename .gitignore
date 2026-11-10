@@ -1,67 +1,90 @@
-# Ignore environment files
-#changing this file I apply git rm -r --cached /folderchanged
-#then git add . && git commit -m "changed" && git push
-.env
-.vscode
-# Python cache files
-*/__pycache__/
-*/node_modules/
-*.pyc
-*.pyo
-*.pyd
-*.log
-*.sql
-# Legacy / Old directories
-**/old/
+# ==================================================
+# GEN20
+# Git exclusions
+# ==================================================
 
-# Media files
-log/
-media/
-data/
-backup/
-kronos/data/
-kronos/services/sketch/video/
-node_modules/
-dist/
+# Environment and secrets
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# IDE and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Git-local files
+*.swp
+*.swo
+*~
+
+# ==================================================
+# Dependencies
+# ==================================================
+
+**/node_modules/
+**/vendor/
 .yarn/
-# Ignore everything in public/
-gaia/public/*
-gaia/wordpress
-# Allow these specific folders
-!gaia/public/_phpdomain.local/
-!gaia/public/_reactdomain.local/
-# Ignore node_modules inside public/_reactdomain.local
-gaia/public/_reactdomain.local/node_modules/
-gaia/public/_reactdomain.local/build/
-god/vendor/
-god/tmp/
-god/old/
-setup/
-vendor/
-rus/target/
-# Specific directories and files
-kronos/__pycache__/
 kronos/genenv/
-ermis/node_modules/
-cubos/node_modules/
-venus/node_modules/
-ermis/services/aistudio/.env
-ermis/services/botpress/.env
-ermis/services/huggingface/.env
-ermis/services/openai/.env
-venus/services/openai/.env
+
+# ==================================================
+# Python
+# ==================================================
+
+**/__pycache__/
+*.py[cod]
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# ==================================================
+# Logs and runtime files
+# ==================================================
+
+*.log
+log/
+
+# ==================================================
+# Generated builds and binaries
+# ==================================================
+
+dist/
+build/
+**/target/
+
+# ==================================================
+# Temporary and legacy directories
+# ==================================================
+
+**/old/
+god/tmp/
+mars/tmp2/
+
+# ==================================================
+# GEN20 specific exclusions
+# ==================================================
+
+setup/
+kronos/services/sketch/video/
 mars/server
-mars/tmp2
-/.env
-###> symfony/framework-bundle ###
-/.env.local
-/.env.local.php
-/.env.*.local
-/config/secrets/prod/prod.decrypt.private.php
-/vendor/
-###< symfony/framework-bundle ###
-###> phpunit/phpunit ###
-/phpunit.xml
+
+# Symfony private production key
+config/secrets/prod/prod.decrypt.private.php
+
+# PHPUnit
 .phpunit.result.cache
-ermis.zip
-###< phpunit/phpunit ###
+
+# Database dumps (not SQL source/migrations)
+*.dump.sql
+*.backup.sql
+*.sql.gz
+
+# Archives
+*.zip
