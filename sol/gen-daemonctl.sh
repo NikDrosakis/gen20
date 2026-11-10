@@ -1,18 +1,18 @@
 #!/bin/bash
-# /var/www/gs/sun/gen-daemonctl.sh
+# /var/www/gs/SON/gen-daemonctl.sh
 
 set -u
 
 ROOT="/var/www/gs"
-SUN_DIR="$ROOT/sun"
-DAEMON="$SUN_DIR/gen-daemon"
-PID_FILE="$SUN_DIR/gen.pid"
-LOCK_FILE="$SUN_DIR/gen.lock"
+SOL_DIR="$ROOT/sol"
+DAEMON="$SOL_DIR/gen-daemon"
+PID_FILE="$SOL_DIR/gen.pid"
+LOCK_FILE="$SOL_DIR/gen.lock"
 LOG_FILE="$ROOT/log/gen.log"
 LOG_MAX_SIZE=$((10 * 1024 * 1024))
 
 ensure_dirs() {
-    mkdir -p "$(dirname "$LOG_FILE")" "$SUN_DIR" || {
+    mkdir -p "$(dirname "$LOG_FILE")" "$SOL_DIR" || {
         echo "Cannot create required directories" >&2
         exit 1
     }

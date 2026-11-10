@@ -1,14 +1,21 @@
+#!/usr/bin/env bash
 # SOL — SOL language and command surface.
 # Source-only. TUI is owned by ../interface.sh.
+
 sol_about() {
     printf '%s\n' 'SOL | language, command surface, navigation and orchestration'
 }
+
 sol_status() {
+    local count
+    # Διόρθωση: Το tr -d ' ' ήθελε σωστό κλείσιμο και εισαγωγικά
+    count=$(__sol_entities 2>/dev/null | wc -l | tr -d ' ')
     printf 'SOL %s | Bash %s | systems %s\n' \
         "${SOL_VERSION:-dev}" "$BASH_VERSION" \
-        "$(__sol_entities 2>/dev/null | wc -l | tr -d ' ')'
+        "${count:-0}"
     printf 'root: %s\n' "${SOL_ROOT:-unknown}"
 }
+
 sol_subject_menu() {
     local name about file
     printf '%-12s %s\n' SYSTEM SUBJECT
@@ -44,25 +51,25 @@ sol_command_index() {
 }
 
 sol_help() {
-    cat <<'EOF'
-SOL — GEN20 LANGUAGE ENVIRONMENT
-
-COMMANDS
-  exit, quit       Leave SOL
-  help             Show this help
-  subject_menu     Show system glossary
-  version          Show SOL version
-
-GRAMMAR
-  <system> esti [args...]
-  <system> <verb> [args...]
-
-NATIVE BASH
-  Commands, pipes, redirects, variables, loops and functions.
-
-COMMAND INDEX
-  Run: command_index
-EOF
+    # Αλλαγή σε printf για να αποφύγουμε θέματα με heredocs και formatting
+    printf '%s\n' \
+        'SOL — GEN20 LANGUAGE ENVIRONMENT' \
+        '' \
+        'COMMANDS' \
+        '  exit, quit       Leave SOL' \
+        '  help             Show this help' \
+        '  subject_menu     Show system glossary' \
+        '  version          Show SOL version' \
+        '' \
+        'GRAMMAR' \
+        '  <system> esti [args...]' \
+        '  <system> <verb> [args...]' \
+        '' \
+        'NATIVE BASH' \
+        '  Commands, pipes, redirects, variables, loops and functions.' \
+        '' \
+        'COMMAND INDEX' \
+        '  Run: command_index'
 }
 
 command_index() {
@@ -87,9 +94,12 @@ sol_dispatch_line() {
     # command_not_found_handle dispatches SOL systems.
     eval -- "$line"
 }
+
 sol_esti() {
+    local entities
+    entities=$(__sol_entities | paste -sd ' ' -)
     printf 'SOL %s\n' "${SOL_VERSION:-dev}"
     printf 'root: %s\n' "${SOL_ROOT:-unknown}"
-    printf 'expressions: %s\n' "$(__sol_entities | paste -sd ' ' -)"
+    printf 'expressions: %s\n' "${entities:-none}"
     printf 'bash: %s\n' "$BASH_VERSION"
 }

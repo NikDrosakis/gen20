@@ -44,8 +44,7 @@ sol_ui_systems() {
 
     while IFS= read -r entity; do
         [[ -z "$entity" ]] && continue
-        printf '  %-18s' "$entity"
-        printf '\n'
+        printf '  %-18s\n' "$entity"
     done < <(__sol_entities)
 }
 
@@ -58,7 +57,7 @@ sol_ui_help() {
     printf '  exit                 Leave SOL\n'
     printf '\n'
     printf '  system               Show system expressions\n'
-    printf '  system expression   Execute expression\n'
+    printf '  system expression    Execute expression\n'
     printf '\n'
 }
 
@@ -71,7 +70,8 @@ sol_ui_expressions() {
     local verb
 
     printf '\n'
-    printf "${SOL_C_CYAN}%s EXPRESSIONS${SOL_C_RESET}\n' "$system"
+    # Διόρθωση: έκλεινε με μονό αντί για διπλό εισαγωγικό
+    printf "${SOL_C_CYAN}%s EXPRESSIONS${SOL_C_RESET}\n" "$system"
 
     while IFS= read -r verb; do
         [[ -z "$verb" ]] && continue
@@ -116,7 +116,8 @@ sol_ui_create_expression() {
     file="$(__sol_entity_file "$system")"
 
     if [[ -z "$file" || ! -f "$file" ]]; then
-        printf "${SOL_C_RED}System file not found: %s${SOL_C_RESET}\n' "$system"
+        # Διόρθωση: έκλεινε με μονό αντί για διπλό εισαγωγικό
+        printf "${SOL_C_RED}System file not found: %s${SOL_C_RESET}\n" "$system"
         return 1
     fi
 
@@ -137,11 +138,12 @@ sol_ui_create_expression() {
 
     temp_file="$(mktemp)" || return 1
 
+    # Διόρθωση: Καθαρό heredoc χωρίς διπλά backslashes που χαλάνε το output
     cat > "$temp_file" <<EOF
 ${function_name}() {
     # TODO: Implement ${system} ${verb}
 
-    printf '%s\\\\n' '${system} ${verb}: not implemented'
+    printf '%s\n' '${system} ${verb}: not implemented'
 }
 EOF
 
@@ -182,6 +184,7 @@ sol_ui_execute() {
     local system
     local verb
     local rest
+    local file
 
     [[ -z "$line" ]] && return 0
 
@@ -211,7 +214,6 @@ sol_ui_execute() {
     fi
 
     if declare -F "__sol_entity_file" >/dev/null 2>&1; then
-        local file
         file="$(__sol_entity_file "$system")"
 
         if [[ -n "$file" && -f "$file" ]]; then

@@ -1,19 +1,19 @@
 #!/bin/bash
-# /var/www/gs/sun/gen-daemon
+# /var/www/gs/sol/gen-daemon
 
 set -u
 set -o pipefail
 
 # ---------- Config ----------
 ROOT="/var/www/gs"
-SUN_DIR="$ROOT/sun"
+SOL_DIR="$ROOT/sol"
 ENV_FILE="$ROOT/.env"
-BG_DIR="$SUN_DIR/bg"                    # ✅ sun/bg
+BG_DIR="$SOL_DIR/bg"                    # ✅ SOL/bg
 LOG_DIR="$ROOT/log"
 PUBLIC_DIR="$ROOT/moon"
 SOURCE_DIR="$ROOT/gaia/core"
-GEN_BIN="$SUN_DIR/gen.sh"
-WATCH_FLAG="$SUN_DIR/.watch_enabled"
+GEN_BIN="$SOL_DIR/gen.sh"
+WATCH_FLAG="$SOL_DIR/.watch_enabled"
 POLL_INTERVAL=10
 VERSION_STEP="0.001"
 

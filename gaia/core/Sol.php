@@ -19,7 +19,7 @@ use Core\Traits\CuboPublic;
 use Core\Traits\CuboAdmin;
 use Core\Cubos\Aggregator;
 
-class Sun extends Gaia {
+class Sol extends Gaia {
 use  Url, Manifest, Tree, Aggregator, Form,Domain,DomainFS,DomainDB,Media, Filemeta, CuboPublic, CuboAdmin;
 
 public $argv=[]; // To store the arguments passed to the script

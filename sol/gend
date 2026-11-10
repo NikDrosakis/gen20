@@ -1,14 +1,14 @@
 #!/bin/bash
-# cli/gen-daemonctl.sh  (ή όπως το ονομάζεις)
+# sol/gen-daemonctl.sh  (ή όπως το ονομάζεις)
 # Manager για τον gen daemon
 
 set -u
 
 ROOT="/var/www/gs"
-DAEMON="$ROOT/cli/gen-daemon"          # Το εκτελέσιμο του daemon
-PID_FILE="$ROOT/cli/gen.pid"
-LOCK_FILE="$ROOT/cli/gen.lock"
-LOG_FILE="$ROOT/log/gen.log"
+DAEMON="$ROOT/sol/gen-daemon"          # Το εκτελέσιμο του daemon
+PID_FILE="$ROOT/sol/gen.pid"
+LOCK_FILE="$ROOT/sol/gen.lock"
+LOG_FILE="$ROOT/data/gen20.net/gen.txt"
 LOG_MAX_SIZE=$((10 * 1024 * 1024))     # 10MB
 
 # ---------- helpers ----------
