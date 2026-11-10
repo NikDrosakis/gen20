@@ -1,0 +1,299 @@
+#!/usr/bin/env bash
+# SOL — GEN20 language environment.
+# Native Bash is the execution engine. SOL adds domain expressions.
+
+if [[ ${SOL_ENGINE:-0} != 1 ]]; then
+    export SOL_ENGINE=1
+    if (($#)); then
+        exec bash "$0" "$@"
+    fi
+    exec bash --noprofile --rcfile "$0" -i
+fi
+unset SOL_ENGINE
+
+SOL_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+SOL_ROOT=$(cd -- "$SOL_DIR/.." && pwd -P)
+SOL_VERSION=0.1.0
+SOL_PROMPT='gen> '
+
+declare -gA SOL_LOADED=()
+
+# Preserve the developer's Bash environment.
+if [[ $- == *i* && -r ${HOME}/.bashrc ]]; then
+    source "${HOME}/.bashrc"
+fi
+
+__sol_entity_file() {
+    local name=$1 file
+
+    for file in \
+        "$SOL_DIR/systems/$name.sh" \
+        "$SOL_DIR/systems/"*/"$name.sh" \
+        "$SOL_DIR/actions/$name.sh" \
+        "$SOL_DIR/actions/"*/"$name.sh" \
+        "$SOL_DIR/opus/$name.sh"
+    do
+        [[ -f $file ]] && {
+            printf '%s\n' "$file"
+            return 0
+        }
+    done
+
+    return 1
+}
+
+__sol_entities() {
+    local dir file
+
+    for dir in "$SOL_DIR/systems" "$SOL_DIR/actions" "$SOL_DIR/opus"; do
+        [[ -d $dir ]] || continue
+
+        while IFS= read -r -d '' file; do
+            basename -- "$file" .sh
+        done < <(
+            command find "$dir" -type f -name '*.sh' -print0 2>/dev/null
+        )
+    done | sort -u
+}
+
+__sol_load() {
+    local file=$1
+
+    [[ -n ${SOL_LOADED[$file]+x} ]] && return 0
+
+    source "$file" || return 1
+    SOL_LOADED[$file]=1
+}
+
+__sol_verbs() {
+    local name=$1 file fn
+
+    file=$(__sol_entity_file "$name") || return 0
+    __sol_load "$file" || return 1
+
+    while IFS= read -r fn; do
+        printf '%s\n' "${fn#${name}_}"
+    done < <(compgen -A function "${name}_" | sort -u)
+}
+
+sol_help() {
+    cat <<'EOF'
+SOL — GEN20 language environment
+
+  <system> esti [args...]    inspect a system
+  <system> <verb> [args...]  execute an expression
+  subject_menu               show system glossary
+  help                       show SOL grammar
+  version                    show SOL version
+  exit                       leave SOL
+
+Native Bash remains available:
+  commands, pipes, redirects, variables, loops and functions.
+EOF
+}
+
+__sol_dispatch() {
+    (($#)) || return 0
+
+    local name=$1
+    local verb file fn candidate
+    shift
+
+    case "$name" in
+        help)
+            sol_help
+            return $?
+            ;;
+        version)
+            printf 'SOL %s\n' "$SOL_VERSION"
+            return 0
+            ;;
+        opus)
+            case ${1:-esti} in
+                esti)
+                    printf 'OPUS expression space\n'
+                    ;;
+                neo|sose)
+                    printf 'OPUS %s: provider not connected yet.\n' "$1"
+                    return 2
+                    ;;
+                *)
+                    printf 'OPUS expressions: esti neo sose\n'
+                    ;;
+            esac
+            return 0
+            ;;
+    esac
+
+    file=$(__sol_entity_file "$name") || return 127
+    __sol_load "$file" || return 1
+
+    # Bare system: display its available expressions.
+    if (($# == 0)); then
+        printf '%s expressions:\n' "$name"
+
+        while IFS= read -r candidate; do
+            [[ -n $candidate ]] && printf '  %s\n' "$candidate"
+        done < <(__sol_verbs "$name")
+
+        return 0
+    fi
+
+    verb=$1
+    shift
+
+    fn="${name}_${verb}"
+
+    if declare -F "$fn" >/dev/null; then
+        "$fn" "$@"
+        return $?
+    fi
+
+    printf 'SOL: %s has no expression "%s". Available:' \
+        "$name" "$verb" >&2
+
+    local found=0
+
+    while IFS= read -r candidate; do
+        printf ' %s' "$candidate" >&2
+        found=1
+    done < <(__sol_verbs "$name")
+
+    ((found)) || printf ' (none)' >&2
+    printf '\n' >&2
+
+    return 2
+}
+
+sol_dispatch_line() {
+    local line=$1 first
+
+    [[ -n ${line//[[:space:]]/} ]] || return 0
+
+    read -r first _ <<< "$line"
+
+    case "$first" in
+        exit|quit)
+            return 99
+            ;;
+        help)
+            sol_help
+            return 0
+            ;;
+        version)
+            printf 'SOL %s\n' "$SOL_VERSION"
+            return 0
+            ;;
+        subject_menu)
+            sol_subject_menu
+            return $?
+            ;;
+    esac
+
+    if __sol_entity_file "$first" >/dev/null 2>&1 ||
+       [[ $first == opus ]]
+    then
+        # SOL expression dispatch.
+        # shellcheck disable=SC2086
+        __sol_dispatch $line
+    else
+        # Native Bash execution.
+        eval -- "$line"
+    fi
+}
+
+command_not_found_handle() {
+    local name=$1
+    shift
+
+    if __sol_entity_file "$name" >/dev/null ||
+       [[ $name == opus || $name == help || $name == version ]]
+    then
+        __sol_dispatch "$name" "$@"
+        return $?
+    fi
+
+    printf 'bash: %s: command not found (try: help)\n' "$name" >&2
+    return 127
+}
+
+_sol_complete() {
+    local cur name file verbs
+
+    cur=${COMP_WORDS[COMP_CWORD]}
+    COMPREPLY=()
+
+    if ((COMP_CWORD == 0)); then
+        local words
+        words="$(__sol_entities) help version opus subject_menu"
+        COMPREPLY=( $(compgen -W "$words" -- "$cur") )
+        return 0
+    fi
+
+    name=${COMP_WORDS[0]}
+
+    if [[ $name == opus ]]; then
+        COMPREPLY=( $(compgen -W 'esti neo sose' -- "$cur") )
+        return 0
+    fi
+
+    file=$(__sol_entity_file "$name" 2>/dev/null) || return 0
+    verbs=$(__sol_verbs "$name")
+
+    COMPREPLY=( $(compgen -W "$verbs" -- "$cur") )
+}
+
+if [[ -r /usr/share/bash-completion/bash_completion ]] &&
+   ! declare -F _completion_loader >/dev/null
+then
+    source /usr/share/bash-completion/bash_completion
+fi
+
+complete -D -F _sol_complete -o bashdefault -o default
+
+# Persistent command history.
+HISTFILE=${GEN_HISTORY:-${HOME}/.gen_history}
+HISTSIZE=5000
+HISTFILESIZE=10000
+HISTCONTROL=ignoredups:erasedups
+shopt -s histappend
+set -o history
+
+PS1=$SOL_PROMPT
+
+# Load SOL's own expressions.
+sol_file="$SOL_DIR/systems/sol.sh"
+[[ -f $sol_file ]] && __sol_load "$sol_file"
+
+# Load the TUI interface.
+if [[ -f "$SOL_DIR/interface.sh" ]]; then
+    source "$SOL_DIR/interface.sh"
+else
+    printf 'SOL: interface.sh not found\n' >&2
+    return 1 2>/dev/null || exit 1
+fi
+
+# Interactive environment.
+if [[ $- == *i* ]]; then
+    sol_interface
+    return 0 2>/dev/null || exit 0
+fi
+
+# Non-interactive execution.
+if (($#)); then
+    if [[ $1 == -c || $1 == --command ]]; then
+        shift
+        eval "$*"
+        exit $?
+    fi
+
+    if __sol_entity_file "$1" >/dev/null ||
+       [[ $1 == opus || $1 == help || $1 == version ]]
+    then
+        __sol_dispatch "$@"
+    else
+        command "$@"
+    fi
+
+    exit $?
+fi

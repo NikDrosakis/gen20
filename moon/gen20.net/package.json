@@ -6,13 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "postbuild": "npm run generate-sitemap && npm run generate-meta",
-    "generate-meta": "node scripts/generate-meta.js",
-    "generate-router": "node scripts/generate-router.cjs",
-    "generate-sitemap": "node scripts/generate-sitemap.js",
-    "generate-headify": "node scripts/generate-headify-config.js",
-    "headify": "node headify.server.js"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@mui/icons-material": "^7.1.2",

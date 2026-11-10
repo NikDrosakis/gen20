@@ -11,7 +11,8 @@
 *.pyd
 *.log
 *.sql
-
+# Legacy / Old directories
+**/old/
 
 # Media files
 log/
