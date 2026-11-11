@@ -16,10 +16,23 @@ fi
 
 unset SOL_ENGINE
 
-SOL_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+# Λύνει symlinks του ίδιου του gen.sh (όχι μόνο του directory)
+SOL_SOURCE="${BASH_SOURCE[0]}"
+while [[ -L $SOL_SOURCE ]]; do
+    SOL_TARGET=$(readlink -- "$SOL_SOURCE")
+    if [[ $SOL_TARGET == /* ]]; then
+        SOL_SOURCE="$SOL_TARGET"
+    else
+        SOL_SOURCE="$(dirname -- "$SOL_SOURCE")/$SOL_TARGET"
+    fi
+done
+SOL_DIR=$(cd -- "$(dirname -- "$SOL_SOURCE")" && pwd -P)
 SOL_ROOT=$(cd -- "$SOL_DIR/.." && pwd -P)
-
+unset SOL_SOURCE SOL_TARGET
 SOL_VERSION="0.1.0"
+
+source "$SOL_DIR/__sol/__sol_dispatch.sh"
+source "$SOL_DIR/__sol/__sol_complete.sh"
 
 # --------------------------------------------------
 # GEN20 CENTRAL LOG
@@ -63,73 +76,120 @@ if [[ $- == *i* && -r ${HOME}/.bashrc ]]; then
     source "${HOME}/.bashrc"
 fi
 
+
 # --------------------------------------------------
 # ENTITY DISCOVERY
+# Κανόνας: underscore = διαχωριστής λέξεων.
+#   "astra migrate" -> astra_migrate
+# Ψάχνουμε πρώτα ολόκληρο filename, μετά function μέσα στο <noun>.sh.
 # --------------------------------------------------
 
+__sol_search_dirs() {
+    # Σειρά προτεραιότητας: actions -> systems -> opus
+    printf '%s\n' \
+        "$SOL_DIR/actions" \
+        "$SOL_DIR/systems" \
+        "$SOL_DIR/opus"
+}
+
+# Ψάχνει ένα filename <name>.sh σε actions/** , systems/** , opus/
 __sol_entity_file() {
     local name="${1:-}"
-    local file
+    local dir file
 
     [[ -n $name ]] || return 1
 
-    for file in \
-        "$SOL_DIR/systems/$name.sh" \
-        "$SOL_DIR/systems/"*/"$name.sh" \
-        "$SOL_DIR/actions/$name.sh" \
-        "$SOL_DIR/actions/"*/"$name.sh" \
-        "$SOL_DIR/opus/$name.sh"
-    do
+    while IFS= read -r dir; do
+        [[ -d $dir ]] || continue
+
+        # Άμεσα μέσα στον φάκελο
+        file="$dir/$name.sh"
         if [[ -f $file ]]; then
             printf '%s\n' "$file"
             return 0
         fi
-    done
+
+        # Ένα επίπεδο βαθύτερα (π.χ. actions/astra/migrate.sh)
+        while IFS= read -r -d '' file; do
+            if [[ $(basename -- "$file") == "$name.sh" ]]; then
+                printf '%s\n' "$file"
+                return 0
+            fi
+        done < <(command find "$dir" -mindepth 2 -maxdepth 2 -type f -name "$name.sh" -print0 2>/dev/null)
+    done < <(__sol_search_dirs)
 
     return 1
 }
 
-__sol_entities() {
-    local dir file
+# Κανόνας 3+4: "<noun> <verb>" -> <noun>_<verb>.sh  ή  <noun>.sh::<noun>_<verb>
+# Επιστρέφει "file<TAB>mode<TAB>function"
+#   mode = script   -> εκτέλεση ως subprocess
+#   mode = function -> source + κάλεσμα function
+__sol_find_expression() {
+    local noun="${1:-}"
+    local verb="${2:-}"
+    local full file
 
-    for dir in \
-        "$SOL_DIR/systems" \
-        "$SOL_DIR/actions" \
-        "$SOL_DIR/opus"
-    do
-        [[ -d $dir ]] || continue
+    [[ -n $noun && -n $verb ]] || return 1
 
-        while IFS= read -r -d '' file; do
-            basename -- "$file" .sh
-        done < <(
-            command find "$dir" -type f -name '*.sh' -print0 2>/dev/null
-        )
-    done
+    full="${noun}_${verb}"
 
-    # Gaia is a PHP CLI namespace, not a Bash expression file.
-    [[ -f "$SOL_DIR/systems/gaia/index.php" ]] && printf 'gaia\n'
+    # 1) Ολόκληρο filename: astra_migrate.sh
+    if file=$(__sol_entity_file "$full"); then
+        printf '%s\tscript\t\n' "$file"
+        return 0
+    fi
 
-    sort -u
+    # 2) Function μέσα στο <noun>.sh
+    if file=$(__sol_entity_file "$noun"); then
+        printf '%s\tfunction\t%s\n' "$file" "$full"
+        return 0
+    fi
+
+    return 1
 }
 
+# Κανόνας 1: σκέτο "<noun>" -> <noun>.sh
+__sol_find_noun() {
+    local noun="${1:-}"
+    __sol_entity_file "$noun"
+}
+
+# Φορτώνει expression file (μόνο functions) μία φορά.
 __sol_load() {
     local file="${1:-}"
 
     [[ -n $file && -f $file ]] || return 1
     [[ -n ${SOL_LOADED[$file]+loaded} ]] && return 0
 
-    # Expression files must define functions only.
     # shellcheck source=/dev/null
     source "$file" || return 1
 
     SOL_LOADED[$file]=1
 }
 
+# Λίστα όλων των entities (για completion / help)
+__sol_entities() {
+    {
+        local dir file
+        while IFS= read -r dir; do
+            [[ -d $dir ]] || continue
+            while IFS= read -r -d '' file; do
+                basename -- "$file" .sh
+            done < <(command find "$dir" -type f -name '*.sh' -print0 2>/dev/null)
+        done < <(__sol_search_dirs)
+        [[ -f "$SOL_DIR/systems/gaia/index.php" ]] && printf 'gaia\n'
+    } | sort -u
+}
+
+# Λίστα verbs ενός noun (functions <noun>_* μέσα στο <noun>.sh)
 __sol_verbs() {
     local name="${1:-}"
     local file fn
 
-    file=$(__sol_entity_file "$name") || return 0
+    [[ -n $name ]] || return 0
+
+    file=$(__sol_find_noun "$name") || return 0
     __sol_load "$file" || return 1
 
     while IFS= read -r fn; do
@@ -166,165 +226,23 @@ Enter executes. Ctrl-D exits.
 Native Bash syntax remains available.
 SOLHELP
 }
-
-# --------------------------------------------------
-# DISPATCH
-# --------------------------------------------------
-
-__sol_dispatch() {
-    (($#)) || return 0
-
-    local name="$1"
-    local verb file fn candidate
-    local found=0
-
-    shift
-
-    case "$name" in
-        help)
-            __sol_help
-            return 0
-            ;;
-
-        version)
-            printf 'SOL %s\n' "$SOL_VERSION"
-            return 0
-            ;;
-
-        gaia)
-            local gaia_cli="$SOL_DIR/systems/gaia/index.php"
-
-            if [[ ! -f $gaia_cli ]]; then
-                printf 'SOL: Gaia CLI not found: %s\n' "$gaia_cli" >&2
-                return 127
-            fi
-
-            if ! command -v php >/dev/null 2>&1; then
-                printf 'SOL: PHP CLI is not available\n' >&2
-                return 127
-            fi
-
-            php "$gaia_cli" gaia "$@"
-            return $?
-            ;;
-
-        opus)
-            case "${1:-esti}" in
-                esti)
-                    printf 'OPUS expression space - ASTRA packaging integration follows.\n'
-                    ;;
-                neo|sose)
-                    printf 'OPUS %s - reserved expression; provider not connected yet.\n' "$1"
-                    return 2
-                    ;;
-                *)
-                    printf 'OPUS expressions: esti neo sose\n'
-                    ;;
-            esac
-            return 0
-            ;;
-    esac
-
-    file=$(__sol_entity_file "$name") || return 127
-    __sol_load "$file" || return 1
-
-    verb="${1:-esti}"
-    (($#)) && shift
-
-    fn="${name}_${verb}"
-
-    if declare -F "$fn" >/dev/null 2>&1; then
-        "$fn" "$@"
-        return $?
-    fi
-
-    printf 'SOL: %s has no expression "%s". Available:' \
-        "$name" "$verb" >&2
-
-    while IFS= read -r candidate; do
-        printf ' %s' "$candidate" >&2
-        found=1
-    done < <(__sol_verbs "$name")
-
-    ((found)) || printf ' (none)' >&2
-    printf '\n' >&2
-
-    return 2
-}
-
+help() { __sol_help; }
 # --------------------------------------------------
 # NATIVE BASH FALLBACK
 # --------------------------------------------------
 
 command_not_found_handle() {
     local name="${1:-}"
-
     shift || true
 
-    if __sol_entity_file "$name" >/dev/null 2>&1 ||
-       [[ $name == gaia || $name == opus || $name == help || $name == version ]]
-    then
-        __sol_dispatch "$name" "$@"
-        return $?
+    if ! declare -F __sol_dispatch >/dev/null || [[ -n ${__SOL_IN_HANDLER:-} ]]; then
+        printf '%s: command not found\n' "$name" >&2
+        return 127
     fi
 
-    printf 'bash: %s: command not found (try: help)\n' "$name" >&2
-    return 127
+    local __SOL_IN_HANDLER=1
+    __sol_dispatch "$name" "$@"
 }
-
-# --------------------------------------------------
-# COMPLETION
-# --------------------------------------------------
-
-_sol_complete() {
-    local cur="" name="" file="" verbs="" words=""
-
-    COMPREPLY=()
-
-    [[ ${COMP_WORDS+x} && ${COMP_CWORD+x} ]] || return 0
-    ((${#COMP_WORDS[@]} > 0)) || return 0
-    ((COMP_CWORD >= 0 && COMP_CWORD < ${#COMP_WORDS[@]})) || return 0
-
-    cur="${COMP_WORDS[COMP_CWORD]}"
-
-    if ((COMP_CWORD == 0)); then
-        words="$(__sol_entities) help version opus"
-        mapfile -t COMPREPLY < <(compgen -W "$words" -- "$cur")
-        return 0
-    fi
-
-    name="${COMP_WORDS[0]}"
-
-    if [[ $name == opus ]]; then
-        mapfile -t COMPREPLY < <(
-            compgen -W 'esti neo sose' -- "$cur"
-        )
-        return 0
-    fi
-
-    if [[ $name == gaia ]]; then
-        mapfile -t COMPREPLY < <(
-            compgen -W 'esti' -- "$cur"
-        )
-        return 0
-    fi
-
-    file=$(__sol_entity_file "$name" 2>/dev/null) || return 0
-    verbs=$(__sol_verbs "$name")
-
-    mapfile -t COMPREPLY < <(compgen -W "$verbs" -- "$cur")
-    return 0
-}
-
-# Load system-wide Bash completion when available.
-if [[ -r /usr/share/bash-completion/bash_completion ]] &&
-   ! declare -F _completion_loader >/dev/null 2>&1
-then
-    # shellcheck source=/dev/null
-    source /usr/share/bash-completion/bash_completion
-fi
-
-complete -D -F _sol_complete -o bashdefault -o default
 
 # --------------------------------------------------
 # HISTORY AND PROMPT
@@ -351,11 +269,18 @@ if [[ $- == *i* ]]; then
         show_banner
     fi
 
+ # cd στο SOL_ROOT — τελευταίο, μετά από όλα τα source
+    cd "$SOL_ROOT" || {
+        printf 'SOL: cannot cd to SOL_ROOT: %s\n' "$SOL_ROOT" >&2
+        exit 1
+    }
+    
     printf 'SOL %s | GEN20 language environment\n' "$SOL_VERSION"
     printf 'Type help for expressions. Native Bash is available.\n'
 
     return 0 2>/dev/null || exit 0
 fi
+
 
 # --------------------------------------------------
 # SCRIPT / COMMAND MODE
@@ -368,13 +293,6 @@ if (($#)); then
         exit $?
     fi
 
-    if __sol_entity_file "$1" >/dev/null 2>&1 ||
-       [[ $1 == gaia || $1 == opus || $1 == help || $1 == version ]]
-    then
-        __sol_dispatch "$@"
-    else
-        command "$@"
-    fi
-
+    __sol_dispatch "$@"
     exit $?
 fi

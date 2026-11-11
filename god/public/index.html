@@ -4,23 +4,9 @@
     <meta charset="UTF-8">
     <title>GEN20 — GALAXY</title>
     <style>
-        body {
-            background-image: url("https://www.universetoday.com/article_images/Andromeda_Galaxy_Hubble.jpg");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            color: #00ff41;
-            font-family: monospace;
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background-size: cover;
-            backdrop-filter: brightness(0.5);
-        }
+        body { background: #05050a; color: #00ff41; font-family: monospace; margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        nav { font-size:22px;padding: 10px; font-size: 24px; background: #111; border-bottom: 1px solid #003b0f; display: flex; gap: 20px; }
+        nav { padding: 10px; font-size: 24px; background: #111; border-bottom: 1px solid #003b0f; display: flex; gap: 20px; }
         nav a { color: #00ff41; text-decoration: none; font-weight: bold; }
         nav a:hover { color: #fff; text-decoration: underline; }
         nav a.api-link { color: #ffaa00; }
@@ -28,22 +14,19 @@
         #galaxy { flex-grow: 1; background: radial-gradient(circle, #0a0a1a 0%, #000 100%); position: relative; overflow: hidden; }
         svg { width: 100%; height: 100%; }
 
-        /* Πλανήτες (Το SVG g container) */
+        /* Πλανήτες */
         .planet { cursor: pointer; transition: all 0.3s; }
-
-        /* Το στρογγυλό περίγραμμα */
-        .planet .ring { stroke-width: 2px; fill: none; }
+        .planet .ring { stroke-width: 3px; fill: none; transition: all 0.3s; }
         .planet.running .ring { stroke: #00ff41; }
         .planet.stopped .ring { stroke: #ff0055; opacity: 0.5; }
         .planet.degraded .ring { stroke: #ffaa00; }
 
-        /* Το κείμενο */
-        .planet text { fill: #00ff41; font-size:22px;; font-weight: bold; text-anchor: middle; pointer-events: none; margin-top: 10px; }
+        .planet text { fill: #00ff41; font-size: 18px; font-weight: bold; text-anchor: middle; pointer-events: none; }
         .planet.stopped text { fill: #ff0055; opacity: 0.5; }
 
         /* Ο Ήλιος (SOL) */
-        #center circle { fill: #00ff41; filter: drop-shadow(0 0 30px #00ff41); }
-        #center text { fill: #000; font-size: 16px; font-weight: bold; text-anchor: middle; }
+        #center circle { fill: #00ff41; filter: drop-shadow(0 0 40px #00ff41); }
+        #center text { fill: #000; font-size: 28px; font-weight: bold; text-anchor: middle; }
 
         /* Τροχιές */
         .orbit { stroke: #003b0f; stroke-width: 2px; stroke-dasharray: 5,5; fill: none; transition: all 0.3s; }
@@ -52,13 +35,13 @@
 
         /* --- SPLIT TERMINAL --- */
         #terminal-area { height: 35%; display: flex; border-top: 1px solid #003b0f; background: #000; }
-        .term-pane { font-size:22px;flex: 1; display: flex; flex-direction: column; border-right: 1px solid #222; padding: 10px; }
+        .term-pane { flex: 1; display: flex; flex-direction: column; border-right: 1px solid #222; padding: 10px; }
         .term-pane:last-child { border-right: none; }
-        .term-header { font-size: 22px; color: #ffaa00; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 5px; text-transform: uppercase; }
-        .term-log { font-size:22px;flex-grow: 1; overflow-y: auto; white-space: pre-wrap; font-size: 13px; color: #888; }
+        .term-header { font-size: 14px; color: #ffaa00; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 5px; text-transform: uppercase; }
+        .term-log { flex-grow: 1; overflow-y: auto; white-space: pre-wrap; font-size: 14px; color: #888; }
         .term-input-wrapper { display: flex; border-top: 1px solid #222; padding-top: 5px; }
-        .term-prompt {font-size:22px; color: #00ff41; margin-right: 10px; font-weight: bold; }
-        .term-input { font-size:22px;background: transparent; border: none; color: #00ff41; font-family: inherit; font-size: 14px; flex-grow: 1; outline: none; }
+        .term-prompt { color: #00ff41; margin-right: 10px; font-weight: bold; font-size: 16px; }
+        .term-input { background: transparent; border: none; color: #00ff41; font-family: inherit; font-size: 16px; flex-grow: 1; outline: none; }
         .quick-actions { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
         .quick-actions button { background: #111; color: #00ff41; border: 1px solid #00ff41; padding: 5px 10px; cursor: pointer; font-family: monospace; font-size: 12px; }
         .quick-actions button:hover { background: #00ff41; color: #000; }
@@ -72,19 +55,23 @@
 </nav>
 
 <div id="galaxy">
-    <svg id="galaxy-svg">
-        <!-- Ορισμός του ClipPath για να κόβονται τα βίντεο κυκλικά -->
+    <svg id="galaxy-svg" viewBox="0 0 1000 1000">
         <defs>
+            <!-- Clip path για κυκλικούς πλανήτες -->
             <clipPath id="circle-clip">
-                <circle cx="0" cy="0" r="60" />
+                <circle cx="0" cy="0" r="70" />
+            </clipPath>
+            <!-- Clip path για τετράγωνες βάσεις -->
+            <clipPath id="square-clip">
+                <rect x="-50" y="-50" width="100" height="100" rx="10" /> <!-- rx=10 για ελαφρώς στρογγυλεμένες γωνίες -->
             </clipPath>
         </defs>
 
         <g id="orbits"></g>
         <g id="planets"></g>
         <g id="center">
-            <circle cx="50%" cy="50%" r="35" />
-            <text x="50%" y="46%" dy=".3em">SOL</text>
+            <circle cx="500" cy="500" r="50" />
+            <text x="500" y="500" dy="0.3em">SOL</text>
         </g>
     </svg>
 </div>
@@ -115,19 +102,27 @@
 </div>
 
 <script>
-    // 1. Οι Πλανήτες με τα Media τους
+    // 1. Οι Πλανήτες & οι Βάσεις
     const systems = [
-        { id: 'god',      name: 'GOD',      r: 400, angle: 270, state: 'stopped', media: 'https://www.gstatic.com/culturalinstitute/searchar/assets/jupiter/desktop_light.mp4' },
-        { id: 'moon',     name: 'MOON',     r: 400, angle: 330, state: 'stopped', media: 'https://www.gstatic.com/culturalinstitute/searchar/assets/earths_moon/desktop_light.mp4' },
-        { id: 'gaia',     name: 'GAIA',     r: 400, angle: 30,  state: 'stopped', media: 'https://media.giphy.com/media/mf8UbIDew7e8g/giphy.gif' },
-        { id: 'kronos',   name: 'KRONOS',   r: 400, angle: 90,  state: 'stopped', media: '' },
-        { id: 'mars',     name: 'MARS',     r: 400, angle: 150, state: 'stopped', media: '' },
-        { id: 'database', name: 'DATABASE', r: 400, angle: 210, state: 'stopped', media: '' }
+        // Πλανήτες
+        { id: 'god',      name: 'GOD',      r: 350, angle: 270, state: 'stopped', shape: 'circle', media: 'https://www.gstatic.com/culturalinstitute/searchar/assets/jupiter/desktop_light.mp4' },
+        { id: 'moon',     name: 'MOON',     r: 350, angle: 330, state: 'stopped', shape: 'circle', media: 'https://www.gstatic.com/culturalinstitute/searchar/assets/earths_moon/desktop_light.mp4' },
+        { id: 'gaia',     name: 'GAIA',     r: 350, angle: 30,  state: 'stopped', shape: 'circle', media: 'https://media.giphy.com/media/mf8UbIDew7e8g/giphy.gif' },
+        { id: 'kronos',   name: 'KRONOS',   r: 350, angle: 90,  state: 'stopped', shape: 'circle', media: 'https://i.ytimg.com/vi/XvTSB5B0d0w/maxresdefault.jpg' },
+        { id: 'mars',     name: 'MARS',     r: 350, angle: 150, state: 'stopped', shape: 'circle', media: 'https://www.gstatic.com/culturalinstitute/searchar/assets/mars/desktop_light.mp4' },
+
+        // Βάσεις Δεδομένων (Τετράγωνες)
+        { id: 'database', name: 'MariaDB',  r: 200, angle: 45,  state: 'stopped', shape: 'square', media: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRL58aHclEzkBlr4yhPwyynoyDPMVcyNqqIXPPpHHy9I7MwpAg-_zXx9HHAr6W1AtY6r0mTB5WDropFq3W12a2WXRJJ8BsGJ-wFSFBdqPBU&s=10' },
+        { id: 'couchdb',  name: 'CouchDB',  r: 220, angle: 315, state: 'stopped', shape: 'square', media: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTOUILGZX2cDGbfoIa7PE-97QL4mLdCzmM1e12FwRgmoW91lJdMn2A-1cwhuIDFlHszX3r2zwuAhB5IqI5ENDH_3xwgWhbINoW4LyFtZAtVqA&s=10' },
+        { id: 'redis',    name: 'Redis',    r: 120, angle: 0,   state: 'stopped', shape: 'square', media: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTf5rqbnsf7gXv6hTVdeu7lCdpw1mrpcl6B_hXa_oxicCbH2XXxW8nVCAslf3ujrW7-FZzjK-RzU6sKm6bPrD7NSXNLzgBiruHpefwMyAI9PA&s=10' }
     ];
 
+    // Ενημέρωση των συνδέσεων για να δείχνουν προς τις νέες βάσεις
     const connections = [
-        { from: 'god', to: 'moon' }, { from: 'god', to: 'database' },
-        { from: 'gaia', to: 'database' }, { from: 'kronos', to: 'god' },
+        { from: 'god', to: 'couchdb' },     // GOD -> CouchDB
+        { from: 'gaia', to: 'database' },   // GAIA -> MariaDB
+        { from: 'god', to: 'moon' },
+        { from: 'kronos', to: 'god' },
         { from: 'moon', to: 'gaia' }
     ];
 
@@ -142,7 +137,10 @@
     // 2. Σχεδίαση
     function getCoordinates(r, angleDeg) {
         const angleRad = (angleDeg - 90) * (Math.PI / 180);
-        return { x: 50 + (r * Math.cos(angleRad)) / 100, y: 50 + (r * Math.sin(angleRad)) / 100 };
+        return {
+            x: 500 + (r * Math.cos(angleRad)),
+            y: 500 + (r * Math.sin(angleRad))
+        };
     }
 
     function drawPlanets() {
@@ -152,35 +150,69 @@
             const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             g.setAttribute('class', `planet ${sys.state}`);
             g.setAttribute('id', `planet-${sys.id}`);
-            // Μετακινούμε το κέντρο του πλανήτη στη σωστή θέση
-            g.setAttribute('transform', `translate(${pos.x * 10}, ${pos.y * 10})`); // Το *10 είναι επειδή το SVG χρησιμοποιεί % στο viewBox
+            g.setAttribute('transform', `translate(${pos.x}, ${pos.y})`);
 
-            // 1. Το animation (Βίντεο ή GIF)
+            const isSquare = sys.shape === 'square';
+            const size = isSquare ? 100 : 140; // Τα τετράγωνα είναι λίγο πιο μικρά
+            const radius = isSquare ? 50 : 70;
+            const clipPath = isSquare ? 'url(#square-clip)' : 'url(#circle-clip)';
+
+            // 1. Το media
             if (sys.media) {
-                const image = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-                // Το href δέχεται και MP4 και GIF
-                image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', sys.media);
-                image.setAttribute('x', '-60');
-                image.setAttribute('y', '-60');
-                image.setAttribute('width', '120');
-                image.setAttribute('height', '120');
-                image.setAttribute('clip-path', 'url(#circle-clip)');
-                // Αν είναι stopped, το κάνουμε ασπρόμαυρο και διάφανο
-                if (sys.state === 'stopped') {
-                    image.setAttribute('style', 'filter: grayscale(100%) opacity(0.3);');
+                if (sys.media.endsWith('.mp4')) {
+                    // Βίντεο (Μόνο για κύκλους)
+                    const fo = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+                    fo.setAttribute('x', `-${radius}`); fo.setAttribute('y', `-${radius}`);
+                    fo.setAttribute('width', size); fo.setAttribute('height', size);
+                    fo.setAttribute('clip-path', clipPath);
+
+                    const video = document.createElement('video');
+                    video.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+                    video.setAttribute('width', size); video.setAttribute('height', size);
+                    video.setAttribute('autoplay', ''); video.setAttribute('loop', ''); video.setAttribute('playsinline', ''); video.setAttribute('preload', 'auto');
+                    video.muted = true;
+                    video.style.objectFit = 'cover';
+                    if (isSquare) video.style.borderRadius = '10px';
+
+                    const source = document.createElement('source');
+                    source.setAttribute('src', sys.media); source.setAttribute('type', 'video/mp4');
+                    video.appendChild(source);
+
+                    if (sys.state === 'stopped') video.style.filter = 'grayscale(100%) opacity(0.3)';
+                    video.addEventListener('canplay', () => { video.play().catch(e => console.log("Autoplay blocked:", e)); });
+
+                    fo.appendChild(video);
+                    g.appendChild(fo);
+                } else {
+                    // Εικόνα ή GIF
+                    const image = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+                    image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', sys.media);
+                    image.setAttribute('x', `-${radius}`); image.setAttribute('y', `-${radius}`);
+                    image.setAttribute('width', size); image.setAttribute('height', size);
+                    image.setAttribute('clip-path', clipPath);
+                    if (sys.state === 'stopped') image.setAttribute('style', 'filter: grayscale(100%) opacity(0.3);');
+                    g.appendChild(image);
                 }
-                g.appendChild(image);
             }
 
-            // 2. Το δαχτυλίδι (ring) γύρω από τον πλανήτη
-            const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            ring.setAttribute('class', 'ring');
-            ring.setAttribute('cx', '0'); ring.setAttribute('cy', '0'); ring.setAttribute('r', '60');
-            g.appendChild(ring);
+            // 2. Το δαχτυλίδι (Για τα τετράγωνα θα είναι ένα ορθογώνιο περίγραμμα)
+            if (isSquare) {
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('class', 'ring');
+                rect.setAttribute('x', `-${radius}`); rect.setAttribute('y', `-${radius}`);
+                rect.setAttribute('width', size); rect.setAttribute('height', size);
+                rect.setAttribute('rx', '10'); // Στρογγυλεμένες γωνίες
+                g.appendChild(rect);
+            } else {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('class', 'ring');
+                circle.setAttribute('cx', '0'); circle.setAttribute('cy', '0'); circle.setAttribute('r', radius);
+                g.appendChild(circle);
+            }
 
             // 3. Το κείμενο
             const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            text.setAttribute('x', '0'); text.setAttribute('y', '85'); // Τοποθέτηση κάτω από τον πλανήτη
+            text.setAttribute('x', '0'); text.setAttribute('y', radius + 30); // 30px κάτω από το σχήμα
             text.textContent = sys.name;
             g.appendChild(text);
 
@@ -203,16 +235,11 @@
             const posTo = getCoordinates(sysTo.r, sysTo.angle);
 
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            // Επειδή δουλεύουμε με % στο SVG, πρέπει να μετατρέψουμε τις τιμές σε απόλυτες (viewBox 1000x1000)
-            line.setAttribute('x1', `${posFrom.x * 10}`);
-            line.setAttribute('y1', `${posFrom.y * 10}`);
-            line.setAttribute('x2', `${posTo.x * 10}`);
-            line.setAttribute('y2', `${posTo.y * 10}`);
+            line.setAttribute('x1', posFrom.x); line.setAttribute('y1', posFrom.y);
+            line.setAttribute('x2', posTo.x); line.setAttribute('y2', posTo.y);
             line.setAttribute('class', 'orbit');
 
-            if(sysFrom.state === 'running' && sysTo.state === 'running') {
-                line.classList.add('active');
-            }
+            if(sysFrom.state === 'running' && sysTo.state === 'running') line.classList.add('active');
             orbitsGroup.appendChild(line);
         });
     }
@@ -224,13 +251,12 @@
                 const planetEl = document.getElementById(`planet-${sys.id}`);
                 if(planetEl) {
                     planetEl.setAttribute('class', `planet ${sys.state}`);
-                    // Αν άλλαξε σε stopped, κάνε το βίντεο ασπρόμαυρο
-                    const img = planetEl.querySelector('image');
-                    if (img) {
+                    const mediaEl = planetEl.querySelector('image, video');
+                    if (mediaEl) {
                         if (sys.state === 'stopped') {
-                            img.setAttribute('style', 'filter: grayscale(100%) opacity(0.3);');
+                            mediaEl.style.filter = 'grayscale(100%) opacity(0.3)';
                         } else {
-                            img.removeAttribute('style');
+                            mediaEl.style.filter = 'none';
                         }
                     }
                 }
@@ -247,16 +273,11 @@
         const wsUrl = `${protocol}//${host}/god/v1/messaging/ws?userid=galaxy%3A1`;
         ws = new WebSocket(wsUrl);
 
-        ws.onopen = () => {
-            wsLog.innerHTML += `\n<span style="color:#00ff41">[WS] Connected to Messaging Hub.</span>`;
-        };
-
+        ws.onopen = () => { wsLog.innerHTML += `\n<span style="color:#00ff41">[WS] Connected to Messaging Hub.</span>`; };
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-                if (data.type === 'state' && data.systems) {
-                    updateGalaxyState(data.systems);
-                }
+                if (data.type === 'state' && data.systems) updateGalaxyState(data.systems);
                 wsLog.innerHTML += `\n<span style="color:#ffaa00">[MSG] ${JSON.stringify(data)}</span>`;
                 wsLog.scrollTop = wsLog.scrollHeight;
             } catch(e) {
@@ -264,54 +285,23 @@
                 wsLog.scrollTop = wsLog.scrollHeight;
             }
         };
-
-        ws.onclose = () => {
-            wsLog.innerHTML += `\n<span style="color:#ff0055">[WS] Disconnected. Retrying...</span>`;
-            setTimeout(connectWebSockets, 3000);
-        };
+        ws.onclose = () => { wsLog.innerHTML += `\n<span style="color:#ff0055">[WS] Disconnected. Retrying...</span>`; setTimeout(connectWebSockets, 3000); };
 
         const ptyUrl = `${protocol}//${host}/god/v1/pty?userid=galaxy%3A1`;
         ptyWs = new WebSocket(ptyUrl);
-
-        ptyWs.onopen = () => {
-            ptyLog.innerHTML += `\n<span style="color:#00ff41">[PTY] Connected.</span>`;
-        };
-
-        ptyWs.onmessage = (event) => {
-            ptyLog.innerHTML += `\n${event.data}`;
-            ptyLog.scrollTop = ptyLog.scrollHeight;
-        };
+        ptyWs.onopen = () => { ptyLog.innerHTML += `\n<span style="color:#00ff41">[PTY] Connected.</span>`; };
+        ptyWs.onmessage = (event) => { ptyLog.innerHTML += `\n${event.data}`; ptyLog.scrollTop = ptyLog.scrollHeight; };
     }
 
     // 4. Events
-    function sendRawWS(obj) {
-        if(ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify(obj));
-        }
-    }
+    function sendRawWS(obj) { if(ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
+    function sendWSCmd(cmd) { wsLog.innerHTML += `\n<span style="color:#00ff41">sol> ${cmd}</span>`; sendRawWS({ system: "sol", type: "command", verba: cmd }); }
 
-    function sendWSCmd(cmd) {
-        wsLog.innerHTML += `\n<span style="color:#00ff41">sol> ${cmd}</span>`;
-        sendRawWS({ system: "sol", type: "command", verba: cmd });
-    }
+    document.getElementById('ws-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') { const cmd = e.target.value.trim(); if(cmd) { sendWSCmd(cmd); e.target.value = ''; } } });
+    document.getElementById('pty-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') { const cmd = e.target.value.trim(); if(cmd && ptyWs && ptyWs.readyState === WebSocket.OPEN) { ptyLog.innerHTML += `\n<span style="color:#00ff41">gen> ${cmd}</span>`; ptyWs.send(cmd + '\n'); e.target.value = ''; } } });
 
-    document.getElementById('ws-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            const cmd = e.target.value.trim();
-            if(cmd) { sendWSCmd(cmd); e.target.value = ''; }
-        }
-    });
-
-    document.getElementById('pty-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            const cmd = e.target.value.trim();
-            if(cmd && ptyWs && ptyWs.readyState === WebSocket.OPEN) {
-                ptyLog.innerHTML += `\n<span style="color:#00ff41">gen> ${cmd}</span>`;
-                ptyWs.send(cmd + '\n');
-                e.target.value = '';
-            }
-        }
-    });
+    // Fallback για autoplay
+    document.body.addEventListener('click', () => { document.querySelectorAll('video').forEach(v => v.play()); }, { once: true });
 
     drawPlanets();
     drawOrbits();
