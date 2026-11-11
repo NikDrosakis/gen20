@@ -4,9 +4,11 @@
 # KRONOS Runtime Manager
 # FastAPI + Gunicorn + Uvicorn
 # ==========================================
-
-ROOT="/var/www/gs/kronos"
+GALAXY="/var/www/gs"
+ROOT="$GALAXY/kronos"
 VENV="$ROOT/genenv"
+PIDFILE="$ROOT/kronos.pid"
+LOGFILE="$GALAXY/data/gen20.net/kronos.txt"
 
 GUNICORN="$VENV/bin/gunicorn"
 
@@ -17,8 +19,7 @@ APP="main:app"
 WORKERS="1"
 LOG_LEVEL="debug"
 
-PIDFILE="$ROOT/kronos.pid"
-LOGFILE="/var/www/gs/data/gen20.net/kronos.txt"
+
 
 cd "$ROOT" || exit 1
 

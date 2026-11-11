@@ -218,45 +218,74 @@ func main() {
 	}
 	go hub.Run()
 
-	router := gin.Default()
-	registerMCPRoutes(router)
-	router.LoadHTMLGlob("public/*")
+	router := gin.New()
+    router.Use(gin.Recovery())
 
-	// ✅ Ο aggregator κάνει τα πάντα
-	core.RegisterRoutes(router, hub)
-	cubos.RegisterAll(router, hub, couch)
+    registerMCPRoutes(router)
+    router.LoadHTMLGlob("public/*")
 
-	v1 := router.Group("/god/v1")
-	{
-		v1.GET("/", func(c *gin.Context) {
-			routes := router.Routes()
-			var routeList []map[string]string
-			for _, route := range routes {
-				routeList = append(routeList, map[string]string{
-					"Path":   route.Path,
-					"Method": route.Method,
-				})
-			}
-			c.HTML(http.StatusOK, "index.html", gin.H{
-				"title":     "God Gin App Landing Page",
-				"endpoints": routeList,
-			})
-		})
-		v1.GET("/routes", func(c *gin.Context) {
-			routes := router.Routes()
-			var list []map[string]string
-			for _, r := range routes {
-				if strings.HasPrefix(r.Path, "/god/v1/") || strings.HasPrefix(r.Path, "/mcp") {
-					list = append(list, map[string]string{
-						"path":   r.Path,
-						"method": r.Method,
-					})
-				}
-			}
-			c.JSON(200, gin.H{"success": true, "routes": list})
-		})
-		v1.GET("/getUrl", getUrl)
-	}
+    // Core routes
+    core.RegisterRoutes(router, hub)
+
+    // Cubos routes
+    cubos.RegisterAll(router, hub, couch)
+
+    // GOD v1
+    v1 := router.Group("/god/v1")
+    {
+        // SOL / Galaxy interface
+        v1.GET("/", func(c *gin.Context) {
+            c.HTML(http.StatusOK, "index.html", gin.H{
+                "title": "GEN20 SOL",
+            })
+        })
+
+        // API documentation interface
+        v1.GET("/api.html", func(c *gin.Context) {
+            var routeList []map[string]string
+
+            for _, route := range router.Routes() {
+                if strings.HasPrefix(route.Path, "/god/v1/") ||
+                    strings.HasPrefix(route.Path, "/mcp") {
+
+                    routeList = append(routeList, map[string]string{
+                        "Path":   route.Path,
+                        "Method": route.Method,
+                    })
+                }
+            }
+
+            c.HTML(http.StatusOK, "api.html", gin.H{
+                "title":  "GOD API",
+                "routes": routeList,
+            })
+        })
+
+        // JSON routes endpoint
+        v1.GET("/routes", func(c *gin.Context) {
+            var list []map[string]string
+
+            for _, route := range router.Routes() {
+                if strings.HasPrefix(route.Path, "/god/v1/") ||
+                    strings.HasPrefix(route.Path, "/mcp") {
+
+                    list = append(list, map[string]string{
+                        "path":   route.Path,
+                        "method": route.Method,
+                    })
+                }
+            }
+
+            c.JSON(http.StatusOK, gin.H{
+                "success": true,
+                "routes":  list,
+            })
+        })
+
+        // Existing URL fetcher
+        v1.GET("/getUrl", getUrl)
+    }
+
 
 	port := os.Getenv("PORT")
 	if port == "" {

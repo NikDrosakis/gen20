@@ -1,43 +1,321 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>GEN20 - GALAXY</title>
+    <meta charset="UTF-8">
+    <title>GEN20 — GALAXY</title>
     <style>
-        body { background: #000; color: #0f0; font-family: monospace; }
-        #galaxy { width: 100vw; height: 100vh; }
-        .planet { cursor: pointer; }
-        #terminal { position: fixed; bottom: 0; width: 100%; background: #111; }
+        body {
+            background-image: url("https://www.universetoday.com/article_images/Andromeda_Galaxy_Hubble.jpg");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: #00ff41;
+            font-family: monospace;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-size: cover;
+            backdrop-filter: brightness(0.5);
+        }
+
+        nav { font-size:22px;padding: 10px; font-size: 24px; background: #111; border-bottom: 1px solid #003b0f; display: flex; gap: 20px; }
+        nav a { color: #00ff41; text-decoration: none; font-weight: bold; }
+        nav a:hover { color: #fff; text-decoration: underline; }
+        nav a.api-link { color: #ffaa00; }
+
+        #galaxy { flex-grow: 1; background: radial-gradient(circle, #0a0a1a 0%, #000 100%); position: relative; overflow: hidden; }
+        svg { width: 100%; height: 100%; }
+
+        /* Πλανήτες (Το SVG g container) */
+        .planet { cursor: pointer; transition: all 0.3s; }
+
+        /* Το στρογγυλό περίγραμμα */
+        .planet .ring { stroke-width: 2px; fill: none; }
+        .planet.running .ring { stroke: #00ff41; }
+        .planet.stopped .ring { stroke: #ff0055; opacity: 0.5; }
+        .planet.degraded .ring { stroke: #ffaa00; }
+
+        /* Το κείμενο */
+        .planet text { fill: #00ff41; font-size:22px;; font-weight: bold; text-anchor: middle; pointer-events: none; margin-top: 10px; }
+        .planet.stopped text { fill: #ff0055; opacity: 0.5; }
+
+        /* Ο Ήλιος (SOL) */
+        #center circle { fill: #00ff41; filter: drop-shadow(0 0 30px #00ff41); }
+        #center text { fill: #000; font-size: 16px; font-weight: bold; text-anchor: middle; }
+
+        /* Τροχιές */
+        .orbit { stroke: #003b0f; stroke-width: 2px; stroke-dasharray: 5,5; fill: none; transition: all 0.3s; }
+        .orbit.active { stroke: #00ff41; animation: dash 1s linear infinite; }
+        @keyframes dash { to { stroke-dashoffset: -15; } }
+
+        /* --- SPLIT TERMINAL --- */
+        #terminal-area { height: 35%; display: flex; border-top: 1px solid #003b0f; background: #000; }
+        .term-pane { font-size:22px;flex: 1; display: flex; flex-direction: column; border-right: 1px solid #222; padding: 10px; }
+        .term-pane:last-child { border-right: none; }
+        .term-header { font-size: 22px; color: #ffaa00; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 5px; text-transform: uppercase; }
+        .term-log { font-size:22px;flex-grow: 1; overflow-y: auto; white-space: pre-wrap; font-size: 13px; color: #888; }
+        .term-input-wrapper { display: flex; border-top: 1px solid #222; padding-top: 5px; }
+        .term-prompt {font-size:22px; color: #00ff41; margin-right: 10px; font-weight: bold; }
+        .term-input { font-size:22px;background: transparent; border: none; color: #00ff41; font-family: inherit; font-size: 14px; flex-grow: 1; outline: none; }
+        .quick-actions { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
+        .quick-actions button { background: #111; color: #00ff41; border: 1px solid #00ff41; padding: 5px 10px; cursor: pointer; font-family: monospace; font-size: 12px; }
+        .quick-actions button:hover { background: #00ff41; color: #000; }
     </style>
 </head>
 <body>
-<svg id="galaxy"></svg>
-<div id="terminal">
-    <input type="text" id="sol-cmd" placeholder="sol god esti" autofocus>
+
+<nav>
+    <a href="/god/v1/" class="galaxy-link">Galaxy Home</a>
+    <a href="/god/v1/api.html" class="api-link">API Routes</a>
+</nav>
+
+<div id="galaxy">
+    <svg id="galaxy-svg">
+        <!-- Ορισμός του ClipPath για να κόβονται τα βίντεο κυκλικά -->
+        <defs>
+            <clipPath id="circle-clip">
+                <circle cx="0" cy="0" r="60" />
+            </clipPath>
+        </defs>
+
+        <g id="orbits"></g>
+        <g id="planets"></g>
+        <g id="center">
+            <circle cx="50%" cy="50%" r="35" />
+            <text x="50%" y="46%" dy=".3em">SOL</text>
+        </g>
+    </svg>
 </div>
+
+<div id="terminal-area">
+    <div class="term-pane">
+        <div class="term-header">PTY Terminal (gen>)</div>
+        <div id="pty-log" class="term-log">Initializing PTY...</div>
+        <div class="term-input-wrapper">
+            <span class="term-prompt">gen></span>
+            <input type="text" id="pty-input" class="term-input" autocomplete="off" placeholder="native bash commands...">
+        </div>
+    </div>
+
+    <div class="term-pane">
+        <div class="term-header">WS Traffic / SOL Hub</div>
+        <div id="ws-log" class="term-log">Connecting to WebSocket Hub...</div>
+        <div class="term-input-wrapper">
+            <span class="term-prompt">sol></span>
+            <input type="text" id="ws-input" class="term-input" autocomplete="off" placeholder="god esti...">
+        </div>
+        <div class="quick-actions">
+            <button onclick="sendWSCmd('god esti')">GOD Status</button>
+            <button onclick="sendWSCmd('moon esti')">MOON Status</button>
+            <button onclick="sendRawWS({'type':'ping'})">Send Ping</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    // 1. Σύνδεση στο GOD
-    const ws = new WebSocket('ws://localhost:8080/ws/galaxy');
+    // 1. Οι Πλανήτες με τα Media τους
+    const systems = [
+        { id: 'god',      name: 'GOD',      r: 400, angle: 270, state: 'stopped', media: 'https://www.gstatic.com/culturalinstitute/searchar/assets/jupiter/desktop_light.mp4' },
+        { id: 'moon',     name: 'MOON',     r: 400, angle: 330, state: 'stopped', media: 'https://www.gstatic.com/culturalinstitute/searchar/assets/earths_moon/desktop_light.mp4' },
+        { id: 'gaia',     name: 'GAIA',     r: 400, angle: 30,  state: 'stopped', media: 'https://media.giphy.com/media/mf8UbIDew7e8g/giphy.gif' },
+        { id: 'kronos',   name: 'KRONOS',   r: 400, angle: 90,  state: 'stopped', media: '' },
+        { id: 'mars',     name: 'MARS',     r: 400, angle: 150, state: 'stopped', media: '' },
+        { id: 'database', name: 'DATABASE', r: 400, angle: 210, state: 'stopped', media: '' }
+    ];
 
-    // 2. Όταν το GOD στείλει κατάσταση, ζωγράφισε
-    ws.onmessage = (event) => {
-        const state = JSON.parse(event.data);
-        // π.χ. state = { god: "running", moon: "building", sun: "active" }
-        renderGalaxy(state);
-    };
+    const connections = [
+        { from: 'god', to: 'moon' }, { from: 'god', to: 'database' },
+        { from: 'gaia', to: 'database' }, { from: 'kronos', to: 'god' },
+        { from: 'moon', to: 'gaia' }
+    ];
 
-    // 3. Όταν γράψεις στο τερματικό, στείλε το στο GOD
-    document.getElementById('sol-cmd').addEventListener('keypress', (e) => {
+    const planetsGroup = document.getElementById('planets');
+    const orbitsGroup = document.getElementById('orbits');
+    const ptyLog = document.getElementById('pty-log');
+    const wsLog = document.getElementById('ws-log');
+
+    let ws;
+    let ptyWs;
+
+    // 2. Σχεδίαση
+    function getCoordinates(r, angleDeg) {
+        const angleRad = (angleDeg - 90) * (Math.PI / 180);
+        return { x: 50 + (r * Math.cos(angleRad)) / 100, y: 50 + (r * Math.sin(angleRad)) / 100 };
+    }
+
+    function drawPlanets() {
+        planetsGroup.innerHTML = '';
+        systems.forEach(sys => {
+            const pos = getCoordinates(sys.r, sys.angle);
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            g.setAttribute('class', `planet ${sys.state}`);
+            g.setAttribute('id', `planet-${sys.id}`);
+            // Μετακινούμε το κέντρο του πλανήτη στη σωστή θέση
+            g.setAttribute('transform', `translate(${pos.x * 10}, ${pos.y * 10})`); // Το *10 είναι επειδή το SVG χρησιμοποιεί % στο viewBox
+
+            // 1. Το animation (Βίντεο ή GIF)
+            if (sys.media) {
+                const image = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+                // Το href δέχεται και MP4 και GIF
+                image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', sys.media);
+                image.setAttribute('x', '-60');
+                image.setAttribute('y', '-60');
+                image.setAttribute('width', '120');
+                image.setAttribute('height', '120');
+                image.setAttribute('clip-path', 'url(#circle-clip)');
+                // Αν είναι stopped, το κάνουμε ασπρόμαυρο και διάφανο
+                if (sys.state === 'stopped') {
+                    image.setAttribute('style', 'filter: grayscale(100%) opacity(0.3);');
+                }
+                g.appendChild(image);
+            }
+
+            // 2. Το δαχτυλίδι (ring) γύρω από τον πλανήτη
+            const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            ring.setAttribute('class', 'ring');
+            ring.setAttribute('cx', '0'); ring.setAttribute('cy', '0'); ring.setAttribute('r', '60');
+            g.appendChild(ring);
+
+            // 3. Το κείμενο
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', '0'); text.setAttribute('y', '85'); // Τοποθέτηση κάτω από τον πλανήτη
+            text.textContent = sys.name;
+            g.appendChild(text);
+
+            g.addEventListener('click', () => {
+                document.getElementById('ws-input').value = `${sys.id} esti`;
+                document.getElementById('ws-input').focus();
+            });
+            planetsGroup.appendChild(g);
+        });
+    }
+
+    function drawOrbits() {
+        orbitsGroup.innerHTML = '';
+        connections.forEach(conn => {
+            const sysFrom = systems.find(s => s.id === conn.from);
+            const sysTo = systems.find(s => s.id === conn.to);
+            if(!sysFrom || !sysTo) return;
+
+            const posFrom = getCoordinates(sysFrom.r, sysFrom.angle);
+            const posTo = getCoordinates(sysTo.r, sysTo.angle);
+
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            // Επειδή δουλεύουμε με % στο SVG, πρέπει να μετατρέψουμε τις τιμές σε απόλυτες (viewBox 1000x1000)
+            line.setAttribute('x1', `${posFrom.x * 10}`);
+            line.setAttribute('y1', `${posFrom.y * 10}`);
+            line.setAttribute('x2', `${posTo.x * 10}`);
+            line.setAttribute('y2', `${posTo.y * 10}`);
+            line.setAttribute('class', 'orbit');
+
+            if(sysFrom.state === 'running' && sysTo.state === 'running') {
+                line.classList.add('active');
+            }
+            orbitsGroup.appendChild(line);
+        });
+    }
+
+    function updateGalaxyState(newState) {
+        systems.forEach(sys => {
+            if(newState[sys.id]) {
+                sys.state = newState[sys.id];
+                const planetEl = document.getElementById(`planet-${sys.id}`);
+                if(planetEl) {
+                    planetEl.setAttribute('class', `planet ${sys.state}`);
+                    // Αν άλλαξε σε stopped, κάνε το βίντεο ασπρόμαυρο
+                    const img = planetEl.querySelector('image');
+                    if (img) {
+                        if (sys.state === 'stopped') {
+                            img.setAttribute('style', 'filter: grayscale(100%) opacity(0.3);');
+                        } else {
+                            img.removeAttribute('style');
+                        }
+                    }
+                }
+            }
+        });
+        drawOrbits();
+    }
+
+    // 3. WebSockets
+    function connectWebSockets() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host;
+
+        const wsUrl = `${protocol}//${host}/god/v1/messaging/ws?userid=galaxy%3A1`;
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+            wsLog.innerHTML += `\n<span style="color:#00ff41">[WS] Connected to Messaging Hub.</span>`;
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type === 'state' && data.systems) {
+                    updateGalaxyState(data.systems);
+                }
+                wsLog.innerHTML += `\n<span style="color:#ffaa00">[MSG] ${JSON.stringify(data)}</span>`;
+                wsLog.scrollTop = wsLog.scrollHeight;
+            } catch(e) {
+                wsLog.innerHTML += `\n<span style="color:#ccc">${event.data}</span>`;
+                wsLog.scrollTop = wsLog.scrollHeight;
+            }
+        };
+
+        ws.onclose = () => {
+            wsLog.innerHTML += `\n<span style="color:#ff0055">[WS] Disconnected. Retrying...</span>`;
+            setTimeout(connectWebSockets, 3000);
+        };
+
+        const ptyUrl = `${protocol}//${host}/god/v1/pty?userid=galaxy%3A1`;
+        ptyWs = new WebSocket(ptyUrl);
+
+        ptyWs.onopen = () => {
+            ptyLog.innerHTML += `\n<span style="color:#00ff41">[PTY] Connected.</span>`;
+        };
+
+        ptyWs.onmessage = (event) => {
+            ptyLog.innerHTML += `\n${event.data}`;
+            ptyLog.scrollTop = ptyLog.scrollHeight;
+        };
+    }
+
+    // 4. Events
+    function sendRawWS(obj) {
+        if(ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(obj));
+        }
+    }
+
+    function sendWSCmd(cmd) {
+        wsLog.innerHTML += `\n<span style="color:#00ff41">sol> ${cmd}</span>`;
+        sendRawWS({ system: "sol", type: "command", verba: cmd });
+    }
+
+    document.getElementById('ws-input').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            const cmd = e.target.value;
-            ws.send(JSON.stringify({ action: 'sol', cmd: cmd }));
-            e.target.value = '';
+            const cmd = e.target.value.trim();
+            if(cmd) { sendWSCmd(cmd); e.target.value = ''; }
         }
     });
 
-    function renderGalaxy(state) {
-        // Εδώ γίνεται η μαγεία. Ζωγραφίζεις τους κύκλους με βάση το state.
-        console.log("State received:", state);
-    }
+    document.getElementById('pty-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const cmd = e.target.value.trim();
+            if(cmd && ptyWs && ptyWs.readyState === WebSocket.OPEN) {
+                ptyLog.innerHTML += `\n<span style="color:#00ff41">gen> ${cmd}</span>`;
+                ptyWs.send(cmd + '\n');
+                e.target.value = '';
+            }
+        }
+    });
+
+    drawPlanets();
+    drawOrbits();
+    connectWebSockets();
 </script>
 </body>
 </html>

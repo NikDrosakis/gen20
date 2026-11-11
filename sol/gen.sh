@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
+#
 # SOL - GEN20 language environment.
 # Native interactive Bash is the execution shell.
 # SOL adds domain expressions.
 
 if [[ ${SOL_ENGINE:-0} != 1 ]]; then
     export SOL_ENGINE=1
+
     if (($#)); then
         exec bash "$0" "$@"
     fi
+
     exec bash --noprofile --rcfile "$0" -i
 fi
 
@@ -15,6 +18,7 @@ unset SOL_ENGINE
 
 SOL_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 SOL_ROOT=$(cd -- "$SOL_DIR/.." && pwd -P)
+
 SOL_VERSION="0.1.0"
 
 # --------------------------------------------------
@@ -50,7 +54,10 @@ log_action() {
 SOL_PROMPT='gen> '
 declare -gA SOL_LOADED=()
 
-# Preserve the developer's Bash environment.
+# --------------------------------------------------
+# PRESERVE NATIVE BASH ENVIRONMENT
+# --------------------------------------------------
+
 if [[ $- == *i* && -r ${HOME}/.bashrc ]]; then
     # shellcheck source=/dev/null
     source "${HOME}/.bashrc"
@@ -97,7 +104,12 @@ __sol_entities() {
         done < <(
             command find "$dir" -type f -name '*.sh' -print0 2>/dev/null
         )
-    done | sort -u
+    done
+
+    # Gaia is a PHP CLI namespace, not a Bash expression file.
+    [[ -f "$SOL_DIR/systems/gaia/index.php" ]] && printf 'gaia\n'
+
+    sort -u
 }
 
 __sol_load() {
@@ -135,11 +147,12 @@ SOL language environment
 
   <system> esti [args...]      inspect a system
   <system> <verb> [args...]    execute a system expression
-  <native Bash command>        execute Bash/Linux directly
+  <native Bash command>       execute Bash/Linux directly
 
 Examples:
 
   god esti
+  gaia esti
   moon esti
   preflight run
   preflight latest
@@ -149,6 +162,7 @@ Examples:
 
 Tab completes SOL expressions and falls back to native Bash completion.
 Enter executes. Ctrl-D exits.
+
 Native Bash syntax remains available.
 SOLHELP
 }
@@ -171,10 +185,29 @@ __sol_dispatch() {
             __sol_help
             return 0
             ;;
+
         version)
             printf 'SOL %s\n' "$SOL_VERSION"
             return 0
             ;;
+
+        gaia)
+            local gaia_cli="$SOL_DIR/systems/gaia/index.php"
+
+            if [[ ! -f $gaia_cli ]]; then
+                printf 'SOL: Gaia CLI not found: %s\n' "$gaia_cli" >&2
+                return 127
+            fi
+
+            if ! command -v php >/dev/null 2>&1; then
+                printf 'SOL: PHP CLI is not available\n' >&2
+                return 127
+            fi
+
+            php "$gaia_cli" gaia "$@"
+            return $?
+            ;;
+
         opus)
             case "${1:-esti}" in
                 esti)
@@ -229,7 +262,7 @@ command_not_found_handle() {
     shift || true
 
     if __sol_entity_file "$name" >/dev/null 2>&1 ||
-       [[ $name == opus || $name == help || $name == version ]]
+       [[ $name == gaia || $name == opus || $name == help || $name == version ]]
     then
         __sol_dispatch "$name" "$@"
         return $?
@@ -265,6 +298,13 @@ _sol_complete() {
     if [[ $name == opus ]]; then
         mapfile -t COMPREPLY < <(
             compgen -W 'esti neo sose' -- "$cur"
+        )
+        return 0
+    fi
+
+    if [[ $name == gaia ]]; then
+        mapfile -t COMPREPLY < <(
+            compgen -W 'esti' -- "$cur"
         )
         return 0
     fi
@@ -310,8 +350,10 @@ if [[ $- == *i* ]]; then
         source "$SOL_DIR/banner.sh"
         show_banner
     fi
+
     printf 'SOL %s | GEN20 language environment\n' "$SOL_VERSION"
     printf 'Type help for expressions. Native Bash is available.\n'
+
     return 0 2>/dev/null || exit 0
 fi
 
@@ -327,7 +369,7 @@ if (($#)); then
     fi
 
     if __sol_entity_file "$1" >/dev/null 2>&1 ||
-       [[ $1 == opus || $1 == help || $1 == version ]]
+       [[ $1 == gaia || $1 == opus || $1 == help || $1 == version ]]
     then
         __sol_dispatch "$@"
     else
