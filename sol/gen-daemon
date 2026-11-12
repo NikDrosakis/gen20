@@ -21,7 +21,7 @@ fi
 source "$SOL_ROOT/init.sh"
 
 # Runtime paths derived from shared configuration
-BG_DIR="$SOL_ROOT/bg"
+ESO_DIR="$SOL_ROOT/eso"
 PUBLIC_DIR="$ROOT/moon"
 SOURCE_DIR="$ROOT/gaia/core"
 GEN_BIN="$SOL_ROOT/gen.sh"
@@ -30,7 +30,7 @@ WATCH_FLAG="$SOL_ROOT/.watch_enabled"
 POLL_INTERVAL=10
 VERSION_STEP="0.001"
 
-mkdir -p "$LOG_DIR" "$BG_DIR"
+mkdir -p "$LOG_DIR" "$ESO_DIR"
 
 log() {
     log_action "GEND: ${1:-}"
@@ -120,7 +120,7 @@ start_services() {
     local found=0
     local script
 
-    for script in "$BG_DIR"/*.sh; do
+    for script in "$ESO_DIR"/*.sh; do
         [[ -e "$script" ]] || continue
 
         if [[ ! -x "$script" ]]; then
@@ -133,7 +133,7 @@ start_services() {
     done
 
     [[ "$found" -gt 0 ]] ||
-        log "WARN: No executables in $BG_DIR"
+        log "WARN: No executables in $ESO_DIR"
 
     increment_version
 }
@@ -296,7 +296,7 @@ while [[ "$SHUTDOWN" -eq 0 ]]; do
             if ! kill -0 "$pid" 2>/dev/null; then
                 log "Service $name (PID $pid) crashed, restarting"
 
-                local_script="${SERVICE_SCRIPTS[$name]:-$BG_DIR/$name.sh}"
+                local_script="${SERVICE_SCRIPTS[$name]:-$ESO_DIR/$name.sh}"
 
                 unset 'SERVICE_PIDS[$name]'
                 unset 'SERVICE_SCRIPTS[$name]'

@@ -33,6 +33,19 @@ SOL_VERSION="0.1.0"
 
 source "$SOL_DIR/__sol/__sol_dispatch.sh"
 source "$SOL_DIR/__sol/__sol_complete.sh"
+# Φόρτωση prothesis
+if [[ -d "$SOL_DIR/prothesis" ]]; then
+    for f in "$SOL_DIR/prothesis"/*.sh; do
+        [[ -r $f ]] && source "$f"
+    done
+fi
+
+# Φόρτωση rima
+if [[ -d "$SOL_DIR/rima" ]]; then
+    for f in "$SOL_DIR/rima"/*.sh; do
+        [[ -r $f ]] && source "$f"
+    done
+fi
 
 # --------------------------------------------------
 # GEN20 CENTRAL LOG
@@ -85,14 +98,18 @@ fi
 # --------------------------------------------------
 
 __sol_search_dirs() {
-    # Σειρά προτεραιότητας: actions -> systems -> opus
     printf '%s\n' \
-        "$SOL_DIR/actions" \
+        "$SOL_ROOT/acta" \
+        "$SOL_ROOT/systems" \
+        "$SOL_ROOT/rima" \
+        "$SOL_ROOT/prothesis" \
+        "$SOL_DIR/acta" \
         "$SOL_DIR/systems" \
-        "$SOL_DIR/opus"
+        "$SOL_DIR/rima" \
+        "$SOL_DIR/prothesis"
 }
 
-# Ψάχνει ένα filename <name>.sh σε actions/** , systems/** , opus/
+# Ψάχνει ένα filename <name>.sh σε acta/** , systems/** , opus/
 __sol_entity_file() {
     local name="${1:-}"
     local dir file
@@ -109,7 +126,7 @@ __sol_entity_file() {
             return 0
         fi
 
-        # Ένα επίπεδο βαθύτερα (π.χ. actions/astra/migrate.sh)
+        # Ένα επίπεδο βαθύτερα (π.χ. acta/astra/migrate.sh)
         while IFS= read -r -d '' file; do
             if [[ $(basename -- "$file") == "$name.sh" ]]; then
                 printf '%s\n' "$file"
@@ -276,6 +293,22 @@ if [[ $- == *i* ]]; then
         exit 1
     }
     # --------------------------------------------------
+    # Dynamic prompt — δείχνει το relative path
+    # --------------------------------------------------
+
+_sol_prompt() {
+    local rel
+    rel=$(realpath --relative-to="$SOL_ROOT" "$PWD" 2>/dev/null)
+
+    if [[ -z $rel || $rel == "." ]]; then
+        PS1='\[\e[1;31m\]gen>\[\e[0m\] '
+    else
+        PS1="\[\e[1;31m\]${rel} gen>\[\e[0m\] "
+    fi
+}
+
+    PROMPT_COMMAND="_sol_prompt"
+    # --------------------------------------------------
     # Aliases για γρήγορη πλοήγηση
     # (cd, ls είναι κρατημένα — δεν τα αγγίζουμε)
     # --------------------------------------------------
@@ -290,7 +323,7 @@ if [[ $- == *i* ]]; then
     alias MARS='cd "$SOL_ROOT/mars"'
     alias SOL='cd "$SOL_ROOT"'
     alias GAIA='cd "$SOL_ROOT/gaia"'
-    alias ACTIONS='cd "$SOL_ROOT/sol/actions"'
+    alias ACTA='cd "$SOL_ROOT/sol/acta"'
     alias SYSTEMS='cd "$SOL_ROOT/sol/systems"'
 
     printf 'SOL %s | GEN20 language environment\n' "$SOL_VERSION"

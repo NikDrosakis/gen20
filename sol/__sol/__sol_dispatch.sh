@@ -4,61 +4,34 @@
 # Ο καρδιακός κόμβος της γλώσσας.
 # Δεν ξέρει τίποτα ειδικό. Μόνο:
 #
-#   1. <noun> <verb>  →  <noun>_<verb>.sh   (script mode)
-#   2. <noun> <verb>  →  <noun>.sh::<noun>_<verb>   (function mode)
-#   3. <noun>         →  <noun>.sh, default verb = esti
-#   4. native Bash    (command)
+#   1. <noun> <rima>   →  <noun>_<rima>.sh          (script mode)
+#   2. <noun> <rima>   →  <noun>.sh::<noun>_<rima>  (function mode)
+#   3. <noun> [args]   →  <noun>.sh + args          (script mode)
+#   4. native Bash     (command)
 #   5. not found
 #
-# Ειδικές περιπτώσεις (gaia, opus, help, version) ΜΕΤΑΦΕΡΟΝΤΑΙ σταδιακά
-# σε actions/ και systems/. Μέχρι τότε, μένουν εδώ ως fallback.
+# Όλα τα υπόλοιπα (gaia, opus, help, version) είναι πλέον
+# κανονικά acta/ ή systems/ — δεν ανήκουν εδώ.
 
 __sol_dispatch() {
     (($#)) || return 0
 
     local name="$1"
-    local verb=""
+    local rima=""
     local rest=()
     local file mode fn candidate found=0
 
     shift
 
     # --------------------------------------------------
-    # Fallback: ειδικές περιπτώσεις (προς μεταφορά)
-    # --------------------------------------------------
-    case "$name" in
-        help)
-            __sol_help
-            return 0
-            ;;
-        version)
-            printf 'SOL %s\n' "$SOL_VERSION"
-            return 0
-            ;;
-        gaia)
-            __sol_fallback_gaia "$@"
-            return $?
-            ;;
-        opus)
-            __sol_fallback_opus "$@"
-            return $?
-            ;;
-    esac
-
-    # --------------------------------------------------
-    # Δεύτερη λέξη = verb (αν υπάρχει)
+    # 1. <noun> <rima> → script ή function
     # --------------------------------------------------
     if (($#)); then
-        verb="$1"
-        shift
-    fi
-    rest=("$@")
+        rima="$1"
 
-    # --------------------------------------------------
-    # 1+2. <noun> <verb> → script ή function
-    # --------------------------------------------------
-    if [[ -n $verb ]]; then
-        if IFS=$'\t' read -r file mode fn < <(__sol_find_expression "$name" "$verb"); then
+        if IFS=$'\t' read -r file mode fn < <(__sol_find_expression "$name" "$rima"); then
+            shift
+            rest=("$@")
             case "$mode" in
                 script)
                     ( cd "$SOL_ROOT" && bash "$file" "${rest[@]}" )
@@ -76,80 +49,47 @@ __sol_dispatch() {
     fi
 
     # --------------------------------------------------
-    # 3. <noun> μόνο → <noun>.sh, default verb = esti
+    # 2. <noun> [args] → <noun>.sh + args
+    #    ΑΛΛΑ: αν υπάρχουν rimata <noun>_* → δείξε τα
     # --------------------------------------------------
     if file=$(__sol_find_noun "$name"); then
         __sol_load "$file" || return 1
 
-        [[ -z $verb ]] && verb="esti"
-        fn="${name}_${verb}"
-
-        if declare -F "$fn" >/dev/null 2>&1; then
-            ( cd "$SOL_ROOT" && "$fn" "${rest[@]}" )
+        # Έλεγχος: function <name>() υπάρχει;
+        if declare -F "$name" >/dev/null 2>&1; then
+            ( cd "$SOL_ROOT" && "$name" "$@" )
             return $?
         fi
 
-        # Δείξε διαθέσιμες
-        printf 'SOL: %s has no expression "%s". Available:' \
-            "$name" "$verb" >&2
-
+        # Έλεγχος: rimata <name>_*
+        local rimata=()
         while IFS= read -r candidate; do
-            printf ' %s' "$candidate" >&2
-            found=1
+            [[ -n $candidate ]] && rimata+=("$candidate")
         done < <(__sol_verbs "$name")
 
-        ((found)) || printf ' (none)' >&2
-        printf '\n' >&2
-        return 2
-    fi
+        if ((${#rimata[@]} > 0)); then
+            printf 'SOL: %s is not a rima.\n' "$name" >&2
+            printf 'Available rimata for %s:\n' "$name" >&2
+            printf '  %s\n' "${rimata[@]}" >&2
+            printf '\nUsage: %s <rima> [args...]\n' "$name" >&2
+            return 2
+        fi
 
+        # Script mode
+        ( cd "$SOL_ROOT" && bash "$file" "$@" )
+        return $?
+    fi
     # --------------------------------------------------
-    # 4. Native Bash
+    # 3. Native Bash
     # --------------------------------------------------
     if command -v "$name" >/dev/null 2>&1; then
-        ( cd "$SOL_ROOT" && command "$name" "${rest[@]}" )
+        ( cd "$SOL_ROOT" && command "$name" "$@" )
         return $?
     fi
 
     # --------------------------------------------------
-    # 5. Not found
+    # 4. Not found
     # --------------------------------------------------
     printf 'bash: %s: command not found (try: help)\n' "$name" >&2
     return 127
-}
-
-# --------------------------------------------------
-# Fallbacks (προς μεταφορά σε actions/ ή systems/)
-# --------------------------------------------------
-
-__sol_fallback_gaia() {
-    local gaia_cli="$SOL_ROOT/gaia/sol/index.php"
-
-    if [[ ! -f $gaia_cli ]]; then
-        printf 'SOL: Gaia not found: %s\n' "$gaia_cli" >&2
-        return 127
-    fi
-
-    if ! command -v php >/dev/null 2>&1; then
-        printf 'SOL: PHP cli is not available\n' >&2
-        return 127
-    fi
-
-    php "$gaia_cli" gaia "$@"
-}
-
-__sol_fallback_opus() {
-    case "${1:-esti}" in
-        esti)
-            printf 'OPUS expression space - ASTRA packaging integration follows.\n'
-            ;;
-        neo|sose)
-            printf 'OPUS %s - reserved expression; provider not connected yet.\n' "$1"
-            return 2
-            ;;
-        *)
-            printf 'OPUS expressions: esti neo sose\n'
-            ;;
-    esac
-    return 0
 }
