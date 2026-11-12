@@ -369,7 +369,7 @@ protected function makeApiRequest(string $url, array $payload, string $apiKey=''
     }
 
     protected function isCliRequest(): bool {
-        return $this->SYSTEM=== 'cli';
+        return PHP_SAPI === 'cli' || $this->SYSTEM=== 'cli';
     }
 
     protected function isWorkerRequest(): bool {

@@ -10,15 +10,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ============================================================
 set(SOURCES
     main.cpp
-    Cubo.cpp
-    FS.cpp
-    Maria.cpp
-    Ws.cpp
-    Yaml.cpp
-    wss_client.cpp
+    core/Maria.cpp
+    core/Yaml.cpp
+    core/FS.cpp
+    core/Ws.cpp
     # === CUBOS:START ===
     cubos/aggregator.cpp
-    cubos/hello/hello.cpp
+    ##cubos/hello/hello.cpp
     # === CUBOS:END ===
 )
 
@@ -27,11 +25,33 @@ set(SOURCES
 # ============================================================
 add_executable(mars ${SOURCES})
 
-# Libraries (προσάρμοσε)
-find_package(PkgConfig REQUIRED)
-# pkg_check_modules(...)
-
+# ============================================================
+# Include dirs
+# ============================================================
 target_include_directories(mars PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/core
     ${CMAKE_CURRENT_SOURCE_DIR}/cubos
+)
+
+# ============================================================
+# Libraries
+# ============================================================
+find_package(PkgConfig REQUIRED)
+
+find_package(Boost REQUIRED COMPONENTS system thread)
+find_package(OpenSSL REQUIRED)
+find_package(Threads REQUIRED)
+
+# yaml-cpp
+find_package(yaml-cpp REQUIRED)
+
+target_link_libraries(mars PRIVATE
+    ${Boost_LIBRARIES}
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    Threads::Threads
+    yaml-cpp
+    mariadb
+    mariadbcpp
 )

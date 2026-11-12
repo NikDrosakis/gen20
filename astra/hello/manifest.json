@@ -33,6 +33,12 @@
       "path": "sun",
       "files": ["sun/hello.sh"],
       "register_line": "cubos_register \"hello\" hello_register"
+    },
+    "moon": {
+      "language": "jsx",
+      "path": "moon",
+      "files": ["moon/Hello.jsx"],
+      "register_line": "import Hello from './Hello';"
     }
   }
 }

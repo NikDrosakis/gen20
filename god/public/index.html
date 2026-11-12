@@ -270,7 +270,7 @@
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const host = window.location.host;
 
-        const wsUrl = `${protocol}//${host}/god/v1/messaging/ws?userid=galaxy%3A1`;
+        const wsUrl = `${protocol}//${host}/god/v1/messaging/ws?userid=god%3A1`;
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => { wsLog.innerHTML += `\n<span style="color:#00ff41">[WS] Connected to Messaging Hub.</span>`; };

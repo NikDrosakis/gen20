@@ -64,7 +64,7 @@ log_action() {
     printf '%s\n' "$entry"
 }
 
-SOL_PROMPT='gen> '
+SOL_PROMPT='\[\e[1;31m\]gen>\[\e[0m\] '
 declare -gA SOL_LOADED=()
 
 # --------------------------------------------------
@@ -178,7 +178,7 @@ __sol_entities() {
                 basename -- "$file" .sh
             done < <(command find "$dir" -type f -name '*.sh' -print0 2>/dev/null)
         done < <(__sol_search_dirs)
-        [[ -f "$SOL_DIR/systems/gaia/index.php" ]] && printf 'gaia\n'
+        [[ -f "$SOL_ROOT/gaia/sol/index.php" ]] && printf 'gaia\n'
     } | sort -u
 }
 
@@ -256,6 +256,7 @@ HISTCONTROL=ignoredups:erasedups
 shopt -s histappend
 set -o history
 
+export LS_COLORS="${LS_COLORS:-}di=1;36:ln=1;35:ex=1;32:"
 PS1="$SOL_PROMPT"
 
 # --------------------------------------------------
@@ -274,7 +275,24 @@ if [[ $- == *i* ]]; then
         printf 'SOL: cannot cd to SOL_ROOT: %s\n' "$SOL_ROOT" >&2
         exit 1
     }
-    
+    # --------------------------------------------------
+    # Aliases για γρήγορη πλοήγηση
+    # (cd, ls είναι κρατημένα — δεν τα αγγίζουμε)
+    # --------------------------------------------------
+
+    alias MOON='cd "$SOL_ROOT/moon"'
+    alias BIND='cd /etc/bind'
+    alias NGINX='cd /etc/nginx'
+    alias TOR='cd /var/lib/tor'
+    alias ASTRA='cd "$SOL_ROOT/astra"'
+    alias GOD='cd "$SOL_ROOT/god"'
+    alias KRONOS='cd "$SOL_ROOT/kronos"'
+    alias MARS='cd "$SOL_ROOT/mars"'
+    alias SOL='cd "$SOL_ROOT"'
+    alias GAIA='cd "$SOL_ROOT/gaia"'
+    alias ACTIONS='cd "$SOL_ROOT/sol/actions"'
+    alias SYSTEMS='cd "$SOL_ROOT/sol/systems"'
+
     printf 'SOL %s | GEN20 language environment\n' "$SOL_VERSION"
     printf 'Type help for expressions. Native Bash is available.\n'
 

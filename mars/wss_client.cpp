@@ -28,7 +28,7 @@ int main() {
         websocket::stream<ssl::stream<tcp::socket>> ws(ioc, ctx);
 
         // Resolve the server address
-        std::string host = "vivalibro.com";
+        std::string host = "gen20.net";
         std::string port = "3010";
         tcp::resolver resolver(ioc);
         auto const results = resolver.resolve(host, port);

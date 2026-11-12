@@ -24,7 +24,7 @@ use  Url, Manifest, Tree, Aggregator, Form,Domain,DomainFS,DomainDB,Media, Filem
 
 public $argv=[]; // To store the arguments passed to the script
 public $argc; // Store the argument count
-protected $cliDir = "/var/www/gs/cli"; // Adjust this path as needed
+protected $cliDir = "/var/www/gs/sol"; // Adjust this path as needed
 
 public function __construct() {
       parent::__construct();

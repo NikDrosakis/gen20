@@ -1,50 +1,54 @@
 import asyncio
-import redis
 import logging
-import keyboard
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 from core.Mari import Mari
-from action import action_loop, add
 from datetime import datetime
 from core.WS import WSClient
-from core.Watch import Watch
-from core.Yaml import Yaml
 import os
 import io
 
-# Logging setup
-log_file_path = '/var/www/gs/data/gen20.net/kronos.text'
+# --------------------------------------------------
+# Logging
+# --------------------------------------------------
+
+log_file_path = '/var/www/gs/data/gen20.net/kronos.txt'
 log_file = open(log_file_path, 'a')
 logger = logging.getLogger('kronos')
 logger.setLevel(logging.INFO)
-handler = logging.StreamHandler(io.StringIO())  # Dummy handler
+handler = logging.StreamHandler(io.StringIO())
 logger.addHandler(handler)
 
-def log(message, level=logging.INFO):
+
+def log(message, level=logging.INFO, **extra):
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    log_message = f'{timestamp} - {level} - {message}\n'
+    extra_str = ' '.join(f'{k}={v}' for k, v in extra.items())
+    log_message = f'[{timestamp}] [{level}] {message}'
+    if extra_str:
+        log_message += f' | {extra_str}'
+    log_message += '\n'
+
     log_file.write(log_message)
     log_file.flush()
 
     if os.getenv('KRONOS_LOGGING_ENABLED') == 'true':
-        if level == logging.ERROR:
-            logger.error(message)
-        elif level == logging.WARNING:
-            logger.warning(message)
-        elif level == logging.INFO:
-            logger.info(message)
-        else:
-            print(message)
+        logger.log(level, message)
 
-# Integrations
+
+# --------------------------------------------------
+# Services
+# --------------------------------------------------
+
 from services.deepseek.routes import router as deepseek_route
 from services.gaia.routes import router as gaia_route
 from services.sketch.routes import router as sketch_route
-from services.bio.injection import router as inject_router
 
-# Start FastAPI
+
+# --------------------------------------------------
+# App
+# --------------------------------------------------
+
 app = FastAPI(
     title="Kronos API",
     docs_url="/apy/v1/docs",
@@ -52,7 +56,6 @@ app = FastAPI(
     openapi_url="/apy/v1/openapi.json"
 )
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -61,43 +64,129 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Includes
 app.include_router(deepseek_route, prefix="/apy/v1/deepseek")
 app.include_router(gaia_route, prefix="/apy/v1/gaia")
 app.include_router(sketch_route, prefix="/apy/v1/sketch")
-app.include_router(inject_router, prefix="/apy/v1/injector")
 
-# WSManager Initialize
-async def wsinit():
-    ws_client = None
+
+# --------------------------------------------------
+# WebSocket client (persistent) — μιλάει με god
+# --------------------------------------------------
+
+_ws_client = None
+_ws_connected = False
+
+
+def _make_cid(a: str, b: str) -> str:
+    """Conversation ID — αλφαβητικά, ίδιο και για τις δύο κατευθύνσεις."""
+    return f"{a}-{b}" if a < b else f"{b}-{a}"
+
+
+async def ws_loop():
+    """Persistent WebSocket — μένει ανοιχτό, reconnect σε αποτυχία."""
+    global _ws_client, _ws_connected
+
+    while True:
+        try:
+            log("WS connecting", event="ws.connect")
+            _ws_client = WSClient(uri=settings.WEBSOCKET_URL)
+            await _ws_client.connect()
+            _ws_connected = True
+            log("WS connected", event="ws.connected")
+
+            # Στείλε "hello"
+            hello = {
+                "type": "message",
+                "cid": _make_cid("kronos:1", "god:1"),
+                "uid": "kronos:1",
+                "c": "kronos is online",
+                "modified": int(datetime.now().timestamp())
+            }
+            await _ws_client.send_message(hello)
+            log(f"WS out: {hello}", event="ws.out")
+
+            # Loop — διάβασε μηνύματα
+            while True:
+                msg = await _ws_client.receive_message()
+                log(f"WS in: {msg}", event="ws.in")
+
+                if not isinstance(msg, dict):
+                    continue
+
+                msg_type = msg.get("type", "")
+                msg_uid = msg.get("uid", "")
+                msg_cid = msg.get("cid", "")
+                msg_text = msg.get("c", "")
+
+                # Αν είναι "ask" → απάντησε
+                if msg_type == "ask":
+                    reply = {
+                        "type": "message",
+                        "cid": _make_cid("kronos:1", msg_uid or "sol:1"),
+                        "uid": "kronos:1",
+                        "c": f"kronos received: {msg_text}",
+                        "modified": int(datetime.now().timestamp())
+                    }
+                    await _ws_client.send_message(reply)
+                    log(f"WS out: {reply}", event="ws.out")
+
+                # Αν είναι "message" → log + απάντηση (προαιρετικά)
+                elif msg_type == "message":
+                    log(f"Message from {msg_uid}: {msg_text[:120]}", event="msg.in")
+
+                    # Απάντηση — αν το msg είναι προς kronos
+                    if msg.get("uid") != "kronos:1":
+                        reply = {
+                            "type": "message",
+                            "cid": msg_cid or _make_cid("kronos:1", msg_uid),
+                            "uid": "kronos:1",
+                            "c": f"kronos received: {msg_text}",
+                            "modified": int(datetime.now().timestamp())
+                        }
+                        await _ws_client.send_message(reply)
+                        log(f"WS out: {reply}", event="ws.out")
+
+        except Exception as e:
+            _ws_connected = False
+            log(f"WS error: {e}", level=logging.ERROR, event="ws.error")
+            if _ws_client:
+                try:
+                    await _ws_client.close()
+                except Exception:
+                    pass
+                _ws_client = None
+
+            log("WS reconnecting in 5s", event="ws.reconnect")
+            await asyncio.sleep(5)
+
+
+# --------------------------------------------------
+# (προαιρετικό) local WS — για debug / sol real-time
+# --------------------------------------------------
+
+connected_clients = []
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    connected_clients.append(websocket)
+    log("WS local client connected", event="ws.local.connect")
     try:
-        log("Initializing WebSocket connection...")
-        ws_client = WSClient(uri=settings.WEBSOCKET_URL)
-        await ws_client.connect()
-        log("Connected to WebSocket server!")
-
-        message = {
-            "system": "kronos",
-            "domaffect": "*",
-            "type": "open",
-            "verba": "kronos pings",
-            "userid": "1",
-            "to": "1",
-            "cast": "one",
-        }
-
-        await ws_client.send_message(message)
-
-        response = await ws_client.receive_message()
-        log(f"Received response: {response}")
-
-    except Exception as e:
-        log(f"WebSocket error: {e}", level=logging.ERROR)
-
+        while True:
+            data = await websocket.receive_text()
+            log(f"WS local in: {data[:120]}", event="ws.local.in")
+    except Exception:
+        pass
     finally:
-        if ws_client:
-            log("Closing WebSocket connection...")
-            await ws_client.close()
+        if websocket in connected_clients:
+            connected_clients.remove(websocket)
+        log("WS local client disconnected", event="ws.local.disconnect")
+
+
+# --------------------------------------------------
+# Startup
+# --------------------------------------------------
 
 @app.on_event("startup")
 async def startup():
@@ -105,14 +194,20 @@ async def startup():
     app.state.maria = Mari()
     log("Mari connection initialized")
 
-    # === CUBOS:START === (auto-generated)
     from cubos import aggregator as cubos
     cubos.register_all()
-    # === CUBOS:END ===
 
     log("\n".join([str(route) for route in app.routes]))
-    await wsinit()
+
+    # Background task — ΔΕΝ μπλοκάρει
+    asyncio.create_task(ws_loop())
+
     log("Startup completed")
+
+
+# --------------------------------------------------
+# Main
+# --------------------------------------------------
 
 if __name__ == '__main__':
     import uvicorn
@@ -120,6 +215,6 @@ if __name__ == '__main__':
         "main:app",
         host=settings.HOST,
         port=settings.PORT,
-        reload=True,  # Enable auto-reload for development
+        reload=False,
         log_level=settings.LOG_LEVEL
     )

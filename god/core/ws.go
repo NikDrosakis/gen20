@@ -42,7 +42,7 @@ func (ws *WebSocketClient) SendMessage() error {
 		"system":    "god",
 		"domaffect": "*",
 		"type":      "open",
-		"verba":     "god pings",
+		"c":     "god pings",
 		"userid":    "1",
 		"to":        "1",
 		"cast":      "one",

@@ -1,0 +1,199 @@
+/* components/ContentArchive.css - Magazine Archive */
+.content-archive {
+    width: 100%;
+}
+
+.user-avatar {
+    object-fit: cover;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+}
+
+/* Trending Tags */
+.trending-tags {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.tags-title {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-light);
+    margin-bottom: 1rem;
+}
+
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.tag {
+    background: var(--bg-light);
+    padding: 0.35rem 1rem;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    color: var(--text);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border);
+}
+
+.tag:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+/* Loading Overlay for Archive */
+.archive-loading-overlay {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+}
+
+/* Responsive adjustments for archive */
+@media (max-width: 768px) {
+    .newsletter-form {
+        flex-direction: column;
+    }
+
+    .newsletter-button {
+        width: 100%;
+    }
+}
+
+/* Hero Split Layout - Image Left, Text Right */
+.article-hero-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-bottom: 2rem;
+    background: var(--bg-light);
+    border-radius: 24px;
+    overflow: hidden;
+    padding: 2rem;
+}
+
+.hero-image-left {
+    border-radius: 16px;
+    overflow: hidden;
+    height: 100%;
+    min-height: 300px;
+}
+
+.hero-image-left img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.hero-image-left:hover img {
+    transform: scale(1.02);
+}
+
+.hero-content-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.hero-content-right .article-category {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    padding: 0.35rem 1rem;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+    width: fit-content;
+}
+
+.hero-content-right .article-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text-h);
+    margin-bottom: 1.5rem;
+    line-height: 1.3;
+}
+
+.hero-content-right .article-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+/* Related posts with images */
+.related-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.related-image {
+    height: 150px;
+    overflow: hidden;
+}
+
+.related-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.related-card:hover .related-image img {
+    transform: scale(1.05);
+}
+
+.related-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--primary);
+}
+
+.related-content {
+    padding: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .article-hero-split {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        padding: 1.5rem;
+    }
+
+    .hero-image-left {
+        min-height: 200px;
+        max-height: 250px;
+    }
+
+    .hero-content-right .article-title {
+        font-size: 1.6rem;
+    }
+
+    .hero-content-right .article-meta {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
