@@ -1,10 +1,10 @@
-// Layout.jsx
+// PageAdmin.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import PagesLayout from './PagesLayout';
-import SrcFilesList from './SrcFilesList';
-import "./Layout.css";
+import PagesLayout from '../components/PagesLayout';
+import SrcFilesList from '../components/SrcFilesList';
+import "./PageAdmin.css";
 
-const Layout = ({ pageId, lockedPageId, jsonData, onJsonChange }) => {
+const PageAdmin = ({ pageId, lockedPageId, jsonData, onJsonChange }) => {
     const [selectedPageId, setSelectedPageId] = useState(lockedPageId ?? pageId ?? null);
     const [pages, setPages] = useState([]);
     const [components, setComponents] = useState([]);
@@ -305,4 +305,4 @@ const Layout = ({ pageId, lockedPageId, jsonData, onJsonChange }) => {
     );
 };
 
-export default Layout;
+export default PageAdmin;

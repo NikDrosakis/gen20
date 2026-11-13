@@ -16,6 +16,8 @@ import SuperAdmin from "./pages/SuperAdmin";
 import { MessagingProvider, useMessaging } from './MessagingContext';
 import MemberFormAdmin from "./pages/MemberFormAdmin";
 import Settings from "./pages/Settings";
+import PageAdmin from "./pages/PageAdmin";
+import PageAdmin2 from "./pages/PageAdmin2";
 import Media from "./pages/Media";
 import Doc from "./pages/Doc";
 import { useG } from './GContext';
@@ -161,6 +163,8 @@ const App = () => {
             else if (isNew) setCurrentPage('page-new');
             else setCurrentPage('page-archive');
         }
+        else if (path === '/admin/page-admin') setCurrentPage('page-admin');
+        else if (path === '/admin/page-admin2') setCurrentPage('page-admin2');
         else if (path === '/admin/users') setCurrentPage('users');
         else if (path === '/admin/user-new') setCurrentPage('user-new');
         else if (path === '/admin/user-edit' && userId) {
@@ -186,6 +190,8 @@ const App = () => {
     const navigateTo = (page, id = null) => {
         switch(page) {
             case 'page-edit': window.location.href = `/admin/page?id=${id}`; break;
+            case 'page-admin': window.location.href = '/admin/page-admin'; break;
+            case 'page-admin2': window.location.href = '/admin/page-admin2'; break;
             case 'page-new': window.location.href = '/admin/page?new'; break;
             case 'page-archive': window.location.href = '/admin/page'; break;
             case 'user-edit': window.location.href = `/admin/user-edit?userId=${id}`; break;
@@ -236,6 +242,8 @@ const App = () => {
             case '/admin/doc': return <Doc navigateTo={navigateTo} />;
             case '/admin/members': return <MemberFormAdmin navigateTo={navigateTo} />;
             case '/admin/superadmin': return <SuperAdmin navigateTo={navigateTo} />;
+            case '/admin/page-admin': return <PageAdmin navigateTo={navigateTo} />;
+            case '/admin/page-admin2': return <PageAdmin2 navigateTo={navigateTo} />;
             case '/admin':
             default: return <Home navigateTo={navigateTo} />;
         }

@@ -1,0 +1,304 @@
+/* PageAdmin2.css */
+
+/* --- Γενικό Layout (3 Στήλες) --- */
+.page-admin2-container {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    height: 100%;
+    min-height: 80vh;
+    background: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    box-sizing: border-box;
+}
+
+/* --- Πλαϊνά Panels (Αριστερά & Δεξιά) --- */
+.sidebar-panel {
+    flex: 0 0 260px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.panel-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f1f5f9;
+}
+
+.panel-header h4 {
+    margin: 0;
+    font-size: 13px;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* --- Λίστα Cubos --- */
+.cubo-list {
+    list-style: none;
+    padding: 8px;
+    margin: 0;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.cubo-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+    font-size: 13px;
+    border: 1px solid transparent;
+    cursor: grab;
+    transition: all 0.2s ease;
+}
+
+.cubo-item:active {
+    cursor: grabbing;
+}
+
+/* Available (Αριστερά) */
+.available-item {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #334155;
+}
+
+.available-item:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+/* Installed (Δεξιά) */
+.installed-item {
+    background: #f0fdf4; /* Απαλό πράσινο */
+    border-color: #bbf7d0;
+    color: #166534;
+    cursor: default;
+}
+
+.installed-item .cubo-status {
+    margin-left: auto;
+    color: #22c55e;
+}
+
+/* Εικονίδια & Κείμενο */
+.cubo-icon {
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+.cubo-name {
+    font-weight: 500;
+    flex: 1;
+}
+
+.cubo-deps {
+    font-size: 10px;
+    background: #e2e8f0;
+    padding: 2px 6px;
+    border-radius: 10px;
+    color: #64748b;
+    margin-right: 6px;
+}
+
+.install-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.install-btn:hover {
+    background: #2563eb;
+}
+
+.empty-state {
+    padding: 20px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 12px;
+    font-style: italic;
+}
+
+/* --- Κεντρικό Panel (Page Builder) --- */
+.center-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* Για να μην σπάει το flex */
+}
+
+/* Tabs (Απαίτηση 4) */
+.page-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    padding-bottom: 0;
+}
+
+.page-tab {
+    background: #e2e8f0;
+    border: 1px solid #cbd5e1;
+    border-bottom: none;
+    padding: 8px 16px;
+    border-radius: 8px 8px 0 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.page-tab:hover {
+    background: #cbd5e1;
+}
+
+.page-tab.active {
+    background: #ffffff;
+    color: #1e293b;
+    border-bottom: 2px solid #ffffff; /* Σβήνει το κάτω border */
+    box-shadow: 0 -2px 4px rgba(0,0,0,0.02);
+}
+
+/* Page Content (Απαιτήσεις 1 & 2) */
+.page-content-box {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 0 8px 8px 8px;
+    padding: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.page-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #1e293b;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.clear-btn, .auto-set-btn {
+    padding: 4px 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.clear-btn {
+    background: #ef4444;
+    color: white;
+}
+
+.clear-btn:hover { background: #dc2626; }
+
+.auto-set-btn {
+    background: #10b981;
+    color: white;
+}
+
+.auto-set-btn:hover { background: #059669; }
+
+/* --- Areas (Drag & Drop Zones) --- */
+.page-areas {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+}
+
+.area {
+    border: 2px dashed #cbd5e1;
+    border-radius: 6px;
+    min-height: 80px;
+    padding: 8px;
+    background: #f8fafc;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+
+.area.drag-over {
+    background: #eff6ff;
+    border-color: #3b82f6;
+    border-style: solid;
+}
+
+.area-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+}
+
+.area-content {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 40px;
+}
+
+/* Main Area (Πιο φαρδύ) */
+.main-area {
+    flex: 2;
+    min-height: 120px;
+}
+
+.area-row {
+    display: flex;
+    gap: 12px;
+    flex: 1;
+}
+
+.area-row .area {
+    flex: 1;
+}
+
+/* Header & Footer - Πιο ρηχά */
+.header-area, .footer-area {
+    min-height: 60px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .page-admin2-container {
+        flex-direction: column;
+        height: auto;
+    }
+    .sidebar-panel {
+        flex: 1 1 auto;
+        max-height: 300px;
+    }
+    .area-row {
+        flex-direction: column;
+    }
+}

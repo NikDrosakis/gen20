@@ -4,7 +4,7 @@ import RichTextEditor from "../components/RichTextEditor";
 import AuthorDropdown from "../components/AuthorDrop";
 import ClassificationDrop from "../components/ClassificationDrop";
 import MediaToolbox from '../components/MediaToolbox';
-import Layout from '../components/Layout';
+import PageAdmin from './PageAdmin';
 import ContentNavigation from '../components/ContentNavigation';
 import "./Content.css";
 
@@ -541,7 +541,7 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
             {skeletonDressOpen && (
                 <div className="form-card" style={{position: 'relative',maxHeight: '570px',
                     overflow: 'auto'}}>
-                    <Layout
+                    <PageAdmin
                         onClose={closeSkeletonDress}
                         domain={window.location.hostname}
                         pageId={layoutPageId}

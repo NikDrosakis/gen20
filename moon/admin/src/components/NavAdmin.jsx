@@ -27,6 +27,8 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
         { id: 'slides', label: 'Slides', icon: '🖼️', path: '/admin/slides' },
         { id: 'languages', label: 'Languages', icon: '🌐', path: '/admin/languages' },
         { id: 'analytics', label: 'Analytics', icon: '📈', path: '/admin/analytics' },
+        { id: 'page-admin', label: 'Page Builder', icon: '⚙️', path: '/admin/page-admin' },
+        { id: 'page-admin2', label: 'Page Builder New', icon: '⚙️', path: '/admin/page-admin2' },
         { id: 'setup', label: 'Settings', icon: '⚙️', path: '/admin/setup' },
         // monetize και superadmin μόνο για gen20.net
         ...(isGen20Net ? [
