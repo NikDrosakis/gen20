@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import Cookies from 'js-cookie';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import Cookies from "js-cookie";
 
 const GContext = createContext({
     G: null,
     setG: () => {},
-    lang: 'el',
-    setLang: () => {}
+    lang: "el",
+    setLang: () => {},
 });
 
 export const useG = () => useContext(GContext);
@@ -13,19 +13,24 @@ export const useG = () => useContext(GContext);
 export const GProvider = ({ children }) => {
     const baseURL = import.meta.env.VITE_HTTP_API;
     const NODE_ENV = import.meta.env.VITE_HTTP_API;
+
     const [G, setG] = useState(null);
-    const [lang, setLangState] = useState(Cookies.get('lang') || 'el');
+    const [lang, setLangState] = useState(Cookies.get("lang") || "el");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const setLang = (newLang) => {
-        Cookies.set('lang', newLang);
+        Cookies.set("lang", newLang, { path: "/", expires: 365 });
         setLangState(newLang);
     };
 
     useEffect(() => {
+        document.documentElement.lang = lang;
+        document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+    }, [lang]);
+
+    useEffect(() => {
         const loadConfig = async () => {
-            // 1. Check if G is already available from server (injected script)
             if (typeof window !== "undefined" && window.G) {
                 setG(window.G);
                 setLoading(false);
@@ -33,21 +38,26 @@ export const GProvider = ({ children }) => {
             }
 
             try {
-                const res = await fetch(`${baseURL}local?lang=en`);
+                const res = await fetch(
+                    `${baseURL}local?lang=${encodeURIComponent(lang)}`
+                );
+
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
                 const result = await res.json();
-                if (!result?.data || typeof result.data !== 'object') {
-                    throw new Error('Malformed response: missing data');
+
+                if (!result?.data || typeof result.data !== "object") {
+                    throw new Error("Malformed response: missing data");
                 }
 
                 setG(result.data);
-                if (NODE_ENV === 'development') {
-                    console.log('Loaded G config from fetch:', result.data);
+
+                if (NODE_ENV === "development") {
+                    console.log("Loaded G config from fetch:", result.data);
                 }
             } catch (err) {
-                console.error('Failed to load setup data:', err);
-                setError(err.message || 'Unknown error');
+                console.error("Failed to load setup data:", err);
+                setError(err.message || "Unknown error");
             } finally {
                 setLoading(false);
             }
@@ -55,7 +65,6 @@ export const GProvider = ({ children }) => {
 
         loadConfig();
     }, [baseURL, lang]);
-
 
     if (loading) return <div>Loading configuration...</div>;
     if (error) return <div>Error loading configuration: {error}</div>;
