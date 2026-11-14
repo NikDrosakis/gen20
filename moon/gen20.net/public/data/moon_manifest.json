@@ -1,0 +1,70 @@
+{
+  "$schema": "https://gen20.net/schemas/moon-manifest.v1.json",
+  "system": {
+    "name": "moon",
+    "version": "1.0.0"
+  },
+  "site": {
+    "id": "gen20.net",
+    "defaultLanguage": "el",
+    "languages": ["el", "en", "it", "es", "ar"]
+  },
+  "routing": {
+    "mode": "manifest",
+    "trailingSlash": "ignore",
+    "default": "home",
+    "notFound": "notFound",
+    "routes": [
+      {
+        "id": "home",
+        "pattern": "/",
+        "type": "home"
+      },
+      {
+        "id": "page",
+        "pattern": "/:slug",
+        "type": "page",
+        "pageKey": "slug"
+      },
+      {
+        "id": "nested-page",
+        "pattern": "/:parent/:slug",
+        "type": "page",
+        "pageKey": "path"
+      },
+      {
+        "id": "deep-page",
+        "pattern": "/:parent/:section/:slug",
+        "type": "page",
+        "pageKey": "path"
+      }
+    ]
+  },
+  "home": {
+    "component": "Home",
+    "cubos": []
+  },
+  "pages": {},
+  "i18n": {
+    "el": {
+      "loading": "Φόρτωση...",
+      "notFound": "Η σελίδα δεν βρέθηκε."
+    },
+    "en": {
+      "loading": "Loading...",
+      "notFound": "Page not found."
+    },
+    "it": {
+      "loading": "Caricamento...",
+      "notFound": "Pagina non trovata."
+    },
+    "es": {
+      "loading": "Cargando...",
+      "notFound": "Página no encontrada."
+    },
+    "ar": {
+      "loading": "جار التحميل...",
+      "notFound": "الصفحة غير موجودة."
+    }
+  }
+}
