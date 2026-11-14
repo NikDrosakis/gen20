@@ -1,0 +1,23 @@
+/* Moon Aggregator states */
+.gen-cubo-aggregator {
+    width: 100%;
+    min-width: 0;
+}
+
+.gen-home,
+.gen-page {
+    width: 100%;
+    min-width: 0;
+}
+
+.moon-aggregator-state,
+.moon-aggregator-error,
+.moon-not-found {
+    width: 100%;
+    padding: 1rem;
+    color: var(--text2, inherit);
+}
+
+.moon-aggregator-error {
+    color: var(--danger, #a33);
+}
