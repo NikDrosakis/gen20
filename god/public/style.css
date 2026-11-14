@@ -1,0 +1,42 @@
+/* style.css */
+body { background: #05050a; color: #00ff41; font-family: monospace; margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+nav { padding: 10px; font-size: 24px; background: #111; border-bottom: 1px solid #003b0f; display: flex; gap: 20px; }
+nav a { color: #00ff41; text-decoration: none; font-weight: bold; }
+nav a:hover { color: #fff; text-decoration: underline; }
+nav a.api-link { color: #ffaa00; }
+
+#galaxy { flex-grow: 1; background: radial-gradient(circle, #0a0a1a 0%, #000 100%); position: relative; overflow: hidden; }
+svg { width: 100%; height: 100%; }
+
+/* Πλανήτες */
+.planet { cursor: pointer; transition: all 0.3s; }
+.planet .ring { stroke-width: 3px; fill: none; transition: all 0.3s; }
+.planet.running .ring { stroke: #00ff41; }
+.planet.stopped .ring { stroke: #ff0055; opacity: 0.5; }
+.planet.degraded .ring { stroke: #ffaa00; }
+
+.planet text { fill: #00ff41; font-size: 18px; font-weight: bold; text-anchor: middle; pointer-events: none; }
+.planet.stopped text { fill: #ff0055; opacity: 0.5; }
+
+/* Ο Ήλιος (SOL) */
+#center circle { fill: #00ff41; filter: drop-shadow(0 0 40px #00ff41); }
+#center text { fill: #000; font-size: 28px; font-weight: bold; text-anchor: middle; }
+
+/* Τροχιές */
+.orbit { stroke: #003b0f; stroke-width: 2px; stroke-dasharray: 5,5; fill: none; transition: all 0.3s; }
+.orbit.active { stroke: #00ff41; animation: dash 1s linear infinite; }
+@keyframes dash { to { stroke-dashoffset: -15; } }
+
+/* --- SPLIT TERMINAL --- */
+#terminal-area { height: 35%; display: flex; border-top: 1px solid #003b0f; background: #000; }
+.term-pane { flex: 1; display: flex; flex-direction: column; border-right: 1px solid #222; padding: 10px; }
+.term-pane:last-child { border-right: none; }
+.term-header { font-size: 14px; color: #ffaa00; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 5px; text-transform: uppercase; }
+.term-log { flex-grow: 1; overflow-y: auto; white-space: pre-wrap; font-size: 14px; color: #888; }
+.term-input-wrapper { display: flex; border-top: 1px solid #222; padding-top: 5px; }
+.term-prompt { color: #00ff41; margin-right: 10px; font-weight: bold; font-size: 16px; }
+.term-input { background: transparent; border: none; color: #00ff41; font-family: inherit; font-size: 16px; flex-grow: 1; outline: none; }
+.quick-actions { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
+.quick-actions button { background: #111; color: #00ff41; border: 1px solid #00ff41; padding: 5px 10px; cursor: pointer; font-family: monospace; font-size: 12px; }
+.quick-actions button:hover { background: #00ff41; color: #000; }

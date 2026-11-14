@@ -4,15 +4,12 @@ import RichTextEditor from "../components/RichTextEditor";
 import AuthorDropdown from "../components/AuthorDrop";
 import ClassificationDrop from "../components/ClassificationDrop";
 import MediaToolbox from '../components/MediaToolbox';
-import PageAdmin from './PageAdmin';
 import ContentNavigation from '../components/ContentNavigation';
 import "./Content.css";
 
 const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
 
 const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }) => {
-    const [skeletonDressOpen, setSkeletonDressOpen] = useState(false);
-    const [layoutPageId, setLayoutPageId] = useState(null);
     const [jsonData, setJsonData] = useState({});
     const [editingTitle, setEditingTitle] = useState(false);
     const [showMediaToolbox, setShowMediaToolbox] = useState(false);
@@ -382,28 +379,6 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
         return () => window.removeEventListener('mediaSelected', handleMediaSelected);
     }, []);
 
-    // ============================================================
-    // Άνοιγμα Layout Toolbox
-    // ============================================================
-    const toggleSkeletonDress = (id = null) => {
-        if (skeletonDressOpen) {
-            // κλείσιμο
-            setSkeletonDressOpen(false);
-            setLayoutPageId(null);
-        } else {
-            // άνοιγμα
-            setLayoutPageId(id);
-            setSkeletonDressOpen(true);
-        }
-    };
-    const openSkeletonDress = (id = null) => {
-        setLayoutPageId(id);        // ήταν setSkeletonDressPageId
-        setSkeletonDressOpen(true);
-    };
-    const closeSkeletonDress = () => {
-        setSkeletonDressOpen(false);
-        setLayoutPageId(null);   // ✅ σωστό όνομα
-    };
 
     // 🔧 ΔΙΟΡΘΩΜΕΝΟ: format για το input datetime-local
     const getFormattedPublished = () => {
@@ -506,17 +481,9 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
                         onChange={(e) => setFormData({...formData, type: e.target.value})}
                     >
                         <option value="post">Post</option>
-                        <option value="page">Page</option>
                         <option value="component">Component</option>
                         <option value="block">Block</option>
                     </select>
-                    <button
-                        onClick={() => toggleSkeletonDress(contentId)}
-                        disabled={!contentId}
-                        title={!contentId ? 'Αποθήκευσε πρώτα το content για να επεξεργαστείς το layout' : 'Επεξεργασία layout'}
-                    >
-                        📐 Layout
-                    </button>
                 </div>
 
                 <div className="form-group">
@@ -536,20 +503,6 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
                     ← Archieve
                 </button>
             </div>
-
-            {/* === LAYOUT TOOLBOX FORM CARD === */}
-            {skeletonDressOpen && (
-                <div className="form-card" style={{position: 'relative',maxHeight: '570px',
-                    overflow: 'auto'}}>
-                    <PageAdmin
-                        onClose={closeSkeletonDress}
-                        domain={window.location.hostname}
-                        pageId={layoutPageId}
-                        jsonData={jsonData}
-                        onJsonChange={setJsonData}
-                    />
-                </div>
-            )}
 
             {/* === MEDIA TOOLBOX FORM CARD === */}
             {showMediaToolbox && (

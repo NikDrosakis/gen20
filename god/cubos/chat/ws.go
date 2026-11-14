@@ -29,11 +29,32 @@ func (h *wsHandler) HandleWS(c *core.Client, msg core.Message) bool {
 
 // handleInsert — νέο μήνυμα
 func (h *wsHandler) handleInsert(c *core.Client, msg core.Message) {
-	if msg.UserID == "" {
-		msg.UserID = c.UserID
+	// 1. UID
+	if msg.UID == "" {
+		msg.UID = c.UserID
 	}
-	if msg.To == "" {
-		sendError(c, msg, "insert: to required")
+
+	// 2. Έλεγχος CID (αντί για To)
+	if msg.CID == "" {
+		sendError(c, msg, "insert: cid required")
+		return
+	}
+
+	// 3. Εξαγωγή του παραλήπτη από το CID (π.χ. "user1-user2" -> "user2")
+	// Αν το CID είναι "a-b" και το UID είναι "a", τότε ο To είναι "b".
+	// Για απλότητα, εδώ θεωρούμε ότι ο To είναι το δεύτερο μέρος του CID.
+	// Αν το UID δεν ταιριάζει με το πρώτο μέρος, τότε ο To είναι το πρώτο.
+	parts := splitCID(msg.CID)
+	to := ""
+	if len(parts) == 2 {
+		if parts[0] == msg.UID {
+			to = parts[1]
+		} else {
+			to = parts[0]
+		}
+	}
+	if to == "" {
+		sendError(c, msg, "insert: invalid cid")
 		return
 	}
 
@@ -52,18 +73,16 @@ func (h *wsHandler) handleInsert(c *core.Client, msg core.Message) {
 		return
 	}
 
-	cid := CID([]string{msg.UserID, msg.To})
+	// Χρησιμοποιούμε το CID ως έχει
+	cid := msg.CID
 
 	content := msg.C
-	if content == "" {
-		content = msg.Verba
-	}
 	if content == "" {
 		sendError(c, msg, "insert: empty message")
 		return
 	}
 
-	saved, err := SaveMessage(ctx, db, cid, msg.UserID, content)
+	saved, err := SaveMessage(ctx, db, cid, msg.UID, content)
 	if err != nil {
 		sendError(c, msg, "save: "+err.Error())
 		return
@@ -74,23 +93,23 @@ func (h *wsHandler) handleInsert(c *core.Client, msg core.Message) {
 		_ = MarkDirty(redis, cid)
 	}
 
+	// Broadcast με το νέο format
 	c.Hub.Broadcast(&core.Message{
-		System: "chat",
-		Type:   "insert",
-		C:      saved.C,
-		UserID: saved.UID,
-		To:     msg.To,
-		CID:    cid,
+		Type:     "insert",
+		CID:      cid,
+		UID:      saved.UID,
+		C:        saved.C,
+		Modified: time.Now().Unix(),
 	})
 }
 
 // handleGet — ιστορικό για cid
 func (h *wsHandler) handleGet(c *core.Client, msg core.Message) {
-	if msg.UserID == "" {
-		msg.UserID = c.UserID
+	if msg.UID == "" {
+		msg.UID = c.UserID
 	}
-	if msg.To == "" {
-		sendError(c, msg, "get: to required")
+	if msg.CID == "" {
+		sendError(c, msg, "get: cid required")
 		return
 	}
 
@@ -109,7 +128,7 @@ func (h *wsHandler) handleGet(c *core.Client, msg core.Message) {
 		return
 	}
 
-	cid := CID([]string{msg.UserID, msg.To})
+	cid := msg.CID
 	log.Printf("[chat] handleGet: cid=%s", cid)
 
 	msgs, err := ListMessages(ctx, db, cid)
@@ -121,13 +140,14 @@ func (h *wsHandler) handleGet(c *core.Client, msg core.Message) {
 	log.Printf("[chat] handleGet: found %d for cid=%s", len(msgs), cid)
 
 	payload, _ := json.Marshal(msgs)
+
+	// Στέλνουμε την απάντηση πίσω στον χρήστη
 	c.Hub.Broadcast(&core.Message{
-		System: "chat",
-		Type:   "res",
-		C:      string(payload),
-		UserID: "system",
-		To:     c.UserID,
-		CID:    cid,
+		Type:     "res",
+		CID:      cid,
+		UID:      "system",
+		C:        string(payload),
+		Modified: time.Now().Unix(),
 	})
 }
 
@@ -144,20 +164,44 @@ func (h *wsHandler) handleGetList(c *core.Client, msg core.Message) {
 
 	payload, _ := json.Marshal(out)
 	c.Hub.Broadcast(&core.Message{
-		System: "chat",
-		Type:   "reslist",
-		C:      string(payload),
-		UserID: "system",
-		To:     c.UserID,
+		Type:     "reslist",
+		CID:      "", // Δεν υπάρχει cid για τη λίστα, ή βάλε ένα default
+		UID:      "system",
+		C:        string(payload),
+		Modified: time.Now().Unix(),
 	})
 }
 
 func sendError(c *core.Client, msg core.Message, errMsg string) {
+	// Αν έχουμε cid, στείλε πίσω στο cid. Αλλιώς, στείλε στον αποστολέα.
+	cid := msg.CID
+	if cid == "" {
+		// fallback: στέλνουμε μόνο στον αποστολέα
+		c.Hub.Broadcast(&core.Message{
+			Type:     "error",
+			UID:      "system",
+			C:        errMsg,
+			Modified: time.Now().Unix(),
+		})
+		return
+	}
+
 	c.Hub.Broadcast(&core.Message{
-		System: "chat",
-		Type:   "error",
-		C:      errMsg,
-		UserID: "system",
-		To:     c.UserID,
+		Type:     "error",
+		CID:      cid,
+		UID:      "system",
+		C:        errMsg,
+		Modified: time.Now().Unix(),
 	})
+}
+
+// splitCID χωρίζει το cid σε δύο μέρη (π.χ. "a-b" -> ["a", "b"])
+func splitCID(cid string) []string {
+	// Βρίσκουμε το πρώτο '-' και χωρίζουμε
+	for i := 0; i < len(cid); i++ {
+		if cid[i] == '-' {
+			return []string{cid[:i], cid[i+1:]}
+		}
+	}
+	return []string{cid}
 }

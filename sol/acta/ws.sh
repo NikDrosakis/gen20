@@ -13,7 +13,7 @@ ws_help()  {
         'WS — WebSocket client' \
         '' \
         'Usage:' \
-        '  ws send <message> --to <user> [--cast one|all]' \
+        '  ws send <message> --to <user> ' \
         '  ws interactive --to <user>' \
         '  ws test'
 }
@@ -36,18 +36,16 @@ ws_cid() {
 ws_send() {
     local msg=""
     local to=""
-    local cast="all"
 
     while (($#)); do
         case "$1" in
             --to)    to="$2"; shift 2 ;;
-            --cast)  cast="$2"; shift 2 ;;
             *)       msg="$1"; shift ;;
         esac
     done
 
     [[ -n $msg && -n $to ]] || {
-        printf 'Usage: ws send <msg> --to <user> [--cast one|all]\n' >&2
+        printf 'Usage: ws send <msg> --to <user> \n' >&2
         return 1
     }
 
@@ -66,7 +64,6 @@ ws_send() {
         --arg cid "$cid" \
         --arg userid "$WS_USER" \
         --arg to "$to" \
-        --arg cast "$cast" \
         --arg c "$msg" \
         --argjson timestamp "$(date +%s)" \
         '{
@@ -75,7 +72,6 @@ ws_send() {
             cid: $cid,
             userid: $userid,
             to: $to,
-            cast: $cast,
             c: $c,
             timestamp: $timestamp
         }')
@@ -165,7 +161,6 @@ ws_interactive() {
             --arg cid "$cid" \
             --arg userid "$WS_USER" \
             --arg to "$to" \
-            --arg cast "one" \
             --arg c "$line" \
             --argjson timestamp "$(date +%s)" \
             '{
@@ -174,7 +169,6 @@ ws_interactive() {
                 cid: $cid,
                 userid: $userid,
                 to: $to,
-                cast: $cast,
                 c: $c,
                 timestamp: $timestamp
             }')

@@ -1,5 +1,5 @@
 <?php
-//Cli.php
+//Sol.php
 namespace Core;
 use ReflectionClass;
 
@@ -175,14 +175,14 @@ protected function parseParams($params) {
   protected function router() {
      global $argv, $argc;
      // Debugging: Print arguments
-     $this->arrowCli($argv);
+    // $this->arrowCli($argv);
 
     //Check for second argument
      if(!$argv[2]){
-     echo "❌ Gaia Method not set. Try methods listed by TraiT/Class: \n";
+     //echo "❌ Gaia Method not set. Try methods listed by TraiT/Class: \n";
      $methods = $this->getClassMethods();
      $this->arrayCli($methods);
-     echo "❌ Or type arg[2] as this to get the whole Gaia Object: \n";
+     //echo "❌ Or type arg[2] as this to get the whole Gaia Object: \n";
      exit(1);
      }
 
@@ -371,7 +371,8 @@ protected function testCli() {
 }
 
 protected function arrayCli($data) {
-        echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL;
+       // echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL;
+        echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
     }
 
 protected function arrowCli($data) {

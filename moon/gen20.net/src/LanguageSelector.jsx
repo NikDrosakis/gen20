@@ -1,4 +1,3 @@
-import React from "react";
 import { useTheme } from "./ThemeContext";
 import Cookies from "js-cookie";
 const LanguageSelector = ({ currentLang }) => {

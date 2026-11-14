@@ -1,12 +1,5 @@
 // src/MessagingContext.jsx
-import React, {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useRef,
-    useState,
-} from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 
 const MessagingContext = createContext(null);
 
@@ -18,12 +11,8 @@ export function MessagingProvider({ userID, domains = [], children }) {
 
     const connect = useCallback(() => {
         setConnection("connecting");
-        console.log("[messaging] connecting…");
-
         const proto = window.location.protocol === "https:" ? "wss" : "ws";
-        const url = `${proto}://${window.location.host}/god/v1/messaging/ws?userid=${encodeURIComponent(
-            userID
-        )}`;
+        const url = `${proto}://${window.location.host}/god/v1/messaging/ws?userid=${encodeURIComponent(userID)}`;
 
         const ws = new WebSocket(url);
         wsRef.current = ws;
@@ -31,9 +20,8 @@ export function MessagingProvider({ userID, domains = [], children }) {
 
         ws.onopen = () => {
             setConnection("open");
-            console.log("[messaging] open…");
             domains.forEach((d) => {
-                ws.send(JSON.stringify({ type: "subscribe", domaffect: d }));
+                ws.send(JSON.stringify({ type: "subscribe", domain: d }));
             });
         };
 
@@ -49,12 +37,10 @@ export function MessagingProvider({ userID, domains = [], children }) {
 
         ws.onclose = () => {
             setConnection("closed");
-            console.log("[messaging] closed…");
             setTimeout(() => {
                 if (wsRef.current === ws) connect();
             }, 3000);
         };
-
         ws.onerror = () => setConnection("error");
     }, [userID, domains.join(",")]);
 
@@ -63,29 +49,12 @@ export function MessagingProvider({ userID, domains = [], children }) {
         return () => wsRef.current?.close(1000, "unmount");
     }, [connect]);
 
-    const send = useCallback(
-        (msg) => {
-            const ws = wsRef.current;
-            if (ws?.readyState !== WebSocket.OPEN) return false;
-            ws.send(JSON.stringify({ ...msg, userid: userID }));
-            return true;
-        },
-        [userID]
-    );
-
-    const sendSystem = useCallback(
-        (verba, domaffect = "*") => {
-            return send({
-                system: "god",
-                domaffect,
-                type: "notify",
-                verba,
-                to: "*",
-                cast: "system",
-            });
-        },
-        [send]
-    );
+    const send = useCallback((msg) => {
+        const ws = wsRef.current;
+        if (ws?.readyState !== WebSocket.OPEN) return false;
+        ws.send(JSON.stringify({ ...msg, uid: userID, modified: Math.floor(Date.now() / 1000) }));
+        return true;
+    }, [userID]);
 
     const subscribe = useCallback((fn) => {
         listenersRef.current.add(fn);
@@ -93,16 +62,7 @@ export function MessagingProvider({ userID, domains = [], children }) {
     }, []);
 
     return (
-        <MessagingContext.Provider
-            value={{
-                connection,
-                messages,
-                send,
-                sendSystem,
-                subscribe,
-                userID,
-            }}
-        >
+        <MessagingContext.Provider value={{ connection, messages, send, subscribe, userID }}>
             {children}
         </MessagingContext.Provider>
     );

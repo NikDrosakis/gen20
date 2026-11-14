@@ -307,6 +307,117 @@ protected function renameItem($params = null): array {
     ];
 }
 
+
+
+/**
+ * Διαγραφή αρχείου ή φακέλου (recursive για φάκελο)
+ */
+ protected function setMoonManifest($params = null): array
+ {
+     $domain   = $params['domain']   ?? $_POST['domain']   ?? null;
+     $manifest = $params['manifest'] ?? $_POST['manifest'] ?? null;
+
+     if (is_string($manifest)) {
+         $decoded = json_decode($manifest, true);
+         if (json_last_error() !== JSON_ERROR_NONE) {
+             return ['success' => false, 'error' => 'Invalid manifest JSON'];
+         }
+         $manifest = $decoded;
+     }
+
+     if (!$domain || !is_array($manifest)) {
+         return ['success' => false, 'error' => 'Domain and manifest required'];
+     }
+
+     if (!preg_match('/^[a-z0-9.\-]+$/i', $domain)) {
+         return ['success' => false, 'error' => 'Invalid domain'];
+     }
+
+     if (!isset($manifest['pages']) || !is_array($manifest['pages'])) {
+         return ['success' => false, 'error' => 'Manifest must contain a pages object'];
+     }
+
+     $dataRoot   = '/var/www/gs/data';
+     $targetDir  = $dataRoot . '/' . $domain;
+     $targetFile = $targetDir . '/moon_manifest.json';
+     $keepBackups = 5; // πόσα παλιά κρατάμε: .1 .2 ... .5
+
+     if (!is_dir($targetDir)) {
+         return ['success' => false, 'error' => 'Domain data dir not found'];
+     }
+
+     $dataRootReal  = realpath($dataRoot);
+     $targetDirReal = realpath($targetDir);
+     if (!$dataRootReal || !$targetDirReal || strpos($targetDirReal, $dataRootReal) !== 0) {
+         return ['success' => false, 'error' => 'Access denied'];
+     }
+
+     // ---------- ROTATION (στο ίδιο folder) ----------
+     // Διαγράφουμε το πιο παλιό (.N), μετακινούμε .N-1 -> .N, ..., .1 -> .2, τρέχον -> .1
+     if (is_file($targetFile)) {
+         // Σβήσε το τελευταίο αν υπάρχει
+         $oldest = $targetFile . '.' . $keepBackups;
+         if (is_file($oldest)) {
+             @unlink($oldest);
+         }
+
+         // Μετακίνηση .i -> .i+1 (από το μεγαλύτερο προς το μικρότερο)
+         for ($i = $keepBackups - 1; $i >= 1; $i--) {
+             $src = $targetFile . '.' . $i;
+             $dst = $targetFile . '.' . ($i + 1);
+             if (is_file($src)) {
+                 @rename($src, $dst);
+             }
+         }
+
+         // Τρέχον -> .1
+         if (!@rename($targetFile, $targetFile . '.1')) {
+             return ['success' => false, 'error' => 'Backup rotate failed (permissions?)'];
+         }
+     }
+
+     // ---------- Γράψιμο νέου ----------
+     $manifest['generated'] = time();
+
+     $json = json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+     if ($json === false) {
+         return ['success' => false, 'error' => 'JSON encode failed'];
+     }
+
+     $tmp = $targetFile . '.tmp.' . getmypid();
+     if (file_put_contents($tmp, $json) === false) {
+         return ['success' => false, 'error' => 'Write failed (permissions?)'];
+     }
+
+     @chmod($tmp, 0644);
+
+     if (!rename($tmp, $targetFile)) {
+         @unlink($tmp);
+         return ['success' => false, 'error' => 'Rename failed (permissions?)'];
+     }
+
+     @chown($targetFile, 'dros');
+     @chgrp($targetFile, 'dros');
+
+     // Permissions στα rotated (προαιρετικά, για συνέπεια)
+     for ($i = 1; $i <= $keepBackups; $i++) {
+         $f = $targetFile . '.' . $i;
+         if (is_file($f)) {
+             @chmod($f, 0644);
+             @chown($f, 'dros');
+             @chgrp($f, 'dros');
+         }
+     }
+
+     return [
+         'success'   => true,
+         'domain'    => $domain,
+         'path'      => 'data/' . $domain . '/moon_manifest.json',
+         'backup'    => is_file($targetFile . '.1') ? 'data/' . $domain . '/moon_manifest.json.1' : null,
+         'generated' => $manifest['generated'],
+         'bytes'     => strlen($json),
+     ];
+ }
 /**
  * Διαγραφή αρχείου ή φακέλου (recursive για φάκελο)
  */

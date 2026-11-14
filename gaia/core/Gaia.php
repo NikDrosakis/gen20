@@ -144,8 +144,8 @@ public $deepseekApiUrl;
     $this->redis=new Gredis("1");
     //apcu instanatiate
    // $this->apc=new GAPCU();
-    $this->deepseekApiKey='sk-3e3fa15ea336406183a300498ad717dd';
-    $this->deepseekApiUrl = 'https://api.deepseek.com/v1/chat/completions';
+ //   $this->deepseekApiKey='sk-3e3fa15ea336406183a300498ad717dd';
+  //  $this->deepseekApiUrl = 'https://api.deepseek.com/v1/chat/completions';
     $this->me = isset($_COOKIE['GENUID']) ? (int)$_COOKIE['GENUID'] : 0;
     //$this->my=[];
     //    if ($this->loggedin) {
@@ -170,11 +170,11 @@ public $deepseekApiUrl;
 
     $this->PAGECUBO = $this->pageCP($this->page);
 
-    $this->usergrps = $this->db->flist("SELECT id, name FROM {$this->publicdb}.usergrp");
-    $this->pagelist = $this->db->flist("SELECT id, name FROM {$this->publicdb}.page");
-    $this->subparent = $this->db->flist("SELECT name,parent FROM {$this->publicdb}.page");
+   // $this->usergrps = $this->db->flist("SELECT id, name FROM {$this->publicdb}.usergrp");
+   // $this->pagelist = $this->db->flist("SELECT id, name FROM {$this->publicdb}.page");
+    //$this->subparent = $this->db->flist("SELECT name,parent FROM {$this->publicdb}.page");
     // Setup exception handler to catch errors in the child classes
-        set_exception_handler([$this, 'handleError']);
+  //      set_exception_handler([$this, 'handleError']);
     // Handle requests (delegated to child classes)
         $this->handleRequest();
     }

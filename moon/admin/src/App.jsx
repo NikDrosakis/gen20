@@ -16,8 +16,7 @@ import SuperAdmin from "./pages/SuperAdmin";
 import { MessagingProvider, useMessaging } from './MessagingContext';
 import MemberFormAdmin from "./pages/MemberFormAdmin";
 import Settings from "./pages/Settings";
-import PageAdmin from "./pages/PageAdmin";
-import PageAdmin2 from "./pages/PageAdmin2";
+import Pages from "./pages/Pages";
 import Media from "./pages/Media";
 import Doc from "./pages/Doc";
 import { useG } from './GContext';
@@ -106,7 +105,8 @@ const App = () => {
     const { G, loading: configLoading, error } = useG();
     const [showSetup, setShowSetup] = useState(false);
     const [setupChecked, setSetupChecked] = useState(false);
-
+// Στο component, μετά το activeChats:
+    const [isChatOpen, setIsChatOpen] = useState(false);
     // ============================================================
     // userid από GENUID cookie + G.publicdb
     // ============================================================
@@ -242,8 +242,7 @@ const App = () => {
             case '/admin/doc': return <Doc navigateTo={navigateTo} />;
             case '/admin/members': return <MemberFormAdmin navigateTo={navigateTo} />;
             case '/admin/superadmin': return <SuperAdmin navigateTo={navigateTo} />;
-            case '/admin/page-admin': return <PageAdmin navigateTo={navigateTo} />;
-            case '/admin/page-admin2': return <PageAdmin2 navigateTo={navigateTo} />;
+            case '/admin/pages': return <Pages navigateTo={navigateTo} />;
             case '/admin':
             default: return <Home navigateTo={navigateTo} />;
         }
@@ -269,7 +268,31 @@ const App = () => {
                 activeChats={activeChats}
                 setActiveChats={setActiveChats}
             />
+            {/* Floating button — ανοίγει το chat */}
+            {!isChatOpen && (
+                <button
+                    onClick={() => setIsChatOpen(true)}
+                    style={{
+                        position: 'fixed',
+                        bottom: 16,
+                        right: 16,
+                        zIndex: 1000,
+                        padding: '12px 20px',
+                        borderRadius: 24,
+                        border: 'none',
+                        background: '#4a90e2',
+                        color: '#fff',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                    }}
+                >
+                    💬 Chat
+                </button>
+            )}
 
+            {isChatOpen && (
             <div className="chat-widget">
                 <ChatList
                     onOpenChat={handleOpenChat}
@@ -287,7 +310,7 @@ const App = () => {
                     />
                 ))}
             </div>
-
+            )}
         </MessagingProvider>
     );
 };

@@ -1,0 +1,122 @@
+.survey {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #222;
+}
+
+.survey__header {
+    margin-bottom: 1.5rem;
+}
+
+.survey__title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+}
+
+.survey__select-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    max-width: 420px;
+}
+
+.survey__label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+}
+
+.survey__select {
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #fff;
+    font-size: 0.95rem;
+    color: #222;
+    cursor: pointer;
+}
+
+.survey__select:focus-visible {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* Questions */
+.survey__questions {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.survey__question {
+    border: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1rem 1.25rem 1.25rem;
+    border-radius: 8px;
+    background: #fff;
+    margin: 0;
+}
+
+.survey__question-title {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    padding: 0;
+    color: #111827;
+}
+
+.survey__options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.survey__option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.survey__option:hover {
+    background: #f3f4f6;
+}
+
+.survey__radio {
+    margin-top: 0.15rem;
+    accent-color: #007bff;
+    flex-shrink: 0;
+}
+
+.survey__option-text {
+    line-height: 1.45;
+    font-size: 0.95rem;
+    color: #374151;
+}
+
+/* States */
+.survey-state {
+    padding: 1rem 0;
+    color: #6b7280;
+}
+
+.survey-state--error {
+    color: #c00;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .survey__title {
+        font-size: 1.25rem;
+    }
+    .survey__question {
+        padding: 0.85rem 1rem 1rem;
+    }
+}

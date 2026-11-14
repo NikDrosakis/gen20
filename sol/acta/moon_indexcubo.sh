@@ -49,10 +49,6 @@ out="$DATA_DIR/$domain/moonlist.json"
     done
     printf ']}\n'
 } > "$out"
-
-echo "✅ $out ($(wc -c < "$out") bytes)"
-# Στο τέλος του astra_indexcubo.sh / moon_indexcubo.sh
-
 # Permissions στο JSON
 chown dros:dros "$out" 2>/dev/null || true
 chmod 644 "$out"

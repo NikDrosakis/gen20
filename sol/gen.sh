@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-#
+#sol/gen.sh
 # SOL - GEN20 language environment.
 # Native interactive Bash is the execution shell.
 # SOL adds domain expressions.
+
 
 if [[ ${SOL_ENGINE:-0} != 1 ]]; then
     export SOL_ENGINE=1
@@ -31,8 +32,11 @@ SOL_ROOT=$(cd -- "$SOL_DIR/.." && pwd -P)
 unset SOL_SOURCE SOL_TARGET
 SOL_VERSION="0.1.0"
 
-source "$SOL_DIR/__sol/__sol_dispatch.sh"
-source "$SOL_DIR/__sol/__sol_complete.sh"
+# Φόρτωση ΟΛΩΝ των __sol_*.sh
+for f in "$SOL_DIR"/__sol/__sol_*.sh; do
+    [[ -r "$f" ]] && source "$f"
+done
+
 # Φόρτωση prothesis
 if [[ -d "$SOL_DIR/prothesis" ]]; then
     for f in "$SOL_DIR/prothesis"/*.sh; do
@@ -89,160 +93,6 @@ if [[ $- == *i* && -r ${HOME}/.bashrc ]]; then
     source "${HOME}/.bashrc"
 fi
 
-
-# --------------------------------------------------
-# ENTITY DISCOVERY
-# Κανόνας: underscore = διαχωριστής λέξεων.
-#   "astra migrate" -> astra_migrate
-# Ψάχνουμε πρώτα ολόκληρο filename, μετά function μέσα στο <noun>.sh.
-# --------------------------------------------------
-
-__sol_search_dirs() {
-    printf '%s\n' \
-        "$SOL_ROOT/acta" \
-        "$SOL_ROOT/systems" \
-        "$SOL_ROOT/rima" \
-        "$SOL_ROOT/prothesis" \
-        "$SOL_DIR/acta" \
-        "$SOL_DIR/systems" \
-        "$SOL_DIR/rima" \
-        "$SOL_DIR/prothesis"
-}
-
-# Ψάχνει ένα filename <name>.sh σε acta/** , systems/** , opus/
-__sol_entity_file() {
-    local name="${1:-}"
-    local dir file
-
-    [[ -n $name ]] || return 1
-
-    while IFS= read -r dir; do
-        [[ -d $dir ]] || continue
-
-        # Άμεσα μέσα στον φάκελο
-        file="$dir/$name.sh"
-        if [[ -f $file ]]; then
-            printf '%s\n' "$file"
-            return 0
-        fi
-
-        # Ένα επίπεδο βαθύτερα (π.χ. acta/astra/migrate.sh)
-        while IFS= read -r -d '' file; do
-            if [[ $(basename -- "$file") == "$name.sh" ]]; then
-                printf '%s\n' "$file"
-                return 0
-            fi
-        done < <(command find "$dir" -mindepth 2 -maxdepth 2 -type f -name "$name.sh" -print0 2>/dev/null)
-    done < <(__sol_search_dirs)
-
-    return 1
-}
-
-# Κανόνας 3+4: "<noun> <verb>" -> <noun>_<verb>.sh  ή  <noun>.sh::<noun>_<verb>
-# Επιστρέφει "file<TAB>mode<TAB>function"
-#   mode = script   -> εκτέλεση ως subprocess
-#   mode = function -> source + κάλεσμα function
-__sol_find_expression() {
-    local noun="${1:-}"
-    local verb="${2:-}"
-    local full file
-
-    [[ -n $noun && -n $verb ]] || return 1
-
-    full="${noun}_${verb}"
-
-    # 1) Ολόκληρο filename: astra_migrate.sh
-    if file=$(__sol_entity_file "$full"); then
-        printf '%s\tscript\t\n' "$file"
-        return 0
-    fi
-
-    # 2) Function μέσα στο <noun>.sh
-    if file=$(__sol_entity_file "$noun"); then
-        printf '%s\tfunction\t%s\n' "$file" "$full"
-        return 0
-    fi
-
-    return 1
-}
-
-# Κανόνας 1: σκέτο "<noun>" -> <noun>.sh
-__sol_find_noun() {
-    local noun="${1:-}"
-    __sol_entity_file "$noun"
-}
-
-# Φορτώνει expression file (μόνο functions) μία φορά.
-__sol_load() {
-    local file="${1:-}"
-
-    [[ -n $file && -f $file ]] || return 1
-    [[ -n ${SOL_LOADED[$file]+loaded} ]] && return 0
-
-    # shellcheck source=/dev/null
-    source "$file" || return 1
-
-    SOL_LOADED[$file]=1
-}
-
-# Λίστα όλων των entities (για completion / help)
-__sol_entities() {
-    {
-        local dir file
-        while IFS= read -r dir; do
-            [[ -d $dir ]] || continue
-            while IFS= read -r -d '' file; do
-                basename -- "$file" .sh
-            done < <(command find "$dir" -type f -name '*.sh' -print0 2>/dev/null)
-        done < <(__sol_search_dirs)
-        [[ -f "$SOL_ROOT/gaia/sol/index.php" ]] && printf 'gaia\n'
-    } | sort -u
-}
-
-# Λίστα verbs ενός noun (functions <noun>_* μέσα στο <noun>.sh)
-__sol_verbs() {
-    local name="${1:-}"
-    local file fn
-
-    [[ -n $name ]] || return 0
-
-    file=$(__sol_find_noun "$name") || return 0
-    __sol_load "$file" || return 1
-
-    while IFS= read -r fn; do
-        printf '%s\n' "${fn#${name}_}"
-    done < <(compgen -A function "${name}_" | sort -u)
-}
-
-# --------------------------------------------------
-# HELP
-# --------------------------------------------------
-
-__sol_help() {
-    cat <<'SOLHELP'
-SOL language environment
-
-  <system> esti [args...]      inspect a system
-  <system> <verb> [args...]    execute a system expression
-  <native Bash command>       execute Bash/Linux directly
-
-Examples:
-
-  god esti
-  gaia esti
-  moon esti
-  preflight run
-  preflight latest
-  preflight history
-  find . -type f -name '*.php' | grep api
-  opus neo
-
-Tab completes SOL expressions and falls back to native Bash completion.
-Enter executes. Ctrl-D exits.
-
-Native Bash syntax remains available.
-SOLHELP
-}
 help() { __sol_help; }
 # --------------------------------------------------
 # NATIVE BASH FALLBACK
@@ -292,39 +142,13 @@ if [[ $- == *i* ]]; then
         printf 'SOL: cannot cd to SOL_ROOT: %s\n' "$SOL_ROOT" >&2
         exit 1
     }
-    # --------------------------------------------------
-    # Dynamic prompt — δείχνει το relative path
-    # --------------------------------------------------
 
-_sol_prompt() {
-    local rel
-    rel=$(realpath --relative-to="$SOL_ROOT" "$PWD" 2>/dev/null)
-
-    if [[ -z $rel || $rel == "." ]]; then
-        PS1='\[\e[1;31m\]gen>\[\e[0m\] '
-    else
-        PS1="\[\e[1;31m\]${rel} gen>\[\e[0m\] "
-    fi
-}
 
     PROMPT_COMMAND="_sol_prompt"
     # --------------------------------------------------
     # Aliases για γρήγορη πλοήγηση
     # (cd, ls είναι κρατημένα — δεν τα αγγίζουμε)
     # --------------------------------------------------
-
-    alias MOON='cd "$SOL_ROOT/moon"'
-    alias BIND='cd /etc/bind'
-    alias NGINX='cd /etc/nginx'
-    alias TOR='cd /var/lib/tor'
-    alias ASTRA='cd "$SOL_ROOT/astra"'
-    alias GOD='cd "$SOL_ROOT/god"'
-    alias KRONOS='cd "$SOL_ROOT/kronos"'
-    alias MARS='cd "$SOL_ROOT/mars"'
-    alias SOL='cd "$SOL_ROOT"'
-    alias GAIA='cd "$SOL_ROOT/gaia"'
-    alias ACTA='cd "$SOL_ROOT/sol/acta"'
-    alias SYSTEMS='cd "$SOL_ROOT/sol/systems"'
 
     printf 'SOL %s | GEN20 language environment\n' "$SOL_VERSION"
     printf 'Type help for expressions. Native Bash is available.\n'

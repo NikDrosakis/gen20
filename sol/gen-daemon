@@ -30,7 +30,6 @@ WATCH_FLAG="$SOL_ROOT/.watch_enabled"
 POLL_INTERVAL=10
 VERSION_STEP="0.001"
 
-mkdir -p "$LOG_DIR" "$ESO_DIR"
 
 log() {
     log_action "GEND: ${1:-}"

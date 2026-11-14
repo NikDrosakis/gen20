@@ -6,28 +6,23 @@ import (
 	"log"
 	"sync"
 	"time"
-
+"strings"
 	"github.com/gorilla/websocket"
 )
 
 // Message είναι το generic protocol του hub.
 type Message struct {
-	System    string `json:"system"`
-	Type      string `json:"type"`
-	Verba     string `json:"verba,omitempty"` // deprecated
-	C         string `json:"c,omitempty"`     // content (HTML OK)
-	UserID    string `json:"userid"`
-	To        string `json:"to"`
-	Cast      string `json:"cast"`
-	Domain    string `json:"domain,omitempty"`
-	Timestamp int64  `json:"timestamp,omitempty"`
-	CID       string `json:"cid,omitempty"`
+	Type     string `json:"type"`
+	CID      string `json:"cid,omitempty"`
+	UID      string `json:"uid,omitempty"`
+	C        string `json:"c,omitempty"`
+	Modified int64  `json:"modified,omitempty"`
 }
 
 // Client είναι ένα συνδεδεμένο WebSocket.
 type Client struct {
 	ID      string
-	UserID  string
+	UserID  string // Κρατάμε το UserID για εσωτερική χρήση (από το query param)
 	Domains map[string]bool
 	Conn    *websocket.Conn
 	Send    chan []byte
@@ -53,15 +48,13 @@ func NewHub(redis *Gredis) *Hub {
 		byUser:     make(map[string]map[*Client]bool),
 		byDomain:   make(map[string]map[*Client]bool),
 		unregister: make(chan *Client, 64),
-		broadcast:  make(chan *Message, 1024), // ↑ από 256
+		broadcast:  make(chan *Message, 1024),
 		redis:      redis,
 	}
 }
 
-// SetCouch — εισάγει το Gcouch (generic).
 func (h *Hub) SetCouch(g *Gcouch) { h.couch = g }
 
-// Run — κεντρικός loop (χωρίς register — synchronous).
 func (h *Hub) Run() {
 	for {
 		select {
@@ -90,9 +83,12 @@ func (h *Hub) Run() {
 	}
 }
 
-// dispatch — στέλνει το μήνυμα στους σωστούς clients (χωρίς DomAffect).
+// dispatch — στέλνει το μήνυμα στους σωστούς clients με βάση το CID.
 func (h *Hub) dispatch(msg *Message) {
-	msg.Timestamp = time.Now().Unix()
+	// Ενημερώνουμε το modified αν δεν υπάρχει
+	if msg.Modified == 0 {
+		msg.Modified = time.Now().Unix()
+	}
 
 	data, err := json.Marshal(msg)
 	if err != nil {
@@ -104,13 +100,16 @@ func (h *Hub) dispatch(msg *Message) {
 
 	var targets []*Client
 
-	// Αν έχει To → στείλε σε αυτόν
-	if msg.To != "" && msg.To != "*" {
-		for c := range h.byUser[msg.To] {
-			targets = append(targets, c)
+	if msg.CID != "" {
+		// Το CID είναι της μορφής "user1-user2". Στέλνουμε και στους δύο.
+		parts := strings.Split(msg.CID, "-")
+		for _, uid := range parts {
+			for c := range h.byUser[uid] {
+				targets = append(targets, c)
+			}
 		}
 	} else {
-		// Αλλιώς → broadcast σε όλους
+		// Αν δεν υπάρχει CID, κάνουμε broadcast σε όλους (fallback)
 		for c := range h.clients {
 			targets = append(targets, c)
 		}
@@ -125,7 +124,6 @@ func (h *Hub) dispatch(msg *Message) {
 	}
 }
 
-// Broadcast — στέλνει μήνυμα στο hub.
 func (h *Hub) Broadcast(msg *Message) {
 	select {
 	case h.broadcast <- msg:
@@ -134,7 +132,6 @@ func (h *Hub) Broadcast(msg *Message) {
 	}
 }
 
-// Register — σύγχρονη εγγραφή (no race).
 func (h *Hub) Register(c *Client) {
 	h.mu.Lock()
 	h.clients[c] = true
@@ -146,7 +143,6 @@ func (h *Hub) Register(c *Client) {
 	log.Printf("[hub] registered: %s", c.UserID)
 }
 
-// Unregister — αφαιρεί client.
 func (h *Hub) Unregister(c *Client) {
 	h.unregister <- c
 }
@@ -174,14 +170,9 @@ func DispatchWS(c *Client, msg Message) bool {
 	return false
 }
 
-// ============================================================
-//  ACCESSORS (για cubos)
-// ============================================================
-
 func (h *Hub) Couch() *Gcouch { return h.couch }
 func (h *Hub) Redis() *Gredis { return h.redis }
 
-// OnlineUsers — επιστρέφει όλα τα ενεργά userids.
 func (h *Hub) OnlineUsers() []string {
 	h.mu.RLock()
 	defer h.mu.RUnlock()

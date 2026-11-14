@@ -12,6 +12,17 @@ const GContext = createContext({
 
 export const useG = () => useContext(GContext);
 
+// helper: δέχεται είτε { data: {...} } είτε σκέτο {...}
+const unwrap = (json) => {
+    if (json && typeof json === 'object' && !Array.isArray(json)) {
+        if (json.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
+            return json.data;          // wrapped
+        }
+        return json;                   // plain cv object
+    }
+    throw new Error('Malformed GContext.json');
+};
+
 export const GProvider = ({ children }) => {
     const [G, setG] = useState(() =>
         typeof window !== 'undefined' ? window.G ?? null : null
@@ -21,7 +32,7 @@ export const GProvider = ({ children }) => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (window.G) {
+        if (typeof window !== 'undefined' && window.G) {
             setG(window.G);
             setLoading(false);
             return;
@@ -31,25 +42,32 @@ export const GProvider = ({ children }) => {
 
         const loadConfig = async () => {
             try {
-                const res = await fetch('/api/v1/local', {
-                    signal: controller.signal
+                const res = await fetch(`/data/admin/GContext.json`, {
+                    signal: controller.signal,
+                    cache: 'no-cache'
                 });
 
                 if (!res.ok) {
                     throw new Error(`HTTP ${res.status}`);
                 }
 
-                const result = await res.json();
-
-                if (!result?.data || typeof result.data !== 'object') {
-                    throw new Error('Malformed response: missing data');
+                // diagnostics: αν ο server σερβίρει HTML αντί για JSON
+                const ct = res.headers.get('content-type') || '';
+                if (!ct.includes('json')) {
+                    const text = await res.text();
+                    throw new Error(
+                        `Expected JSON but got "${ct || 'unknown'}" (first 60 chars: ${text.slice(0, 60)})`
+                    );
                 }
 
-                window.G = result.data;
-                setG(result.data);
+                const json = await res.json();
+                const data = unwrap(json);   // ✅ δέχεται και τα δύο σχήματα
+
+                if (typeof window !== 'undefined') window.G = data;
+                setG(data);
             } catch (err) {
                 if (err.name !== 'AbortError') {
-                    console.error('Failed to load setup data:', err);
+                    console.error('Failed to load GContext:', err);
                     setError(err.message || 'Unknown error');
                 }
             } finally {

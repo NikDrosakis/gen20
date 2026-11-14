@@ -293,10 +293,10 @@ if (!defined('TEMPLATE')) {
        "sr1" => "sr", "sr2" => "sr", "sr3" => "sr",
        "fr" => "f", "fc" => "f", "fl" => "f"
     ];
-    $this->version = '0.69';
+    $this->version = '0.99';
 
     $this->publicdb = "gen_".TEMPLATE;
     $this->loggedin = !empty($_COOKIE['GENUID']);
-    $this->ini = ini_get_all();
-    $this->env = getenv();
+   // $this->ini = ini_get_all();
+    //$this->env = getenv();
 

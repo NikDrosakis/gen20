@@ -5,7 +5,6 @@ import SuperAdminHeader from '../components/SuperAdminHeader';
 import DomainManager from '../components/DomainManager';
 import SSLManager from '../components/SSLManager';
 import ComponentManager from '../components/ComponentManager';
-import PageAdmin from './PageAdmin';
 import NginxManager from '../components/NginxManager';
 import DNSManager from '../components/DNSManager';
 import DBTree from '../components/DBTree';
@@ -499,11 +498,6 @@ const SuperAdmin = () => {
 
                 {activeTab === 'components' && (
                     <ComponentManager filesystem={componentfiles} />
-                )}
-
-
-                {activeTab === 'layout' && (
-                    <PageAdmin filesystem={componentfiles} />
                 )}
 
                 {activeTab === 'dbtree' && (
