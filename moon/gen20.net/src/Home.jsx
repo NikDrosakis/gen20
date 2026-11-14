@@ -1,43 +1,14 @@
-// pages/Home.jsx
-import React, { useState, useEffect } from 'react';
-import TeamSection from "../components/TeamSection";
-import EventBoard from "../components/EventBoard";
+import React from "react";
 
-const Home = ({ path, lang }) => {
-    const [blocks, setBlocks] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
-
-    useEffect(() => {
-        const fetchBlocks = async () => {
-            try {
-                // Fetch blocks from content table (type='block')
-                const response = await fetch(`/api/v1/maria/fa?folder=select * from ${publicdb}.content where type='post' order by sort desc`);
-                const data = await response.json();
-
-                if (data.success && data.data) {
-                    setBlocks(data.data);
-                }
-            } catch (error) {
-                console.error('Error fetching blocks:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchBlocks();
-    }, [publicdb]);
-
-    if (loading) {
-        return <div className="loading-state">Loading...</div>;
-    }
-
+/**
+ * Home is the default composition.
+ * It is not a CMS page and has no page record.
+ * Its only content is the Cubos declared in moon_manifest.json.
+ */
+export default function Home({ cubos = [], renderCubos }) {
     return (
-        <>
-            <EventBoard postgrpid={30} lang={lang} />
-            <TeamSection path={path} lang={lang} />
-        </>
+        <div className="gen-home" data-composition="home">
+            {typeof renderCubos === "function" ? renderCubos(cubos) : null}
+        </div>
     );
-};
-
-export default Home;
+}
