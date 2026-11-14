@@ -1,5 +1,5 @@
 {
-  "$schema": "https://gen20.net/schemas/moon-manifest.v1.json",
+  "schemaVersion": "1.0.0",
   "system": {
     "name": "moon",
     "version": "1.0.0"
@@ -41,7 +41,6 @@
     ]
   },
   "home": {
-    "component": "Home",
     "cubos": []
   },
   "pages": {},
