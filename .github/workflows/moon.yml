@@ -1,0 +1,74 @@
+
+name: Moon CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "moon/**"
+      - ".github/workflows/moon.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "moon/**"
+      - ".github/workflows/moon.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: moon-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Admin
+            directory: moon/admin
+            lint: true
+          - name: Public
+            directory: moon/gen20.net
+            lint: false
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.directory }}
+        run: yarn install --immutable
+
+      - name: Lint
+        if: matrix.lint
+        working-directory: ${{ matrix.directory }}
+        run: yarn lint
+
+      - name: Build
+        working-directory: ${{ matrix.directory }}
+        run: yarn build
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: moon-${{ matrix.name }}-${{ github.sha }}
+          path: ${{ matrix.directory }}/dist/
+          if-no-files-found: error
+          retention-days: 7
