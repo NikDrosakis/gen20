@@ -1,0 +1,82 @@
+.audioPlayerCubo {
+    width: 100%;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: var(--player-bg, #f5f5f5);
+    color: var(--player-text, #333);
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.playerHeader h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.controls {
+    margin: 10px 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.controls button {
+    font-size: 1.5rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--player-text, #333);
+    transition: transform 0.15s ease;
+}
+
+.controls button:hover {
+    transform: scale(1.15);
+}
+
+.timeRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 15px 0;
+    font-size: 0.8rem;
+    color: var(--player-text, #333);
+}
+
+.progressContainer {
+    position: relative;
+    flex: 1;
+    height: 5px;
+    background-color: var(--progress-bg, #ddd);
+    border-radius: 5px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.progressBar {
+    height: 100%;
+    width: 0;
+    background-color: var(--primary, #4caf50);
+    transition: width 0.1s linear;
+}
+
+.playlist ul {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 10px;
+}
+
+.playlist li {
+    cursor: pointer;
+    padding: 5px 0;
+    color: var(--player-text, #333);
+    transition: color 0.2s ease;
+}
+
+.playlist li:hover {
+    color: var(--primary, #4caf50);
+}
+
+.playlist li.active {
+    color: var(--primary, #4caf50);
+    font-weight: 600;
+}

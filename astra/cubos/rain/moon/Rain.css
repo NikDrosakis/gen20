@@ -1,0 +1,73 @@
+/* src/cubos/rain/Rain.css */
+
+/* Το canvas γεμίζει την οθόνη, πίσω από το terminal */
+#bckgrnd {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    z-index: 0;
+    background: #000;
+}
+
+/* Terminal overlay */
+.window {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    pointer-events: none; /* να μη μπλοκάρει το canvas */
+}
+
+.window-content {
+    width: min(90vw, 900px);
+    font-family: "Courier New", monospace;
+    color: #00ffcc;
+    text-shadow: 0 0 6px #00ffcc88;
+}
+
+.window-cursor {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 18px;
+}
+
+.i-cursor-indicator {
+    color: #00ffcc;
+}
+
+.terminal-text {
+    white-space: pre;
+}
+
+/* Το blinking underscore */
+.i-cursor-underscore {
+    display: inline-block;
+    width: 10px;
+    height: 18px;
+    background: #00ffcc;
+    animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+    50% { opacity: 0; }
+}
+
+/* Shortcut που εμφανίζεται με JS */
+.prompt-shortcut {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 2;
+    color: #00ffcc;
+    font-family: monospace;
+    cursor: pointer;
+}
+
+.prompt-shortcut.hidden {
+    display: none;
+}

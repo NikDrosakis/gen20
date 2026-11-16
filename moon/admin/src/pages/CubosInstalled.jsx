@@ -11,7 +11,8 @@ const CubosInstalled = ({ cubos, loading, onDrop, onDragOver, onDragLeave }) => 
         return cubos.filter(
             (c) =>
                 c.name?.toLowerCase().includes(q) ||
-                c.title?.toLowerCase().includes(q)
+                c.title?.toLowerCase().includes(q) ||
+                c.description?.toLowerCase().includes(q)
         );
     }, [cubos, query]);
 
@@ -80,9 +81,29 @@ const CubosInstalled = ({ cubos, loading, onDrop, onDragOver, onDragLeave }) => 
                                     : '4px solid transparent',
                             }}
                         >
-                            <span className="cubo-icon">{cubo.color ? '🎨' : '📦'}</span>
-                            <span className="cubo-name">{cubo.title || cubo.name}</span>
-                            <span className="cubo-status">✅</span>
+                            {/* Header: Icon + Name + Version */}
+                            <div className="cubo-item__header">
+                                <span className="cubo-icon" aria-hidden="true">
+                                    {cubo.icon || '📦'}
+                                </span>
+                                <span className="cubo-name">{cubo.name}</span>
+                                <span className="cubo-version">v{cubo.version || '1.0'}</span>
+                            </div>
+
+                            {/* Title */}
+                            {cubo.title && cubo.title !== cubo.name && (
+                                <div className="cubo-title">{cubo.title}</div>
+                            )}
+
+                            {/* Description */}
+                            {cubo.description && (
+                                <div className="cubo-description">{cubo.description}</div>
+                            )}
+
+                            {/* Footer: Status */}
+                            <div className="cubo-item__footer">
+                                <span className="cubo-status">✅ Installed</span>
+                            </div>
                         </li>
                     ))}
                 </ul>

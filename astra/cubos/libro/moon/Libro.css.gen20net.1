@@ -1,0 +1,162 @@
+.libro-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 20px;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.libro-section {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.libro-heading {
+    margin: 0 0 16px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #222;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.libro-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.libro-form label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.libro-input {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.libro-input:focus {
+    outline: none;
+    border-color: #4caf50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.15);
+}
+
+.libro-btn {
+    padding: 10px 18px;
+    background: #4caf50;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    align-self: flex-start;
+    transition: background-color 0.2s;
+}
+
+.libro-btn:hover:not(:disabled) {
+    background: #45a049;
+}
+
+.libro-btn:disabled {
+    background: #a5d6a7;
+    cursor: not-allowed;
+}
+
+.libro-error {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: #fdecea;
+    color: #b71c1c;
+    border-left: 3px solid #b71c1c;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.libro-result {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+}
+
+.libro-cover {
+    width: 100px;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+}
+
+.libro-meta {
+    flex: 1;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.libro-meta h4 {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+    color: #111;
+}
+
+.libro-meta p {
+    margin: 4px 0;
+    color: #444;
+}
+
+.libro-desc {
+    margin-top: 8px !important;
+    color: #666 !important;
+    font-size: 0.85rem;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.libro-isbn-list {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+}
+
+.libro-isbn-list h4 {
+    margin: 0 0 8px;
+    font-size: 1rem;
+    color: #222;
+}
+
+.libro-isbn-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.libro-isbn-list li {
+    padding: 6px 8px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+}
+
+.libro-isbn-type {
+    font-weight: 600;
+    color: #555;
+    margin-right: 4px;
+}
+
+.libro-isbn-list code {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    color: #111;
+}

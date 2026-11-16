@@ -1,4 +1,4 @@
-sql = """-- GEN20 Survey Cubo
+-- GEN20 Survey Cubo
 -- Database: gen_gen20net
 -- Creates the research groups, questions and user answers tables.
 
@@ -60,8 +60,3 @@ CREATE TABLE IF NOT EXISTS `gen_gen20net`.`c_research_answer` (
     CONSTRAINT `chk_research_answer_option`
         CHECK (`answer` BETWEEN 1 AND 4)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-"""
-path = "/mnt/data/gen20_survey.sql"
-with open(path, "w", encoding="utf-8") as f:
-    f.write(sql)
-print(path)

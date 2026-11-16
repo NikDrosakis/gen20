@@ -1,3 +1,0 @@
-./sol  [error opening dir]
-
-0 directories, 0 files

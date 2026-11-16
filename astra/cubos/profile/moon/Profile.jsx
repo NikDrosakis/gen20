@@ -1,189 +1,108 @@
-// pages/Profile.jsx
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import TeamSection from "../components/TeamSection";
-import Breadcrumb from "../components/Breadcrumb";
+import './Profile.css';
 
-const Profile = () => {
+const escapeSql = (s = '') => String(s).replace(/'/g, "''");
+
+export default function Profile() {
     const [searchParams] = useSearchParams();
     const name = searchParams.get('name');
-    const [profile, setProfile] = useState(null);
+
+    const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
+
+    const publicdb = 'gen_' + window.location.hostname.replace(/\./g, '');
 
     useEffect(() => {
+        if (!name) {
+            setError('No profile name provided');
+            setLoading(false);
+            return;
+        }
+
+        const controller = new AbortController();
+
         const fetchProfile = async () => {
-            if (!name) {
-                setError('No profile name provided');
-                setLoading(false);
-                return;
-            }
-
+            setLoading(true);
+            setError(null);
             try {
-                const response = await fetch(`/api/v1/maria/f?folder=select * from ${publicdb}.user where name='${name}' and status=1`);
-                const data = await response.json();
+                const sql = `SELECT * FROM ${publicdb}.user WHERE name='${escapeSql(name)}' AND status=1`;
+                const res = await fetch(
+                    `/api/v1/maria/fa?key=maria&q=${encodeURIComponent(sql)}`,
+                    { signal: controller.signal }
+                );
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
 
-                if (data.success && data.data) {
-                    setProfile(data.data);
-                } else {
-                    setError('Profile not found');
-                }
+                // Το API μπορεί να επιστρέψει array ή { rows: [...] } ή { data: [...] }
+                const rows = Array.isArray(data) ? data : data?.rows ?? data?.data ?? [];
+                const found = Array.isArray(rows) ? rows[0] : rows;
+
+                if (found) setUser(found);
+                else setError('Profile not found');
             } catch (err) {
-                console.error('Error fetching profile:', err);
-                setError('Failed to load profile');
+                if (err.name !== 'AbortError') {
+                    console.error('Error fetching profile:', err);
+                    setError('Failed to load profile');
+                }
             } finally {
                 setLoading(false);
             }
         };
 
         fetchProfile();
+        return () => controller.abort();
     }, [name, publicdb]);
 
-    if (loading) {
-        return <div className="loading-state">Loading profile...</div>;
-    }
-
-    if (error || !profile) {
-        return <div className="error-state">{error || 'Profile not found'}</div>;
-    }
-
-    // Get the first user from data (if data is array)
-    const user = profile.data || profile;
+    if (loading) return <div className="profile-state">Loading profile…</div>;
+    if (error || !user) return <div className="profile-state profile-state--error">{error || 'Profile not found'}</div>;
 
     return (
-        <>
-            <Breadcrumb path="profile" />
+        <section className="profile">
+            <div className="profile__cover">
+                <img
+                    className="profile__cover-img"
+                    src={`/media/${user.cover_img || 'default-cover.jpg'}`}
+                    alt=""
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+                <div className="profile__cover-overlay" />
 
-            <section style={{
-                maxWidth: "900px",
-                margin: "2rem auto",
-                fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-                color: "#222",
-                backgroundColor: "#fff",
-                borderRadius: "10px",
-                boxShadow: "0 0 12px rgba(0,0,0,0.1)",
-                overflow: "hidden"
-            }}>
-                {/* Cover photo */}
-                <div style={{
-                    height: "240px",
-                    backgroundImage: `url(/media/${user.cover_img || "default-cover.jpg"})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "top",
-                    position: "relative",
-                    filter: "brightness(0.75)"
-                }}>
-                    <div style={{
-                        position: "absolute",
-                        inset: 0,
-                        background: "rgba(0,0,0,0.25)"
-                    }}></div>
+                <div className="profile__avatar">
+                    <img
+                        src={`/media/${user.img || 'default-avatar.png'}`}
+                        alt={`${user.fullname || user.name}'s avatar`}
+                        onError={(e) => { e.currentTarget.src = '/assets/default-avatar.png'; }}
+                    />
+                </div>
+            </div>
 
-                    {/* Avatar */}
-                    <div style={{
-                        position: "absolute",
-                        bottom: "-60px",
-                        left: "2rem",
-                        borderRadius: "50%",
-                        border: "5px solid #fff",
-                        width: "120px",
-                        height: "120px",
-                        overflow: "hidden",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-                        backgroundColor: "#eee"
-                    }}>
-                        <img
-                            src={`/media/${user.img || "default-avatar.png"}`}
-                            alt={`${user.fullname || user.name}'s avatar`}
-                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                            onError={(e) => {
-                                e.target.src = "/assets/default-avatar.png";
-                            }}
-                        />
-                    </div>
+            <div className="profile__body">
+                <h1 className="profile__name">{user.fullname || user.name}</h1>
+                <p className="profile__bio">{user.bio || 'No bio yet.'}</p>
+                <p className="profile__location">📍 {user.location || 'Unknown location'}</p>
+
+                <div className="profile__actions">
+                    <button type="button" className="btn btn--primary">Follow</button>
+                    <button type="button" className="btn btn--outline">Message</button>
                 </div>
 
-                {/* Info Section */}
-                <div style={{
-                    padding: "80px 2rem 2rem 2rem",
-                    textAlign: "left"
-                }}>
-                    <h1 style={{ fontSize: "2.4rem", marginBottom: "0.2rem", fontWeight: "700" }}>
-                        {user.fullname || user.name}
-                    </h1>
-                    <p style={{ color: "#666", fontStyle: "italic", marginBottom: "1rem" }}>
-                        {user.bio || "No bio yet."}
-                    </p>
-                    <p style={{ fontWeight: "500", color: "#444", marginBottom: "1.5rem" }}>
-                        📍 {user.location || "Unknown location"}
-                    </p>
-
-                    {/* Buttons */}
-                    <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem" }}>
-                        <button style={{
-                            padding: "0.7rem 1.6rem",
-                            fontWeight: "600",
-                            fontSize: "1rem",
-                            color: "#fff",
-                            backgroundColor: "#007bff",
-                            border: "none",
-                            borderRadius: "5px",
-                            cursor: "pointer",
-                            transition: "background-color 0.25s"
-                        }} onMouseEnter={e => e.currentTarget.style.backgroundColor = "#0056b3"}
-                                onMouseLeave={e => e.currentTarget.style.backgroundColor = "#007bff"}>
-                            Follow
-                        </button>
-
-                        <button style={{
-                            padding: "0.7rem 1.6rem",
-                            fontWeight: "600",
-                            fontSize: "1rem",
-                            color: "#007bff",
-                            backgroundColor: "transparent",
-                            border: "2px solid #007bff",
-                            borderRadius: "5px",
-                            cursor: "pointer",
-                            transition: "background-color 0.25s, color 0.25s"
-                        }} onMouseEnter={e => {
-                            e.currentTarget.style.backgroundColor = "#007bff";
-                            e.currentTarget.style.color = "#fff";
-                        }} onMouseLeave={e => {
-                            e.currentTarget.style.backgroundColor = "transparent";
-                            e.currentTarget.style.color = "#007bff";
-                        }}>
-                            Message
-                        </button>
-                    </div>
-
-                    {/* Stats */}
-                    <div style={{
-                        display: "flex",
-                        justifyContent: "space-around",
-                        borderTop: "1px solid #eee",
-                        paddingTop: "1rem",
-                        fontWeight: "600"
-                    }}>
-                        <div style={{ textAlign: "center" }}>
-                            <div style={{ fontSize: "1.6rem", color: "#007bff" }}>{user.followers_count || 0}</div>
-                            <div style={{ color: "#555", fontSize: "0.9rem" }}>Followers</div>
-                        </div>
-                        <div style={{ textAlign: "center" }}>
-                            <div style={{ fontSize: "1.6rem", color: "#007bff" }}>{user.following_count || 0}</div>
-                            <div style={{ color: "#555", fontSize: "0.9rem" }}>Following</div>
-                        </div>
-                        <div style={{ textAlign: "center" }}>
-                            <div style={{ fontSize: "1.6rem", color: "#007bff" }}>{user.posts_count || 0}</div>
-                            <div style={{ color: "#555", fontSize: "0.9rem" }}>Posts</div>
-                        </div>
-                    </div>
+                <div className="profile__stats">
+                    <Stat value={user.followers_count} label="Followers" />
+                    <Stat value={user.following_count} label="Following" />
+                    <Stat value={user.posts_count} label="Posts" />
                 </div>
-            </section>
-
-            <TeamSection />
-        </>
+            </div>
+        </section>
     );
-};
+}
 
-export default Profile;
+function Stat({ value = 0, label }) {
+    return (
+        <div className="profile__stat">
+            <div className="profile__stat-value">{value}</div>
+            <div className="profile__stat-label">{label}</div>
+        </div>
+    );
+}

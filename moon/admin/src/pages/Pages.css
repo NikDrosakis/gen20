@@ -1,359 +1,160 @@
-/* PageAdmin2.css */
+/* ============================================================
+   Pages.css — Page Builder (3-column layout)
+   ============================================================ */
 
-/* --- Γενικό Layout (3 Στήλες) --- */
+/* ---------- Design tokens ---------- */
+:root {
+    --pa-bg:            #f8fafc;
+    --pa-surface:       #ffffff;
+    --pa-surface-2:     #f1f5f9;
+    --pa-border:        #e2e8f0;
+    --pa-border-strong: #cbd5e1;
+    --pa-text:          #0f172a;
+    --pa-text-muted:    #64748b;
+    --pa-text-soft:     #94a3b8;
+
+    --pa-primary:       #2563eb;
+    --pa-primary-hover: #1d4ed8;
+    --pa-primary-soft:  #eff6ff;
+    --pa-primary-ring:  #bfdbfe;
+
+    --pa-success:       #16a34a;
+    --pa-success-soft:  #f0fdf4;
+    --pa-success-ring:  #bbf7d0;
+
+    --pa-danger:        #dc2626;
+    --pa-danger-soft:   #fef2f2;
+    --pa-danger-ring:   #fecaca;
+
+    --pa-radius:        8px;
+    --pa-radius-sm:     6px;
+    --pa-radius-pill:   999px;
+
+    --pa-shadow-sm:     0 1px 2px rgba(15, 23, 42, 0.04);
+    --pa-shadow-md:     0 4px 12px rgba(15, 23, 42, 0.06);
+
+    --pa-font:          -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+    --pa-font-mono:     ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    --pa-transition:    160ms ease;
+}
+
+/* ---------- Reset (scoped) ---------- */
+.page-admin2-container *,
+.page-admin2-container *::before,
+.page-admin2-container *::after {
+    box-sizing: border-box;
+}
+
+/* ---------- Layout ---------- */
 .page-admin2-container {
     display: flex;
     gap: 16px;
     padding: 16px;
-    height: 100%;
     min-height: 80vh;
-    background: #f8f9fa;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    box-sizing: border-box;
+    background: var(--pa-bg);
+    color: var(--pa-text);
+    font-family: var(--pa-font);
+    font-size: 14px; /* Αυξημένο από 13px */
+    line-height: 1.5;
 }
 
-/* --- Πλαϊνά Panels (Αριστερά & Δεξιά) --- */
+/* ============================================================
+   Sidebar panels
+   ============================================================ */
 .sidebar-panel {
-    flex: 0 0 260px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    flex: 0 0 280px; /* Λίγο πιο φαρδύ για να χωράει το layout */
     display: flex;
     flex-direction: column;
+    min-height: 0;
+    max-height: calc(100vh - 32px);
+    background: var(--pa-surface);
+    border: 1px solid var(--pa-border);
+    border-radius: var(--pa-radius);
+    box-shadow: var(--pa-shadow-sm);
     overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .panel-header {
-    padding: 12px 16px;
-    border-bottom: 1px solid #e2e8f0;
-    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 14px 16px;
+    background: var(--pa-surface-2);
+    border-bottom: 1px solid var(--pa-border);
 }
 
 .panel-header h4 {
     margin: 0;
-    font-size: 13px;
-    color: #475569;
+    font-size: 13px; /* Αυξημένο από 12px */
+    font-weight: 700;
+    color: var(--pa-text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.06em;
 }
 
-/* --- Λίστα Cubos --- */
-.cubo-list {
-    list-style: none;
-    padding: 8px;
-    margin: 0;
-    overflow-y: auto;
-    flex: 1;
-}
-
-.cubo-item {
-    display: flex;
-    align-items: center;
-    padding: 8px 10px;
-    margin-bottom: 6px;
-    border-radius: 6px;
-    font-size: 13px;
-    border: 1px solid transparent;
-    cursor: grab;
-    transition: all 0.2s ease;
-}
-
-.cubo-item:active {
-    cursor: grabbing;
-}
-
-/* Available (Αριστερά) */
-.available-item {
-    background: #f8fafc;
-    border-color: #e2e8f0;
-    color: #334155;
-}
-
-.available-item:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-}
-
-/* Installed (Δεξιά) */
-.installed-item {
-    background: #f0fdf4; /* Απαλό πράσινο */
-    border-color: #bbf7d0;
-    color: #166534;
-    cursor: default;
-}
-
-.installed-item .cubo-status {
-    margin-left: auto;
-    color: #22c55e;
-}
-
-/* Εικονίδια & Κείμενο */
-.cubo-icon {
-    margin-right: 8px;
-    font-size: 16px;
-}
-
-.cubo-name {
-    font-weight: 500;
-    flex: 1;
-}
-
-.cubo-deps {
-    font-size: 10px;
-    background: #e2e8f0;
-    padding: 2px 6px;
-    border-radius: 10px;
-    color: #64748b;
-    margin-right: 6px;
-}
-
-.install-btn {
-    background: #3b82f6;
-    color: white;
-    border: none;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.install-btn:hover {
-    background: #2563eb;
-}
-
-.empty-state {
-    padding: 20px;
-    text-align: center;
-    color: #94a3b8;
+.count-badge {
     font-size: 12px;
-    font-style: italic;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: var(--pa-radius-pill);
+    background: var(--pa-border);
+    color: var(--pa-text-muted);
 }
 
-/* --- Κεντρικό Panel (Page Builder) --- */
-.center-panel {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0; /* Για να μην σπάει το flex */
-}
-
-/* Tabs (Απαίτηση 4) */
-.page-tabs {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 12px;
-    padding-bottom: 0;
-}
-
-.page-tab {
-    background: #e2e8f0;
-    border: 1px solid #cbd5e1;
-    border-bottom: none;
-    padding: 8px 16px;
-    border-radius: 8px 8px 0 0;
-    font-size: 13px;
-    font-weight: 500;
-    color: #475569;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.page-tab:hover {
-    background: #cbd5e1;
-}
-
-.page-tab.active {
-    background: #ffffff;
-    color: #1e293b;
-    border-bottom: 2px solid #ffffff; /* Σβήνει το κάτω border */
-    box-shadow: 0 -2px 4px rgba(0,0,0,0.02);
-}
-
-/* Page Content (Απαιτήσεις 1 & 2) */
-.page-content-box {
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 0 8px 8px 8px;
-    padding: 16px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-}
-
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #f1f5f9;
-}
-
-.page-header h3 {
-    margin: 0;
-    font-size: 16px;
-    color: #1e293b;
-}
-
-.header-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.clear-btn, .auto-set-btn {
-    padding: 4px 10px;
-    border: none;
-    border-radius: 4px;
-    font-size: 12px;
-    cursor: pointer;
-}
-
-.clear-btn {
-    background: #ef4444;
-    color: white;
-}
-
-.clear-btn:hover { background: #dc2626; }
-
-.auto-set-btn {
-    background: #10b981;
-    color: white;
-}
-
-.auto-set-btn:hover { background: #059669; }
-
-/* --- Areas (Drag & Drop Zones) --- */
-.page-areas {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    flex: 1;
-}
-
-.area {
-    border: 2px dashed #cbd5e1;
-    border-radius: 6px;
-    min-height: 80px;
-    padding: 8px;
-    background: #f8fafc;
-    transition: all 0.2s;
-    display: flex;
-    flex-direction: column;
-}
-
-.area.drag-over {
-    background: #eff6ff;
-    border-color: #3b82f6;
-    border-style: solid;
-}
-
-.area-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #64748b;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-    letter-spacing: 0.5px;
-}
-
-.area-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    flex-wrap: wrap;
-    gap: 8px;
-    min-height: 40px;
-}
-
-/* Main Area (Πιο φαρδύ) */
-.main-area {
-    flex: 2;
-    min-height: 120px;
-}
-
-.area-row {
-    display: flex;
-    gap: 12px;
-    flex: 1;
-}
-
-.area-row .area {
-    flex: 1;
-}
-
-/* Header & Footer - Πιο ρηχά */
-.header-area, .footer-area {
-    min-height: 60px;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-    .page-admin2-container {
-        flex-direction: column;
-        height: auto;
-    }
-    .sidebar-panel {
-        flex: 1 1 auto;
-        max-height: 300px;
-    }
-    .area-row {
-        flex-direction: column;
-    }
-}
-
-
-/* Panel layout: header + search fixed, list scrollable */
-.sidebar-panel {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;            /* επιτρέπει στο child να κάνει scroll μέσα σε flex */
-    max-height: calc(100vh - 40px);
-}
-
-/* Search */
+/* ---------- Search ---------- */
 .panel-search {
     position: relative;
-    padding: 8px 12px;
-    border-bottom: 1px solid #e5e7eb;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--pa-border);
 }
 
 .panel-search__input {
     width: 100%;
-    box-sizing: border-box;
-    padding: 8px 30px 8px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
+    padding: 8px 32px 8px 12px;
+    border: 1px solid var(--pa-border-strong);
+    border-radius: var(--pa-radius-sm);
     font: inherit;
-    font-size: 0.9rem;
-    background: #fff;
+    font-size: 14px;
+    color: var(--pa-text);
+    background: var(--pa-surface);
+    transition: border-color var(--pa-transition), box-shadow var(--pa-transition);
 }
 
-.panel-search__input:focus-visible {
-    outline: 2px solid #2563eb;
-    outline-offset: 1px;
+.panel-search__input:focus {
+    outline: none;
+    border-color: var(--pa-primary);
+    box-shadow: 0 0 0 3px var(--pa-primary-ring);
 }
 
 .panel-search__clear {
     position: absolute;
     top: 50%;
-    right: 20px;
+    right: 22px;
     transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 0;
+    border-radius: var(--pa-radius-pill);
     background: transparent;
-    font-size: 1.1rem;
+    color: var(--pa-text-soft);
+    font-size: 16px;
     line-height: 1;
-    color: #6b7280;
     cursor: pointer;
+    transition: background var(--pa-transition), color var(--pa-transition);
 }
 
 .panel-search__clear:hover {
-    color: #111827;
+    background: var(--pa-border);
+    color: var(--pa-text);
 }
 
-/* Scrollable list */
+/* ---------- Cubo list ---------- */
 .cubo-list {
     flex: 1 1 auto;
     min-height: 0;
@@ -361,278 +162,593 @@
     margin: 0;
     padding: 8px 12px;
     list-style: none;
+    scrollbar-width: thin;
+    scrollbar-color: var(--pa-border-strong) transparent;
 }
 
-.cubo-list::-webkit-scrollbar {
-    width: 8px;
-}
+.cubo-list::-webkit-scrollbar { width: 8px; }
 .cubo-list::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 4px;
+    background: var(--pa-border-strong);
+    border-radius: var(--pa-radius-sm);
 }
-.cubo-list::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
+.cubo-list::-webkit-scrollbar-thumb:hover { background: var(--pa-text-soft); }
+
+.cubo-item {
+    display: flex;
+    flex-direction: column; /* Κάθετη στοίχιση */
+    gap: 6px;
+    padding: 12px;
+    margin-bottom: 8px;
+    border: 1px solid var(--pa-border);
+    border-radius: var(--pa-radius-sm);
+    font-size: 14px;
+    cursor: grab;
+    user-select: none;
+    transition: background var(--pa-transition),
+    border-color var(--pa-transition),
+    transform var(--pa-transition);
 }
 
-/* ---------- Tabs (μέσα στο header-area) ---------- */
+.cubo-item:active { cursor: grabbing; }
+
+.available-item {
+    background: var(--pa-surface);
+    color: var(--pa-text);
+}
+
+.available-item:hover {
+    background: var(--pa-surface-2);
+    border-color: var(--pa-border-strong);
+}
+
+/* ---------- Cubo Item Inner Layout ---------- */
+.cubo-item__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cubo-item__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--pa-border); /* Διαχωριστικό γραμμής */
+}
+
+/* ---------- Cubo internals ---------- */
+.cubo-icon {
+    flex-shrink: 0;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.cubo-name {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 600;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cubo-version {
+    flex-shrink: 0;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--pa-text-muted);
+    background: var(--pa-border);
+    border-radius: var(--pa-radius-pill);
+}
+
+.cubo-title {
+    font-size: 13px;
+    color: var(--pa-text-muted);
+    font-weight: 500;
+}
+
+.cubo-description {
+    font-size: 13px;
+    font-style: italic; /* Πλάγια γράμματα */
+    color: var(--pa-text-soft);
+    line-height: 1.4;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.cubo-deps {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: var(--pa-radius-pill);
+    background: var(--pa-surface-2);
+    color: var(--pa-text-muted);
+}
+
+.install-btn {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border: 0;
+    border-radius: var(--pa-radius-sm);
+    background: var(--pa-primary);
+    color: #fff;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--pa-transition), transform var(--pa-transition);
+}
+
+.install-btn:hover { background: var(--pa-primary-hover); }
+.install-btn:active { transform: translateY(1px); }
+.install-btn:focus-visible {
+    outline: 2px solid var(--pa-primary-ring);
+    outline-offset: 2px;
+}
+
+/* ---------- States ---------- */
+.loading-state,
+.empty-state {
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--pa-text-soft);
+    font-size: 14px;
+    font-style: italic;
+}
+
+/* ============================================================
+   Center panel
+   ============================================================ */
+.center-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* ---------- Tabs ---------- */
 .page-tabs {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    padding: 8px 0;
-    border-bottom: 1px dashed #e5e7eb;
-    margin-bottom: 8px;
+    padding: 6px 0;
+    margin-bottom: 12px;
+    border-bottom: 1px dashed var(--pa-border);
 }
 
 .page-tab {
-    padding: 6px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 999px;
-    background: #f9fafb;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid var(--pa-border-strong);
+    border-radius: var(--pa-radius-pill);
+    background: var(--pa-surface);
+    color: var(--pa-text-muted);
     font: inherit;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    font-size: 14px;
+    font-weight: 500;
     white-space: nowrap;
+    cursor: pointer;
+    transition: background var(--pa-transition),
+    border-color var(--pa-transition),
+    color var(--pa-transition);
 }
 
 .page-tab:hover {
-    background: #eef2ff;
-    border-color: #c7d2fe;
+    background: var(--pa-primary-soft);
+    border-color: var(--pa-primary-ring);
+    color: var(--pa-primary);
 }
 
 .page-tab.active {
-    background: #2563eb;
-    border-color: #2563eb;
+    background: var(--pa-primary);
+    border-color: var(--pa-primary);
     color: #fff;
 }
 
 .page-tab__key {
-    opacity: 0.6;
-    font-size: 0.75rem;
+    opacity: 0.65;
+    font-size: 12px;
+    font-family: var(--pa-font-mono);
 }
 
-/* ---------- Area content ---------- */
-.area-content {
+/* ---------- Page content ---------- */
+.page-content-box {
+    flex: 1;
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    min-height: 40px;
-    padding: 8px;
-    border: 1px dashed #d1d5db;
-    border-radius: 6px;
-    background: #fafafa;
+    flex-direction: column;
+    padding: 20px;
+    background: var(--pa-surface);
+    border: 1px solid var(--pa-border-strong);
+    border-radius: 0 var(--pa-radius) var(--pa-radius) var(--pa-radius);
+    box-shadow: var(--pa-shadow-md);
 }
 
-.area-cubo {
-    display: inline-flex;
-    min-height: 80px;
+.page-header {
+    display: flex;
     align-items: center;
-    padding: 4px 10px;
-    border-radius: 6px;
-    background: #eef2ff;
-    color: #3730a3;
-    font-weight: 500;
-    border: 1px solid #c7d2fe;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--pa-surface-2);
 }
 
-.area-empty {
-    color: #9ca3af;
-    font-style: italic;
+.page-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--pa-text);
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ---------- Buttons (generic) ---------- */
+.clear-btn,
+.auto-set-btn,
+.new-page-btn,
+.drop-btn {
+    padding: 8px 16px;
+    border: 0;
+    border-radius: var(--pa-radius-sm);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--pa-transition), transform var(--pa-transition);
+}
+
+.clear-btn {
+    background: var(--pa-danger);
+    color: #fff;
+}
+.clear-btn:hover { background: #b91c1c; }
+
+.auto-set-btn,
+.new-page-btn {
+    background: var(--pa-primary);
+    color: #fff;
+}
+.auto-set-btn:hover,
+.new-page-btn:hover { background: var(--pa-primary-hover); }
+
+.drop-btn {
+    background: var(--pa-surface);
+    border: 1px solid var(--pa-danger-ring);
+    color: var(--pa-danger);
+}
+.drop-btn:hover:not(:disabled) { background: var(--pa-danger-soft); }
+.drop-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.clear-btn:active,
+.auto-set-btn:active,
+.new-page-btn:active { transform: translateY(1px); }
+
+/* ---------- Areas (Κάθετα, Σοβαρά Box) ---------- */
+.page-areas {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.area-row {
+    display: flex;
+    flex-direction: column; /* Κάθετα */
+    gap: 16px;
+    flex: 1;
+}
+
+.area-row .area { flex: 1; }
+
+.area {
+    display: flex;
+    flex-direction: column;
+    min-height: 90px;
+    padding: 12px;
+    border: 2px dashed var(--pa-border-strong);
+    border-radius: var(--pa-radius);
+    background: var(--pa-surface-2);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+    transition: background var(--pa-transition),
+    border-color var(--pa-transition);
 }
 
 .area.drag-over {
-    border-color: #2563eb;
-    background: #eff6ff;
+    background: var(--pa-primary-soft);
+    border-color: var(--pa-primary);
+    border-style: solid;
 }
 
-
-/* ---------- Default units panel ---------- */
-.default-units-panel {
-    margin-top: 16px;
-    padding: 14px 16px;
-    border-radius: 10px;
-    background: #f0f9ff;           /* διαφορετικό χρώμα από το page-content-box */
-    border: 1px solid #bae6fd;
-}
-
-.default-units-panel__title {
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #0369a1;
-    margin-bottom: 10px;
-}
-
-.default-units-panel__grid {
+.area-label {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-/* Τετράγωνο default unit */
-.default-unit {
-    width: 110px;
-    height: 110px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    border-radius: 10px;
-    border: 1px dashed #7dd3fc;
-    background: #fff;
-    cursor: grab;
-    user-select: none;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-    text-align: center;
-    padding: 8px;
-    box-sizing: border-box;
-}
-
-.default-unit:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(3, 105, 161, 0.15);
-    border-color: #0369a1;
-}
-
-.default-unit:active {
-    cursor: grabbing;
-}
-
-.default-unit__label {
-    font-weight: 600;
-    color: #0c4a6e;
-}
-
-.default-unit__type {
-    color: #0284c7;
-    font-family: monospace;
-}
-
-.area-cubo {
-    display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 6px 4px 10px;
-    border-radius: 6px;
-    background: #eef2ff;
-    color: #3730a3;
-    font-size: 0.8rem;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--pa-border);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--pa-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.area-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column; /* Κάθετη στοίβαξη cubos */
+    gap: 8px;
+    min-height: 50px;
+    padding: 10px;
+    border: 1px dashed var(--pa-border);
+    border-radius: var(--pa-radius-sm);
+    background: var(--pa-surface);
+}
+
+.area-empty {
+    color: var(--pa-text-soft);
+    font-style: italic;
+    font-size: 14px;
+}
+
+.main-area { flex: 2; min-height: 220px; }
+.header-area,
+.footer-area { min-height: 90px; }
+
+/* ---------- Area cubo chip ---------- */
+.area-cubo {
+    display: flex; /* Αλλάζει από inline-flex σε flex */
+    width: 100%;
+    align-items: center;
+    justify-content: space-between; /* Σπρώχνει το remove δεξιά */
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--pa-primary-ring);
+    border-radius: var(--pa-radius-sm);
+    background: var(--pa-primary-soft);
+    color: var(--pa-primary-hover);
+    font-size: 14px;
     font-weight: 500;
-    border: 1px solid #c7d2fe;
 }
 
 .area-cubo__label {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 140px;
 }
 
 .area-cubo__remove {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 999px;
+    width: 20px;
+    height: 20px;
     border: 0;
+    border-radius: var(--pa-radius-pill);
     background: transparent;
-    color: #6366f1;
-    font-size: 1rem;
+    color: var(--pa-primary);
+    font-size: 16px;
     line-height: 1;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition: background var(--pa-transition), color var(--pa-transition);
 }
 
 .area-cubo__remove:hover {
-    background: #fecaca;
-    color: #b91c1c;
+    background: var(--pa-danger-ring);
+    color: var(--pa-danger);
 }
 
+/* ---------- Area cubo box (with params) ---------- */
 .area-cubo-box {
     display: flex;
     flex-direction: column;
-    background: #eef2ff;
-    border: 1px solid #c7d2fe;
-    border-radius: 6px;
-    padding: 4px 6px;
-    font-size: 0.8rem;
-    min-width: 120px;
+    width: 100%; /* Πιάνει όλο το πλάτος */
+    padding: 10px 12px;
+    border: 1px solid var(--pa-primary-ring);
+    border-radius: var(--pa-radius-sm);
+    background: var(--pa-primary-soft);
+    font-size: 14px;
 }
 
 .area-cubo-box__header {
     display: flex;
     align-items: center;
+    justify-content: space-between; /* Σπρώχνει τα buttons δεξιά */
     gap: 4px;
 }
 
 .area-cubo-box__params {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    margin-top: 6px;
-    padding-top: 6px;
-    border-top: 1px dashed #c7d2fe;
+    gap: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--pa-primary-ring);
 }
 
 .area-cubo-box__params label {
     display: flex;
     flex-direction: column;
-    font-size: 0.7rem;
-    color: #4338ca;
-    gap: 2px;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--pa-primary-hover);
 }
 
 .area-cubo-box__params input {
-    padding: 2px 6px;
-    border: 1px solid #c7d2fe;
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--pa-primary-ring);
     border-radius: 4px;
-    font-size: 0.8rem;
-    width: 80px;
+    font: inherit;
+    font-size: 13px;
+}
+
+.area-cubo-box__params input:focus {
+    outline: none;
+    border-color: var(--pa-primary);
+    box-shadow: 0 0 0 2px var(--pa-primary-ring);
 }
 
 .area-cubo__params-btn {
+    padding: 0 6px;
     border: 0;
     background: transparent;
+    color: var(--pa-primary);
+    font-size: 16px;
     cursor: pointer;
-    color: #4338ca;
-    padding: 0 4px;
-    font-size: 0.9rem;
+    transition: color var(--pa-transition);
 }
 
-.area-cubo__params-btn:hover {
-    color: #1e1b4b;
+.area-cubo__params-btn:hover { color: var(--pa-primary-hover); }
+
+/* ============================================================
+   Default units panel
+   ============================================================ */
+.default-units-panel {
+    margin-top: 20px;
+    padding: 16px;
+    border: 1px solid var(--pa-primary-ring);
+    border-radius: var(--pa-radius);
+    background: var(--pa-primary-soft);
 }
 
-.drop-btn {
-    padding: 6px 14px;
-    border: 1px solid #fca5a5;
-    border-radius: 6px;
-    background: #fff;
-    color: #b91c1c;
+.default-units-panel__title {
+    margin-bottom: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--pa-primary-hover);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.default-units-panel__grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.default-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 110px;
+    height: 110px;
+    padding: 8px;
+    border: 1px dashed var(--pa-primary-ring);
+    border-radius: var(--pa-radius);
+    background: var(--pa-surface);
+    text-align: center;
+    cursor: grab;
+    user-select: none;
+    transition: transform var(--pa-transition),
+    box-shadow var(--pa-transition),
+    border-color var(--pa-transition);
+}
+
+.default-unit:hover {
+    transform: translateY(-2px);
+    border-color: var(--pa-primary);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.15);
+}
+
+.default-unit:active { cursor: grabbing; }
+
+.default-unit__label {
+    font-size: 13px;
     font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    color: var(--pa-primary-hover);
 }
-.drop-btn:hover:not(:disabled) {
-    background: #fef2f2;
+
+.default-unit__type {
+    font-family: var(--pa-font-mono);
+    font-size: 11px;
+    color: var(--pa-primary);
 }
-.drop-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 1024px) {
+    .page-admin2-container {
+        flex-direction: column;
+        min-height: auto;
+    }
+
+    .sidebar-panel {
+        flex: 1 1 auto;
+        max-height: 400px; /* Λίγο πιο ψηλό για να φαίνονται τα description */
+    }
 }
-.new-page-btn {
-    padding: 6px 14px;
-    border: 0;
-    border-radius: 6px;
-    background: #2563eb;
-    color: #fff;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s;
+
+/* ============================================================
+   Installed Items (Right Panel - Green Theme)
+   ============================================================ */
+
+/* Το βασικό background του installed-item */
+.cubo-item.installed-item {
+    background: var(--pa-success-soft);
+    border-color: var(--pa-success-ring);
+    color: #14532d; /* Πιο σκούρο πράσινο για το κείμενο */
 }
-.new-page-btn:hover {
-    background: #1d4ed8;
+
+.cubo-item.installed-item:hover {
+    background: #dcfce7; /* Λίγο πιο έντονο πράσινο στο hover */
+    border-color: #86efac;
 }
+
+/* Στοιχεία μέσα στο installed-item */
+.installed-item .cubo-name {
+    color: #14532d;
+}
+
+.installed-item .cubo-title {
+    color: #166534;
+}
+
+.installed-item .cubo-description {
+    color: #15803d;
+    opacity: 0.8;
+}
+
+.installed-item .cubo-version {
+    background: var(--pa-success-ring);
+    color: #14532d;
+}
+
+.installed-item .cubo-item__footer {
+    border-top-color: var(--pa-success-ring);
+}
+
+/* Status Badge */
+.cubo-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: var(--pa-radius-pill);
+    background: var(--pa-success);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Αφαιρούμε το margin-left:auto από το παλιό .installed-item .cubo-status
+   γιατί πλέον είναι μέσα στο footer */

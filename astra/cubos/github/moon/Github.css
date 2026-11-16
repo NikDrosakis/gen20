@@ -1,0 +1,112 @@
+/* ---------- Λίστα repos ---------- */
+#repo-archive {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.repo-card {
+    width: 300px;
+    margin-bottom: 20px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: aliceblue;
+}
+
+.repo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.repo-header h3 {
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.repo-header a {
+    text-decoration: none;
+    color: #0366d6;
+}
+
+.fork-badge {
+    font-size: 0.8em;
+    padding: 4px 8px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+}
+
+.repo-description {
+    margin-bottom: 10px;
+}
+
+.repo-meta {
+    display: flex;
+    align-items: center;
+}
+
+.language-tag {
+    font-size: 0.8em;
+    padding: 4px 8px;
+    background-color: #eee;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.stars {
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+}
+
+.stars i {
+    color: #ffc107;
+    margin-right: 4px;
+}
+
+.updated {
+    font-size: 0.8em;
+    color: #666;
+}
+
+/* ---------- Tabs λεπτομερειών ---------- */
+.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.tab-button {
+    padding: 10px 20px;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    background: #f7f7f7;
+    border-radius: 5px;
+    font-weight: 600;
+}
+
+.tab-button.active {
+    background: #0366d6;
+    color: white;
+    border-color: #0366d6;
+}
+
+.tab-content {
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 5px;
+    background: #fff;
+}
+
+.tab-content ul {
+    list-style: disc inside;
+    padding-left: 0;
+}
+
+/* ---------- Error ---------- */
+.github-error {
+    color: #c00;
+}
