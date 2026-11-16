@@ -270,8 +270,8 @@ export default function ContentLoop({
                        WHERE ${filters.join(" AND ")}
                        ORDER BY c.created DESC
                        LIMIT ${parseInt(limit, 10) || 50}`;
-
-        fetch(`/api/v1/maria/fa?query=${encodeURIComponent(query)}`, { signal: ctrl.signal })
+console.log(query);
+        fetch(`/api/v1/maria/fa?key=${encodeURIComponent(query)}`, { signal: ctrl.signal })
             .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
             .then((d) => {
                 setPosts(d.success && Array.isArray(d.data) ? d.data : Array.isArray(d) ? d : []);

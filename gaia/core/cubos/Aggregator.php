@@ -3,6 +3,6 @@ namespace Core\Cubos;
 
 trait Aggregator
 {
-    use Poeta, Hello;
+    use Poeta, Hello, Sketch;
 }
 ?>

@@ -1,11 +1,12 @@
 import EventBoard from "./EventBoard";
-const Events = ({path, lang}) => {
+
+const Event = ({ classificationid = 100, lang = "el" }) => {
     return (
-        <>
-            <EventBoard postgrpid={33} lang={lang} />
-            <EventBoard postgrpid={31} lang={lang} />
-        </>
-    )
+        <EventBoard
+            classificationid={classificationid}
+            lang={lang}
+        />
+    );
 };
 
-export default Events
+export default Event;

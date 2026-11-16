@@ -623,3 +623,16 @@
     opacity: 0.6;
     cursor: not-allowed;
 }
+.new-page-btn {
+    padding: 6px 14px;
+    border: 0;
+    border-radius: 6px;
+    background: #2563eb;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.new-page-btn:hover {
+    background: #1d4ed8;
+}

@@ -1,8 +1,10 @@
-// src/Pages.jsx
+// Pages.jsx
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMessaging } from '../MessagingContext';
 import CubosAvailable from './CubosAvailable.jsx';
 import CubosInstalled from './CubosInstalled.jsx';
+import ParamsForm from './ParamsForm';
+import { getSchema, normalizeParams, UNIT_SCHEMAS } from './unitSchema';
 import './Pages.css';
 
 const currentDomain = window.location.hostname;
@@ -45,10 +47,13 @@ async function loadManifest() {
 }
 
 // ---------- Default units ----------
-const DEFAULT_UNITS = [
-    { type: 'contentOne', label: 'Content One', defaults: { id: 1 } },
-    { type: 'contentLoop', label: 'Content Loop', defaults: { classificationid: 1 } },
-];
+const DEFAULT_UNITS = Object.entries(UNIT_SCHEMAS)
+    .filter(([, s]) => s.source === 'default')
+    .map(([type, s]) => ({
+        type,
+        label: s.label,
+        defaults: Object.fromEntries(s.fields.map((f) => [f.key, f.default])),
+    }));
 
 // manifest item -> { kind, name, params }
 const itemToUnit = (item) => {
@@ -88,6 +93,10 @@ function broadcastManifest(manifest) {
 }
 // ---------- Component ----------
 export default function Pages({ pageId, lockedPageId }) {
+    const [postOptions, setPostOptions] = useState([]);
+    const [classificationOptions, setClassificationOptions] = useState([]);
+    const [optionsLoading, setOptionsLoading] = useState(true);
+
     const { send } = useMessaging();
 
     const [manifest, setManifest] = useState(null);
@@ -105,6 +114,7 @@ export default function Pages({ pageId, lockedPageId }) {
     const [saving, setSaving] = useState(false);
     const [saveMsg, setSaveMsg] = useState(null);
 
+    const [creating, setCreating] = useState(false);
     // 1) Manifest
     useEffect(() => {
         let cancelled = false;
@@ -157,6 +167,50 @@ export default function Pages({ pageId, lockedPageId }) {
         };
     }, []);
 
+    // Options για dropdowns (posts, classifications)
+    useEffect(() => {
+        let cancelled = false;
+        const publicdb = 'gen_' + currentDomain.replace(/\./g, '');
+
+        const loadOptions = async () => {
+            setOptionsLoading(true);
+            try {
+                const [postsRes, classesRes] = await Promise.all([
+                    fetchJson(
+                        `${API_BASE}/api/v1/maria/fa?key=${encodeURIComponent(
+                            `SELECT id, title FROM ${publicdb}.content ORDER BY title ASC`
+                        )}`
+                    ),
+                    fetchJson(
+                        `${API_BASE}/api/v1/maria/fa?key=${encodeURIComponent(
+                            `SELECT id, name FROM ${publicdb}.classification ORDER BY name ASC`
+                        )}`
+                    ),
+                ]);
+
+                if (cancelled) return;
+
+                const postsRows = Array.isArray(postsRes) ? postsRes : postsRes?.rows ?? postsRes?.data ?? [];
+                const classesRows = Array.isArray(classesRes) ? classesRes : classesRes?.rows ?? classesRes?.data ?? [];
+
+                setPostOptions(
+                    postsRows.map((r) => ({ value: Number(r.id), label: r.title || `#${r.id}` }))
+                );
+                setClassificationOptions(
+                    classesRows.map((r) => ({ value: Number(r.id), label: r.name || `#${r.id}` }))
+                );
+            } catch (err) {
+                console.error('options fetch error:', err);
+            } finally {
+                if (!cancelled) setOptionsLoading(false);
+            }
+        };
+
+        loadOptions();
+        return () => {
+            cancelled = true;
+        };
+    }, []);
     // Pages (κρατάμε και τα raw items για render)
     const pages = useMemo(() => {
         if (!manifest?.pages) return [];
@@ -175,10 +229,45 @@ export default function Pages({ pageId, lockedPageId }) {
 
     const selectedPage = pages.find((p) => p.key === selectedPageKey) || pages[0];
 
+    // ---------- Create New Page ----------
+    const handleCreatePage = useCallback(() => {
+        const raw = window.prompt(
+            'Νέα σελίδα — key (π.χ. "contact" ή "docs/faq"):'
+        );
+        if (!raw) return;
+
+        const key = raw
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, '-')
+            .replace(/[^a-z0-9/_-]/g, '');
+
+        if (!key) return alert('Μη έγκυρο key');
+        if (manifest?.pages?.[key]) return alert(`Υπάρχει ήδη σελίδα "${key}"`);
+
+        const title = window.prompt('Τίτλος σελίδας:', key) ?? key;
+
+        setManifest((prev) => {
+            if (!prev?.pages) return prev;
+            const next = structuredClone(prev);
+            next.pages[key] = {
+                title,
+                m: [],
+            };
+            next.generated = Date.now();
+            try {
+                localStorage.setItem(MANIFEST_KEY, JSON.stringify(next));
+                broadcastManifest(next);
+            } catch {}
+            return next;
+        });
+
+        setSelectedPageKey(key);
+    }, [manifest]);
     // ---------- Drag & Drop ----------
     const handleDragOver = useCallback((e) => {
         e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
+        e.dataTransfer.dropEffect = 'copy';
         e.currentTarget.classList.add('drag-over');
     }, []);
 
@@ -206,39 +295,43 @@ export default function Pages({ pageId, lockedPageId }) {
 
             const kind = isCubo ? 'cubo' : data.kind;
             const name = isCubo ? data.name : data.kind;
-            const params = data.params ?? null;
+            const params = normalizeParams(kind, data.params);
 
-            // Command προς Sol
-            const commandMsg = isCubo
-                ? `skeleton_dress --domain ${currentDomain} --page ${pageKey} --area ${area} --cubo ${name}`
-                : `skeleton_dress --domain ${currentDomain} --page ${pageKey} --area ${area} --type ${kind} --params '${JSON.stringify(params || {})}'`;
+            // (προαιρετικά) command προς Sol — χωρίς early return
+            try {
+                const commandMsg = isCubo
+                    ? `skeleton_dress --domain ${currentDomain} --page ${pageKey} --area ${area} --cubo ${name}`
+                    : `skeleton_dress --domain ${currentDomain} --page ${pageKey} --area ${area} --type ${kind} --params '${JSON.stringify(params || {})}'`;
 
-            const cid = makeCid(MY_USER_ID, SOL_USER_ID);
-            const sent = send({
-                system: 'sol',
-                type: 'message',
-                cid,
-                to: SOL_USER_ID,
-                cast: 'one',
-                c: commandMsg,
-            });
-
-            if (!sent) {
-                alert('WebSocket δεν είναι συνδεδεμένο!');
-                return;
+                const cid = makeCid(MY_USER_ID, SOL_USER_ID);
+                const sent = send({
+                    system: 'sol',
+                    type: 'message',
+                    cid,
+                    to: SOL_USER_ID,
+                    cast: 'one',
+                    c: commandMsg,
+                });
+                if (!sent) console.warn('WS not connected — optimistic only');
+            } catch (err) {
+                console.warn('sol command failed:', err);
             }
 
-            // Optimistic update (manifest + localStorage)
+            // Optimistic update — ΠΑΝΤΑ εκτελείται
             setManifest((prev) => {
-                if (!prev?.pages?.[pageKey]) return prev;
-                const next = structuredClone(prev);
-                const arr = next.pages[pageKey][area] || [];
-                next.pages[pageKey][area] = [...arr, unitToItem({ kind, name, params })];
                 try {
+                    if (!prev?.pages?.[pageKey]) return prev;
+                    const next = structuredClone(prev);
+                    const arr = next.pages[pageKey][area] || [];
+                    next.pages[pageKey][area] = [...arr, unitToItem({ kind, name, params })];
+                    next.generated = Date.now();
                     localStorage.setItem(MANIFEST_KEY, JSON.stringify(next));
-                    broadcastManifest(next);   // ← ειδοποιεί το public site
-                } catch {}
-                return next;
+                    broadcastManifest(next);
+                    return next;
+                } catch (err) {
+                    console.error('[drop updater]', err);
+                    return prev;
+                }
             });
         },
         [send]
@@ -402,7 +495,7 @@ export default function Pages({ pageId, lockedPageId }) {
                 if (!unit) return prev;
                 next.pages[pageKey][area][index] = unitToItem({
                     ...unit,
-                    params: { ...unit.params, ...nextParams },
+                    params: normalizeParams(unit.kind, { ...unit.params, ...nextParams }),
                 });
                 next.generated = Date.now();
                 try {
@@ -425,7 +518,8 @@ export default function Pages({ pageId, lockedPageId }) {
         items.length ? (
             items.map((item, i) => {
                 const unit = itemToUnit(item);
-                const isDefault = unit?.kind === 'contentOne' || unit?.kind === 'contentLoop';
+                const schema = unit ? getSchema(unit.kind) : null;
+                const isEditable = !!schema; // contentOne/contentLoop/team/... έχουν schema
                 const isEditing =
                     editing?.pageKey === selectedPage.key &&
                     editing?.area === areaKey &&
@@ -435,17 +529,24 @@ export default function Pages({ pageId, lockedPageId }) {
                     <div key={`${areaKey}-${i}`} className="area-cubo-box">
                         <div className="area-cubo-box__header">
                             <span className="area-cubo__label">{unitLabel(item)}</span>
-                            {isDefault && (
+
+                            {isEditable && (
                                 <button
                                     type="button"
                                     className="area-cubo__params-btn"
+                                    title="Edit parameters"
                                     onClick={() =>
-                                        setEditing(isEditing ? null : { pageKey: selectedPage.key, area: areaKey, index: i })
+                                        setEditing(
+                                            isEditing
+                                                ? null
+                                                : { pageKey: selectedPage.key, area: areaKey, index: i }
+                                        )
                                     }
                                 >
                                     {isEditing ? '▾' : '⚙'}
                                 </button>
                             )}
+
                             <button
                                 type="button"
                                 className="area-cubo__remove"
@@ -458,36 +559,20 @@ export default function Pages({ pageId, lockedPageId }) {
                             </button>
                         </div>
 
-                        {isEditing && isDefault && (
+                        {isEditing && isEditable && (
                             <div className="area-cubo-box__params">
-                                {unit.kind === 'contentOne' && (
-                                    <label>
-                                        id
-                                        <input
-                                            type="number"
-                                            value={unit.params?.id ?? ''}
-                                            onChange={(e) =>
-                                                updateParams(selectedPage.key, areaKey, i, {
-                                                    id: Number(e.target.value),
-                                                })
-                                            }
-                                        />
-                                    </label>
-                                )}
-                                {unit.kind === 'contentLoop' && (
-                                    <label>
-                                        classificationid
-                                        <input
-                                            type="number"
-                                            value={unit.params?.classificationid ?? ''}
-                                            onChange={(e) =>
-                                                updateParams(selectedPage.key, areaKey, i, {
-                                                    classificationid: Number(e.target.value),
-                                                })
-                                            }
-                                        />
-                                    </label>
-                                )}
+                                <ParamsForm
+                                    kind={unit.kind}
+                                    params={unit.params}
+                                    options={{
+                                        contentOne: { id: postOptions },
+                                        contentLoop: { classificationid: classificationOptions },
+                                    }}
+                                    loading={optionsLoading}
+                                    onChange={(nextParams) =>
+                                        updateParams(selectedPage.key, areaKey, i, nextParams)
+                                    }
+                                />
                             </div>
                         )}
                     </div>
@@ -496,7 +581,6 @@ export default function Pages({ pageId, lockedPageId }) {
         ) : (
             <span className="area-empty">Drop cubos here ({areaKey.toUpperCase()})</span>
         );
-
 
     return (
         <div className="page-admin2-container">
@@ -512,9 +596,39 @@ export default function Pages({ pageId, lockedPageId }) {
                         <h3>
                             {selectedPage.name} <span className="page-key">#{selectedPage.key}</span>
                         </h3>
+
+                        {/* Default units panel */}
+
+
+                            <div className="default-units-panel__grid">
+                                {DEFAULT_UNITS.map((u) => (
+                                    <div
+                                        key={u.type}
+                                        className="default-unit"
+                                        draggable
+                                        onDragStart={(e) => {
+                                            const data = {
+                                                kind: u.type,
+                                                name: u.type,
+                                                params: u.defaults,
+                                                source: 'default',
+                                            };
+                                            e.dataTransfer.setData('text/plain', JSON.stringify(data));
+                                            e.dataTransfer.effectAllowed = 'copyMove';
+                                        }}
+                                    >
+                                        <div className="default-unit__label">{u.label}</div>
+                                        <div className="default-unit__type">.{u.type}</div>
+                                    </div>
+                                ))}
+                            </div>
+                       
+
                         <div className="header-actions">
+                            <button className="new-page-btn" type="button" onClick={handleCreatePage}>
+                                ➕ New page
+                            </button>
                             <button className="clear-btn" type="button">Clear</button>
-                            <button className="auto-set-btn" type="button">Auto-set</button>
                             <button
                                 type="button"
                                 className="save-btn"
@@ -543,7 +657,7 @@ export default function Pages({ pageId, lockedPageId }) {
                             onDragLeave={handleDragLeave}
                             onDrop={(e) => handleDropOnArea(e, selectedPage.key, 'h')}
                         >
-                            <div className="area-label">Header (H) — Navigator</div>
+                        <div className="area-label">Header (H) — Navigator</div>
 
                             <div className="page-tabs">
                                 {pages.map((page) => (
@@ -601,33 +715,6 @@ export default function Pages({ pageId, lockedPageId }) {
                             <div className="area-label">Footer (F)</div>
                             <div className="area-content">{renderAreaContent(selectedPage.raw.f, 'f')}</div>
                         </div>
-                    </div>
-                </div>
-
-                {/* Default units panel */}
-                <div className="default-units-panel">
-                    <div className="default-units-panel__title">Default units</div>
-                    <div className="default-units-panel__grid">
-                        {DEFAULT_UNITS.map((u) => (
-                            <div
-                                key={u.type}
-                                className="default-unit"
-                                draggable
-                                onDragStart={(e) => {
-                                    const data = {
-                                        kind: u.type,
-                                        name: u.type,
-                                        params: u.defaults,
-                                        source: 'default',
-                                    };
-                                    e.dataTransfer.setData('text/plain', JSON.stringify(data));
-                                    e.dataTransfer.effectAllowed = 'copy';
-                                }}
-                            >
-                                <div className="default-unit__label">{u.label}</div>
-                                <div className="default-unit__type">.{u.type}</div>
-                            </div>
-                        ))}
                     </div>
                 </div>
             </div>

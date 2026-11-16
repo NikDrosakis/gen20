@@ -1,0 +1,38 @@
+.poetanote {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    color: var(--text);
+    background: var(--bg);
+    font-family: var(--font-family-sans-serif);
+}
+.poetanote *, .poetanote *::before, .poetanote *::after { box-sizing: border-box; }
+.poetanote-toolbar {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; padding: 12px; border-bottom: 1px solid var(--border);
+}
+.poetanote-upload { cursor: pointer; color: var(--primary); }
+.poetanote-upload input { display: none; }
+.poetanote-workspace {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 32%);
+    gap: 16px; padding: 12px;
+}
+.poetanote-editor { min-width: 0; }
+.poetanote-line { display: flex; align-items: flex-start; gap: 12px; padding: 5px 8px; }
+.poetanote-line.active { background: var(--bg3); }
+.poetanote-number { min-width: 24px; color: var(--gray); text-align: right; user-select: none; }
+.poetanote-line textarea {
+    width: 100%; min-width: 0; resize: none; overflow: hidden;
+    border: 0; outline: 0; background: transparent; color: var(--text);
+    font: inherit; font-family: Georgia, serif; font-size: 1.15rem; line-height: 1.7;
+}
+.poetanote-context { min-width: 0; border-left: 1px solid var(--border); padding-left: 14px; }
+.poetanote-context h3 { margin-top: 0; font-size: 1rem; }
+.poetanote-result { padding: 10px 0; border-bottom: 1px solid var(--bg3); }
+.poetanote-result p { margin: 0 0 6px; font-family: Georgia, serif; line-height: 1.5; }
+.poetanote-result small, .poetanote-context small { color: var(--gray); }
+@media (max-width: 700px) {
+    .poetanote-workspace { grid-template-columns: minmax(0, 1fr); }
+    .poetanote-context { border-left: 0; border-top: 1px solid var(--border); padding: 14px 0 0; }
+}

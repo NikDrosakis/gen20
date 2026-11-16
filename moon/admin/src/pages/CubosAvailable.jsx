@@ -62,7 +62,7 @@ const CubosAvailable = ({ cubos, loading, onInstall }) => {
                                     'text/plain',
                                     JSON.stringify({ ...cubo, source: 'astra' })
                                 );
-                                e.dataTransfer.effectAllowed = 'copy';
+                                e.dataTransfer.effectAllowed = 'copyMove';
                             }}
                             style={{
                                 borderLeft: cubo.color

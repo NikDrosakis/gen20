@@ -339,138 +339,327 @@ console.log(filepath)
                 </div>
             </div>
             <style>{`
-       @viewport {
-          width: device-width;
-          zoom: 1.0;
-        }
+                .sketch {
+                display: grid;
+                grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+                grid-template-areas:
+                "controls player"
+                "controls library";
+                grid-template-rows: minmax(260px, auto) minmax(180px, auto);
+                gap: 16px;
+                width: 100%;
+                max-width: 100%;
+                min-width: 0;
+                margin: 0;
+                padding: 16px;
+                box-sizing: border-box;
+                font-family: var(--font-family-sans-serif);
+                color: var(--text);
+                background: var(--bg);
+            }
 
-        @media (max-width: 768px) {
-          body {
-            font-size: 16px;
-            padding: 1rem;
-            margin: 0;
-          }
+                .sketch *,
+                .sketch *::before,
+                .sketch *::after {
+                box-sizing: border-box;
+                min-width: 0;
+            }
 
-          video, img, canvas {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 0 auto;
-          }
+                /* BOX 1: Upload and drawing controls */
+                .sketch #sketchForm {
+                grid-area: controls;
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+                width: 100%;
+                max-width: none;
+                min-width: 0;
+                margin: 0;
+                padding: 20px;
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                background: var(--bg2);
+                color: var(--text);
+                box-shadow: var(--shadow);
+            }
 
-          .controls {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 0.5rem;
-          }
-        }
+                .sketch #sketchForm label {
+                display: block;
+                margin-top: 4px;
+                color: var(--text);
+                font-size: 0.9rem;
+            }
 
-    #sketchForm {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;        
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        margin: 20px auto;
-        width: 200px;
-        float: left;
-            color: var(--text);
-    background: var(--bg2);
-        }
-        
-        #sketchForm input[type="file"] {
-          margin-bottom: 10px;
-        }
+                .sketch #sketchForm input[type="file"] {
+                display: block;
+                width: 100%;
+                max-width: 100%;
+            }
 
-        #selectedPreview {
-          margin: 10px 0;
-          text-align: center;
-        }
+                .sketch #selectedPreview {
+                width: 100%;
+                max-width: 100%;
+                margin: 10px 0;
+                text-align: center;
+            }
 
-#fileInput{
-width: 180px;
-}
+                .sketch #selectedPreview img {
+                display: block;
+                width: auto;
+                max-width: 100%;
+                max-height: 220px;
+                height: auto;
+                margin: 0 auto;
+                object-fit: contain;
+            }
 
-        #pen_color,
-        #bg_color {
-          margin-bottom: 10px;
-          width: 100px;
-          height: 30px;
-          border: none;
-          cursor: pointer;
-        }
+                .sketch #fileInput {
+                width: 100%;
+                max-width: 100%;
+            }
 
-        #pen_width {
-          width: 60px;
-          padding: 4px;
-          margin-bottom: 10px;
-          font-size: 12pt;
-          border-radius: 4px;
-          border: 1px solid #ccc;
-        }
+                .sketch #pen_color,
+                .sketch #bg_color {
+                width: 100%;
+                max-width: 100%;
+                height: 36px;
+                margin: 0;
+                padding: 2px;
+                border: 1px solid var(--border);
+                border-radius: 5px;
+                background: var(--bg);
+                cursor: pointer;
+            }
 
-      
-        .thumbnails-container {
-          flex: 1;
-          overflow-y: auto;       
-          padding: 10px;
-          box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
-        }
+                .sketch #pen_width {
+                width: 100%;
+                max-width: 100%;
+                padding: 7px 9px;
+                margin: 0;
+                border: 1px solid var(--border);
+                border-radius: 5px;
+                background: var(--bg);
+                color: var(--text);
+                font: inherit;
+            }
 
-        .thumbnail-row {
-          display: flex;
-          gap: 12px;
-          margin-bottom: 15px;
-          position: relative;
-        }
-button{
-    color: var(--text);
-    background: var(--bg2);
-}
-        .thumb-block {
-          position: relative;
-          background: #f0f0f0;
-          padding: 6px;
-          border-radius: 6px;
-          border: 1px solid #ccc;
-          user-select: none;
-          cursor: default;
-          width: 140px;
-          text-align: center;
-        }
+                .sketch #sketchForm button {
+                width: 100%;
+                max-width: 100%;
+                margin: 8px 0 0;
+                padding: 11px 14px;
+                border: 1px solid var(--primary);
+                border-radius: 6px;
+                background: var(--primary);
+                color: var(--white);
+                font: inherit;
+                font-weight: 600;
+                cursor: pointer;
+            }
 
-        .thumb-block:hover {
-          box-shadow: 0 0 12px #999;
-          border-color: #999;
-          cursor: pointer;
-        }
+                .sketch #sketchForm button:hover {
+                opacity: 0.9;
+            }
 
-        .thumb-flag {
-          position: absolute;
-          top: 4px;
-          left: 4px;
-          font-size: 18px;
-        }
+                .sketch #loader {
+                width: 100%;
+                margin-top: 10px;
+                text-align: center;
+            }
 
-        .thumb-label {
-          margin-top: 4px;
-          font-size: 11pt;
-          font-weight: bold;
-          color: #333;
-          overflow-wrap: break-word;
-          white-space: normal;
-        }
+                .sketch #loader img {
+                display: block;
+                width: 50px;
+                height: 50px;
+                margin: 0 auto;
+            }
 
-        .delete-icon {
-          position: absolute;
-          top: 4px;
-          right: 4px;
-          font-size: 18px;
-          color: red;
-          cursor: pointer;
-        }
-      `}</style>
+                /* Player + media wrapper.
+                   display: contents lets the player and library become
+                   independent grid areas of the main Sketch layout. */
+                .sketch__media-layout {
+                display: contents;
+            }
+
+                /* BOX 2: Video player */
+                .sketch__media-layout > :first-child {
+                grid-area: player;
+                width: 100%;
+                max-width: 100%;
+                min-width: 0;
+                min-height: 0;
+                overflow: hidden;
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                background: var(--bg2);
+                box-shadow: var(--shadow);
+            }
+
+                .sketch__media-layout > :first-child video,
+                .sketch__media-layout > :first-child img,
+                .sketch__media-layout > :first-child canvas {
+                display: block;
+                max-width: 100%;
+                height: auto;
+                margin: 0 auto;
+                object-fit: contain;
+            }
+
+                /* BOX 3: Media library */
+                .sketch .thumbnails-container {
+                grid-area: library;
+                display: flex;
+                flex-wrap: wrap;
+                align-content: flex-start;
+                gap: 12px;
+                width: 100%;
+                max-width: 100%;
+                min-width: 0;
+                min-height: 180px;
+                max-height: 420px;
+                overflow: auto;
+                padding: 12px;
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                background: var(--bg2);
+                box-shadow: var(--shadow);
+            }
+
+                .sketch .thumbnail-row {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: flex-start;
+                gap: 10px;
+                width: auto;
+                max-width: 100%;
+                min-width: 0;
+                margin: 0;
+                position: relative;
+            }
+
+                .sketch .thumb-block {
+                position: relative;
+                width: 140px;
+                max-width: 100%;
+                min-width: 0;
+                padding: 6px;
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                background: var(--bg3);
+                color: var(--text);
+                text-align: center;
+                user-select: none;
+                cursor: pointer;
+                transition: box-shadow 0.2s ease, border-color 0.2s ease;
+            }
+
+                .sketch .thumb-block:hover {
+                border-color: var(--primary);
+                box-shadow: var(--shadow);
+            }
+
+                .sketch .thumb-block img,
+                .sketch .thumb-block video {
+                display: block;
+                width: 100%;
+                max-width: 100%;
+                height: auto;
+                margin: 0 auto;
+                object-fit: contain;
+            }
+
+                .sketch .thumb-flag {
+                position: absolute;
+                top: 4px;
+                left: 4px;
+                z-index: 1;
+                font-size: 18px;
+            }
+
+                .sketch .thumb-label {
+                margin-top: 5px;
+                color: var(--text);
+                font-size: 0.8rem;
+                font-weight: 600;
+                overflow-wrap: anywhere;
+                white-space: normal;
+            }
+
+                .sketch .delete-icon {
+                position: absolute;
+                top: 4px;
+                right: 4px;
+                z-index: 2;
+                color: var(--danger);
+                font-size: 18px;
+                cursor: pointer;
+            }
+
+                /* Tablet */
+                @media (max-width: 900px) and (min-width: 601px) {
+                .sketch {
+                grid-template-columns: minmax(190px, 240px) minmax(0, 1fr);
+                gap: 12px;
+                padding: 12px;
+            }
+
+                .sketch #sketchForm {
+                padding: 14px;
+            }
+
+                .sketch .thumbnails-container {
+                max-height: 340px;
+            }
+            }
+
+                /* Mobile: three boxes stacked vertically */
+                @media (max-width: 600px) {
+                .sketch {
+                grid-template-columns: minmax(0, 1fr);
+                grid-template-areas:
+                "controls"
+                "player"
+                "library";
+                grid-template-rows: auto auto minmax(180px, auto);
+                gap: 12px;
+                padding: 12px;
+            }
+
+                .sketch #sketchForm {
+                padding: 16px;
+            }
+
+                .sketch__media-layout > :first-child {
+                min-height: 200px;
+            }
+
+                .sketch .thumbnails-container {
+                min-height: 160px;
+                max-height: 320px;
+                padding: 10px;
+            }
+
+                .sketch .thumb-block {
+                width: min(140px, calc(50% - 6px));
+            }
+            }
+
+                /* Small mobile */
+                @media (max-width: 360px) {
+                .sketch {
+                padding: 8px;
+                gap: 10px;
+            }
+
+                .sketch #sketchForm {
+                padding: 12px;
+            }
+
+                .sketch .thumb-block {
+                width: 100%;
+            }
+            }`}</style>
         </>
     );
 };

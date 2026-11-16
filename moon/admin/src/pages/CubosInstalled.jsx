@@ -72,7 +72,7 @@ const CubosInstalled = ({ cubos, loading, onDrop, onDragOver, onDragLeave }) => 
                                     'text/plain',
                                     JSON.stringify({ ...cubo, source: 'moon' })
                                 );
-                                e.dataTransfer.effectAllowed = 'move';
+                                e.dataTransfer.effectAllowed = 'copyMove';
                             }}
                             style={{
                                 borderLeft: cubo.color

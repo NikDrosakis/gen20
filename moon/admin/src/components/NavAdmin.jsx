@@ -17,23 +17,23 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
     const isGen20Net = window.location.hostname.split('.')[0] === 'gen20';
     const navItems = [
         { id: 'home', label: 'Home', icon: '🏠', path: '/admin' },
+        { id: 'pages', label: 'Pages', icon: '⚙️', path: '/admin/pages' },
         { id: 'page', label: 'Content', icon: '📝', path: '/admin/page' },
         { id: 'classification', label: 'Classification', icon: '🏷️', path: '/admin/classification' },
         { id: 'users', label: 'Users', icon: '👤', path: '/admin/users' },
         { id: 'members', label: 'Members', icon: '👤', path: '/admin/members' },
         { id: 'media', label: 'Media', icon: '🖼️', path: '/admin/media' },
-        { id: 'doc', label: 'Documentation', icon: '📚', path: '/admin/doc' },
         { id: 'links', label: 'Links', icon: '🖼️', path: '/admin/links' },
         { id: 'slides', label: 'Slides', icon: '🖼️', path: '/admin/slides' },
         { id: 'languages', label: 'Languages', icon: '🌐', path: '/admin/languages' },
         { id: 'analytics', label: 'Analytics', icon: '📈', path: '/admin/analytics' },
-        { id: 'pages', label: 'Pages', icon: '⚙️', path: '/admin/pages' },
         { id: 'setup', label: 'Settings', icon: '⚙️', path: '/admin/setup' },
         // monetize και superadmin μόνο για gen20.net
         ...(isGen20Net ? [
             { id: 'superadmin', label: 'SuperAdmin', icon: '🛡️', path: '/admin/superadmin' },
             { id: 'monetize', label: 'Monetize', icon: '💰', path: '/admin/monetize' },
         ] : []),
+        { id: 'doc', label: 'Documentation', icon: '📚', path: '/admin/doc' },
     ];
 
     // Load languages from database
