@@ -15,6 +15,10 @@
 #   - νέο cubo              → 1.0
 #   - υπάρχον, ίδιο hash    → κρατά version
 #   - υπάρχον, άλλο hash    → +0.1
+# ΣΗΜΑΝΤΙΚΟ:
+# Αυτό το script ΔΕΝ συγχρονίζει το version με το moonlist.json.
+# Η μεταφορά του version από το astralist στο moonlist (και αντίστροφα)
+# γίνεται ΑΠΟΚΛΕΙΣΤΙΚΑ από τα astra_pullcubo.sh και astra_pushcubo.sh.
 
 set -uo pipefail
 

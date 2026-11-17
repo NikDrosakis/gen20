@@ -88,3 +88,39 @@ config/secrets/prod/prod.decrypt.private.php
 
 # Archives
 *.zip
+
+# ==================================================
+# Media / Data / Uploads
+# ==================================================
+
+**/data/
+**/media/
+**/uploads/
+**/files/
+**/storage/
+**/cdn/
+**/assets/
+
+# Media files (αν κάποιο ξεφύγει)
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.svg
+*.ico
+*.bmp
+*.tiff
+*.mp3
+*.mp4
+*.wav
+*.ogg
+*.webm
+*.mov
+*.avi
+*.pdf
+*.woff
+*.woff2
+*.ttf
+*.eot
+*.otf

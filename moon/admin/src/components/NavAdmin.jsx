@@ -17,23 +17,25 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
     const isGen20Net = window.location.hostname.split('.')[0] === 'gen20';
     const navItems = [
         { id: 'home', label: 'Home', icon: '🏠', path: '/admin' },
-        { id: 'pages', label: 'Pages', icon: '⚙️', path: '/admin/pages' },
-        { id: 'page', label: 'Content', icon: '📝', path: '/admin/page' },
-        { id: 'classification', label: 'Classification', icon: '🏷️', path: '/admin/classification' },
-        { id: 'users', label: 'Users', icon: '👤', path: '/admin/users' },
-        { id: 'members', label: 'Members', icon: '👤', path: '/admin/members' },
-        { id: 'media', label: 'Media', icon: '🖼️', path: '/admin/media' },
-        { id: 'links', label: 'Links', icon: '🖼️', path: '/admin/links' },
-        { id: 'slides', label: 'Slides', icon: '🖼️', path: '/admin/slides' },
-        { id: 'languages', label: 'Languages', icon: '🌐', path: '/admin/languages' },
-        { id: 'analytics', label: 'Analytics', icon: '📈', path: '/admin/analytics' },
-        { id: 'setup', label: 'Settings', icon: '⚙️', path: '/admin/setup' },
+        { id: 'pages', label: 'Pages', icon: '📑', path: '/admin/pages' },          // Αντί για ⚙️ (γενικό)
+        { id: 'content', label: 'Content', icon: '✍️', path: '/admin/content' },         // Αντί για 📝 (πιο άμεσο)
+        { id: 'classification', label: 'Classification', icon: '🗂️', path: '/admin/classification' }, // Αντί για 🏷️
+        { id: 'users', label: 'Users', icon: '👥', path: '/admin/users' },         // Διαφορετικό από Members
+        { id: 'members', label: 'Members', icon: '🪪', path: '/admin/members' },   // ID card / profile
+        { id: 'media', label: 'Media', icon: '📸', path: '/admin/media' },         // Κάμερα (πιο media)
+        { id: 'links', label: 'Links', icon: '🔗', path: '/admin/links' },         // Το προφανές
+        { id: 'slides', label: 'Slides', icon: '🎞️', path: '/admin/slides' },      // Film strip
+        { id: 'languages', label: 'Languages', icon: '🗣️', path: '/admin/languages' }, // Ομιλία / Γλώσσα
+        { id: 'analytics', label: 'Analytics', icon: '📊', path: '/admin/analytics' }, // Bar chart (πιο σαφές)
+        { id: 'setup', label: 'Settings', icon: '🛠️', path: '/admin/setup' },      // Εργαλεία αντί για γρανάζι
+
         // monetize και superadmin μόνο για gen20.net
         ...(isGen20Net ? [
-            { id: 'superadmin', label: 'SuperAdmin', icon: '🛡️', path: '/admin/superadmin' },
-            { id: 'monetize', label: 'Monetize', icon: '💰', path: '/admin/monetize' },
+            { id: 'superadmin', label: 'SuperAdmin', icon: '⚡', path: '/admin/superadmin' }, // Ή ⚡ / 🛡️
+            { id: 'monetize', label: 'Monetize', icon: '💳', path: '/admin/monetize' },        // Κάρτα αντί για 💰
         ] : []),
-        { id: 'doc', label: 'Documentation', icon: '📚', path: '/admin/doc' },
+
+        { id: 'doc', label: 'Documentation', icon: '📘', path: '/admin/doc' },     // Μπλε βιβλίο (πιο επίσημο)
     ];
 
     // Load languages from database
@@ -73,13 +75,9 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
             img: userImg
         });
     };
-
+    
     const handleNavigation = (item) => {
-        if (item.id === 'page') {
-            window.location.href = '/admin/page';
-        } else {
-            window.location.href = item.path;
-        }
+        window.location.href = item.path;
     };
 
     const handleLanguageChange = (langCode) => {
@@ -199,7 +197,7 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
                             className="admin-nav-link public-home"
                             onClick={() => window.location.href = '/'}
                         >
-                            <span className="admin-nav-icon">🏠</span>
+                            <span className="admin-nav-icon">🚩</span>
                             <span className="admin-nav-label">Public</span>
                         </button>
                     </li>

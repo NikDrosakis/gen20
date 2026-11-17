@@ -12,6 +12,10 @@ fi
 
 source /var/www/gs/sol/.env
 
+# communication
+coproc WS { websocat -t -H "X-Sol-Token: $SOL_TOKEN" --ping-interval 20 \
+            "ws://127.0.0.1:${PORT:-3008}/god/v1/sol/ws"; }
+            
 # Shared logger
 if [[ ! -r "$SOL_ROOT/init.sh" ]]; then
     echo "Missing shared logger: $SOL_ROOT/init.sh" >&2

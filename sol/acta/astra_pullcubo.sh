@@ -114,6 +114,15 @@ pull_one() {
                 continue
             fi
 
+ # ── ΕΛΕΓΧΟΣ ΑΝ ΤΟ ΑΡΧΕΙΟ ΕΙΝΑΙ ΙΔΙΟ ──
+            if [[ -e $target ]]; then
+                # Αν είναι πανομοιότυπα, το προσπερνάμε
+                if cmp -s "$file" "$target"; then
+                    log "  ⏭️  $sub/$rel (identical, omit file)"
+                    skipped=$((skipped + 1))
+                    continue
+                fi
+
             if [[ -e $target ]]; then
                 local bkp
                 bkp=$(backup_name "$target" "$sub_domain")
@@ -195,4 +204,16 @@ else
 fi
 
 [[ $overall_failed -eq 0 ]] || exit 1
+
+    # ── Ενημέρωση moonlist.json μετά το pull ──
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    MOON_INDEX="$SCRIPT_DIR/moon_indexcubo.sh"
+
+    if [[ -x "$MOON_INDEX" ]]; then
+        log "=== MOON INDEXCUBO: $domain ==="
+        "$MOON_INDEX" "$domain"
+    else
+        err "moon_indexcubo.sh not found or not executable at $MOON_INDEX"
+    fi
+
 exit 0
