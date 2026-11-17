@@ -2,7 +2,10 @@
 package core
 
 import (
+	"log"
 	"net/http"
+	"os"
+	"runtime/debug"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -24,31 +27,44 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-// RegisterRoutes συνδέει το hub με το gin router.
-func RegisterRoutes(router *gin.Engine, hub *Hub) {          // ← *Hub (χωρίς core.)
+func RegisterRoutes(router *gin.Engine, hub *Hub) {
 	router.GET("/god/v1/messaging/ws", func(c *gin.Context) {
-		userID := c.Query("userid")
-		if userID == "" {
-			userID = "anonymous"
+		db, uid, role, err := VerifyAuthToken(c.Query("token"), os.Getenv("GOD_SHARED_SECRET"))
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
 		}
 
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
+			log.Printf("ws upgrade: %v", err) // ο upgrader έχει ήδη απαντήσει στον client
 			return
 		}
 
-		client := &Client{                                    // ← &Client (χωρίς core.)
-			ID:      userID + "-" + conn.RemoteAddr().String(),
-			UserID:  userID,
-			Domains: make(map[string]bool),
+		guid := GUID(db, uid)
+		client := &Client{
+			ID:      guid + "-" + conn.RemoteAddr().String(),
+			UserID:  guid,
+			Role:    role, // νέο πεδίο στο Client
+			Domains: map[string]bool{db: true},
 			Conn:    conn,
 			Send:    make(chan []byte, 256),
 			Hub:     hub,
 		}
 
 		hub.Register(client)
-
-		go client.WritePump()
-		go client.ReadPump()
+		safeGo(client.WritePump)
+		safeGo(client.ReadPump)
 	})
+}
+
+func safeGo(fn func()) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("PANIC in goroutine: %v\n%s", r, debug.Stack())
+			}
+		}()
+		fn()
+	}()
 }

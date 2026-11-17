@@ -3,11 +3,11 @@ package core
 
 import (
 	"encoding/json"
+	"github.com/gorilla/websocket"
 	"log"
+	"strings"
 	"sync"
 	"time"
-"strings"
-	"github.com/gorilla/websocket"
 )
 
 // Message είναι το generic protocol του hub.
@@ -21,6 +21,7 @@ type Message struct {
 
 // Client είναι ένα συνδεδεμένο WebSocket.
 type Client struct {
+	Role    string // "user" | "admin", από το signed token
 	ID      string
 	UserID  string // Κρατάμε το UserID για εσωτερική χρήση (από το query param)
 	Domains map[string]bool
@@ -32,6 +33,7 @@ type Client struct {
 
 // Hub διαχειρίζεται όλες τις ενεργές συνδέσεις.
 type Hub struct {
+	Sol        *SolBridge
 	clients    map[*Client]bool
 	byUser     map[string]map[*Client]bool
 	byDomain   map[string]map[*Client]bool

@@ -264,12 +264,18 @@ func main() {
 	if couch != nil {
 		hub.SetCouch(couch)
 	}
+
+hub.Sol = core.NewSolBridge()
+
 	go hub.Run() // Ξεκινάει το κεντρικό loop του Hub
 
 	// 6. Δημιουργία Gin router
 	router := gin.New()
 	router.Use(gin.Recovery()) // Recovery από panics
 
+// 6b. Sol bridge: endpoint /god/v1/sol/ws
+	hub.Sol.Register(router)
+	
 	// 7. MCP routes (αν έχει token)
 	registerMCPRoutes(router)
 
