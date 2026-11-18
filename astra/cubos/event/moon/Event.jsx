@@ -1,6 +1,6 @@
 import EventBoard from "./EventBoard";
 
-const Event = ({ classificationid = 100, lang = "el" }) => {
+export const Event = ({ classificationid = 100, lang = "el" }) => {
     return (
         <EventBoard
             classificationid={classificationid}
@@ -8,5 +8,3 @@ const Event = ({ classificationid = 100, lang = "el" }) => {
         />
     );
 };
-
-export default Event;

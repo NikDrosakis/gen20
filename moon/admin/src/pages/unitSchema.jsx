@@ -1,54 +1,53 @@
-// src/unitSchema.js
+// unitSchema.js
 export const UNIT_SCHEMAS = {
     contentOne: {
-        label: 'Content One',
+        label: 'ContentOne',
         source: 'default',
         fields: [
-            { key: 'id', label: 'Post', type: 'select', default: 1 },
+            { key: 'id', type: 'picker', label: 'Post', default: 1 },
         ],
     },
     contentLoop: {
-        label: 'Content Loop',
+        label: 'ContentLoop',
         source: 'default',
         fields: [
-            { key: 'classificationid', label: 'Classification', type: 'select', default: 1 },
+            { key: 'classificationid', type: 'picker', label: 'Classification', default: 1 },
         ],
     },
 };
 
-export function getSchema(kind) {
-    return UNIT_SCHEMAS[kind] ?? null;
-}
+// Νέο: δυναμικό schema από astralist.json
+let dynamicSchemas = {};
 
-export function getDefaults(kind) {
-    const s = getSchema(kind);
-    if (!s) return {};
-    return Object.fromEntries(s.fields.map((f) => [f.key, f.default]));
-}
-
-function coerce(field, value) {
-    if (value === undefined || value === null || value === '') return field.default;
-    switch (field.type) {
-        case 'number':
-        case 'range':
-            return Number(value);
-        case 'boolean':
-            return value === true || value === 'true' || value === 1 || value === '1';
-        case 'select':
-            return typeof field.default === 'number' ? Number(value) : value;
-        default:
-            return value;
+export function setDynamicSchemas(cubos) {
+    dynamicSchemas = {};
+    for (const cubo of cubos) {
+        if (cubo.params) {
+            dynamicSchemas[cubo.name] = {
+                label: cubo.title || cubo.name,
+                source: 'astra',
+                fields: Object.entries(cubo.params).map(([key, def]) => ({
+                    key,
+                    type: def.type || 'text',
+                    label: def.label || key,
+                    default: def.default,
+                    required: def.required,
+                    options: def.options,
+                    keys: def.keys,
+                    dependsOn: def.dependsOn,
+                })),
+            };
+        }
     }
+}
+
+export function getSchema(kind) {
+    return dynamicSchemas[kind] || UNIT_SCHEMAS[kind] || null;
 }
 
 export function normalizeParams(kind, params) {
-    const s = getSchema(kind);
-    if (!s) return params ?? {};
-    const out = { ...getDefaults(kind) };
-    for (const f of s.fields) {
-        if (params && params[f.key] !== undefined) {
-            out[f.key] = coerce(f, params[f.key]);
-        }
-    }
-    return out;
+    const schema = getSchema(kind);
+    if (!schema) return params;
+    const defaults = Object.fromEntries(schema.fields.map(f => [f.key, f.default]));
+    return { ...defaults, ...params };
 }

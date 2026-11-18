@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
 import './Film.css';
 
-const Film = () => {
+export const Film = () => {
     const lang = Cookies.get('lang') || 'el';
     const [activeTab, setActiveTab] = useState('bio');
     const [showAllAwards, setShowAllAwards] = useState(false);
@@ -162,5 +162,3 @@ Ten years as a stage actor, director and playwright, he has recently published t
         </div>
     );
 };
-
-export default Film;

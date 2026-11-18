@@ -23,7 +23,7 @@ const STATIC_PAGE_TITLES = {
     cv: { en: "CV", el: "Βιογραφικό" },
 };
 
-const Breadcrumb = ({ path }) => {
+export const Breadcrumb = ({ path }) => {
     const [pageTitle, setPageTitle] = useState('');
     const [loading, setLoading] = useState(true);
     const lang = Cookies.get('lang') || 'el';
@@ -134,5 +134,3 @@ const Breadcrumb = ({ path }) => {
         </>
     );
 };
-
-export default Breadcrumb;

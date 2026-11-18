@@ -12,7 +12,7 @@ const runQuery = async (sql, signal) => {
     return Array.isArray(data) ? data : data?.rows ?? data?.data ?? [];
 };
 
-const MdSection = ({ path }) => {
+export const Edit = ({ path }) => {
     const [blocks, setBlocks] = useState([]);
     const [postid, setPostid] = useState(1);
     const [loading, setLoading] = useState(true);
@@ -91,5 +91,3 @@ const MdSection = ({ path }) => {
         </div>
     );
 };
-
-export default MdSection;

@@ -121,7 +121,7 @@ const todayLabel = () => {
     return `${days[d.getDay()]} ${dd}-${mm}-${d.getFullYear()}`;
 };
 
-const Diary = () => {
+export const Diary = () => {
     const [entries, setEntries] = useState([]);
     const [dates, setDates] = useState([]);
     const [activeDate, setActiveDate] = useState(null);
@@ -256,5 +256,3 @@ const Diary = () => {
         </>
     );
 };
-
-export default Diary;

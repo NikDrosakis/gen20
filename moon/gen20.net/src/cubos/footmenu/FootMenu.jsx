@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import './FootMenu.css';
 
-const FootMenu = () => {
+export const FootMenu = () => {
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
     const menuItems = [
@@ -104,5 +104,3 @@ const FootMenu = () => {
         </footer>
     );
 };
-
-export default FootMenu;

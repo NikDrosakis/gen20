@@ -51,18 +51,51 @@ say "OS: $PRETTY_NAME | Architecture: $ARCH"
 say "Root: $GS_ROOT"
 say "Log: $LOG_FILE"
 
-# Debian 13 CouchDB runs in the official Apache image. Ensure Docker's
-# official APT repository exists before resolving docker-ce packages.
-if [[ "$VERSION_ID" == 13 ]]; then
-    install -d -m 0755 /etc/apt/keyrings
-    if [[ ! -s /etc/apt/keyrings/docker.gpg ]]; then
-        curl -fsSL https://download.docker.com/linux/debian/gpg |
-            gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg
-        chmod 0644 /etc/apt/keyrings/docker.gpg
-    fi
-    printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian trixie stable\\n' \\
-        "$ARCH" > /etc/apt/sources.list.d/docker.list
+# --------------------------------------------------
+# COUCHDB — OFFICIAL APACHE SNAP
+# --------------------------------------------------
+
+say "Installing Apache CouchDB without Docker..."
+
+apt-get install -y snapd
+
+systemctl enable --now snapd.socket
+
+snap install couchdb
+
+# Generate credentials only on first installation.
+COUCHDB_SECRET_DIR="/etc/gen20"
+COUCHDB_SECRET_FILE="$COUCHDB_SECRET_DIR/couchdb.env"
+
+install -d -m 0700 "$COUCHDB_SECRET_DIR"
+
+if [[ ! -s "$COUCHDB_SECRET_FILE" ]]; then
+    COUCHDB_ADMIN_USER="admin"
+    COUCHDB_ADMIN_PASSWORD="$(openssl rand -hex 24)"
+    COUCHDB_COOKIE="$(openssl rand -hex 32)"
+
+    umask 077
+    printf 'COUCHDB_USER=%s\nCOUCHDB_PASSWORD=%s\nCOUCHDB_COOKIE=%s\n' \
+        "$COUCHDB_ADMIN_USER" \
+        "$COUCHDB_ADMIN_PASSWORD" \
+        "$COUCHDB_COOKIE" > "$COUCHDB_SECRET_FILE"
+
+    chmod 0600 "$COUCHDB_SECRET_FILE"
 fi
+
+source "$COUCHDB_SECRET_FILE"
+
+snap set couchdb \
+    admin="$COUCHDB_PASSWORD" \
+    setcookie="$COUCHDB_COOKIE"
+
+snap connect couchdb:mount-observe
+
+snap start couchdb
+
+unset COUCHDB_PASSWORD COUCHDB_COOKIE
+
+ok "Apache CouchDB installed."
 
 say "Refreshing APT metadata..."
 apt-get update

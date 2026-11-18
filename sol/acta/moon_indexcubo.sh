@@ -4,15 +4,7 @@
 #
 # Schema:
 #   { "domain": "...", "generated": <unix>, "cubos": [
-#       { name, title, color, files, icon, description, version, status } ] }
-#
-# Versioning:
-#   - νέο cubo              → 1.0
-#   - υπάρχον                → κρατά version (ανεξάρτητα από hash)
-#
-# Status:
-#   - νέο cubo              → "testing"
-#   - υπάρχον               → κρατά status (αν υπάρχει), αλλιώς "testing"
+#       { name, title, color, files, icon, description, version, status, params } ] }
 
 set -uo pipefail
 
@@ -69,6 +61,9 @@ for cubo_dir in "$src_dir"/*/; do
     icon=$(jq -r '.icon // ""' <<< "$meta_entry")
     desc=$(jq -r '.description // ""' <<< "$meta_entry")
 
+    # ── Params από το astralist.json ──
+    params=$(jq -c '.params // {}' <<< "$meta_entry")
+
     # ── Hash για ανίχνευση αλλαγών ──
     hash_new="$(
         find "$cubo_dir" -type f \
@@ -110,11 +105,12 @@ for cubo_dir in "$src_dir"/*/; do
         --arg version "$new_ver" \
         --arg hash "$hash_new" \
         --arg status "$new_status" \
+        --argjson params "$params" \
         '$arr + [{
             name: $name, title: $title, color: $color,
             files: $files, icon: $icon,
             description: $description, version: $version, hash: $hash,
-            status: $status
+            status: $status, params: $params
         }]')
 done
 

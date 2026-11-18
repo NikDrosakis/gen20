@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../../ThemeContext';
 
-const Audioplayer = ({ tracks = [] }) => {
+export const Audioplayer = ({ tracks = [] }) => {
     const { theme } = useTheme();
     const audioRef = useRef(null);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -143,5 +143,3 @@ const Audioplayer = ({ tracks = [] }) => {
         </div>
     );
 };
-
-export default Audioplayer;

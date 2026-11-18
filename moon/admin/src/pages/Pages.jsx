@@ -33,7 +33,7 @@ async function fetchJson(url) {
 
 
 function isValidCubo(cubo) {
-    return cubo && cubo.name && !cubo.name.includes('.') && !cubo.name.startsWith('.');
+    return cubo && typeof cubo.name === 'string' && !cubo.name.includes('.') && !cubo.name.startsWith('.');
 }
 
 async function loadManifest() {
@@ -143,14 +143,26 @@ export default function Pages({ pageId, lockedPageId }) {
     useEffect(() => {
         let cancelled = false;
         setLoadingAvailable(true);
+        const timeout = setTimeout(() => {
+            if (!cancelled) {
+                console.warn('astralist fetch timeout');
+                setLoadingAvailable(false);
+            }
+        }, 5000); // 5 δευτερόλεπτα
+
         fetchJson(`${API_BASE}/data/astralist.json`).then((data) => {
+            clearTimeout(timeout);
             if (cancelled) return;
-            setAvailableCubos((data?.cubos || []).filter(isValidCubo));
+            const cubos = (data?.cubos || []).filter(isValidCubo);
+            setAvailableCubos(cubos);
             setLoadingAvailable(false);
+        }).catch(err => {
+            clearTimeout(timeout);
+            console.error('astralist fetch error:', err);
+            if (!cancelled) setLoadingAvailable(false);
         });
-        return () => {
-            cancelled = true;
-        };
+
+        return () => { cancelled = true; clearTimeout(timeout); };
     }, []);
 
     // 3) Installed (moon)
