@@ -4,12 +4,15 @@
 #
 # Schema:
 #   { "domain": "...", "generated": <unix>, "cubos": [
-#       { name, title, color, files, icon, description, version } ] }
+#       { name, title, color, files, icon, description, version, status } ] }
 #
 # Versioning:
 #   - νέο cubo              → 1.0
-#   - υπάρχον, ίδιο hash    → κρατά version
-#   - υπάρχον, άλλο hash    → +0.1
+#   - υπάρχον                → κρατά version (ανεξάρτητα από hash)
+#
+# Status:
+#   - νέο cubo              → "testing"
+#   - υπάρχον               → κρατά status (αν υπάρχει), αλλιώς "testing"
 
 set -uo pipefail
 
@@ -26,7 +29,6 @@ mkdir -p "$DATA_DIR/$domain" || exit 1
 
 out="$DATA_DIR/$domain/moonlist.json"
 prev="$DATA_DIR/$domain/moonlist.prev.json"
-# Το κεντρικό registry του astra
 astralist="$DATA_DIR/astralist.json"
 
 # Κρατάμε το προηγούμενο για σύγκριση
@@ -44,15 +46,6 @@ else
     astralist_content=$(cat "$astralist")
 fi
 
-# Βοηθητικές συναρτήσεις
-bump_version() {
-    awk -v v="$1" 'BEGIN{
-        split(v,a,".");
-        major=a[1]+0; minor=(a[2]+0)+1;
-        printf "%d.%d", major, minor
-    }'
-}
-
 cubos_json="[]"
 
 for cubo_dir in "$src_dir"/*/; do
@@ -68,7 +61,6 @@ for cubo_dir in "$src_dir"/*/; do
     [[ $files -eq 0 ]] && continue
 
     # ── Metadata ΑΠΟΚΛΕΙΣΤΙΚΑ από το astralist.json ──
-    # Παίρνουμε το entry του συγκεκριμένου cubo (αν δεν υπάρχει, επιστρέφει κενό αντικείμενο)
     meta_entry=$(jq -c --arg n "$cubo" --argjson fallback '{"cubos":[]}' \
         '(.cubos[] | select(.name == $n)) // {}' <<< "$astralist_content")
 
@@ -77,7 +69,7 @@ for cubo_dir in "$src_dir"/*/; do
     icon=$(jq -r '.icon // ""' <<< "$meta_entry")
     desc=$(jq -r '.description // ""' <<< "$meta_entry")
 
-    # ── Hash για ανίχνευση αλλαγών (βασισμένο ΜΟΝΟ στα αρχεία του cubo) ──
+    # ── Hash για ανίχνευση αλλαγών ──
     hash_new="$(
         find "$cubo_dir" -type f \
             -not -path "*/node_modules/*" \
@@ -85,19 +77,24 @@ for cubo_dir in "$src_dir"/*/; do
             -printf '%P\n' 2>/dev/null | sort | sha256sum | cut -d' ' -f1
     )"
 
-    # ── Versioning ──
+    # ── Version & Status ──
     prev_entry="$(jq -c --arg n "$cubo" '.cubos[] | select(.name==$n)' "$prev" 2>/dev/null || echo '')"
 
     if [[ -z $prev_entry ]]; then
+        # Νέο cubo
         new_ver="1.0"
+        new_status="testing"
     else
+        # Υπάρχον cubo — κρατάμε version χωρίς αλλαγή
         prev_ver="$(jq -r '.version // "1.0"' <<<"$prev_entry")"
-        hash_old="$(jq -r '.hash // ""' <<<"$prev_entry")"
+        new_ver="$prev_ver"
 
-        if [[ "$hash_new" == "$hash_old" ]]; then
-            new_ver="$prev_ver"
+        # Status: διατήρηση αν υπάρχει, αλλιώς "testing"
+        prev_status="$(jq -r '.status // ""' <<<"$prev_entry")"
+        if [[ -n "$prev_status" && ( "$prev_status" == "testing" || "$prev_status" == "active" || "$prev_status" == "broken" ) ]]; then
+            new_status="$prev_status"
         else
-            new_ver="$(bump_version "$prev_ver")"
+            new_status="testing"
         fi
     fi
 
@@ -112,10 +109,12 @@ for cubo_dir in "$src_dir"/*/; do
         --arg description "$desc" \
         --arg version "$new_ver" \
         --arg hash "$hash_new" \
+        --arg status "$new_status" \
         '$arr + [{
             name: $name, title: $title, color: $color,
             files: $files, icon: $icon,
-            description: $description, version: $version, hash: $hash
+            description: $description, version: $version, hash: $hash,
+            status: $status
         }]')
 done
 

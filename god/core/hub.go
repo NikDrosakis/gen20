@@ -12,13 +12,15 @@ import (
 
 // Message είναι το generic protocol του hub.
 type Message struct {
-	Type     string `json:"type"`
-	CID      string `json:"cid,omitempty"`
-	UID      string `json:"uid,omitempty"`
-	C        string `json:"c,omitempty"`
-	Modified int64  `json:"modified,omitempty"`
+    System   string `json:"system,omitempty"`
+    Type     string `json:"type"`
+    CID      string `json:"cid"`
+    UID      string `json:"uid"`
+    To       string `json:"to,omitempty"`
+    Cast     string `json:"cast,omitempty"`
+    C        string `json:"c,omitempty"`
+    Modified int64  `json:"modified,omitempty"`
 }
-
 // Client είναι ένα συνδεδεμένο WebSocket.
 type Client struct {
 	Role    string // "user" | "admin", από το signed token

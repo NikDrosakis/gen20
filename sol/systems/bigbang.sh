@@ -2,7 +2,7 @@
 # BIGBANG — GEN20 infrastructure bootstrap
 # Source-only. Όλες οι εκφράσεις είναι functions: bigbang_<verb>.
 
-BIGBANG_SCRIPT="${BIGBANG_SCRIPT:-$SOL_ROOT/sol/actions/bigbang_start.sh}"
+BIGBANG_SCRIPT="${BIGBANG_SCRIPT:-$SOL_ROOT/sol/acta/bigbang_start.sh}"
 
 bigbang_about() { printf '%s\n' 'BIGBANG | GEN20 infrastructure bootstrap'; }
 bigbang_esti()  { bigbang_help; }

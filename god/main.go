@@ -275,7 +275,7 @@ hub.Sol = core.NewSolBridge()
 
 // 6b. Sol bridge: endpoint /god/v1/sol/ws
 	hub.Sol.Register(router)
-	
+
 	// 7. MCP routes (αν έχει token)
 	registerMCPRoutes(router)
 
