@@ -37,6 +37,17 @@
     margin-top: 4px;
 }
 
+
+.dropdown-menu {
+    top: 100%;
+    margin-top: 0;
+}
+
+/* Hover stability */
+.dropdown-container:hover .dropdown-menu,
+.dropdown-container:focus-within .dropdown-menu {
+    display: block;
+}
 /* Dark mode dropdown */
 [data-theme="dark"] .dropdown-menu {
     background: #2a2a2a;

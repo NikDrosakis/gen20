@@ -1,0 +1,64 @@
+{
+  "cubos": [
+    {
+      "name": "core",
+      "enabled": true,
+      "location": "core",
+      "package": "god/core",
+      "register": "Register",
+      "register_line": "core.Register(a.router)",
+      "signature": "router_only",
+      "endpoints": [
+        "GET  /god/v1/hosts/list",
+        "POST /god/v1/hosts/save",
+        "GET  /god/v1/bind/list",
+        "POST /god/v1/bind/save",
+        "GET  /god/v1/ssl/list",
+        "POST /god/v1/ssl/action",
+        "POST /god/v1/setup/domain"
+      ],
+      "files": [
+        "core/api.go",
+        "core/hosts.go",
+        "core/bind.go",
+        "core/ssl.go"
+      ]
+    },
+    {
+      "name": "build",
+      "enabled": true,
+      "register_line": "core.RegisterBuildRoutes(a.router, a.base)",
+      "files": [
+        "core/build.go"
+      ]
+    },
+    {
+      "name": "chat",
+      "enabled": true,
+      "register_line": "chat.Register(a.hub, a.couch)",
+      "files": [
+        "cubos/chat/chat.go",
+        "cubos/chat/chat_store.go",
+        "cubos/chat/chat_cache.go",
+        "cubos/chat/couchdb.go",
+        "cubos/chat/ws.go"
+      ]
+    },
+    {
+      "name": "mermaid",
+      "enabled": true,
+      "register_line": "mermaid.RegisterRoutes(a.router)",
+      "files": [
+        "cubos/mermaid/routes.go"
+      ]
+    },
+    {
+      "name": "terminal",
+      "enabled": true,
+      "register_line": "terminal.RegisterRoutes(a.router)",
+      "files": [
+        "cubos/terminal/terminal.go"
+      ]
+    }
+  ]
+}

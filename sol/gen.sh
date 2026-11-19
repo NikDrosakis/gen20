@@ -51,6 +51,12 @@ if [[ -d "$SOL_DIR/rima" ]]; then
     done
 fi
 
+# Φόρτωση acta
+if [[ -d "$SOL_DIR/acta" ]]; then
+    for f in "$SOL_DIR/acta"/*.sh; do
+        [[ -r $f ]] && source "$f"
+    done
+fi
 # --------------------------------------------------
 # GEN20 CENTRAL LOG
 # --------------------------------------------------

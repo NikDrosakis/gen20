@@ -29,7 +29,7 @@ export default function Search({ onSearch, initialValue = "" }) {
             <span className="search-icon">🔍</span>
             <input
                 type="text"
-                placeholder="Search articles by title or keyword..."
+                placeholder="Αναζήτησε δημοσιεύσεις με βάση τον τίτλο ή λέξη κλειδί"
                 value={searchTerm}
                 onChange={(e) => {
                     setSearchTerm(e.target.value);

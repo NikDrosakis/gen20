@@ -41,6 +41,8 @@ export default function ContentOne({ name: propName }) {
                 c.id,
                 c.name,
                 c.title,
+                c.type,
+                c.url,
                 c.excerpt,
                 c.description,
                 c.classificationid,
@@ -75,6 +77,8 @@ export default function ContentOne({ name: propName }) {
                     id: contentData.id,
                     name: contentData.name,
                     title: contentData.title || "",
+                    url: contentData.url || null,      // ✅ ΝΕΟ
+                    type: contentData.type || 'post',  // ✅ ΝΕΟ
                     excerpt: contentData.excerpt || "",
                     description: contentData.description || "",
                     classificationid: contentData.classificationid || 1,
@@ -183,6 +187,57 @@ export default function ContentOne({ name: propName }) {
         }
         return `/media/${img}`;
     };
+
+    // ── PDF Viewer ──
+    if (content.type === 'pdf') {
+        const pdfUrl = content.url || (content.img ? `/media/${content.img}` : null);
+
+        return (
+            <>
+                <Helmet prioritizeSeoTags={true}>
+                    <title>{currentTitle} | PDF</title>
+                    <meta name="description" content={(currentExcerpt || currentDescription || '').substring(0, 160)}/>
+                </Helmet>
+
+                <div className="content-one-container">
+                    <article className="single-article pdf-article">
+                        <div className="breadcrumbs">
+                            <Link to="/">Αρχική</Link>
+                            <span className="separator">/</span>
+                            <Link to="/">Ιστολόγιο</Link>
+                            <span className="separator">/</span>
+                            <span className="current">{currentTitle}</span>
+                        </div>
+
+                        <div className="pdf-header">
+                            <h1 className="article-title">{currentTitle}</h1>
+                            {currentExcerpt && <p className="pdf-excerpt">{currentExcerpt}</p>}
+                        </div>
+
+                        {pdfUrl ? (
+                            <div className="pdf-viewer-container">
+                                <iframe
+                                    src={pdfUrl}
+                                    title={currentTitle}
+                                    className="pdf-viewer"
+                                    loading="lazy"
+                                />
+                            </div>
+                        ) : (
+                            <div className="pdf-error">
+                                <p>⚠️ Δεν βρέθηκε PDF για αυτό το άρθρο.</p>
+                            </div>
+                        )}
+
+                        {currentDescription && (
+                            <div className="pdf-description" dangerouslySetInnerHTML={{ __html: currentDescription }} />
+                        )}
+                    </article>
+                </div>
+            </>
+        );
+    }
+
     return (
         <>
             <Helmet prioritizeSeoTags={true}>

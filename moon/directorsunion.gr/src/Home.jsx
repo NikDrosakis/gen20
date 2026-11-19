@@ -11,10 +11,11 @@ const Home = () => {
 
     return (
         <div className={`home-page ${theme}`}>
-            <Slides groupName="home" />
             <Latest/>
+            <>
+            <Slides groupName="home" />
             <VideoPanel />
-            <Hero />
+            </>
         </div>
     );
 };

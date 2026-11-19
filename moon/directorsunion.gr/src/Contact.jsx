@@ -1,24 +1,29 @@
-// /Contact.jsx
+
+// /components/pages/Contact.jsx
+
 import { useState } from "react";
+
 import {
     FaEnvelope,
     FaPhone,
     FaMapMarkerAlt,
     FaTwitter,
-    FaGithub,
-    FaLinkedin,
-    FaUserGraduate,
     FaChartLine,
     FaDna,
     FaMicroscope,
     FaBook,
     FaCheckCircle,
-    FaPaperPlane
+    FaPaperPlane,
+    FaExclamationCircle
 } from "react-icons/fa";
-import { MdSchool } from "react-icons/md";
+
 import "./Contact.css";
+import { useG } from "./GContext";
 
 export default function Contact() {
+    const { G } = useG();
+    const settings = G?.set || {};
+
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -28,53 +33,38 @@ export default function Contact() {
 
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState("");
 
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-
-        // Simulate form submission (replace with actual API call)
-        setTimeout(() => {
-            setIsSubmitted(true);
-            setIsLoading(false);
-            setFormData({ name: "", email: "", subject: "", message: "" });
-
-            // Reset success message after 5 seconds
-            setTimeout(() => setIsSubmitted(false), 5000);
-        }, 1000);
-    };
-
+    // Contact information
     const contactInfo = [
         {
             icon: <FaEnvelope />,
             title: "Email",
-            content: "directorscreatorsunion@gmail.com",
-            link: "mailto:directorscreatorsunion@gmail.com",
+            content: settings.email || "",
+            link: settings.email
+                ? `mailto:${settings.email}`
+                : null,
             color: "var(--primary)"
         },
         {
             icon: <FaPhone />,
             title: "Τηλ.",
-            content: "+30 210 123 4567",
-            link: "tel:+302101234567",
+            content: settings.tel || "",
+            link: settings.tel
+                ? `tel:${settings.tel}`
+                : null,
             color: "var(--secondary)"
         },
         {
             icon: <FaMapMarkerAlt />,
             title: "Διεύθυνση",
-            content: "Athens, Greece",
+            content: settings.address || "",
             link: null,
             color: "var(--accent)"
         }
     ];
 
+    // Social links
     const socialLinks = [
         {
             name: "Twitter",
@@ -84,6 +74,7 @@ export default function Contact() {
         }
     ];
 
+    // Research interests
     const researchInterests = [
         { icon: <FaDna />, text: "Genomics" },
         { icon: <FaMicroscope />, text: "Bioinformatics" },
@@ -91,71 +82,188 @@ export default function Contact() {
         { icon: <FaBook />, text: "Neurogenetics" }
     ];
 
+    // Form changes
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+
+        setError("");
+    };
+
+    // Form submission
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (isLoading) return;
+
+        setError("");
+        setIsSubmitted(false);
+
+        setIsLoading(true);
+
+        try {
+            /*
+             * TODO:
+             * Connect to the actual Gen20 contact endpoint.
+             *
+             * No fake success response.
+             */
+
+            throw new Error(
+                "Η υπηρεσία αποστολής μηνυμάτων δεν έχει συνδεθεί ακόμη."
+            );
+
+        } catch (err) {
+            setError(
+                err.message || "Παρουσιάστηκε σφάλμα κατά την αποστολή."
+            );
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="contact-page-container">
             <div className="centered-container">
                 <div className="contact-container">
 
                     <div className="contact-grid">
+
                         {/* Left Column - Contact Info and Image */}
+
                         <div className="contact-info-section">
+
                             <div className="contact-image-container">
-                                <img
-                                    src="/assets/asset_1.png"
-                                    alt="Bioinformatics Research Illustration"
-                                    className="contact-image"
-                                    onError={(e) => {
-                                        e.target.src = "https://via.placeholder.com/400x300?text=Bioinformatics+Research";
-                                        e.target.onerror = null;
-                                    }}
-                                />
+                                {settings.bg && (
+                                    <img
+                                        src={`/media/${settings.bg}`}
+                                        alt={settings.title || "Contact"}
+                                        className="contact-image"
+                                    />
+                                )}
                             </div>
 
                             <div className="contact-details">
+
                                 <h2>Επικοινωνία</h2>
+
                                 <div className="info-list">
-                                    {contactInfo.map((info, index) => (
-                                        <div key={index} className="info-item">
-                                            <div className="info-icon" style={{color: info.color}}>
-                                                {info.icon}
+
+                                    {contactInfo
+                                        .filter(info => info.content)
+                                        .map((info, index) => (
+                                            <div
+                                                key={index}
+                                                className="info-item"
+                                            >
+                                                <div
+                                                    className="info-icon"
+                                                    style={{
+                                                        color: info.color
+                                                    }}
+                                                >
+                                                    {info.icon}
+                                                </div>
+
+                                                <div className="info-content">
+
+                                                    <h3>{info.title}</h3>
+
+                                                    {info.link ? (
+                                                        <a href={info.link}>
+                                                            {info.content}
+                                                        </a>
+                                                    ) : (
+                                                        <p>{info.content}</p>
+                                                    )}
+
+                                                </div>
                                             </div>
-                                            <div className="info-content">
-                                                <h3>{info.title}</h3>
-                                                {info.link ? (
-                                                    <a href={info.link}>{info.content}</a>
-                                                ) : (
-                                                    <p>{info.content}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
+                                        ))}
+
                                 </div>
                             </div>
+
+                            {/* Social Links */}
+
+                            {socialLinks.length > 0 && (
+                                <div className="social-links">
+                                    {socialLinks.map((social, index) => (
+                                        <a
+                                            key={index}
+                                            href={social.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            aria-label={social.name}
+                                            style={{
+                                                color: social.color
+                                            }}
+                                        >
+                                            {social.icon}
+                                        </a>
+                                    ))}
+                                </div>
+                            )}
+
                         </div>
 
                         {/* Right Column - Contact Form */}
+
                         <div className="contact-form-section">
+
                             <div className="form-card">
+
                                 <h2>Αποστολή Μηνύματος</h2>
+
                                 <p className="form-subtitle">
                                     Θα απαντηθεί το γρηγορότερο
                                 </p>
 
+                                {/* Success */}
+
                                 {isSubmitted && (
                                     <div className="success-message">
-                                        <FaCheckCircle/>
+                                        <FaCheckCircle />
                                         <div>
-                                            <strong>Το μήνυμα στάλθηκε επιτυχώς!</strong>
-                                            <p>Ευχαριστώ για το μήνυμα.</p>
+                                            <strong>
+                                                Το μήνυμα στάλθηκε επιτυχώς!
+                                            </strong>
+                                            <p>
+                                                Ευχαριστούμε για την επικοινωνία.
+                                            </p>
                                         </div>
                                     </div>
                                 )}
 
-                                <form onSubmit={handleSubmit} className="contact-form">
+                                {/* Error */}
+
+                                {error && (
+                                    <div className="error-message">
+                                        <FaExclamationCircle />
+                                        <div>
+                                            {error}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Form */}
+
+                                <form
+                                    onSubmit={handleSubmit}
+                                    className="contact-form"
+                                >
+
                                     <div className="form-group">
+
                                         <label htmlFor="name">
-                                            Όνομα <span className="required">*</span>
+                                            Όνομα
+                                            <span className="required">*</span>
                                         </label>
+
                                         <input
                                             type="text"
                                             id="name"
@@ -163,14 +271,20 @@ export default function Contact() {
                                             value={formData.name}
                                             onChange={handleChange}
                                             required
-                                            placeholder="Dr. Jane Smith"
+                                            maxLength={120}
+                                            autoComplete="name"
+                                            placeholder="Το όνομά σας"
                                         />
+
                                     </div>
 
                                     <div className="form-group">
+
                                         <label htmlFor="email">
-                                            Email <span className="required">*</span>
+                                            Email
+                                            <span className="required">*</span>
                                         </label>
+
                                         <input
                                             type="email"
                                             id="email"
@@ -178,14 +292,20 @@ export default function Contact() {
                                             value={formData.email}
                                             onChange={handleChange}
                                             required
-                                            placeholder="jane.smith@example.com"
+                                            maxLength={254}
+                                            autoComplete="email"
+                                            placeholder="your@email.com"
                                         />
+
                                     </div>
 
                                     <div className="form-group">
+
                                         <label htmlFor="subject">
-                                            θέμα <span className="required">*</span>
+                                            Θέμα
+                                            <span className="required">*</span>
                                         </label>
+
                                         <input
                                             type="text"
                                             id="subject"
@@ -193,23 +313,30 @@ export default function Contact() {
                                             value={formData.subject}
                                             onChange={handleChange}
                                             required
-                                            placeholder="Research collaboration inquiry"
+                                            maxLength={200}
+                                            placeholder="Θέμα επικοινωνίας"
                                         />
+
                                     </div>
 
                                     <div className="form-group">
+
                                         <label htmlFor="message">
-                                            Message <span className="required">*</span>
+                                            Μήνυμα
+                                            <span className="required">*</span>
                                         </label>
+
                                         <textarea
                                             id="message"
                                             name="message"
                                             value={formData.message}
                                             onChange={handleChange}
                                             required
-                                            rows="6"
-                                            placeholder="Κείμενο μηνύματος..."
+                                            maxLength={10000}
+                                            rows={6}
+                                            placeholder="Γράψτε το μήνυμά σας..."
                                         />
+
                                     </div>
 
                                     <button
@@ -217,25 +344,30 @@ export default function Contact() {
                                         className="submit-button"
                                         disabled={isLoading}
                                     >
+
                                         {isLoading ? (
                                             <>
-                                                <span className="spinner"></span>
-                                                Στέλνει...
+                                                <span className="spinner" />
+                                                Αποστολή...
                                             </>
                                         ) : (
                                             <>
-                                                <FaPaperPlane/>
+                                                <FaPaperPlane />
                                                 Αποστολή
                                             </>
                                         )}
+
                                     </button>
+
                                 </form>
+
                             </div>
                         </div>
+
                     </div>
 
                 </div>
-                </div>
-                </div>
-                );
-                }
+            </div>
+        </div>
+    );
+}

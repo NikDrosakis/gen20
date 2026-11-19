@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Latest.css';
 
-const Latest = ({ classification = 'publications', limit = 8 }) => {
+const Latest = ({ classification = 'publications', limit = 13 }) => {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -28,7 +28,8 @@ const Latest = ({ classification = 'publications', limit = 8 }) => {
                                u.lastname as author_lastname
                            FROM ${publicdb}.content c
                                     LEFT JOIN ${publicdb}.user u ON c.userid = u.id
-                           WHERE c.type = 'post'
+                                    LEFT JOIN ${publicdb}.classification cl ON c.classificationid = cl.id
+                           WHERE cl.name = '${classification}'
                            ORDER BY c.published DESC, c.id DESC
                                LIMIT ${limit}`;
 

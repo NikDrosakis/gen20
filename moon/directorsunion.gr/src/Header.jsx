@@ -37,53 +37,60 @@ const Header = () => {
 
     return (
         <>
-            {/* Profile Section */}
-            <div className="profile-section">
-                <div className="profile-container">
-                    {/* Avatar */}
-                    {logo && (
-                        <div className="avatar-container">
-                            <img src={`/media/${logo}`} alt="Logo" className="avatar" />
-                        </div>
-                    )}
-
-                    {/* Organization Info */}
-                    <div className="org-info">
-                        <h1 className="org-name">
-                           {G.set.title}
-                        </h1>
-                        {bg && (
-                            <img
-                                src={`/media/${bg}`}
-                                className="bg-image"
-                                alt="Background"
-                            />
-                        )}
+        <div className="profile-section">
+            <div
+                className={`profile-container ${bg ? 'has-background' : ''}`}
+                style={bg ? {
+                    backgroundImage: `
+                linear-gradient(
+                    rgba(20, 20, 38, 0.30),
+                    rgba(20, 20, 38, 0.40)
+                ),
+                url("/media/${bg}")
+            `
+                } : undefined}
+            >
+                {/* Avatar */}
+                {logo && (
+                    <div className="avatar-container">
+                        <img
+                            src={`/media/${logo}`}
+                            alt="Logo"
+                            className="avatar"
+                        />
                     </div>
+                )}
 
-                    {/* Navigation */}
-                    <Navigation />
+                {/* Organization Info */}
+                <div className="org-info">
+                    <h1 className="org-name">{G.set.title}</h1>
                 </div>
-            </div>
 
-            {/* Sticky Header on Scroll */}
-            <div className={`sticky-header ${scrolled ? 'visible' : ''}`}>
-                <img src="/logo0.png" alt="Logo" className="sticky-logo" />
-                <span className="sticky-title">Ένωση Σκηνοθετών Δημιουργών</span>
-                <div className="social-follow">
-                    <a
-                        href={facebookPageUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="sticky-follow-btn"
-                        aria-label="Ακολουθήστε μας στο Facebook"
-                    >
-                        <FaFacebook style={{ marginRight: '5px' }} /> Ακολουθήστε
-                    </a>
-                </div>
+                <Navigation/>
             </div>
-        </>
-    );
+        </div>
+
+
+    {/* Sticky Header on Scroll */
+    }
+    <div className={`sticky-header ${scrolled ? 'visible' : ''}`}>
+        <img src="/logo0.png" alt="Logo" className="sticky-logo"/>
+        <span className="sticky-title">Ένωση Σκηνοθετών Δημιουργών</span>
+        <div className="social-follow">
+            <a
+                href={facebookPageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sticky-follow-btn"
+                aria-label="Ακολουθήστε μας στο Facebook"
+            >
+                <FaFacebook style={{marginRight: '5px'}}/> Ακολουθήστε
+            </a>
+        </div>
+    </div>
+</>
+)
+    ;
 };
 
 export default Header;

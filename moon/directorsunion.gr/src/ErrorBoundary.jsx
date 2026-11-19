@@ -19,8 +19,8 @@ class ErrorBoundary extends React.Component {
         if (this.state.hasError) {
             return (
                 <div className="container text-center" style={{ padding: "4rem 2rem" }}>
-                    <h1>Something went wrong</h1>
-                    <p>Please refresh the page or contact support if the issue persists.</p>
+                    <h1>Κάτι δεν πήγε καλά</h1>
+                    <p>Ανανέωσε τη σελίδα, αν δεν επανέλθει, ενημέρωσε τον αρμόδιο.</p>
                     <button onClick={() => window.location.reload()}>Refresh Page</button>
                 </div>
             );

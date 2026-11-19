@@ -4,14 +4,18 @@
 set -u
 
 # Shared configuration
-if [[ ! -r /var/www/gs/sol/.env ]]; then
-    echo "Missing configuration: /var/www/gs/sol/.env" >&2
+ENV_FILE="${ENV_FILE:-/var/www/gs/.env}"
+
+if [[ ! -r "$ENV_FILE" ]]; then
+    echo "Missing configuration: $ENV_FILE" >&2
     exit 1
 fi
 
-source /var/www/gs/sol/.env
+source "$ENV_FILE"
 
 # Shared logger
+SOL_ROOT="${SOL_ROOT:-/var/www/gs}"
+
 if [[ ! -r "$SOL_ROOT/init.sh" ]]; then
     echo "Missing shared logger: $SOL_ROOT/init.sh" >&2
     exit 1

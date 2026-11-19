@@ -1,21 +1,16 @@
 /* Slides.css */
 .slides-container {
-    position: relative;
-    width: 60%;
     float: left;
-    max-width: 1200px;
-    min-height: 400px;
-    height: auto;
-    background: var(--card-bg, #ffffff);
-    border-radius: 12px;
-    padding: 20px;
+    background: var(--card-bg, #fff);
     z-index: 10;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    margin-right: 1%;
-    margin-bottom: 20px;
-    transition: none;
-    overflow: hidden;
     flex-shrink: 0;
+    width: 60%;
+    max-width: 63%;
+    height: auto;
+    min-height: 400px;
+    transition: none;
+    position: relative;
+    overflow: hidden;
 }
 
 .slides-viewer {
@@ -92,14 +87,12 @@
 }
 
 .slides-btn {
-    background: rgba(59, 130, 246, 0.9);
-    color: white;
+    cursor: pointer;
     border: none;
     padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
     font-size: 18px;
-    transition: all 0.3s ease;
+    transition: all .3s;
+    background:none;
 }
 
 .slides-btn:hover {
@@ -108,12 +101,8 @@
 }
 
 .slides-counter {
-    color: white;
-    font-size: 14px;
-    font-weight: bold;
-    background: rgba(0, 0, 0, 0.5);
     padding: 6px 12px;
-    border-radius: 20px;
+
 }
 
 /* 🔹 Thumbnails - σταθερό ύψος και scroll αν χρειαστεί */
@@ -251,6 +240,7 @@
     .slides-btn {
         padding: 6px 12px;
         font-size: 14px;
+        background:none;
     }
 
     .slides-caption {

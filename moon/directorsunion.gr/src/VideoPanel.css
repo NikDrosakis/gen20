@@ -1,12 +1,9 @@
 /* VideoPanel.css */
 .video-panel-container {
-    width: 100%;
-    float:left;
-    margin: 12px;
-    max-width: 1400px;
-    padding: 40px 20px;
+    float: left;
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-radius: 20px;
+    width: 100%;
+    max-width: 60%;
 }
 
 .video-panel-hero {

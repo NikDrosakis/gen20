@@ -1,13 +1,14 @@
 // pages/Blog.jsx
 import { useState, useEffect } from "react";
-import { useParams  } from "react-router-dom";
 import ContentArchive from "./ContentArchive";
 import ContentOne from "./ContentOne";
 import Search from "./Search";
 import "./Blog.css";
 import Cookies from 'js-cookie';
-export default function Blog({ pageName, pageTitle }) {
-    const { classification } = useParams();
+export default function Blog({ classification, pageName }) {
+    console.log('Blog received classification:', classification);
+    console.log('Blog received pageName:', pageName);
+    console.log('Type of classification:', typeof classification);
     const lang = Cookies.get('lang') || 'en';
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -38,9 +39,9 @@ export default function Blog({ pageName, pageTitle }) {
             FROM ${publicdb}.content c
             LEFT JOIN ${publicdb}.user u ON c.userid = u.id
             LEFT JOIN ${publicdb}.classification ct ON c.classificationid = ct.id
-            WHERE c.type='post' AND ct.name='${classification}'
+            WHERE ct.name='${classification}'
             ORDER BY c.id DESC`;
-
+console.log(query);
             const response = await fetch(`/api/v1/maria/fa?folder=${encodeURIComponent(query)}`);
             const data = await response.json();
 
@@ -188,7 +189,7 @@ export default function Blog({ pageName, pageTitle }) {
             <div className="blog-container">
                 {/* Header */}
                 <div className="blog-header">
-                    <h1>{pageTitle}</h1>
+                    <h1>{pageName}</h1>
                 </div>
 
                 {/* Search Component */}

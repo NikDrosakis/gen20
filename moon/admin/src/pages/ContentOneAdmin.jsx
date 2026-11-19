@@ -17,6 +17,7 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
     const [loading, setLoading] = useState(!isNew && !!propContentId);
     const [saving, setSaving] = useState(false);
     const [contentId, setContentId] = useState(propContentId || null);
+    const [typeOptions, setTypeOptions] = useState([]);
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -70,6 +71,30 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
         const searchParams = new URLSearchParams(window.location.search);
         return searchParams.get('id');
     };
+
+    useEffect(() => {
+        const fetchTypeEnum = async () => {
+            try {
+                const query = `SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '${publicdb}' AND TABLE_NAME = 'content' AND COLUMN_NAME = 'type'`;
+                const response = await fetch(`/api/v1/maria/fa?query=${encodeURIComponent(query)}`);
+                const result = await response.json();
+
+                if (result.success && result.data && result.data.length > 0) {
+                    const columnType = result.data[0].COLUMN_TYPE || '';
+                    // Parse: enum('post','page','component','block','article')
+                    const match = columnType.match(/enum\((.*)\)/i);
+                    if (match) {
+                        const options = match[1].split(',').map(s => s.trim().replace(/^'|'$/g, ''));
+                        setTypeOptions(options);
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching type enum:', err);
+            }
+        };
+
+        fetchTypeEnum();
+    }, [publicdb]);
 
     // Load content for edit mode
     useEffect(() => {
@@ -321,6 +346,7 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
                                                               description='${escapeSql(safeDescription)}',
                                                               excerpt='${escapeSql(safeExcerpt)}',
                                                               name='${escapeSql(safeName)}',
+                                                              type='${escapeSql(formData.type || 'post')}',
                                                               classificationid=${parseInt(formData.classificationid) || 1},
                                                               userid=${parseInt(formData.userid) || 1},
                                                               img='${escapeSql(formData.img || '')}',
@@ -480,9 +506,19 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
                         value={formData.type || 'post'}
                         onChange={(e) => setFormData({...formData, type: e.target.value})}
                     >
-                        <option value="post">Post</option>
-                        <option value="component">Component</option>
-                        <option value="block">Block</option>
+                        {typeOptions.length === 0 ? (
+                            // Fallback αν το enum δεν φορτώθηκε
+                            <>
+                                <option value="post">Post</option>
+                                <option value="pdf">PDF</option>
+                            </>
+                        ) : (
+                            typeOptions.map(type => (
+                                <option key={type} value={type}>
+                                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                                </option>
+                            ))
+                        )}
                     </select>
                 </div>
 
@@ -506,7 +542,7 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
 
             {/* === MEDIA TOOLBOX FORM CARD === */}
             {showMediaToolbox && (
-                <div className="form-card" style={{ position: 'relative' }}>
+                <div className="form-card" style={{position: 'relative'}}>
                     <MediaToolbox
                         onSelect={handleMediaSelect}
                         onClose={() => setShowMediaToolbox(false)}
@@ -514,7 +550,7 @@ const ContentOneAdmin = ({ navigateTo, contentId: propContentId, isNew = false }
                     />
                 </div>
             )}
-            
+
             <div className="form-card">
                 <div className="form-row">
                     <div className="form-group">

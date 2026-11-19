@@ -15,12 +15,8 @@ import Reels from "./Reels";
 import Login from "./Login";
 import Signup from "./Signup";
 const BlogWrapper = () => {
-    const { path } = useParams();
-    const titles = {
-        publications: 'Θέσεις/Παρεμβάσεις',
-        actions: 'Εκδηλώσεις/Δράσεις'
-    };
-    return <Blog classification={path} pageTitle={titles[path] || path} />;
+    const { classification } = useParams();
+    return <Blog classification={classification} pageName={classification} />;
 };
 export const router = createBrowserRouter([
     {

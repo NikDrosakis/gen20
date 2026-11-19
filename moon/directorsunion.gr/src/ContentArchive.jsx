@@ -63,7 +63,7 @@ export default function ContentArchive({ posts, featuredPosts, loading, error, s
             <div className="content-archive">
                 <div className="archive-loading">
                     <div className="magazine-spinner"></div>
-                    <p className="loading-text">Loading research articles...</p>
+                    <p className="loading-text">Φορτώνονται τα άρθρα...</p>
                 </div>
                 <div className="skeleton-grid">
                     {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -86,7 +86,7 @@ export default function ContentArchive({ posts, featuredPosts, loading, error, s
             <div className="content-archive">
                 <div className="archive-error">
                     <span className="error-icon">⚠️</span>
-                    <h3>Unable to load articles</h3>
+                    <h3>Αδύνατο να φορτωθούν τα άρθρα</h3>
                     <p>There was a problem fetching the research content. Please try again.</p>
                     <button onClick={() => window.location.reload()} className="retry-btn">
                         Retry
@@ -101,11 +101,11 @@ export default function ContentArchive({ posts, featuredPosts, loading, error, s
             <div className="content-archive">
                 <div className="archive-empty">
                     <span className="empty-icon">📚</span>
-                    <h3>No articles found</h3>
+                    <h3>Καθόλου δημοσιεύσεις</h3>
                     {searchTerm ? (
                         <p>Δεν υπάρχουν αποτελέσματα με τον όρο αναζήτησης "{searchTerm}". Δοκίμασε διαφορετικό όρο.</p>
                     ) : (
-                        <p>Check back soon for new research articles and insights.</p>
+                        <p>Επέστρεψε σύντομα για νέα άρθρα και ενημερώσεις.</p>
                     )}
                 </div>
             </div>
@@ -153,7 +153,7 @@ export default function ContentArchive({ posts, featuredPosts, loading, error, s
                                 {post.img && (
                                     <div className="featured-image">
                                         <img
-                                            src={getImageSrc(post.img)}
+                                            src={post.type === 'pdf' ? '📄 PDF' : getImageSrc(post.img)}
                                             alt={post.title}
                                             onError={(e) => {
                                                 e.target.src = "/media/default.png";
@@ -172,14 +172,14 @@ export default function ContentArchive({ posts, featuredPosts, loading, error, s
                                         <span>👩‍🔬 {getAuthorName(post)}</span>
                                     </div>
                                     <Link to={`/blog?id=${post.id}`} className="read-more-featured">
-                                        Read full article →
+                                        Διάβασε →
                                     </Link>
                                 </div>
                             </div>
                             {expandedPost === post.id && (
                                 <div className="expanded-content">
                                     <div className="expanded-inner">
-                                        <h3>Full Article</h3>
+                                        <h3>Πλήρες Άρθρο</h3>
                                         <div dangerouslySetInnerHTML={{ __html: post.description || '' }} />
                                         <div className="expanded-meta">
                                             <div className="citation">
@@ -201,7 +201,7 @@ export default function ContentArchive({ posts, featuredPosts, loading, error, s
                     {featuredPosts.slice(1, 2).map((post) => (
                         <div key={post.id} className="featured-card">
                             <div className="featured-card-image">
-                                <img src={post.img || '/assets/default.jpg'} alt={post.title} />
+                                <img src={post.type === 'pdf' ? '📄 PDF' : post.img || '/assets/default.jpg'} alt={post.title} />
                             </div>
                             <div className="featured-card-content">
                                 <span className="featured-category-small">{getCategoryTitle(post)}</span>
@@ -225,7 +225,9 @@ export default function ContentArchive({ posts, featuredPosts, loading, error, s
                                 {post.img && (
                                     <div className="post-image">
                                         <img src={getImageSrc(post.img)} alt={post.title} />
-                                        <span className="post-category-badge">{getCategoryTitle(post)}</span>
+                                        <span className="post-category-badge">
+                                        {post.type === 'pdf' ? '📄 PDF' : getCategoryTitle(post)}
+                                        </span>
                                         <button
                                             className={`post-bookmark ${bookmarkedPosts.includes(post.id) ? 'active' : ''}`}
                                             onClick={() => toggleBookmark(post.id)}

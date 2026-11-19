@@ -148,6 +148,15 @@ const Navigation = () => {
                     </NavLink>
 
                     <NavLink
+                        to="/nomoi"
+                        className={({ isActive }) =>
+                            isActive ? 'nav-link active' : 'nav-link'
+                        }
+                    >
+                        ΚΑΝΟΝΙΣΜΟΙ/ΝΟΜΟΙ
+                    </NavLink>
+
+                    <NavLink
                         to="/arxeio"
                         className={({ isActive }) =>
                             isActive ? 'nav-link active' : 'nav-link'
