@@ -394,3 +394,25 @@
         font-size: 10px;
     }
 }
+
+.sort-handle {
+    cursor: grab;
+    user-select: none;
+}
+
+.sort-handle:active {
+    cursor: grabbing;
+}
+
+.dragging {
+    opacity: 0.35;
+}
+
+.drag-over {
+    outline: 2px dashed var(--primary-color, #8b2635);
+    outline-offset: -2px;
+}
+
+#sortableLinks tbody tr {
+    transition: opacity 150ms ease;
+}

@@ -30,7 +30,61 @@ done
 SOL_DIR=$(cd -- "$(dirname -- "$SOL_SOURCE")" && pwd -P)
 SOL_ROOT=$(cd -- "$SOL_DIR/.." && pwd -P)
 unset SOL_SOURCE SOL_TARGET
-SOL_VERSION="0.1.0"
+SOL_VERSION="0.90"
+
+
+
+# --------------------------------------------------
+# SOL ENVIRONMENT SETUP
+# --------------------------------------------------
+
+SOL_BIN="/usr/local/bin"
+SOL_ENV="/var/www/gs/.env"
+
+SOL_GEN="${SOL_ROOT}/gen.sh"
+SOL_GEND="${SOL_ROOT}/gen-daemonctl.sh"
+
+# Create or repair symlinks
+for item in "gen:${SOL_GEN}" "gend:${SOL_GEND}"; do
+    name="${item%%:*}"
+    target="${item#*:}"
+    link="${SOL_BIN}/${name}"
+
+    if [[ ! -L "$link" || "$(readlink -f "$link" 2>/dev/null)" != "$target" ]]; then
+        if [[ -e "$link" && ! -L "$link" ]]; then
+            printf 'SOL: refusing to replace existing file: %s\n' "$link" >&2
+            continue
+        fi
+
+        if ! ln -sfn "$target" "$link" 2>/dev/null; then
+            printf 'SOL: cannot create %s (sudo required)\n' "$link" >&2
+            continue
+        fi
+
+        printf 'SOL: linked %s -> %s\n' "$name" "$target"
+    fi
+done
+
+# Write SOL_ROOT to central .env
+if [[ -f "$SOL_ENV" ]]; then
+    if grep -q '^SOL_ROOT=' "$SOL_ENV"; then
+        sed -i "s|^SOL_ROOT=.*|SOL_ROOT=${SOL_ROOT}|" "$SOL_ENV"
+    else
+        printf '\nSOL_ROOT=%s\n' "$SOL_ROOT" >> "$SOL_ENV"
+    fi
+else
+    printf 'SOL: central .env not found: %s\n' "$SOL_ENV" >&2
+fi
+
+# Start SOL daemon
+if [[ -x "$SOL_GEND" ]]; then
+    "$SOL_GEND" start
+else
+    printf 'SOL: daemon controller not found: %s\n' "$SOL_GEND" >&2
+fi
+
+
+
 
 # Φόρτωση ΟΛΩΝ των __sol_*.sh
 for f in "$SOL_DIR"/__sol/__sol_*.sh; do

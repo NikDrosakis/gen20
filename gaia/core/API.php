@@ -6,6 +6,7 @@ use ReflectionClass;
 use ReflectionMethod;
 use Symfony\Component\Security\Core\Security;
 
+use Core\Traits\My;
 use Core\Traits\Media;
 use Core\Traits\Tree;
 use Core\Traits\Form;
@@ -32,7 +33,7 @@ use Core\Cubos\Aggregator;
  * */
 
 class API extends Gaia{
-	 use Share,Content, Aggregator, Xml, GA,Manifest,Filesystem,Filemeta, Media, Tree,Form, Domain,DomainDB, DomainFS, CuboAdmin, CuboPublic, Lang, Url, Deepseek;
+	 use My,Share,Content, Aggregator, Xml, GA,Manifest,Filesystem,Filemeta, Media, Tree,Form, Domain,DomainDB, DomainFS, CuboAdmin, CuboPublic, Lang, Url, Deepseek;
    private $security;
 
    public function __construct() {

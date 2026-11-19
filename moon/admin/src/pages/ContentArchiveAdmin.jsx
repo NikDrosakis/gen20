@@ -1,9 +1,10 @@
 // pages/Page.jsx - ContentArchiveAdmin
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useDragDrop } from '../useDragDrop';
 import './Content.css';
 
 const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
-const FALLBACK_CONTENT_TYPES = ['post', 'page', 'block', 'website', 'video'];
+const FALLBACK_CONTENT_TYPES = ['post', 'website', 'video'];
 
 const sqlEscape = (value) => String(value ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 const parseEnumValues = (columnType) => {
@@ -25,6 +26,8 @@ const ContentArchiveAdmin = ({ navigateTo }) => {
     const [apiStatus, setApiStatus] = useState({ show: false, message: '', type: '' });
     const [searchTerm, setSearchTerm] = useState('');
     const [previewContent, setPreviewContent] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 25;
     const showNotification = (message, type = 'success') => {
         setApiStatus({ show: true, message, type });
         setTimeout(() => setApiStatus({ show: false, message: '', type: '' }), 3000);
@@ -112,62 +115,123 @@ const ContentArchiveAdmin = ({ navigateTo }) => {
         });
     }, [contents, selectedClassificationId, selectedType, searchTerm]);
 
-    const updateSortOrder = async (id, sort) => {
-        const query = `UPDATE ${publicdb}.content
-            SET sort=${Number(sort)}
-            WHERE id=${Number(id)}
-              AND classificationid=${Number(selectedClassificationId)}`;
-        const response = await fetch('/api/v1/maria/q', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify([query, []])
-        });
-        const result = await response.json();
-        if (!result.success) throw new Error(result.error || `Failed to sort item ${id}`);
-    };
+    // --------------------------------------------------
+    // PAGINATION
+    // --------------------------------------------------
 
-    const handleSortEnd = useCallback(async () => {
-        // Reordering is enabled only for one complete classification (no search/type filters).
-        const rows = document.querySelectorAll('#contentSortable tbody tr[data-id]');
-        const orderList = Array.from(rows).map((row, index) => ({
-            id: Number(row.getAttribute('data-id')),
-            sort: index + 1
-        })).filter((item) => item.id > 0);
+    const totalPagesCount = Math.max(1, Math.ceil(filteredContents.length / pageSize));
 
-        try {
-            for (const item of orderList) {
-                await updateSortOrder(item.id, item.sort);
-            }
-            setContents((current) => current.map((content) => {
-                const item = orderList.find((entry) => entry.id === Number(content.id));
-                return item ? { ...content, sort: item.sort } : content;
-            }));
-            showNotification('Sort order updated', 'success');
-        } catch (error) {
-            console.error('Error updating sort order:', error);
-            showNotification('Failed to update sort order', 'error');
-            fetchContents();
+    const pageContents = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        return filteredContents.slice(start, start + pageSize);
+    }, [filteredContents, currentPage]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [selectedClassificationId, selectedType, searchTerm, viewStyle]);
+
+    useEffect(() => {
+        if (currentPage > totalPagesCount) {
+            setCurrentPage(totalPagesCount);
         }
-    }, [selectedClassificationId, fetchContents]);
+    }, [currentPage, totalPagesCount]);
+
+    // --------------------------------------------------
+    // DRAG & DROP SORTING
+    // Reorder is allowed only for one complete classification.
+    // Pagination changes the visible slice, not the global order.
+    // --------------------------------------------------
 
     const canReorder = viewStyle === 'table' &&
         Boolean(selectedClassificationId) &&
         selectedType === 'all' &&
         searchTerm.trim() === '';
 
-    useEffect(() => {
-        if (!canReorder || loading || filteredContents.length < 2 ||
-            typeof window.Sortable === 'undefined') return undefined;
-        const tbody = document.querySelector('#contentSortable tbody');
-        if (!tbody) return undefined;
-        const sortable = new window.Sortable(tbody, {
-            animation: 150,
-            handle: '.content-sort-handle',
-            draggable: 'tr[data-id]',
-            onEnd: handleSortEnd
-        });
-        return () => sortable.destroy();
-    }, [canReorder, loading, filteredContents.length, handleSortEnd]);
+    const handleSortDrop = useCallback(async (payload, target) => {
+        if (!canReorder || !payload?.id || !target?.id) return;
+        if (Number(payload.id) === Number(target.id)) return;
+
+        const fromIndex = pageContents.findIndex(
+            item => Number(item.id) === Number(payload.id)
+        );
+        const toIndex = pageContents.findIndex(
+            item => Number(item.id) === Number(target.id)
+        );
+
+        if (fromIndex < 0 || toIndex < 0) return;
+
+        // Reorder only the visible page, preserving every other page.
+        const reorderedPage = [...pageContents];
+        const [moved] = reorderedPage.splice(fromIndex, 1);
+        reorderedPage.splice(toIndex, 0, moved);
+
+        // Insert the reordered page back into the complete classification.
+        const pageStart = (currentPage - 1) * pageSize;
+        const reorderedAll = [...filteredContents];
+        reorderedAll.splice(pageStart, reorderedPage.length, ...reorderedPage);
+
+        // Recalculate a continuous global sort index.
+        const updatedAll = reorderedAll.map((content, index) => ({
+            ...content,
+            sort: index + 1
+        }));
+
+        // Optimistic UI update.
+        const updatedById = new Map(
+            updatedAll.map(content => [Number(content.id), content])
+        );
+
+        setContents(current => current.map(content =>
+            updatedById.get(Number(content.id)) || content
+        ));
+
+        try {
+            // Persist the complete classification order so pagination
+            // cannot create duplicate or overlapping sort positions.
+            for (const item of updatedAll) {
+                const query = `UPDATE ${publicdb}.content
+                    SET sort=${Number(item.sort)}
+                    WHERE id=${Number(item.id)}
+                      AND classificationid=${Number(selectedClassificationId)}`;
+
+                const response = await fetch('/api/v1/maria/q', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify([query, []])
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(
+                        result.error || `Failed to sort item ${item.id}`
+                    );
+                }
+            }
+
+            showNotification('Sort order updated', 'success');
+
+        } catch (error) {
+            console.error('Error updating sort order:', error);
+            showNotification('Failed to update sort order', 'error');
+            fetchContents();
+        }
+    }, [
+        canReorder,
+        pageContents,
+        filteredContents,
+        currentPage,
+        selectedClassificationId,
+        fetchContents
+    ]);
+
+    const {
+        dragging,
+        makeDragProps,
+        makeDropProps
+    } = useDragDrop({
+        onDrop: handleSortDrop
+    });
 
     const handleDeleteContent = async (id, title) => {
         if (!window.confirm(`Are you sure you want to delete "${title || 'Untitled'}"?`)) return;
@@ -305,7 +369,7 @@ const ContentArchiveAdmin = ({ navigateTo }) => {
                             </button>
                         )}
                     </div>
-                    <button className="btn-add" onClick={() => navigateTo('page-new')}>
+                    <button className="btn-add" onClick={() => navigateTo('content-new')}>
                         + New Content
                     </button>
                 </div>
@@ -334,7 +398,7 @@ const ContentArchiveAdmin = ({ navigateTo }) => {
             </div>
 
             {canReorder && (
-                <p className="content-sort-hint">Drag rows using the ⋮⋮ handle to change their order within this classification.</p>
+                <p className="content-sort-hint">Drag rows using ⋮⋮ to reorder this page. Other pages keep their relative positions.</p>
             )}
 
 
@@ -357,14 +421,20 @@ const ContentArchiveAdmin = ({ navigateTo }) => {
                         </tr>
                         </thead>
                         <tbody>
-                        {filteredContents.map((content) => (
-                            <tr key={content.id} data-id={content.id}>
+                        {pageContents.map((content) => (
+                            <tr
+                                key={content.id}
+                                data-id={content.id}
+                                {...(canReorder ? makeDropProps({ id: content.id }) : {})}
+                                className={Number(dragging?.id) === Number(content.id) ? 'content-row-dragging' : ''}
+                            >
                                 <td>
                                     {canReorder ? (
                                         <span
                                             className="content-sort-handle"
                                             title="Drag to reorder"
                                             style={{ cursor: 'grab' }}
+                                            {...makeDragProps({ id: content.id })}
                                         >
                                     ⋮⋮ <span>{content.sort ?? content.id}</span>
                                 </span>
@@ -433,7 +503,7 @@ const ContentArchiveAdmin = ({ navigateTo }) => {
                                 <td>{Number(content.view_count || 0).toLocaleString()}</td>
                                 <td>{content.published ? new Date(content.published).toLocaleDateString('el-GR') : ''}</td>
                                 <td>
-                                    <button className="btn-edit" onClick={() => navigateTo('page-edit', content.id)} title="Edit">✏️</button>
+                                    <button className="btn-edit" onClick={() => navigateTo('content-edit', content.id)} title="Edit">✏️</button>
                                     <button
                                         className="btn-delete"
                                         onClick={() => handleDeleteContent(content.id, content.title)}
@@ -447,7 +517,7 @@ const ContentArchiveAdmin = ({ navigateTo }) => {
                 </div>
             ) : (
                 <div className="content-archive-boxy-grid">
-                    {filteredContents.map((content) => {
+                    {pageContents.map((content) => {
                         const imageUrl = content.img
                             ? (content.img.startsWith('http') ? content.img : `/media/${content.img}`)
                             : null;
@@ -457,7 +527,7 @@ const ContentArchiveAdmin = ({ navigateTo }) => {
                                 <button
                                     type="button"
                                     className="content-boxy-open"
-                                    onClick={() => navigateTo('page-edit', content.id)}
+                                    onClick={() => navigateTo('content-edit', content.id)}
                                     title={`Edit ${content.title || content.name || content.id}`}
                                 >
                                     {imageUrl ? (
@@ -477,21 +547,21 @@ const ContentArchiveAdmin = ({ navigateTo }) => {
                                         </div>
                                     )}
 
-<div className="content-boxy-overlay">
+                                    <div className="content-boxy-overlay">
 <span className="content-boxy-type">
 {content.type || 'post'}
 </span>
 
-<span className="content-boxy-category">
+                                        <span className="content-boxy-category">
 {content.category_title ||
-content.category_name ||
-'Uncategorized'}
+    content.category_name ||
+    'Uncategorized'}
 </span>
 
-<strong>
-{content.title || content.name || 'Untitled'}
-</strong>
-</div>
+                                        <strong>
+                                            {content.title || content.name || 'Untitled'}
+                                        </strong>
+                                    </div>
                                 </button>
 
                                 <span
@@ -512,7 +582,7 @@ content.category_name ||
                                         type="button"
                                         className="btn-edit"
                                         title="Edit"
-                                        onClick={() => navigateTo('page-edit', content.id)}
+                                        onClick={() => navigateTo('content-edit', content.id)}
                                     >✏️
                                     </button>
 
@@ -528,6 +598,33 @@ content.category_name ||
                         );
                     })}
 
+                </div>
+            )}
+
+            {filteredContents.length > 0 && (
+                <div className="content-pagination">
+                    <button
+                        type="button"
+                        className="content-pagination-btn"
+                        onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+                        disabled={currentPage === 1}
+                    >
+                        ← Previous
+                    </button>
+
+                    <span className="content-pagination-info">
+                        Page {currentPage} of {totalPagesCount}
+                        <span> · {filteredContents.length} records</span>
+                    </span>
+
+                    <button
+                        type="button"
+                        className="content-pagination-btn"
+                        onClick={() => setCurrentPage(page => Math.min(totalPagesCount, page + 1))}
+                        disabled={currentPage >= totalPagesCount}
+                    >
+                        Next →
+                    </button>
                 </div>
             )}
 
