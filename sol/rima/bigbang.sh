@@ -7,6 +7,7 @@
 # CouchDB: native Apache package on Debian 12; systemd-managed official
 # CouchDB container on Debian 13 (Apache's convenience .deb list covers 11/12).
 
+bigbang() (
 set -Eeuo pipefail
 
 GS_ROOT="${GS_ROOT:-/var/www/gs}"
@@ -124,7 +125,7 @@ BASE_PACKAGES=(
     # PHP: unpinned Debian default + repository-selected MariaDB driver.
     php-cli php-fpm php-curl php-mbstring php-xml
     php-zip php-gd php-intl php-bcmath php-opcache php-redis php-apcu
-    "$PHP_MARIADB_PACKAGE"
+    "${PHP_MARIADB_PACKAGE:-php-mysql}"
 
     golang-go supervisor
     procps psmisc lsof net-tools iproute2
@@ -397,3 +398,4 @@ say "MariaDB, Redis, CouchDB, Nginx and PHP-FPM are active."
 warn "No domains, Nginx virtual hosts, TLS certificates, application databases, database users or application services were configured."
 warn "KRONOS requirements.txt is not installed automatically; it may contain heavyweight ML/CUDA packages."
 say "Next: review MARS configuration, then run 'make -C $GS_ROOT/mars'."
+)
