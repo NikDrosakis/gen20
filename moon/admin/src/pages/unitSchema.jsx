@@ -4,14 +4,14 @@ export const UNIT_SCHEMAS = {
         label: 'ContentOne',
         source: 'default',
         fields: [
-            { key: 'id', type: 'picker', label: 'Post', default: 1 },
+            { key: 'id', type: 'select', label: 'Post', default: 1 },
         ],
     },
     contentLoop: {
         label: 'ContentLoop',
         source: 'default',
         fields: [
-            { key: 'classificationid', type: 'picker', label: 'Classification', default: 1 },
+            { key: 'classificationid', type: 'select', label: 'Classification', default: 1 },
         ],
     },
 };

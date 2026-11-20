@@ -30,16 +30,18 @@ __sol_dispatch() {
         rima="$1"
 
         if IFS=$'\t' read -r file mode fn < <(__sol_find_expression "$name" "$rima"); then
-            shift
-            rest=("$@")
             case "$mode" in
                 script)
+                    shift
+                    rest=("$@")
                     ( cd "$SOL_ROOT" && bash "$file" "${rest[@]}" )
                     return $?
                     ;;
                 function)
                     __sol_load "$file" || return 1
                     if declare -F "$fn" >/dev/null 2>&1; then
+                        shift
+                        rest=("$@")
                         ( cd "$SOL_ROOT" && "$fn" "${rest[@]}" )
                         return $?
                     fi

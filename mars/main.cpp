@@ -25,7 +25,13 @@ int main(int argc, char* argv[]) {
     // WS to god
     try {
         net::io_context ioc;
-        Ws ws(ioc, "wss://gen20.net/god/v1/messaging/ws?userid=mars%3A1");
+        std::string ws_url = "wss://gen20.net/god/v1/messaging/ws?userid=mars%3A1";
+        const char* ws_token = std::getenv("MARS_WS_TOKEN");
+        if (ws_token && *ws_token) {
+            ws_url += "&token=";
+            ws_url += ws_token;
+        }
+        Ws ws(ioc, ws_url);
 
         ws.setOnMessageHandler([](const std::string& message) {
             std::cout << "Received: " << message << std::endl;

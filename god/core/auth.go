@@ -12,8 +12,9 @@ import (
 )
 
 func GUID(db, uid string) string {
-	h := sha256.Sum256([]byte(db + ":" + uid))
-	return hex.EncodeToString(h[:])
+	// Readable identity για το messaging routing (π.χ. "gen20.net:38", "sol:1").
+	// Η ασφάλεια δεν βασίζεται στο obscuring του ID — το HMAC στο token την παρέχει.
+	return db + ":" + uid
 }
 
 // token = base64url("db|uid|role|exp_unix_seconds") + "." + hex(hmac_sha256(secret, payload))

@@ -51,12 +51,10 @@ if [[ -d "$SOL_DIR/rima" ]]; then
     done
 fi
 
-# Φόρτωση acta
-if [[ -d "$SOL_DIR/acta" ]]; then
-    for f in "$SOL_DIR/acta"/*.sh; do
-        [[ -r $f ]] && source "$f"
-    done
-fi
+# ΣΗΜΕΙΩΣΗ: ΔΕΝ κάνουμε source το acta/* εδώ.
+# Το acta/ περιέχει αυτόνομα scripts (π.χ. astra_clean.sh) με top-level κώδικα
+# που τρέχει κατα το source (και κάνει exit 1) — σκοτώνοντας το interactive shell.
+# Τα acta φορτώνονται on-demand από τον __sol_dispatch (script/function mode).
 # --------------------------------------------------
 # GEN20 CENTRAL LOG
 # --------------------------------------------------

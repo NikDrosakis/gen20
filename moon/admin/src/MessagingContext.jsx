@@ -3,16 +3,30 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 
 const MessagingContext = createContext(null);
 
+const WS_TOKEN = 'Z2VuMjAubmV0fDF8YWRtaW58MjExMDQ5MzYyOA.8762a97b55218c757c5fce3604c3e21b10a47b2ff98c2f8228af2746a3d690b5';   // pre-minted admin token (gen20.net:1)
+
 export function MessagingProvider({ userID, domains = [], children }) {
     const wsRef = useRef(null);
     const [connection, setConnection] = useState("connecting");
     const [messages, setMessages] = useState([]);
     const listenersRef = useRef(new Set());
 
-    const connect = useCallback(() => {
+    const connect = useCallback(async () => {
         setConnection("connecting");
+
+        // per-user token (identity = domain:GENUID) — fallback στο pre-minted
+        let token = WS_TOKEN;
+        try {
+            const host = window.location.host;
+            const r = await fetch(`/api/v1/local/mintToken?domain=${encodeURIComponent(host)}`);
+            const d = await r.json();
+            if (d?.data?.token) token = d.data.token;
+        } catch (err) {
+            console.warn("[messaging] mintToken fetch failed, using fallback", err);
+        }
+
         const proto = window.location.protocol === "https:" ? "wss" : "ws";
-        const url = `${proto}://${window.location.host}/god/v1/messaging/ws?userid=${encodeURIComponent(userID)}`;
+        const url = `${proto}://${window.location.host}/god/v1/messaging/ws?token=${token}`;
 
         const ws = new WebSocket(url);
         wsRef.current = ws;

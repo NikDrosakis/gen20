@@ -163,6 +163,7 @@ function updateGalaxyState(newState) {
 // ============================================================
 const MY_UID = 'galaxy:1'; // Το UID του Galaxy
 const SOL_UID = 'sol:1';   // Το UID του Sol
+const WS_TOKEN = 'Z2FsYXh5fDF8YWRtaW58MjExMDQ5MzA0NQ.0526882e7d5a397ccf407623471583019ef49a86d901aea52301c4a3b02cb1ef';   // pre-minted admin token (galaxy:1)
 
 function makeCid(a, b) {
     return a < b ? `${a}-${b}` : `${b}-${a}`;
@@ -173,7 +174,7 @@ function connectWebSockets() {
     const host = window.location.host;
 
     // WebSocket για το Messaging Hub (Peer-to-Peer)
-    const wsUrl = `${protocol}//${host}/god/v1/messaging/ws?userid=${encodeURIComponent(MY_UID)}`;
+    const wsUrl = `${protocol}//${host}/god/v1/messaging/ws?token=${WS_TOKEN}`;
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
@@ -184,9 +185,13 @@ function connectWebSockets() {
         try {
             const data = JSON.parse(event.data);
 
-            // Αν είναι μήνυμα μηνύματος, εμφάνισε το
-            if (data.type === 'message' && data.c) {
-                wsLog.innerHTML += `\n<span style="color:#ffaa00">[MSG ${data.uid}]</span> ${data.c}`;
+            // chat: αποθηκευμένο μήνυμα (insert) ή απλό message
+            if ((data.type === 'insert' || data.type === 'message') && data.c) {
+                wsLog.innerHTML += `\n<span style="color:#ffaa00">[${data.uid || data.userid || '?'}]</span> ${data.c}`;
+            }
+            // σφάλμα από το hub
+            else if (data.type === 'error' && data.c) {
+                wsLog.innerHTML += `\n<span style="color:#ff5555">[ERR]</span> ${data.c}`;
             }
             // Αν είναι state update
             else if (data.type === 'state' && data.systems) {

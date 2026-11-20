@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import './Pages.css';
 
-const CubosInstalled = ({ cubos, loading, onDrop, onDragOver, onDragLeave }) => {
+const CubosInstalled = ({ cubos, loading, onDrop, onDragOver, onDragLeave, onStatusChange }) => {
     const host = window.location.hostname;
     const [query, setQuery] = useState('');
 
@@ -100,9 +100,20 @@ const CubosInstalled = ({ cubos, loading, onDrop, onDragOver, onDragLeave }) => 
                                 <div className="cubo-description">{cubo.description}</div>
                             )}
 
-                            {/* Footer: Status */}
-                            <div className="cubo-item__footer">
-                                <span className="cubo-status">✅ Installed</span>
+                            {/* Footer: Status dropdown */}
+                            <div className="cubo-item__footer" onClick={(e) => e.stopPropagation()}>
+                                <select
+                                    className="cubo-status-select"
+                                    draggable={false}
+                                    value={cubo.status || 'dev'}
+                                    onChange={(e) => onStatusChange?.(cubo.name, e.target.value)}
+                                    title="Cubo status"
+                                >
+                                    <option value="dev">dev</option>
+                                    <option value="testing">testing</option>
+                                    <option value="active">active</option>
+                                    <option value="production">production</option>
+                                </select>
                             </div>
                         </li>
                     ))}

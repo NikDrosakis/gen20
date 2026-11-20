@@ -21,7 +21,8 @@ import (
 	// --- Internal ---
 	"god/core"       // Core (Hub, Redis, Couch, PTY)
 	"god/cubos"      // Cubos routes
-	_ "god/cubos/chat" // ✅ Side-effect import: καταχωρεί το chat cubo
+	_ "god/cubos/chat"     // ✅ Side-effect import: καταχωρεί το chat cubo
+	_ "god/cubos/terminal" // ✅ Side-effect import: καταχωρεί το terminal cubo (PTY)
 )
 
 // ============================================================

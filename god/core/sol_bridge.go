@@ -22,7 +22,7 @@ var (
 		"install": 15 * time.Minute,
 		"status":  10 * time.Second,
 	}
-	solArgRe    = regexp.MustCompile(`^[a-z0-9]([a-z0-9.-]{0,251}[a-z0-9])?$`) // domain
+	solArgRe    = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9._-]{0,251}[a-zA-Z0-9])?$`) // domain ή cubo (επιτρέπει κεφαλαία, π.χ. sliderBG)
 	solUpgrader = websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}
 )
 
@@ -80,6 +80,13 @@ func (b *SolBridge) Command(c *Client, raw []byte) {
 		return
 	}
 
+	// domain από το token (πρώτο Domains entry)
+	domain := ""
+	for d := range c.Domains {
+		domain = d
+		break
+	}
+
 	id := newID()
 	b.mu.Lock()
 	conn := b.conn
@@ -93,7 +100,7 @@ func (b *SolBridge) Command(c *Client, raw []byte) {
 	b.pending[id] = p
 	b.mu.Unlock()
 
-	line, _ := json.Marshal(map[string]string{"id": id, "action": m.Action, "arg": m.Arg})
+	line, _ := json.Marshal(map[string]string{"id": id, "action": m.Action, "arg": m.Arg, "domain": domain})
 	b.wmu.Lock()
 	err := conn.WriteMessage(websocket.TextMessage, line)
 	b.wmu.Unlock()

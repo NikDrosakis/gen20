@@ -2,6 +2,7 @@
 import { Suspense, lazy } from "react";
 import ContentOne from "./ContentOne";
 import ContentLoop from "./ContentLoop";
+import CuboBoundary from "./CuboBoundary";
 
 // src/cubos/team/Team.jsx → REGISTRY["team"]
 const files = import.meta.glob("./cubos/*/*.jsx");
@@ -40,7 +41,12 @@ export default function Area({ items = [], area }) {
             <Suspense fallback={null}>
                 {items.map((it, i) => {
                     const C = it.kind === "cubo" ? REGISTRY[String(it.name).toLowerCase()] : CONTENT[it.kind];
-                    return C ? <C key={`${it.kind}-${it.name}-${i}`} {...(it.props || {})} /> : null;
+                    if (!C) return null;
+                    return (
+                        <CuboBoundary key={`${it.kind}-${it.name}-${i}`} name={it.name}>
+                            <C {...(it.props || {})} />
+                        </CuboBoundary>
+                    );
                 })}
             </Suspense>
         </div>

@@ -78,19 +78,18 @@ for cubo_dir in "$src_dir"/*/; do
     if [[ -z $prev_entry ]]; then
         # Νέο cubo
         new_ver="1.0"
-        new_status="testing"
+        new_status="dev"
     else
         # Υπάρχον cubo — κρατάμε version χωρίς αλλαγή
         prev_ver="$(jq -r '.version // "1.0"' <<<"$prev_entry")"
         new_ver="$prev_ver"
 
-        # Status: διατήρηση αν υπάρχει, αλλιώς "testing"
+        # Status workflow: dev → testing → active → production (και broken για σπασμένο)
         prev_status="$(jq -r '.status // ""' <<<"$prev_entry")"
-        if [[ -n "$prev_status" && ( "$prev_status" == "testing" || "$prev_status" == "active" || "$prev_status" == "broken" ) ]]; then
-            new_status="$prev_status"
-        else
-            new_status="testing"
-        fi
+        case "$prev_status" in
+            dev|testing|active|production|broken) new_status="$prev_status" ;;
+            *) new_status="dev" ;;
+        esac
     fi
 
     # ── Προσθήκη στο array ──

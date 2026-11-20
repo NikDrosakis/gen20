@@ -19,14 +19,12 @@ export default function ChatList({ onOpenChat, activeChat, meUid }) {
         });
     }, [myUid, connection, send]);
 
-    // 2. Online users από reslist
+    // 2. Online users από reslist (το hub στέλνει reslist χωρίς system field)
     const onlineUsers = useMemo(() => {
-        const res = messages.filter(
-            (m) => m.type === "reslist" && m.system === CHAT
-        );
+        const res = messages.filter((m) => m.type === "reslist");
         if (res.length === 0) return [];
         try {
-            return JSON.parse(res[res.length - 1].c || res[res.length - 1].verba || "[]");
+            return JSON.parse(res[res.length - 1].c || "[]");
         } catch {
             return [];
         }
@@ -51,11 +49,16 @@ export default function ChatList({ onOpenChat, activeChat, meUid }) {
         }
 
         for (const m of messages) {
-            if (m.system !== CHAT) continue;
             if (m.type !== "insert" && m.type !== "message") continue;
 
-            const isMine = m.userid === myUid;
-            const peer = isMine ? m.to : m.userid;
+            const sender = m.uid || m.userid;
+            const isMine = sender === myUid;
+            let peer = null;
+            if (m.cid) {
+                const parts = m.cid.split("-");
+                peer = parts.find((p) => p && p !== myUid) || null;
+            }
+            if (!peer) peer = isMine ? m.to : sender;
             if (!peer || peer === myUid) continue;
 
             const cid = [myUid, peer].sort().join("-");
@@ -72,9 +75,9 @@ export default function ChatList({ onOpenChat, activeChat, meUid }) {
                 });
             }
             const s = map.get(cid);
-            if (m.c || m.verba) {
-                s.lastMessage = m.c ?? m.verba;
-                s.lastActivity = m.modified ?? m.t ?? 0;
+            if (m.c) {
+                s.lastMessage = m.c;
+                s.lastActivity = m.modified || 0;
             }
             s.messages.push(m);
         }

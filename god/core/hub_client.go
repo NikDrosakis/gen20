@@ -47,6 +47,12 @@ func (c *Client) ReadPump() {
 			continue
 		}
 
+		// Sol bridge command (admin → sol daemon)
+		if msg.Type == "sol.cmd" && c.Hub.Sol != nil {
+			c.Hub.Sol.Command(c, data)
+			continue
+		}
+
 		// Cubo WS hooks
 		if DispatchWS(c, msg) {
 			continue

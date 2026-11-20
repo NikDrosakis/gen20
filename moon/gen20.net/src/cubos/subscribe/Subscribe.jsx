@@ -1,6 +1,6 @@
 // components/Subscribe.jsx
 import { useState } from "react";
-import "./Subscribe.css";
+
 export default function Subscribe() {
     const [email, setEmail] = useState("");
     const [status, setStatus] = useState(null); // 'idle', 'loading', 'success', 'error'

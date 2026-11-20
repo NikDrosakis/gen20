@@ -57,6 +57,9 @@ _scan_jsx_params() {
         }
         if (match(s, /export[ ]+function[ ]+[A-Z][A-Za-z0-9_]*[ ]*\(/)) return RSTART + RLENGTH - 1
         if (match(s, /export[ ]+const[ ]+[A-Z][A-Za-z0-9_]*[ ]*=[ ]*\(/)) return RSTART + RLENGTH - 1
+        if (match(s, /(const|let|var)[ ]+[A-Z][A-Za-z0-9_]*[ ]*=[ ]*\(/)) return RSTART + RLENGTH - 1
+        if (match(s, /forwardRef\(\(/)) return RSTART + RLENGTH - 1
+        if (match(s, /memo\(\(/)) return RSTART + RLENGTH - 1
         if (match(s, /function[ ]+[A-Z][A-Za-z0-9_]*[ ]*\(/)) return RSTART + RLENGTH - 1
         return 0
     }
@@ -101,7 +104,7 @@ _scan_jsx_params() {
             {key: .[0], def: (.[1] // "text")} |
             . as $x |
             if ($x.def | startswith("checkbox:")) then
-                {($x.key): {type: "checkbox", default: ($x.def | sub("checkbox:"; "") | . == "true")}}
+                {($x.key): {type: "boolean", default: ($x.def | sub("checkbox:"; "") | . == "true")}}
             elif ($x.def | startswith("number:")) then
                 {($x.key): {type: "number", default: ($x.def | sub("number:"; "") | tonumber)}}
             elif ($x.def | startswith("text:")) then
@@ -151,15 +154,26 @@ astra_scancubo() {
         fi
         total=$((total+1))
 
-        # Αναδρομική αναζήτηση .jsx
+        # Αναδρομική αναζήτηση .jsx — βρες το ΚΥΡΙΟ component
         main=""
-        if [[ -f "$d/moon/$n.jsx" ]]; then
-            main="$d/moon/$n.jsx"
-        elif [[ -f "$d$n.jsx" ]]; then
-            main="$d$n.jsx"
-        else
-            main=$(find "$d" -type f -name "*.jsx" | head -1)
+        # 1) manifest.json → systems.moon.files
+        if [[ -f "$d/manifest.json" ]]; then
+            mf=$(jq -r '.systems.moon.files[]? // empty' "$d/manifest.json" 2>/dev/null | head -1)
+            [[ -n "$mf" && -f "$d/$mf" ]] && main="$d/$mf"
         fi
+        # 2) moon/<Name>.jsx ή moon/<name>.jsx (κεφαλαίο πρώτο γράμμα)
+        if [[ -z "$main" ]]; then
+            cap="$(printf '%s' "${n:0:1}" | tr '[:lower:]' '[:upper:]')${n:1}"
+            for c in "$d/moon/$cap.jsx" "$d/moon/$n.jsx" "$d/$cap.jsx" "$d/$n.jsx"; do
+                [[ -f "$c" ]] && { main="$c"; break; }
+            done
+        fi
+        # 3) αρχείο με `export default` (κύριο component)
+        if [[ -z "$main" ]]; then
+            main=$(grep -rl "export default" "$d" --include='*.jsx' 2>/dev/null | head -1)
+        fi
+        # 4) fallback: πρώτο .jsx
+        [[ -z "$main" ]] && main=$(find "$d" -type f -name "*.jsx" | head -1)
 
         # Hash φακέλου (μόνο .jsx)
         hash=$(cd "$d" && find . -type f -name "*.jsx" -print0 | LC_ALL=C sort -z | xargs -0 sha1sum | sha1sum | cut -c1-12)

@@ -77,7 +77,6 @@ export default function ChatBox({
         if (!cid) return [];
         return messages.filter(
             (m) =>
-                m.system === CHAT &&
                 (m.type === "insert" || m.type === "message") &&
                 m.cid === cid
         );
@@ -87,15 +86,13 @@ export default function ChatBox({
         if (!cid || !Array.isArray(messages)) return [];
 
         const res = messages.filter(
-            (m) => m.system === CHAT && m.type === "res" && m.cid === cid
+            (m) => m.type === "res" && m.cid === cid
         );
 
         if (!res.length) return [];
 
         try {
-            const raw = res[res.length - 1].c
-                || res[res.length - 1].verba
-                || "[]";
+            const raw = res[res.length - 1].c || "[]";
 
             const parsed = typeof raw === "string"
                 ? JSON.parse(raw)
@@ -259,7 +256,7 @@ export default function ChatBox({
                                     {!mine && <div className="message-role">{m.uid}</div>}
                                     <div
                                         className="message-content"
-                                        dangerouslySetInnerHTML={{ __html: m.c ?? m.verba }}
+                                        dangerouslySetInnerHTML={{ __html: m.c }}
                                     />
                                     <div className="message-time">
                                         {new Date((m.modified ?? m.t ?? 0) * 1000).toLocaleTimeString([], {

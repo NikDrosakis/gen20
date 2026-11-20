@@ -80,6 +80,18 @@ export default function ParamsForm({
                                 onChange={(e) => set(f.key, Number(e.target.value))}
                             />
                         )}
+
+                        {(f.type === 'list' || f.type === 'object') && (
+                            <textarea
+                                rows={3}
+                                value={params?.[f.key] != null ? JSON.stringify(params[f.key]) : ''}
+                                onChange={(e) => {
+                                    const raw = e.target.value;
+                                    try { set(f.key, raw.trim() === '' ? (f.type === 'list' ? [] : {}) : JSON.parse(raw)); }
+                                    catch { /* invalid JSON — ignore */ }
+                                }}
+                            />
+                        )}
                     </label>
                 );
             })}

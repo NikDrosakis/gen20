@@ -31,6 +31,8 @@
         /* Τροχιές */
         .orbit { stroke: #003b0f; stroke-width: 2px; stroke-dasharray: 5,5; fill: none; transition: all 0.3s; }
         .orbit.active { stroke: #00ff41; animation: dash 1s linear infinite; }
+        .orbit.lit { stroke: #00ffaa; stroke-width: 4px; filter: drop-shadow(0 0 6px #00ffaa); animation: none; }
+        .planet-msg-input { width: 100%; background: #111; color: #00ff41; border: 1px solid #00ff41; font-family: monospace; font-size: 10px; padding: 2px 4px; border-radius: 3px; outline: none; }
         @keyframes dash { to { stroke-dashoffset: -15; } }
 
         /* --- SPLIT TERMINAL --- */
@@ -45,6 +47,13 @@
         .quick-actions { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
         .quick-actions button { background: #111; color: #00ff41; border: 1px solid #00ff41; padding: 5px 10px; cursor: pointer; font-family: monospace; font-size: 12px; }
         .quick-actions button:hover { background: #00ff41; color: #000; }
+        .comm-tester { border-top: 1px solid #222; padding-top: 6px; display: flex; flex-direction: column; gap: 5px; }
+        .comm-row { display: flex; align-items: center; gap: 6px; }
+        .comm-row label { color: #ffaa00; font-size: 12px; min-width: 55px; text-transform: uppercase; }
+        .comm-select { background: #111; color: #00ff41; border: 1px solid #00ff41; font-family: monospace; font-size: 13px; padding: 3px 4px; flex: 1; }
+        .comm-tester .term-input { border-bottom: 1px solid #222; padding: 4px 0; }
+        .comm-send-btn { background: #111; color: #00ff41; border: 1px solid #00ff41; padding: 6px 12px; cursor: pointer; font-family: monospace; font-size: 13px; font-weight: bold; }
+        .comm-send-btn:hover { background: #00ff41; color: #000; }
     </style>
 </head>
 <body>
@@ -87,16 +96,26 @@
     </div>
 
     <div class="term-pane">
-        <div class="term-header">WS Traffic / SOL Hub</div>
+        <div class="term-header">GEN Communication Tester</div>
         <div id="ws-log" class="term-log">Connecting to WebSocket Hub...</div>
-        <div class="term-input-wrapper">
-            <span class="term-prompt">sol></span>
-            <input type="text" id="ws-input" class="term-input" autocomplete="off" placeholder="god esti...">
-        </div>
-        <div class="quick-actions">
-            <button onclick="sendWSCmd('god esti')">GOD Status</button>
-            <button onclick="sendWSCmd('moon esti')">MOON Status</button>
-            <button onclick="sendRawWS({'type':'ping'})">Send Ping</button>
+        <div class="comm-tester">
+            <div class="comm-row">
+                <label>From</label>
+                <select id="comm-from" class="comm-select"></select>
+                <label>To</label>
+                <select id="comm-to" class="comm-select"></select>
+            </div>
+            <div class="comm-row">
+                <label>CID</label>
+                <input type="text" id="comm-cid" class="term-input" autocomplete="off" placeholder="auto">
+            </div>
+            <div class="comm-row">
+                <label>Message</label>
+                <input type="text" id="comm-msg" class="term-input" autocomplete="off" placeholder="c: message">
+            </div>
+            <div class="comm-row">
+                <button id="comm-send" class="comm-send-btn">Send</button>
+            </div>
         </div>
     </div>
 </div>
@@ -216,9 +235,36 @@
             text.textContent = sys.name;
             g.appendChild(text);
 
+            // 4. Message input box — μήνυμα προς αυτόν τον πλανήτη
+            const inputFo = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+            inputFo.setAttribute('x', '-60');
+            inputFo.setAttribute('y', radius + 34);
+            inputFo.setAttribute('width', '120');
+            inputFo.setAttribute('height', '22');
+            const input = document.createElement('input');
+            input.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+            input.setAttribute('type', 'text');
+            input.setAttribute('class', 'planet-msg-input');
+            input.setAttribute('placeholder', `→ ${sys.id}`);
+            input.addEventListener('click', (e) => e.stopPropagation());
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const c = input.value.trim();
+                    if (c) { sendPlanetMessage(sys.id, c); input.value = ''; }
+                }
+            });
+            inputFo.appendChild(input);
+            g.appendChild(inputFo);
+
             g.addEventListener('click', () => {
-                document.getElementById('ws-input').value = `${sys.id} esti`;
-                document.getElementById('ws-input').focus();
+                const toSel = document.getElementById('comm-to');
+                const want = `${sys.id}:1`;
+                if (toSel && [...toSel.options].some(o => o.value === want)) {
+                    toSel.value = want;
+                    commUpdateCid();
+                }
+                document.getElementById('comm-msg').focus();
             });
             planetsGroup.appendChild(g);
         });
@@ -238,9 +284,22 @@
             line.setAttribute('x1', posFrom.x); line.setAttribute('y1', posFrom.y);
             line.setAttribute('x2', posTo.x); line.setAttribute('y2', posTo.y);
             line.setAttribute('class', 'orbit');
+            line.setAttribute('data-from', conn.from);
+            line.setAttribute('data-to', conn.to);
 
             if(sysFrom.state === 'running' && sysTo.state === 'running') line.classList.add('active');
             orbitsGroup.appendChild(line);
+        });
+    }
+
+    function lightOrbit(a, b) {
+        orbitsGroup.querySelectorAll('line.orbit').forEach((line) => {
+            const from = line.getAttribute('data-from');
+            const to = line.getAttribute('data-to');
+            if ((from === a && to === b) || (from === b && to === a)) {
+                line.classList.add('lit');
+                setTimeout(() => line.classList.remove('lit'), 900);
+            }
         });
     }
 
@@ -266,19 +325,32 @@
     }
 
     // 3. WebSockets
+    const WS_TOKEN = 'Z29kfDF8YWRtaW58MjExMDQ5MzIwNw.897780ca763e593241f0700acd0eebdffb58e5093e701add1f137865bdef4d2f';   // pre-minted admin token (god:1)
     function connectWebSockets() {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const host = window.location.host;
 
-        const wsUrl = `${protocol}//${host}/god/v1/messaging/ws?userid=god%3A1`;
+        const wsUrl = `${protocol}//${host}/god/v1/messaging/ws?token=${WS_TOKEN}`;
         ws = new WebSocket(wsUrl);
 
-        ws.onopen = () => { wsLog.innerHTML += `\n<span style="color:#00ff41">[WS] Connected to Messaging Hub.</span>`; };
+        ws.onopen = () => { wsLog.innerHTML += `\n<span style="color:#00ff41">[WS] Connected to Messaging Hub (god:1).</span>`; };
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-                if (data.type === 'state' && data.systems) updateGalaxyState(data.systems);
-                wsLog.innerHTML += `\n<span style="color:#ffaa00">[MSG] ${JSON.stringify(data)}</span>`;
+                if (data.type === 'state' && data.systems) {
+                    updateGalaxyState(data.systems);
+                } else if ((data.type === 'insert' || data.type === 'message') && data.c) {
+                    wsLog.innerHTML += `\n<span style="color:#ffaa00">[${data.uid || data.userid || '?'}]</span> ${data.c}`;
+                    // φώτισε το orbit μεταξύ των δύο συστημάτων του cid
+                    if (data.cid) {
+                        const parts = data.cid.split('-').map((p) => (p || '').split(':')[0]);
+                        if (parts.length >= 2 && parts[0] && parts[1]) lightOrbit(parts[0], parts[1]);
+                    }
+                } else if (data.type === 'error' && data.c) {
+                    wsLog.innerHTML += `\n<span style="color:#ff5555">[ERR]</span> ${data.c}`;
+                } else {
+                    wsLog.innerHTML += `\n<span style="color:#ccc">[RAW] ${JSON.stringify(data)}</span>`;
+                }
                 wsLog.scrollTop = wsLog.scrollHeight;
             } catch(e) {
                 wsLog.innerHTML += `\n<span style="color:#ccc">${event.data}</span>`;
@@ -289,15 +361,64 @@
 
         const ptyUrl = `${protocol}//${host}/god/v1/pty?userid=galaxy%3A1`;
         ptyWs = new WebSocket(ptyUrl);
-        ptyWs.onopen = () => { ptyLog.innerHTML += `\n<span style="color:#00ff41">[PTY] Connected.</span>`; };
-        ptyWs.onmessage = (event) => { ptyLog.innerHTML += `\n${event.data}`; ptyLog.scrollTop = ptyLog.scrollHeight; };
+        ptyWs.onopen = () => { ptyLog.innerHTML = ''; ptyLog.innerHTML += `<span style="color:#00ff41">[PTY] Connected — sol shell (gen>).</span><br>`; };
+        ptyWs.onmessage = (event) => {
+            // strip ANSI (χρώματα, bracketed-paste κλπ) — κρατάμε μόνο κείμενο
+            let txt = String(event.data || '')
+                .replace(/\x1b\][^\x07]*(?:\x07|\x1b\\)/g, '')
+                .replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, '')
+                .replace(/\x1b[()][0-2A-Z]/g, '');
+            ptyLog.innerHTML += txt.replace(/\n/g, '<br>');
+            ptyLog.scrollTop = ptyLog.scrollHeight;
+        };
     }
 
-    // 4. Events
-    function sendRawWS(obj) { if(ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
-    function sendWSCmd(cmd) { wsLog.innerHTML += `\n<span style="color:#00ff41">sol> ${cmd}</span>`; sendRawWS({ system: "sol", type: "command", verba: cmd }); }
+    // 4. Events — GEN Communication Tester
+    const COMM_IDENTITIES = ['god:1','sol:1','mars:1','kronos:1','moon:1','gaia:1','gen20.net:1','gen20.net:38','nikimourtzi.com:1','directorsunion.gr:1','anticultura.com:1'];
 
-    document.getElementById('ws-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') { const cmd = e.target.value.trim(); if(cmd) { sendWSCmd(cmd); e.target.value = ''; } } });
+    function sendRawWS(obj) { if(ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
+
+    function commUpdateCid() {
+        const from = document.getElementById('comm-from').value;
+        const to = document.getElementById('comm-to').value;
+        document.getElementById('comm-cid').value = [from, to].sort().join('-');
+    }
+
+    function commSend() {
+        const cid = document.getElementById('comm-cid').value.trim();
+        const c = document.getElementById('comm-msg').value.trim();
+        if (!cid || !c) return;
+        wsLog.innerHTML += `\n<span style="color:#00ff41">[SEND] ${cid} → ${c}</span>`;
+        sendRawWS({ type: 'message', cid, c });
+        document.getElementById('comm-msg').value = '';
+    }
+
+    // μήνυμα από god:1 προς <sys>:1 — φωτίζει και το orbit
+    function sendPlanetMessage(sysId, c) {
+        const from = 'god:1';
+        const to = `${sysId}:1`;
+        const cid = [from, to].sort().join('-');
+        wsLog.innerHTML += `\n<span style="color:#00ff41">[${from} → ${to}] ${c}</span>`;
+        sendRawWS({ type: 'message', cid, c });
+        lightOrbit('god', sysId);
+    }
+
+    function commInit() {
+        const from = document.getElementById('comm-from');
+        const to = document.getElementById('comm-to');
+        COMM_IDENTITIES.forEach(id => {
+            from.add(new Option(id, id));
+            to.add(new Option(id, id));
+        });
+        from.value = 'god:1';
+        to.value = 'sol:1';
+        commUpdateCid();
+        from.addEventListener('change', commUpdateCid);
+        to.addEventListener('change', commUpdateCid);
+        document.getElementById('comm-send').addEventListener('click', commSend);
+        document.getElementById('comm-msg').addEventListener('keypress', (e) => { if (e.key === 'Enter') commSend(); });
+        document.getElementById('comm-cid').addEventListener('keypress', (e) => { if (e.key === 'Enter') commSend(); });
+    }
     document.getElementById('pty-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') { const cmd = e.target.value.trim(); if(cmd && ptyWs && ptyWs.readyState === WebSocket.OPEN) { ptyLog.innerHTML += `\n<span style="color:#00ff41">gen> ${cmd}</span>`; ptyWs.send(cmd + '\n'); e.target.value = ''; } } });
 
     // Fallback για autoplay
@@ -306,6 +427,7 @@
     drawPlanets();
     drawOrbits();
     connectWebSockets();
+    commInit();
 </script>
 </body>
 </html>

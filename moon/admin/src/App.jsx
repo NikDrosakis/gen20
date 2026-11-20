@@ -44,7 +44,7 @@ function MessagingDebug() {
     );
 }
 
-function AutoOpenChat({ userID, activeChats, setActiveChats }) {
+function AutoOpenChat({ userID, activeChats, setActiveChats, setIsChatOpen }) {
     const { messages } = useMessaging();
 
     useEffect(() => {
@@ -52,36 +52,39 @@ function AutoOpenChat({ userID, activeChats, setActiveChats }) {
 
         const last = messages[messages.length - 1];
 
-        // --- Case 1: insert → άνοιξε το chat ΑΜΕΣΩΣ ---
+        // --- Case 1: insert/message → άνοιξε το chat ΑΜΕΣΩΣ (pop-up) ---
         if (last.type === "insert" || last.type === "message") {
-            if (last.system !== "chat") return;
-            if (last.to !== userID) return;
-
-            const peer = last.userid;
+            const sender = last.uid || last.userid;
+            const isMine = sender === userID;
+            let peer = null;
+            if (last.cid) {
+                const parts = last.cid.split("-");
+                peer = parts.find((p) => p && p !== userID) || null;
+            }
+            if (!peer) peer = isMine ? last.to : sender;
             if (!peer || peer === userID) return;
 
             // Αν είναι ήδη ανοιχτό το ίδιο, μην το ξανανοίξεις
             if (activeChats.some((c) => c.userId === peer)) return;
 
             const cid = [userID, peer].sort().join("-");
-            console.log("[AutoOpenChat] OPEN from insert:", { cid, peer });
             setActiveChats((prev) => [
                 ...prev,
                 { cid, userId: peer, userName: peer, status: "active" },
             ]);
+            setIsChatOpen(true); // pop-up
             return;
         }
 
         // --- Case 2: reslist → άνοιξε το chat με τον πρώτο online peer ---
-        if (last.type === "reslist" && last.system === "chat") {
+        if (last.type === "reslist") {
             try {
-                const peers = JSON.parse(last.c || last.verba || "[]");
+                const peers = JSON.parse(last.c || "[]");
                 const peer = peers.find((p) => p && p !== userID);
                 if (!peer) return;
                 if (activeChats.some((c) => c.userId === peer)) return;
 
                 const cid = [userID, peer].sort().join("-");
-                console.log("[AutoOpenChat] OPEN from reslist:", { cid, peer });
                 setActiveChats((prev) => [
                     ...prev,
                     { cid, userId: peer, userName: peer, status: "active" },
@@ -91,7 +94,7 @@ function AutoOpenChat({ userID, activeChats, setActiveChats }) {
             }
             return;
         }
-    }, [messages, userID, activeChats, setActiveChats]);
+    }, [messages, userID, activeChats, setActiveChats, setIsChatOpen]);
 
     return null;
 }
@@ -265,6 +268,7 @@ const App = () => {
                 userID={userID}
                 activeChats={activeChats}
                 setActiveChats={setActiveChats}
+                setIsChatOpen={setIsChatOpen}
             />
             {/* Floating button — ανοίγει το chat */}
             {!isChatOpen && (

@@ -59,11 +59,12 @@ esti_pid() {
 esti_god() {
     local pid
 
-    pid=$(pgrep -f '^/var/www/gs/god/god$' | head -1)
-
-    if [[ -z $pid ]]; then
-        pid=$(pgrep -f 'go run.*god/main.go' | head -1)
-    fi
+    # 1) όποιος ακούει στη θύρα 3008 (πιο αξιόπιστο — πιάνει και ./god και go-run temp)
+    pid=$(ss -tulnp 2>/dev/null | grep ':3008 ' | grep -oE 'pid=[0-9]+' | head -1 | cut -d= -f2)
+    # 2) compiled binary
+    [[ -z $pid ]] && pid=$(pgrep -fx '/var/www/gs/god/god' | head -1)
+    # 3) go run
+    [[ -z $pid ]] && pid=$(pgrep -f 'go run .*main\.go' | head -1)
 
     if [[ -n $pid ]]; then
         esti_result "GOD" "OK" "PID $pid"

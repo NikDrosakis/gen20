@@ -29,24 +29,22 @@ god_check_port() {
     ss -tulnp 2>/dev/null | grep -q ":$GOD_PORT "
 }
 
+god_pids() {
+    {
+        # compiled binary (exact)
+        pgrep -fx "$GOD_ROOT/god" 2>/dev/null
+        # `go run` parent (relative or absolute path to main.go)
+        pgrep -f "go run .*main\.go" 2>/dev/null
+        # whoever actually owns the port (catches go-run temp binaries too)
+        ss -tulnp 2>/dev/null | grep ":$GOD_PORT " | grep -oE 'pid=[0-9]+' | sed 's/pid=//'
+    } | grep -E '^[0-9]+$' | sort -un
+}
+
 god_is_running() {
     local pid
-
-    # go run main.go
-    pid=$(pgrep -f "go run.*$GOD_ROOT/main\.go" | head -1)
-    if [[ -n $pid ]]; then
-        echo "$pid"
-        return 0
-    fi
-
-    # compiled binary
-    pid=$(pgrep -fx "$GOD_ROOT/god" | head -1)
-    if [[ -n $pid ]]; then
-        echo "$pid"
-        return 0
-    fi
-
-    return 1
+    pid=$(god_pids | head -1)
+    [[ -n $pid ]] && echo "$pid"
+    [[ -n $pid ]]
 }
 
 # --------------------------------------------------
@@ -70,8 +68,18 @@ god_start() {
         return 1
     fi
 
+    # daemon τρέχει το compiled binary (όχι `go run`, που αφήνει temp binaries στο /tmp)
+    if [[ ! -x ./god ]]; then
+        god_log "🔨 building..."
+        go build -o god . >> "$GOD_LOG" 2>&1 || {
+            god_error "build failed"
+            tail -n 40 "$GOD_LOG" >&2
+            return 1
+        }
+    fi
+
     god_log "🚀 starting on port $GOD_PORT"
-    nohup go run main.go >> "$GOD_LOG" 2>&1 &
+    nohup "$GOD_ROOT/god" >> "$GOD_LOG" 2>&1 &
 
     sleep 2
 
@@ -81,29 +89,24 @@ god_start() {
     fi
 
     god_error "failed to start"
+    tail -n 40 "$GOD_LOG" >&2
     return 1
 }
 
 god_stop() {
     local pids timeout=5
 
-    if ! god_is_running >/dev/null; then
+    pids=$(god_pids)
+    if [[ -z $pids ]]; then
         god_log "ℹ️ not running"
         return 0
     fi
 
-    pids=$(pgrep -f "$GOD_ROOT/main\.go")
-    [[ -z $pids ]] && pids=$(pgrep -fx "$GOD_ROOT/god")
-    [[ -z $pids ]] && { god_error "cannot find PID"; return 1; }
-
-    god_log "🛑 stopping PIDs: $pids"
+    god_log "🛑 stopping PIDs: $(echo $pids)"
     kill -TERM $pids 2>/dev/null
 
     while ((timeout-- > 0)); do
-        if ! god_is_running >/dev/null; then
-            god_log "✅ stopped"
-            return 0
-        fi
+        [[ -z $(god_pids) ]] && { god_log "✅ stopped"; return 0; }
         sleep 1
     done
 
@@ -111,7 +114,7 @@ god_stop() {
     kill -9 $pids 2>/dev/null
     sleep 1
 
-    if ! god_is_running >/dev/null; then
+    if [[ -z $(god_pids) ]]; then
         god_log "✅ stopped (forced)"
         return 0
     fi

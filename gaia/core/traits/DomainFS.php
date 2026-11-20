@@ -60,6 +60,99 @@ protected function getPublicFolders() {
    }
 
     /**
+     * cuboStatus — ενημέρωση status ενός cubo στο moonlist.json (χωρίς MariaDB)
+     * Status workflow: dev → testing → active → production (+ broken)
+     * Χρήση: POST /api/v1/<resource>/cuboStatus  {domain, cubo, status}
+     */
+    protected function cuboStatus($request = []): array {
+        $domain = $request['domain'] ?? $_GET['domain'] ?? null;
+        $cubo   = $request['cubo']   ?? $_GET['cubo']   ?? null;
+        $status = $request['status'] ?? $_GET['status'] ?? null;
+
+        if (!$domain || !$cubo || !$status) {
+            return ['success' => false, 'error' => 'domain, cubo and status required'];
+        }
+
+        $valid = ['dev', 'testing', 'active', 'production', 'broken'];
+        if (!in_array($status, $valid, true)) {
+            return ['success' => false, 'error' => 'invalid status', 'valid' => $valid];
+        }
+
+        $moonlist = "/var/www/gs/data/{$domain}/moonlist.json";
+        if (!is_file($moonlist)) {
+            return ['success' => false, 'error' => 'moonlist.json not found'];
+        }
+
+        $raw = file_get_contents($moonlist);
+        $data = json_decode($raw, true);
+        if (!is_array($data) || !isset($data['cubos'])) {
+            return ['success' => false, 'error' => 'invalid moonlist.json'];
+        }
+
+        $found = false;
+        foreach ($data['cubos'] as $i => $c) {
+            if (($c['name'] ?? null) === $cubo) {
+                $data['cubos'][$i]['status'] = $status;
+                $found = true;
+                break;
+            }
+        }
+
+        if (!$found) {
+            return ['success' => false, 'error' => 'cubo not found'];
+        }
+
+        $ok = file_put_contents(
+            $moonlist,
+            json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
+        );
+
+        return [
+            'success' => $ok !== false,
+            'domain' => $domain,
+            'cubo' => $cubo,
+            'status' => $status,
+        ];
+    }
+
+    /**
+     * mintToken — signed token (HMAC) για το messaging/ws, με την identity του χρήστη.
+     * identity = domain|uid (uid από GENUID cookie), role = admin μόνο για gen20.net.
+     * Δεν αγγίζει MariaDB — διαβάζει το GOD_SHARED_SECRET από god/.env.
+     * Χρήση: GET/POST /api/v1/<resource>/mintToken  {domain, uid?}
+     */
+    protected function mintToken($request = []): array {
+        $domain = $request['domain'] ?? $_SERVER['SERVER_NAME'] ?? null;
+        $uid    = $request['uid']    ?? $_COOKIE['GENUID'] ?? '1';
+
+        if (!$domain || !$uid) {
+            return ['success' => false, 'error' => 'domain and uid required'];
+        }
+
+        // role: admin για το κύριο domain (gen20.net), αλλιώς user
+        $role = ($domain === 'gen20.net') ? 'admin' : 'user';
+
+        $env = @file_get_contents('/var/www/gs/god/.env');
+        if (!is_string($env) || !preg_match('/^GOD_SHARED_SECRET=(.+)$/m', $env, $m)) {
+            return ['success' => false, 'error' => 'GOD_SHARED_SECRET not configured'];
+        }
+        $secret = trim($m[1]);
+
+        $exp = time() + 315360000; // ~10 έτη
+        $payload = "{$domain}|{$uid}|{$role}|{$exp}";
+        $b64 = rtrim(strtr(base64_encode($payload), '+/', '-_'), '=');
+        $sig = hash_hmac('sha256', $payload, $secret);
+
+        return [
+            'success' => true,
+            'token' => "{$b64}.{$sig}",
+            'domain' => $domain,
+            'uid' => $uid,
+            'role' => $role,
+        ];
+    }
+
+    /**
      * Build filesystem structure for a domain in gaia/public/DOMAIN
      */
     protected function addFS($domainName): array {

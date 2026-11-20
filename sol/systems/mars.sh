@@ -48,6 +48,22 @@ mars_get_pid() {
     echo "$pid"
 }
 
+# signed token (HMAC) για το /god/v1/messaging/ws — payload: db|uid|role|exp
+mars_mint_token() {
+    local sol_root="${SOL_ROOT:-$(dirname "$MARS_ROOT")}"
+    local secret payload b64 sig uid role exp db
+    db="${MARS_DB:-mars}"
+    secret=$(grep -oE '^GOD_SHARED_SECRET=.*' "$sol_root/god/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '\r')
+    [[ -z $secret ]] && return 1
+    uid="1"
+    role="system"
+    exp=$(( $(date +%s) + 315360000 ))   # ~10 έτη
+    payload="${db}|${uid}|${role}|${exp}"
+    b64=$(printf '%s' "$payload" | openssl base64 -A 2>/dev/null | tr '+/' '-_' | tr -d '=')
+    sig=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "$secret" -hex 2>/dev/null | awk '{print $NF}')
+    printf '%s.%s' "$b64" "$sig"
+}
+
 # --------------------------------------------------
 # Expressions
 # --------------------------------------------------
@@ -103,7 +119,10 @@ mars_start() {
 
     mars_log "🚀 starting"
 
-    nohup "$MARS_BIN" >> "$MARS_LOG" 2>&1 </dev/null &
+    local ws_token
+    ws_token=$(mars_mint_token 2>/dev/null) || mars_log "⚠️ no GOD_SHARED_SECRET — messaging/ws auth θα αποτύχει (run: token sync)"
+
+    MARS_WS_TOKEN="$ws_token" nohup "$MARS_BIN" >> "$MARS_LOG" 2>&1 </dev/null &
     pid=$!
     echo "$pid" > "$MARS_PID"
 

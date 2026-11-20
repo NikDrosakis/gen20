@@ -4,7 +4,7 @@ import { useMessaging } from '../MessagingContext';
 import CubosAvailable from './CubosAvailable.jsx';
 import CubosInstalled from './CubosInstalled.jsx';
 import ParamsForm from './ParamsForm';
-import { getSchema, normalizeParams, UNIT_SCHEMAS } from './unitSchema';
+import { getSchema, normalizeParams, setDynamicSchemas, UNIT_SCHEMAS } from './unitSchema';
 import './Pages.css';
 
 const currentDomain = window.location.hostname;
@@ -171,7 +171,9 @@ export default function Pages({ pageId, lockedPageId }) {
         setLoadingInstalled(true);
         fetchJson(`${API_BASE}/data/${currentDomain}/moonlist.json`).then((data) => {
             if (cancelled) return;
-            setInstalledCubos((data?.cubos || []).filter(isValidCubo));
+            const cubos = (data?.cubos || []).filter(isValidCubo);
+            setInstalledCubos(cubos);
+            setDynamicSchemas(cubos); // δυναμικά schemas από params (cubo → schema)
             setLoadingInstalled(false);
         });
         return () => {
@@ -307,7 +309,7 @@ export default function Pages({ pageId, lockedPageId }) {
 
             const kind = isCubo ? 'cubo' : data.kind;
             const name = isCubo ? data.name : data.kind;
-            const params = normalizeParams(kind, data.params);
+            const params = normalizeParams(isCubo ? name : kind, data.params);
 
             // (προαιρετικά) command προς Sol — χωρίς early return
             try {
@@ -335,10 +337,13 @@ export default function Pages({ pageId, lockedPageId }) {
                     if (!prev?.pages?.[pageKey]) return prev;
                     const next = structuredClone(prev);
                     const arr = next.pages[pageKey][area] || [];
+                    const newIndex = arr.length;
                     next.pages[pageKey][area] = [...arr, unitToItem({ kind, name, params })];
                     next.generated = Date.now();
                     localStorage.setItem(MANIFEST_KEY, JSON.stringify(next));
                     broadcastManifest(next);
+                    // άνοιξε τις παραμέτρους του νέου cubo (αν έχει schema)
+                    setEditing({ pageKey, area, index: newIndex });
                     return next;
                 } catch (err) {
                     console.error('[drop updater]', err);
@@ -351,15 +356,11 @@ export default function Pages({ pageId, lockedPageId }) {
 
     const handleInstall = useCallback(
         (cubo) => {
-            const commandMsg = `install_cubo --domain ${currentDomain} --cubo ${cubo.name}`;
-            const cid = makeCid(MY_USER_ID, SOL_USER_ID);
+            // sol messaging contract: sol.cmd → god → sol daemon → astra pullcubo
             const sent = send({
-                system: 'sol',
-                type: 'message',
-                cid,
-                to: SOL_USER_ID,
-                cast: 'one',
-                c: commandMsg,
+                type: 'sol.cmd',
+                action: 'install',
+                arg: cubo.name,
             });
 
             if (!sent) {
@@ -369,10 +370,28 @@ export default function Pages({ pageId, lockedPageId }) {
 
             setInstalledCubos((prev) => {
                 if (prev.find((c) => c.name === cubo.name)) return prev;
-                return [{ ...cubo, status: 'installed' }, ...prev];
+                const next = [{ ...cubo, status: 'installed' }, ...prev];
+                setDynamicSchemas(next); // schema του νέου cubo άμεσα διαθέσιμο
+                return next;
             });
         },
         [send]
+    );
+
+    const handleStatusChange = useCallback(
+        (name, status) => {
+            // optimistic update
+            setInstalledCubos((prev) =>
+                prev.map((c) => (c.name === name ? { ...c, status } : c))
+            );
+            // persist via PHP (DomainFS cuboStatus)
+            fetch(`${API_BASE}/api/v1/local/cuboStatus`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ domain: currentDomain, cubo: name, status }),
+            }).catch((err) => console.warn('status update failed:', err));
+        },
+        []
     );
 
     const handleDropOnInstalled = (e) => {
@@ -507,7 +526,7 @@ export default function Pages({ pageId, lockedPageId }) {
                 if (!unit) return prev;
                 next.pages[pageKey][area][index] = unitToItem({
                     ...unit,
-                    params: normalizeParams(unit.kind, { ...unit.params, ...nextParams }),
+                    params: normalizeParams(unit.kind === 'cubo' ? unit.name : unit.kind, { ...unit.params, ...nextParams }),
                 });
                 next.generated = Date.now();
                 try {
@@ -530,8 +549,9 @@ export default function Pages({ pageId, lockedPageId }) {
         items.length ? (
             items.map((item, i) => {
                 const unit = itemToUnit(item);
-                const schema = unit ? getSchema(unit.kind) : null;
-                const isEditable = !!schema; // contentOne/contentLoop/team/... έχουν schema
+                const schemaKind = unit.kind === 'cubo' ? unit.name : unit.kind;
+                const schema = unit ? getSchema(schemaKind) : null;
+                const isEditable = !!schema; // contentOne/contentLoop/cubo με params
                 const isEditing =
                     editing?.pageKey === selectedPage.key &&
                     editing?.area === areaKey &&
@@ -574,7 +594,7 @@ export default function Pages({ pageId, lockedPageId }) {
                         {isEditing && isEditable && (
                             <div className="area-cubo-box__params">
                                 <ParamsForm
-                                    kind={unit.kind}
+                                    kind={schemaKind}
                                     params={unit.params}
                                     options={{
                                         contentOne: { id: postOptions },
@@ -737,6 +757,7 @@ export default function Pages({ pageId, lockedPageId }) {
                 onDrop={handleDropOnInstalled}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
+                onStatusChange={handleStatusChange}
             />
         </div>
     );

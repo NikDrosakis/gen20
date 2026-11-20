@@ -3,7 +3,10 @@
 # Source-only. Όλες οι εκφράσεις είναι functions: ws_<verb>.
 
 WS_URL="${WS_URL:-wss://gen20.net/god/v1/messaging/ws}"
-WS_USER="${WS_USER:-sol:1}"
+WS_DB="${WS_DB:-sol}"
+WS_UID="${WS_UID:-1}"
+WS_ROLE="${WS_ROLE:-admin}"
+WS_USER="${WS_USER:-${WS_DB}:${WS_UID}}"
 WS_SYSTEM="${WS_SYSTEM:-sol}"
 
 ws_about() { printf '%s\n' 'WS | WebSocket client για το GOD messaging hub'; }
@@ -18,10 +21,23 @@ ws_help()  {
         '  ws test'
 }
 
+# signed token (HMAC) για το messaging/ws — payload: db|uid|role|exp
+ws_token() {
+    local sol_root="${SOL_ROOT:-/var/www/gs}"
+    local secret payload b64 sig exp
+    secret=$(grep -oE '^GOD_SHARED_SECRET=.*' "$sol_root/god/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '\r')
+    [[ -z $secret ]] && return 1
+    exp=$(( $(date +%s) + 315360000 ))   # ~10 έτη
+    payload="${WS_DB}|${WS_UID}|${WS_ROLE}|${exp}"
+    b64=$(printf '%s' "$payload" | openssl base64 -A 2>/dev/null | tr '+/' '-_' | tr -d '=')
+    sig=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "$secret" -hex 2>/dev/null | awk '{print $NF}')
+    printf '%s.%s' "$b64" "$sig"
+}
+
 ws_uri() {
-    local encoded
-    encoded=$(printf '%s' "$WS_USER" | jq -sRr @uri)
-    printf '%s?userid=%s\n' "$WS_URL" "$encoded"
+    local token
+    token=$(ws_token) || { printf '❌ GOD_SHARED_SECRET missing — run: token sync\n' >&2; return 1; }
+    printf '%s?token=%s\n' "$WS_URL" "$token"
 }
 
 ws_cid() {
