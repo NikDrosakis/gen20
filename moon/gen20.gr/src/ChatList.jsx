@@ -13,7 +13,7 @@ const ChatList = ({ onOpenChat, activeChat }) => {  // ← Δέχεται το o
     // Fetch sessions
     const fetchSessions = async () => {
         try {
-            const response = await fetch('/ermis/v1/sessions');
+            const response = await fetch('/god/v1/messaging/sessions');
             const data = await response.json();
             if (data.success) {
                 setSessions(data.sessions || []);
@@ -25,7 +25,7 @@ const ChatList = ({ onOpenChat, activeChat }) => {  // ← Δέχεται το o
 
     const fetchStats = async () => {
         try {
-            const response = await fetch('/ermis/v1/sessions/stats');
+            const response = await fetch('/god/v1/messaging/sessions/stats');
             const data = await response.json();
             if (data.success) {
                 setStats(data);

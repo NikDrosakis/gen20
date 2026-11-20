@@ -1,164 +1,97 @@
-import React, { useState } from "react";
 import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
-import Swal from "sweetalert2";
-import withReactContent from "sweetalert2-react-content";
-import DB from "./DB";
-import CreateOxygenInvoice from "./CreateOxygenInvoice";
 
-const Checkout = ({
-                      details,
-                      selectedShow,
-                      quantity = 1,
-                      currentReservationId,
-                      onSuccess,
-                      onError
-                  }) => {
+const API = "/api/v1/maria";
+const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
 
-    const [processing, setProcessing] = useState(false);
-    const totalAmount = ((quantity || 1) * (details.price || 0)).toFixed(2);
-    // Add validation
-    if (!currentReservationId) {
-        return <div>Παρακαλώ περιμένετε...</div>;
-    }
-    const handlePaymentSuccess = async (details) => {
-        setProcessing(true);
-        try {
-            const countFromDB = `
-        SELECT COALESCE(SUM(quantity),0) as count
-        FROM gen_gen20net.c_shop_order
-        WHERE performanceid = ${selectedShow.id} AND status = 2
-      `;
-            const dbRes = await DB.maria("f", countFromDB);
-            const sold = Number(dbRes.count || 0);
-            const safeQty = Number(quantity) || 1;
-            const codes = [];
-            for (let i = 1; i <= safeQty; i++) {
-                codes.push(`S${selectedShow.id}-${sold + i}`);
-            }
-            const spectatorCodes = codes.join(",");
+const esc = (v) => String(v ?? "").replace(/\\/g, "\\\\").replace(/'/g, "''");
 
-            // Εκτύπωση invoice
-            const invoice = await CreateOxygenInvoice({ details, selectedShow, safeQty, currentReservationId });
+async function apiF(sql) {
+    const res = await fetch(`${API}/f?key=${encodeURIComponent(sql)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    return json.data ?? null;
+}
 
-            // Ενημέρωση παραγγελίας
-            const orderQuery = `
-        UPDATE gen_gen20net.c_shop_order
-        SET status = 2,
-            code = '${spectatorCodes}',
-            orderid = '${details.id}',
-            ordername = '${details.payer.name.given_name} ${details.payer.name.surname}',
-            ordermail = '${details.payer.email_address}',
-            oxygen_invoice_id = '${invoice.id}',
-            purchased= '${details.create_time.replace("T", " ").replace("Z", "")}'
-        WHERE id = '${currentReservationId}'
-      `;
-            await DB.maria("q", orderQuery);
+async function apiQ(sql) {
+    const res = await fetch(`${API}/q?key=${encodeURIComponent(sql)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+}
 
-            // Ενημέρωση total booked
-            const updateTotDB = `UPDATE gen_gen20net.c_shop_performance SET total_booked=total_booked+${safeQty} WHERE id = ${selectedShow.id}`;
-            await DB.maria("q", updateTotDB);
+const Checkout = ({ selectedShow, quantity = 1, price = 0, currentReservationId, onSuccess, onError }) => {
+    const qty = Math.max(1, parseInt(quantity, 10) || 1);
+    const totalAmount = (qty * Number(price || 0)).toFixed(2);
 
-            const MySwal = withReactContent(Swal);
-            MySwal.fire({
-                title: 'Επιτυχία!',
-                text: `Η καταχώρηση και η πληρωμή ολοκληρώθηκε με κωδικό/κωδικούς θέσης ${spectatorCodes}`,
-                icon: 'success',
-                confirmButtonText: 'ΟΚ'
-            });
+    const confirmOrder = async (paypalDetails) => {
+        // 1) Κωδικοί θέσεων
+        const countQuery = `
+            SELECT COALESCE(SUM(quantity), 0) AS count
+            FROM gen_gen20net.c_event_order
+            WHERE performanceid = ${selectedShow.performanceid} AND status = 2
+        `;
+        const row = await apiF(countQuery);
+        const sold = Number(row?.count || 0);
+        const codes = [];
+        for (let i = 1; i <= qty; i++) codes.push(`S${selectedShow.performanceid}-${sold + i}`);
+        const spectatorCodes = codes.join(",");
 
-            if (onSuccess) onSuccess({ details, codes: spectatorCodes });
-        } catch (err) {
-            console.error("Checkout success handling error:", err);
-            if (onError) onError(err);
-            alert("Σφάλμα κατά την ολοκλήρωση της παραγγελίας.");
-        } finally {
-            setProcessing(false);
-        }
-    };
+        const orderName = [paypalDetails?.payer?.name?.given_name, paypalDetails?.payer?.name?.surname]
+            .filter(Boolean)
+            .join(" ");
+        const orderMail = paypalDetails?.payer?.email_address || "";
+        const purchased = (paypalDetails?.create_time || "")
+            .replace("T", " ")
+            .replace("Z", "");
 
-    const handlePaymentError = (err) => {
-        console.error("Payment error:", err);
-        if (onError) onError(err);
-        alert("Η πληρωμή απέτυχε. Δοκίμασε ξανά.");
+        // 2) Ολοκλήρωση παραγγελίας
+        await apiQ(`
+            UPDATE gen_gen20net.c_event_order
+            SET status = 2,
+                code = '${esc(spectatorCodes)}',
+                orderid = '${esc(paypalDetails?.id)}',
+                ordername = '${esc(orderName)}',
+                ordermail = '${esc(orderMail)}',
+                purchased = '${esc(purchased)}'
+            WHERE id = ${currentReservationId}
+        `);
+
+        // 3) Ενημέρωση διαθεσιμότητας
+        await apiQ(`
+            UPDATE gen_gen20net.c_event_performance
+            SET total_booked = total_booked + ${qty}
+            WHERE id = ${selectedShow.performanceid}
+        `);
+
+        return codes;
     };
 
     return (
-        <div style={{ marginTop: "20px" }}>
-                <>
-                    <PayPalScriptProvider options={{
-                        "client-id": "AduilDicu9870dr_6BKMErWYllDAhowqhMMXNsDXeaBBGu6Ixs7iDqCpDWfA0bqI9HuNCEnyCuXEsVdL",
-                        currency: "EUR",
-                        locale: "el_GR"
-                    }}>
-                        <PayPalButtons
-                            createOrder={(data, actions) => {
-                                return actions.order.create({
-                                    purchase_units: [{
-                                        amount: { value: totalAmount }
-                                    }]
-                                });
-                            }}
-                            onApprove={async (data, actions) => {
-                                const details = await actions.order.capture();
-                                console.log("✅ Success:", details);
-                                const countFromDB = `
-                                    SELECT COALESCE(SUM(quantity),0) as count
-                                    FROM gen_gen20net.c_shop_order
-                                    WHERE performanceid = ${selectedShow.id} AND status = 2`;
-                                const dbRes = await DB.maria("f", countFromDB);
-                                const sold = Number(dbRes.count || 0);
-                                const safeQty = Number(quantity) || 1;
-                                const codes = [];
-                                for (let i = 1; i <= safeQty; i++) {
-                                    codes.push(`S${selectedShow.id}-${sold + i}`);
-                                }
-                                const spectatorCodes = codes.join(",");
-
-// 2) Run oxygen contacts, invoice
-                                const invoice = await CreateOxygenInvoice({ details, selectedShow, quantity, currentReservationId });
-                                console.log("Invoice=>",invoice);
-// 3) Ενημέρωση παραγγελίας μετά PayPal, oxygen
-                                const orderQuery = `
-                                    UPDATE gen_gen20net.c_shop_order
-                                    SET status = 2,
-                                        code = '${spectatorCodes}',
-                                        orderid = '${details.id}',
-                                        ordername = '${details.payer.name.given_name} ${details.payer.name.surname}',
-                                        ordermail = '${details.payer.email_address}',
-                                        oxygen_invoice_id = '${invoice.id}',
-                                        purchased= '${details.create_time.replace("T", " ").replace("Z", "")}'                                        
-                                    WHERE id = '${currentReservationId}'
-                                `;
-                                console.log(orderQuery);
-                                const orderQueryTransaction = await DB.maria("q", orderQuery);
-
-                                if(orderQueryTransaction) {
-
-                                    const updateTotDB = `UPDATE gen_gen20net.c_shop_performance SET total_booked=total_booked+${safeQty} WHERE id = ${selectedShow.id}`;
-                                    const updateTotal = await DB.maria("q", updateTotDB);
-
-                                    const MySwal = withReactContent(Swal);
-                                    MySwal.fire({
-                                        title: 'Επιτυχία!',
-                                        text: `Ευχαριστούμε! Η καταχώρηση και η πληρωμή σου ολοκληρώθηκε με κωδικό/κωδικούς θέσης ${spectatorCodes}`,
-                                        icon: 'success',
-                                        confirmButtonText: 'ΟΚ'
-                                    });
-                                    console.log(`Η πληρωμή ολοκληρώθηκε `);
-                                }else{
-                                    console.log(invoice);
-                                    alert("Ανέφικτη Συναλλαγή");
-                                }
-                            }}
-                            onError={(err) => {
-                                console.error("❌ Payment error:", err);
-                                const orderQuery = `UPDATE gen_gen20net.c_shop_order SET status=0 WHERE id = '${currentReservationId}'`;
-                                alert("Η πληρωμή απέτυχε. Δοκίμασε ξανά.");
-                            }}
-                        />
-                    </PayPalScriptProvider>
-                </>
+        <div className="event-checkout">
+            <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "EUR", locale: "el_GR" }}>
+                <PayPalButtons
+                    createOrder={(data, actions) =>
+                        actions.order.create({
+                            purchase_units: [{ amount: { value: totalAmount } }],
+                        })
+                    }
+                    onApprove={async (data, actions) => {
+                        try {
+                            const details = await actions.order.capture();
+                            const codes = await confirmOrder(details);
+                            if (onSuccess) onSuccess(codes);
+                        } catch (err) {
+                            console.error("Payment/confirm error:", err);
+                            if (onError) onError(err);
+                        }
+                    }}
+                    onError={(err) => {
+                        console.error("PayPal error:", err);
+                        if (onError) onError(err);
+                    }}
+                />
+            </PayPalScriptProvider>
         </div>
     );
 };
+
 export default Checkout;

@@ -1,0 +1,68 @@
+.newsletter-banner {
+    padding: 24px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg2);
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.newsletter-banner h3 {
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.newsletter-banner p {
+    color: var(--text);
+    opacity: 0.8;
+    margin-bottom: 16px;
+}
+
+.newsletter-form {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.newsletter-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.newsletter-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    background: #ff0000;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.newsletter-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.newsletter-message {
+    margin-top: 14px;
+    font-size: 0.9rem;
+}
+
+.newsletter-message.success {
+    color: var(--success, #39865a);
+}
+
+.newsletter-message.error {
+    color: var(--danger, #c74747);
+}
+
+.message-icon {
+    margin-right: 4px;
+}

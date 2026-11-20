@@ -1,5 +1,65 @@
 /* EventBooking.css */
 
+/* Booking CTA (button that reveals the booking form) */
+.event-booking-cta {
+    text-align: center;
+    margin: 24px auto;
+}
+
+.event-booking-open {
+    padding: 14px 32px;
+    background: #4b4bcc;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.event-booking-open:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(75, 75, 204, 0.35);
+}
+
+/* Booking header (title + close) */
+.event-booking-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.event-booking-close {
+    background: transparent;
+    border: none;
+    font-size: 1.3rem;
+    cursor: pointer;
+    color: var(--text);
+    padding: 4px 8px;
+    line-height: 1;
+}
+
+/* Empty state */
+.event-booking-empty {
+    text-align: center;
+    color: var(--text);
+    padding: 20px;
+}
+
+/* Show price line */
+.event-booking-show-price {
+    font-size: 0.95em;
+    color: var(--text);
+    font-weight: 500;
+}
+
+/* PayPal checkout container */
+.event-checkout {
+    margin-top: 16px;
+}
+
 /* Wrapper */
 .event-booking-wrapper {
     max-width: 600px;

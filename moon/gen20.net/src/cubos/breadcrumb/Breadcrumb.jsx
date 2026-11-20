@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Cookies from 'js-cookie';
+import './Breadcrumb.css';
 
 // ✅ Static page titles
 const STATIC_PAGE_TITLES = {
@@ -134,3 +135,4 @@ export const Breadcrumb = ({ path }) => {
         </>
     );
 };
+export default Breadcrumb;

@@ -1,111 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-
-const styles = `
-.diary-wrapper {
-    display: flex;
-}
-
-.diary-sidebar {
-    width: 200px;
-    padding: 10px;
-    border-right: 1px solid #ddd;
-    height: 100vh;
-    overflow-y: auto;
-    background-color: #f4f4f4;
-    box-sizing: border-box;
-}
-
-.diary-sidebar .date-entry {
-    padding: 10px;
-    cursor: pointer;
-    text-align: center;
-    border-radius: 4px;
-}
-
-.diary-sidebar .date-entry:hover {
-    background-color: #e0e0e0;
-}
-
-.diary-sidebar .date-entry.active {
-    background-color: #4CAF50;
-    color: white;
-}
-
-.diary-container {
-    padding: 20px;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    width: 70%;
-    margin: 20px;
-    box-sizing: border-box;
-}
-
-.diary-container h2 {
-    float: left;
-    margin: 0 0 10px 0;
-}
-
-.diary-container button {
-    padding: 12px 24px;
-    cursor: pointer;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 16px;
-    margin-bottom: 20px;
-    width: 100%;
-    transition: background-color 0.3s;
-    clear: both;
-    margin-top: 40px;
-}
-
-.diary-container button:hover {
-    background-color: #45a049;
-}
-
-.diary-list {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    clear: both;
-}
-
-.diary-entry-row {
-    display: flex;
-    margin-bottom: 10px;
-    align-items: center;
-}
-
-.diary-entry-row .time {
-    width: 80px;
-    text-align: center;
-    padding-right: 10px;
-    font-weight: bold;
-    font-size: 16px;
-    color: #333;
-}
-
-.diary-entry-row .task-entry {
-    flex-grow: 1;
-    padding: 8px;
-    font-size: 16px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    margin-left: 10px;
-    box-sizing: border-box;
-}
-
-.diary-entry-row input.task-entry {
-    font-size: 16px;
-    outline: none;
-}
-
-.diary-entry-row input.task-entry:focus {
-    border-color: #4CAF50;
-}
-`;
+import "./Diary.css";
 
 const formatTime = (date) => {
     const hours = String(date.getHours()).padStart(2, '0');
@@ -212,7 +106,6 @@ export const Diary = () => {
 
     return (
         <>
-            <style>{styles}</style>
             <div className="diary-wrapper">
                 <div className="diary-sidebar">
                     {dates.map((d) => (
@@ -256,3 +149,4 @@ export const Diary = () => {
         </>
     );
 };
+export default Diary;

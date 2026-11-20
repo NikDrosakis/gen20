@@ -1,6 +1,6 @@
 #!/bin/bash
 # astra_pullcubo.sh — εγκατάσταση cubo από astra/cubos σε moon/<domain>/src/cubos
-# Χρήση: astra pullcubo <cubo> --domain <domain>
+# Χρήση: astra pullcubo <cubo> <domain>   (ή astra pullcubo <cubo> --domain <domain>)
 
 set -uo pipefail
 
@@ -9,13 +9,16 @@ ASTRA_CUBOS="${ASTRA_CUBOS:-$SOL_ROOT/astra/cubos}"
 
 cubo=""
 domain=""
+positional=()
 while (($#)); do
     case "$1" in
         --domain) domain="$2"; shift 2 ;;
         -*) shift ;;
-        *) cubo="$1"; shift ;;
+        *) positional+=("$1"); shift ;;
     esac
 done
+cubo="${positional[0]:-}"
+[[ -z "$domain" ]] && domain="${positional[1]:-}"
 
 [[ -n "$cubo" ]] || { echo "Usage: astra pullcubo <cubo> --domain <domain>" >&2; exit 1; }
 [[ -n "$domain" ]] || { echo "❌ --domain required" >&2; exit 1; }

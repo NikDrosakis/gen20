@@ -216,19 +216,16 @@
 
 .film-project-genre {
     color: #667eea;
-    font-size: 13px;
     margin-bottom: 5px;
 }
 
 .film-project-year {
     color: #999;
-    font-size: 12px;
     margin-bottom: 8px;
 }
 
 .film-project-role {
     color: #666;
-    font-size: 14px;
 }
 
 /* Awards */
@@ -273,13 +270,11 @@
 
 .film-award-festival {
     color: #555;
-    font-size: 14px;
     margin-bottom: 2px;
 }
 
 .film-award-location {
     color: #999;
-    font-size: 12px;
 }
 
 .film-show-more {
@@ -291,7 +286,6 @@
     border-radius: 6px;
     cursor: pointer;
     width: 100%;
-    font-size: 14px;
 }
 
 .film-show-more:hover {

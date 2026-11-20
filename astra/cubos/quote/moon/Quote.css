@@ -1,0 +1,7 @@
+/* Quote.css — Quote.jsx uses Tailwind utilities + framer-motion for layout,
+   transition and animation. Only the static overrides live here. */
+.quote-card {
+    aspect-ratio: 9 / 16;
+    background: var(--bg2);
+    color: var(--text);
+}

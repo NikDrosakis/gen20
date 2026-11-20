@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import "./Badge.css";
 
 const defaultBadges = [
     { level: 1, title: 'Newcomer', icon: '🏆', description: 'Welcome to the journey! This badge marks your first step.' },
@@ -13,64 +14,6 @@ const defaultBadges = [
     { level: 10, title: 'Grandmaster', icon: '🌟', description: 'The pinnacle of the journey.' },
 ];
 
-const styles = `
-.badge-cubo-container {
-    position: relative;
-    width: 100%;
-    overflow: hidden;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-}
-
-.badge-cubo {
-    display: flex;
-    transition: transform 0.5s ease;
-}
-
-.badge-card {
-    min-width: 100%;
-    padding: 20px;
-    text-align: center;
-    border-radius: 8px;
-    background-color: #fff;
-    box-sizing: border-box;
-}
-
-.badge-card h4 {
-    margin: 10px 0 6px;
-    font-size: 1.1rem;
-}
-
-.badge-card p {
-    margin: 0;
-    font-size: 0.9rem;
-    opacity: 0.8;
-}
-
-.badge-icon {
-    font-size: 3rem;
-    line-height: 1;
-}
-
-.badge-nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    font-size: 24px;
-    user-select: none;
-    padding: 4px 8px;
-}
-
-.nav-left {
-    left: 10px;
-}
-
-.nav-right {
-    right: 10px;
-}
-`;
-
 const Badge = ({ badges = defaultBadges }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const totalBadges = badges.length;
@@ -83,7 +26,6 @@ const Badge = ({ badges = defaultBadges }) => {
 
     return (
         <>
-            <style>{styles}</style>
             <div className="badge-cubo-container">
                 <div
                     className="badge-cubo"

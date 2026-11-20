@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../../ThemeContext';
 
 export const Audioplayer = ({ tracks = [] }) => {
-    const { theme } = useTheme();
+    const { darkMode } = useTheme();
     const audioRef = useRef(null);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -12,14 +12,20 @@ export const Audioplayer = ({ tracks = [] }) => {
 
     const currentTrack = tracks[currentIndex];
 
-    // Apply theme as CSS variables on root
+    // Apply theme as CSS variables on root (παράγεται από darkMode)
     useEffect(() => {
         const root = document.documentElement;
+        const theme = {
+            primary: darkMode ? '#6ba5d1' : '#4caf50',
+            background: darkMode ? '#1e293b' : '#f5f5f5',
+            text: darkMode ? '#e2e8f0' : '#333333',
+            progressBg: darkMode ? '#334155' : '#dddddd',
+        };
         root.style.setProperty('--primary', theme.primary);
         root.style.setProperty('--player-bg', theme.background);
         root.style.setProperty('--player-text', theme.text);
         root.style.setProperty('--progress-bg', theme.progressBg);
-    }, [theme]);
+    }, [darkMode]);
 
     const formatTime = (secs) => {
         if (isNaN(secs)) return '0:00';
@@ -143,3 +149,4 @@ export const Audioplayer = ({ tracks = [] }) => {
         </div>
     );
 };
+export default Audioplayer;

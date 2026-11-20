@@ -60,7 +60,6 @@
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 14px;
     color: #fff;
     text-decoration: none;
     transition: background-color 0.3s ease, transform 0.15s ease;
@@ -101,7 +100,6 @@
 .not-found__suggestions h4 {
     color: #4a5568;
     margin: 0 0 0.5rem;
-    font-size: 14px;
 }
 
 .not-found__suggestions ul {
@@ -117,7 +115,6 @@
 .not-found__suggestions a {
     color: #4299e1;
     text-decoration: none;
-    font-size: 14px;
 }
 
 .not-found__suggestions a:hover {

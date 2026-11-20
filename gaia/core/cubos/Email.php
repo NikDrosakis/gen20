@@ -1,58 +1,101 @@
 <?php
-namespace Core\Traits;
+namespace Core\Cubos;
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+/**
+ * Email cubo — mail relay through the local postfix MTA.
+ *
+ * Serves the MOON "mail" cubo (contact form):
+ *   POST /api/v1/local/sendMail
+ *
+ * Sender is derived per-domain (noreply@<domain>) so each site signs with its
+ * own DKIM/SPF. Recipient is resolved via mailRecipient():
+ *   - gen20 family (gen20.net/.gr/.dev/.art, genia20.gr) + anticultura.com
+ *     + poetabook.com                                  -> info@gen20.net
+ *   - directorsunion.gr                                -> directorscreatorsunion@gmail.com
+ *   - nikimourtzi.com                                  -> nikimourtzi23@gmail.com
+ *   - everything else                                  -> info@<domain>
+ * Overridable via env: MAIL_FROM / MAIL_TO / MAIL_DOMAIN
+ *
+ * Delivery is handled by postfix (sendmail), so routing/auth/DKIM live in the
+ * MTA config rather than in this trait.
+ */
 trait Email {
 
-    protected function sendZohoMail($data) {
-        if (empty($data['email']) || empty($data['comment'])) {
-            http_response_code(400);
-            return ['error' => 'Missing required fields'];
-        }
+    protected function sendMail(array $data): array {
+        $name    = trim($data['name'] ?? '');
+        $email   = trim($data['email'] ?? '');
+        $website = trim($data['website'] ?? '');
+        $comment  = trim($data['comment'] ?? '');
+        $subject  = trim($data['subject'] ?? '');
+        $fromName = trim($data['fromName'] ?? '');
 
-        $accessToken = 'YOUR_VALID_ACCESS_TOKEN';
-        $accountId = '20106193110'; // Get this from Zoho's /accounts API
-
-        $url = "https://mail.zoho.com/api/accounts/{$accountId}/messages";
-
-        $subject = "New Comment from {$data['name']}";
-        $body = "Comment:\n\n{$data['comment']}\n\nFrom: {$data['name']} ({$data['email']})\nWebsite: {$data['website']}";
-
-        $payload = [
-            "fromAddress" => "info@gen20.net",
-            "toAddress" => "info@gen20.net", // Can also be a comma-separated string of emails
-            "subject" => $subject,
-            "mailFormat" => "text", // or "html"
-            "content" => $body,
-        ];
-
-        $options = [
-            'http' => [
-                'method' => 'POST',
-                'header' => [
-                    "Authorization: Zoho-oauthtoken {$accessToken}",
-                    "Content-Type: application/json",
-                ],
-                'content' => json_encode($payload),
-                'ignore_errors' => true,
-            ]
-        ];
-
-        $context = stream_context_create($options);
-        $result = file_get_contents($url, false, $context);
-        $httpCode = $http_response_header[0] ?? 'HTTP/1.1 500 Internal Server Error';
-
-        if (strpos($httpCode, '200') === false && strpos($httpCode, '202') === false) {
+        if ($email === '' || $comment === '') {
             return [
                 'success' => false,
-                'message' => 'Zoho Mail API failed: ' . $httpCode,
-                'raw' => $result
+                'error'   => 'Missing required fields: email and comment',
             ];
         }
 
-        return [
-            'success' => true,
-            'message' => 'Email sent via Zoho Mail API',
-            'response' => json_decode($result, true),
+        $domain = $_SERVER['SERVER_NAME'] ?? (getenv('MAIL_DOMAIN') ?: 'gen20.net');
+        $domain = preg_replace('/^www\./', '', strtolower(trim($domain)));
+
+        $from = getenv('MAIL_FROM') ?: ('noreply@' . $domain);
+        $to   = getenv('MAIL_TO')   ?: $this->mailRecipient($domain);
+
+        $mail = new PHPMailer(true);
+
+        try {
+            $mail->isSendmail(); // local postfix
+            $mail->CharSet = PHPMailer::CHARSET_UTF8;
+            $mail->setFrom($from, $fromName !== '' ? $fromName : 'GEN20');
+            $mail->addAddress($to);
+            $mail->addReplyTo($email, $name);
+
+            $mail->isHTML(false);
+            $mail->Subject = $subject !== '' ? $subject : "New message from {$name}";
+            $mail->Body    = "Name: {$name}\n"
+                           . "Email: {$email}\n"
+                           . "Website: {$website}\n\n"
+                           . $comment;
+
+            $mail->send();
+
+            return [
+                'success' => true,
+                'message' => 'Email sent',
+            ];
+        } catch (Exception $e) {
+            error_log("Email cubo error: {$mail->ErrorInfo}");
+            return [
+                'success' => false,
+                'error'   => $mail->ErrorInfo,
+            ];
+        }
+    }
+
+    /**
+     * Resolve the recipient mailbox for a given site domain.
+     */
+    protected function mailRecipient(string $domain): string {
+        $toGen20Net = [
+            'gen20.net', 'gen20.gr', 'gen20.dev', 'gen20.art', 'genia20.gr',
+            'anticultura.com', 'poetabook.com',
         ];
+        if (in_array($domain, $toGen20Net, true)) {
+            return 'info@gen20.net';
+        }
+
+        $overrides = [
+            'directorsunion.gr' => 'directorscreatorsunion@gmail.com',
+            'nikimourtzi.com'   => 'nikimourtzi23@gmail.com',
+        ];
+        if (isset($overrides[$domain])) {
+            return $overrides[$domain];
+        }
+
+        return 'info@' . $domain;
     }
 }

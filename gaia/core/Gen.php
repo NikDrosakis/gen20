@@ -8,7 +8,6 @@ use Core\Traits\System;
 use Core\Traits\Meta;
 use Core\Traits\Manifest;
 use Core\Traits\Head;
-use Core\Traits\Ermis;
 use Core\Traits\Lang;
 use Core\Traits\Tree;
 use Core\Traits\Form;
@@ -38,7 +37,7 @@ wordpress integrated
 magento integrated
 */
 class Gen extends Gaia {
-use  Url, System,Meta, Manifest, Head, Ermis,Lang, Tree, Form, DomainZone,DomainFS,DomainDB,DomainHost,Kronos, Sketch,WS, Action, Template, Media, Filemeta, My, CuboAdmin, CuboPublic, Template,Book;
+use  Url, System,Meta, Manifest, Head, Lang, Tree, Form, DomainZone,DomainFS,DomainDB,DomainHost,Kronos, Sketch,WS, Action, Template, Media, Filemeta, My, CuboAdmin, CuboPublic, Template,Book;
 
 protected $database;
 protected $layout_selected;

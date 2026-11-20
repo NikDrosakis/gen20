@@ -19,8 +19,16 @@ export default function App() {
     const PAGES = manifest.pages || {};
     const FIRST = Object.keys(PAGES)[0];
     const uri = pathname.split("/").filter(Boolean).join("/");
+    const segments = uri.split("/");
     const key = uri || FIRST;
-    const page = PAGES[key] || PAGES.notFound;
+
+    // content detail: <section>/<slug> → section page με ContentOne στο main
+    // (ContentOne διαβάζει μόνο του το slug από το URL)
+    let page = PAGES[key];
+    if (!page && segments.length >= 2 && PAGES[segments[0]]) {
+        page = { ...PAGES[segments[0]], m: [{ contentOne: {} }] };
+    }
+    page = page || PAGES.notFound;
 
     if (!page) return <div className="gen-page-not-found">Not found: {uri}</div>;
 

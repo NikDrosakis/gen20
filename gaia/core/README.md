@@ -16,7 +16,7 @@
 
 ### v3 October 2024
 1) API curl for internal 
-2) Layer Connected with Ermis, Kronos
+2) Layer Connected with God, Kronos
 3) Admin, Public Routing 
 4) Form
 5) Template

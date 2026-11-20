@@ -145,7 +145,6 @@
     color: var(--primary);
     cursor: pointer;
     padding: 10px;
-    font-size: 0.9em;
     transition: all 0.3s ease;
     margin-top: 5px;
 }

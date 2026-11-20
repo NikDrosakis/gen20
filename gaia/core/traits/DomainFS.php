@@ -116,6 +116,117 @@ protected function getPublicFolders() {
     }
 
     /**
+     * delPageFS — αφαίρεση ενός page chunk από το moon_manifest.json (χωρίς MariaDB)
+     * Αφαιρεί το entry με το δοθέν key από το αντικείμενο pages.
+     * Χρήση: POST /api/v1/<resource>/delPageFS  {domain, page}
+     */
+    protected function delPageFS($request = []): array {
+        $domain = $request['domain'] ?? $_GET['domain'] ?? null;
+        $page   = $request['page']   ?? $_GET['page']   ?? null;
+
+        if (!$domain || !$page) {
+            return ['success' => false, 'error' => 'domain and page required'];
+        }
+
+        if (!preg_match('/^[a-z0-9.\-]+$/i', $domain)) {
+            return ['success' => false, 'error' => 'Invalid domain'];
+        }
+
+        $dataRoot   = '/var/www/gs/data';
+        $targetDir  = $dataRoot . '/' . $domain;
+        $targetFile = $targetDir . '/moon_manifest.json';
+        $keepBackups = 5; // πόσα παλιά κρατάμε: .1 .2 ... .5
+
+        if (!is_dir($targetDir)) {
+            return ['success' => false, 'error' => 'Domain data dir not found'];
+        }
+
+        $dataRootReal  = realpath($dataRoot);
+        $targetDirReal = realpath($targetDir);
+        if (!$dataRootReal || !$targetDirReal || strpos($targetDirReal, $dataRootReal) !== 0) {
+            return ['success' => false, 'error' => 'Access denied'];
+        }
+
+        if (!is_file($targetFile)) {
+            return ['success' => false, 'error' => 'moon_manifest.json not found'];
+        }
+
+        $raw  = file_get_contents($targetFile);
+        $data = json_decode($raw, true);
+        if (!is_array($data) || !isset($data['pages']) || !is_array($data['pages'])) {
+            return ['success' => false, 'error' => 'invalid moon_manifest.json'];
+        }
+
+        if (!array_key_exists($page, $data['pages'])) {
+            return ['success' => false, 'error' => 'page not found'];
+        }
+
+        unset($data['pages'][$page]);
+
+        // ---------- ROTATION (στο ίδιο folder) ----------
+        // Διαγράφουμε το πιο παλιό (.N), μετακινούμε .N-1 -> .N, ..., .1 -> .2, τρέχον -> .1
+        if (is_file($targetFile)) {
+            $oldest = $targetFile . '.' . $keepBackups;
+            if (is_file($oldest)) {
+                @unlink($oldest);
+            }
+
+            for ($i = $keepBackups - 1; $i >= 1; $i--) {
+                $src = $targetFile . '.' . $i;
+                $dst = $targetFile . '.' . ($i + 1);
+                if (is_file($src)) {
+                    @rename($src, $dst);
+                }
+            }
+
+            if (!@rename($targetFile, $targetFile . '.1')) {
+                return ['success' => false, 'error' => 'Backup rotate failed (permissions?)'];
+            }
+        }
+
+        // ---------- Γράψιμο νέου ----------
+        $data['generated'] = time();
+
+        $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($json === false) {
+            return ['success' => false, 'error' => 'JSON encode failed'];
+        }
+
+        $tmp = $targetFile . '.tmp.' . getmypid();
+        if (file_put_contents($tmp, $json) === false) {
+            return ['success' => false, 'error' => 'Write failed (permissions?)'];
+        }
+
+        @chmod($tmp, 0644);
+
+        if (!rename($tmp, $targetFile)) {
+            @unlink($tmp);
+            return ['success' => false, 'error' => 'Rename failed (permissions?)'];
+        }
+
+        @chown($targetFile, 'dros');
+        @chgrp($targetFile, 'dros');
+
+        for ($i = 1; $i <= $keepBackups; $i++) {
+            $f = $targetFile . '.' . $i;
+            if (is_file($f)) {
+                @chmod($f, 0644);
+                @chown($f, 'dros');
+                @chgrp($f, 'dros');
+            }
+        }
+
+        return [
+            'success'   => true,
+            'domain'    => $domain,
+            'page'      => $page,
+            'path'      => 'data/' . $domain . '/moon_manifest.json',
+            'backup'    => is_file($targetFile . '.1') ? 'data/' . $domain . '/moon_manifest.json.1' : null,
+            'generated' => $data['generated'],
+        ];
+    }
+
+    /**
      * mintToken — signed token (HMAC) για το messaging/ws, με την identity του χρήστη.
      * identity = domain|uid (uid από GENUID cookie), role = admin μόνο για gen20.net.
      * Δεν αγγίζει MariaDB — διαβάζει το GOD_SHARED_SECRET από god/.env.

@@ -1,137 +1,88 @@
-const Footer = () => {
-    return (
-        <footer className="footer">
-            <div className="cubo">
-                <div className="footer__top">
-                    <div className="row">
-                        <div className="col-lg-6 col-md-6">
-                            <div className="footer__top__logo">
-                                <a href="/">
-                                    <img src="img/logo2_en.png" alt=""/>
-                                </a>
-                            </div>
-                        </div>
-                        <div className="col-lg-6 col-md-6">
-                            <div className="footer__top__social">
-                                <a href="/">
-                                    <i className="fa fa-facebook"/>
-                                </a>
-                                <a href="/">
-                                    <i className="fa fa-twitter"/>
-                                </a>
-                                <a href="/">
-                                    <i className="fa fa-instagram"/>
-                                </a>
-                                <a href="/">
-                                    <i className="fa fa-youtube-play"/>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="footer__option">
-                    <div className="row">
-                        <div className="col-lg-4 col-md-6 col-sm-6">
-                            <div className="footer__option__item">
-                                <h5>About us</h5>
-                                <p>
-                                    Formed in 2025 by Nikolas Drosakis, Giorgos Kolios, Alexandros Androulakis is an
-                                    non profit company specializing in art & technology.
-                                </p>
-                                <a href="/" className="read__more">
-                                    Read more <span className="arrow_right"/>
-                                </a>
-                            </div>
-                        </div>
-                        <div className="col-lg-2 col-md-3 col-sm-3">
-                            <div className="footer__option__item">
-                                <h5>Who we are</h5>
-                                <ul>
-                                    <li>
-                                        <a href="/">Team</a>
-                                    </li>
-                                    <li>
-                                        <a href="/">Contact us</a>
-                                    </li>
-                                    <li>
-                                        <a href="/">Locations</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div className="col-lg-2 col-md-3 col-sm-3">
-                            <div className="footer__option__item">
-                                <h5>Our work</h5>
-                                <ul>
-                                    <li>
-                                        <a href="/">Feature</a>
-                                    </li>
-                                    <li>
-                                        <a href="/">Latest</a>
-                                    </li>
-                                    <li>
-                                        <a href="/">Browse Archive</a>
-                                    </li>
-                                    <li>
-                                        <a href="/">Video for web</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div className="col-lg-2 col-md-3 col-sm-3">
-                            <div className="footer__option__item">
-                                <h5>Social</h5>
-                                <div className="header__nav__social">
-                                    <a href="https://facebook.com/NikDrosakis">
-                                        <i className="fa fa-facebook"/>
-                                    </a>
-                                    <a href="https://twitter.com/NikDrosakis">
-                                        <i className="fa fa-twitter"/>
-                                    </a>
-                                    <a href="https://instagram.com/NikDrosakis">
-                                        <i className="fa fa-instagram"/>
-                                    </a>
-                                    <a href="https://youtube.com/@NikDrosakis">
-                                        <i className="fa fa-youtube-play"/>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-lg-4 col-md-12">
-                            <div className="footer__option__item">
-                                <h5>Newsletter</h5>
-                                <p>
-                                    Videoprah is an award-winning, full-service production company
-                                    specializing.
-                                </p>
-                                <form action="#">
-                                    <input type="text" placeholder="Email"/>
-                                    <button type="submit">
-                                        <i className="fa fa-send"/>
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="footer__copyright">
-                    <div className="row">
-                        <div className="col-lg-12 text-center">
-                            <p className="footer__copyright__text">
-                                Powered by Gen20 platform -
-                                Copyright © All rights reserved | This template is made with{" "}
-                                <i className="fa fa-heart-o" aria-hidden="true"/> by{" "}
-                                <a href="https://colorlib.com" rel="noopener">
-                                    Colorlib
-                                </a>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-        </div>
-</footer>
-)
-    ;
-};
+import React from 'react';
+import './Footer.css';
+import { useG } from './GContext';
 
-export default Footer;
+export default function Footer() {
+    const { G } = useG();
+    const currentYear = new Date().getFullYear();
+
+    return (
+        <footer id="company" className="footer">
+            <div className="container">
+                <div className="footer-grid">
+                    <div className="footer-brand">
+                        <div className="logo">
+                            🧬 © {currentYear} {G.set.title}
+                        </div>
+
+                        <p>Precision genomics for equitable medicine.</p>
+
+                        <a
+                            href="/rss.xml"
+                            className="rss-link"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="20"
+                                height="20"
+                                fill="currentColor"
+                            >
+                                <circle cx="6.18" cy="17.82" r="2.18" />
+                                <path d="M4 4.44v2.83c7.03 0 12.73 5.7 12.73 12.73h2.83c0-8.59-6.97-15.56-15.56-15.56zm0 5.66v2.83c3.9 0 7.07 3.17 7.07 7.07h2.83c0-5.47-4.43-9.9-9.9-9.9z" />
+                            </svg>
+                            RSS Feed
+                        </a>
+
+                        <div className="social-links">
+                            <span>🔗 LinkedIn</span>
+                            <span>🐦 Twitter</span>
+                            <span>📧 Email</span>
+                        </div>
+                    </div>
+
+                    <div className="footer-links">
+                        <h4>Platform</h4>
+                        <ul>
+                            <li>PGx engine</li>
+                            <li>PRS Studio</li>
+                            <li>Variant interpreter</li>
+                            <li>Ancestry pipeline</li>
+                        </ul>
+                    </div>
+
+                    <div className="footer-links">
+                        <h4>Resources</h4>
+                        <ul>
+                            <li>API docs</li>
+                            <li>Whitepapers</li>
+                            <li>Case studies</li>
+                            <li>Regulatory</li>
+                        </ul>
+                    </div>
+
+                    <div className="footer-links">
+                        <h4>Company</h4>
+                        <ul>
+                            <li>About</li>
+                            <li>Careers</li>
+                            <li>Press</li>
+                            <li>Contact</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div className="footer-bottom">
+                    <p>
+                        © {currentYear} Gen20 — Corporate home for pharmacogenomics,
+                        polygenic risk scores, variant interpretation, and
+                        ancestry-informed pipelines.
+                    </p>
+
+                    <p>{G?.set?.site_mail ?? ''}</p>
+                </div>
+            </div>
+        </footer>
+    );
+}

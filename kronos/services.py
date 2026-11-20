@@ -47,18 +47,17 @@ def parse_router_file(router_file):
 ROOT = os.getcwd()
 CUBO_DIR = os.path.join(ROOT, 'cubos')
 KRONOS_SERVICES = os.path.join(ROOT, 'kronos', 'services')
-ERMIS_SERVICES = os.path.join(ROOT, 'ermis', 'services')
 GOD_SERVICES = os.path.join(ROOT, 'god', 'services')
 
 # Handle services
 def handle_services():
-    log("Checking and updating services for Kronos, Ermis, and God...")
+    log("Checking and updating services for Kronos and God...")
 
     # Get all existing action names
     existing_action_names = get_existing_action_names()
 
     # Loop through services directories
-    for system_dir in [KRONOS_SERVICES, ERMIS_SERVICES, GOD_SERVICES]:
+    for system_dir in [KRONOS_SERVICES, GOD_SERVICES]:
         # Extract SYSTEM_NAME from the folder structure
         system_name = system_dir.split(os.sep)[-2]
 
@@ -72,8 +71,6 @@ def handle_services():
                 # Parse the router file based on the system
                 if system_name == 'kronos':
                     router_file = os.path.join(service_path, 'router.py')
-                elif system_name == 'ermis':
-                    router_file = os.path.join(service_path, 'routes.js')
                 elif system_name == 'god':
                     router_file = os.path.join(service_path, 'routes.go')
 

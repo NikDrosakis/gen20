@@ -1,0 +1,25 @@
+.event-cubo {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.event-booking-cta {
+    text-align: center;
+}
+
+.event-booking-open {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 8px;
+    background: #ff0000;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.event-booking-open:hover {
+    opacity: 0.9;
+}

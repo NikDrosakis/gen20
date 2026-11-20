@@ -385,9 +385,9 @@ async def build_route(rec: dict) -> bool:
             routes = getattr(routes_module, "router", None)
 
             if routes:
-                app.include_router(routes, prefix=f"/ermis/v1/{rec['grpName']}")
+                app.include_router(routes, prefix=f"/apy/v1/{rec['grpName']}")
                 print(f"✓  {rec['grpName']} routed.")
-                route_mappings = scan_routes(routes, f"/ermis/v1/{rec['grpName']}")
+                route_mappings = scan_routes(routes, f"/apy/v1/{rec['grpName']}")
                 return bool(route_mappings)
             else:
                 print(f"✗  Error: No valid router exported from {router_path}")

@@ -35,6 +35,9 @@ jobs:
           - name: Public
             directory: moon/gen20.net
             lint: false
+          - name: Localhost
+            directory: moon/localhost
+            lint: false
 
     defaults:
       run:

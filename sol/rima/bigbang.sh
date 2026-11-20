@@ -2,7 +2,7 @@
 # GEN20 GALAXY BIGBANG
 # Debian 12 (Bookworm) / Debian 13 (Trixie)
 # Installs system runtimes and development libraries for SOL, MOON, GOD,
-# KRONOS, ERMIS and MARS. PHP follows the Debian default version.
+# KRONOS and MARS. PHP follows the Debian default version.
 # MariaDB and Redis are native services.
 # CouchDB: native Apache package on Debian 12; systemd-managed official
 # CouchDB container on Debian 13 (Apache's convenience .deb list covers 11/12).

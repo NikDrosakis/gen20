@@ -1,0 +1,10 @@
+
+.header__logo {
+    padding: 10px 0;
+    width:80px;
+    height:80px;
+}
+.header__logo a {
+    display: inline-block;
+}
+

@@ -212,13 +212,11 @@
     align-items: center;
     justify-content: center;
     color: #a52b30;
-    font-size: 15px;
     font-weight: 800;
     letter-spacing: 2px;
 }
 
 .event-board-thumbnail-title {
-    font-size: 14px;
     font-weight: 600;
     line-height: 1.45;
 }
@@ -270,11 +268,9 @@
     }
 
     .event-board-description {
-        font-size: 15px;
     }
 
     .event-board-content-text {
-        font-size: 15px;
         line-height: 1.8;
     }
 

@@ -1,10 +1,11 @@
 #!/bin/bash
 # astra_pullroot.sh — moon/<domain>/src → root files
-# Χρήση: gen astra pullroot <domain> --files <file1> <file2> ...
+# Χρήση: gen astra pullroot <domain> [--files <file1> <file2> ...] [--yes]
 #
 # Αντίγραφα από moon/<domain>/src/ → astra/root/
-# - Μόνο συγκεκριμένα αρχεία (όχι folders)
-# - Αν υπάρχει ήδη → ρωτάει "Sync?" → backup .1, .2, ... + νέο
+# - Χωρίς --files → pull ΟΛΑ τα root-level αρχεία (maxdepth 1)
+# - Μόνο αρχεία (όχι folders)
+# - Αν υπάρχει ήδη → ρωτάει "Sync?" → backup .1, .2, ... + νέο (--yes = auto-sync)
 # - Καμία ενημέρωση βάσης
 
 set -uo pipefail
@@ -19,6 +20,7 @@ err() { printf '❌ %s\n' "$*" >&2; log "ERROR: $*"; }
 # Parse args
 domain=""
 files=()
+yes=0
 
 while (($#)); do
     case "$1" in
@@ -29,6 +31,7 @@ while (($#)); do
                 shift
             done
             ;;
+        --yes|-y) yes=1; shift ;;
         *)
             if [[ -z $domain ]]; then
                 domain="$1"
@@ -39,12 +42,7 @@ while (($#)); do
 done
 
 if [[ -z $domain ]]; then
-    printf 'Usage: astra pullroot <domain> --files <file1> <file2> ...\n' >&2
-    exit 1
-fi
-
-if ((${#files[@]} == 0)); then
-    printf '❌ --files required (τουλάχιστον 1 αρχείο)\n' >&2
+    printf 'Usage: astra pullroot <domain> [--files <file1> <file2> ...] [--yes]\n' >&2
     exit 1
 fi
 
@@ -53,6 +51,14 @@ dst_root="$ASTRA_DIR/root"
 
 [[ -d $src_root ]] || { err "not found: $src_root"; exit 1; }
 [[ -d $dst_root ]] || { err "not found: $dst_root"; exit 1; }
+
+# Χωρίς --files → pull ΟΛΑ τα root-level αρχεία
+if ((${#files[@]} == 0)); then
+    while IFS= read -r f; do
+        files+=("$f")
+    done < <(find "$src_root" -maxdepth 1 -type f -printf '%f\n' | sort)
+    [[ ${#files[@]} -gt 0 ]] || { err "no root files in $src_root"; exit 1; }
+fi
 
 log "=== ASTRA PULLROOT: $domain ==="
 log "src: $src_root"
@@ -98,14 +104,16 @@ for rel in "${files[@]}"; do
         continue
     fi
 
-    # Αν υπάρχει → ρώτα
+    # Αν υπάρχει → ρώτα (εκτός αν --yes)
     if [[ -e $target ]]; then
-        printf '⚠️  %s already exists. Sync? [y/N] ' "$target"
-        read -r answer
-        if [[ "${answer,,}" != "y" ]]; then
-            log "  ⏭  $rel: skipped by user"
-            skipped=$((skipped + 1))
-            continue
+        if [[ $yes -eq 0 ]]; then
+            printf '⚠️  %s already exists. Sync? [y/N] ' "$target"
+            read -r answer
+            if [[ "${answer,,}" != "y" ]]; then
+                log "  ⏭  $rel: skipped by user"
+                skipped=$((skipped + 1))
+                continue
+            fi
         fi
 
         bkp=$(backup_name "$target")

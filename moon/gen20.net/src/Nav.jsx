@@ -161,7 +161,7 @@ export default function Nav() {
 
                         {isAdmin && (
                             <li key="admin">
-                                <a href="/admin/page">📊 DASHBOARD</a>
+                                <a href="/admin/page">📊 Admin Panel</a>
                             </li>
                         )}
 

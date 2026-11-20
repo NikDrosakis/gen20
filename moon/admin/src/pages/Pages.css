@@ -217,6 +217,51 @@
     border-top: 1px dashed var(--pa-border); /* Διαχωριστικό γραμμής */
 }
 
+.cubo-status-select {
+    flex: 1;
+    min-width: 0;
+    padding: 4px 8px;
+    border: 1px solid var(--pa-border-strong);
+    border-radius: var(--pa-radius-sm);
+    background: var(--pa-surface);
+    color: var(--pa-text);
+    font: inherit;
+    font-size: 13px;
+}
+
+.page-tab-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.page-tab-row .page-tab {
+    border-radius: var(--pa-radius-pill) 0 0 var(--pa-radius-pill);
+}
+
+.page-tab__delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    padding: 0 6px;
+    border: 1px solid var(--pa-border-strong);
+    border-left: 0;
+    border-radius: 0 var(--pa-radius-pill) var(--pa-radius-pill) 0;
+    background: var(--pa-surface);
+    color: var(--pa-text-soft);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background var(--pa-transition), color var(--pa-transition);
+}
+
+.page-tab__delete:hover {
+    background: var(--pa-danger-soft);
+    border-color: var(--pa-danger-ring);
+    color: var(--pa-danger);
+}
+
 /* ---------- Cubo internals ---------- */
 .cubo-icon {
     flex-shrink: 0;

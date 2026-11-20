@@ -1,0 +1,30 @@
+.breadcrumb-option {
+    padding-top: 80px;
+    background-image: url(/media/Sumūd.png);
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-color: #f6efe978;
+    background-position: center;
+}
+
+.breadcrumb__text h2 {
+    color: var(--text);
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.breadcrumb__links a,
+.breadcrumb__links span {
+    color: var(--text);
+    font-size: 16px;
+}
+
+.breadcrumb-link {
+    display: inline-block;
+    padding: 20px;
+    color: var(--text2);
+    margin-left: 2%;
+    font-size: 1.2em;
+    background: var(--bg3);
+    text-decoration: none;
+}

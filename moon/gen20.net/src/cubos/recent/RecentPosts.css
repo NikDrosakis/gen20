@@ -1,0 +1,29 @@
+/* Recent posts (moved from App.css) */
+.blog__details__recent {
+    margin-bottom: 60px;
+}
+.blog__details__recent h4 {
+    color:var(--text);
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 35px;
+    text-align: center;
+}
+
+.blog__details__recent__item {
+    margin-bottom: 30px;
+}
+.blog__details__recent__item img {
+    min-width: 100%;
+    margin-bottom: 20px;
+}
+.blog__details__recent__item h5 {
+    color:var(--text);
+    font-weight: 700;
+    line-height: 23px;
+    margin-bottom: 4px;
+}
+.blog__details__recent__item span {
+    color: #777777;
+    font-weight: 300;
+}

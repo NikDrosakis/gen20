@@ -1,5 +1,6 @@
 // ShareToolbox.jsx
 import React from 'react';
+import './ShareToolbox.css';
 
 const ShareToolbox = ({ url, title, description, image, className }) => {
     const shareUrl = url || window.location.href;
@@ -21,34 +22,6 @@ const ShareToolbox = ({ url, title, description, image, className }) => {
         const tweetText = `${shareTitle} - ${shareUrl}`;
         const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
         window.open(twitterUrl, '_blank', 'width=550,height=420');
-    };
-
-    const buttonStyles = {
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '40px',
-        height: '40px',
-        border: 'none',
-        borderRadius: '50%',
-        cursor: 'pointer',
-        transition: 'all 0.3s ease',
-        background: '#f1f5f9',
-        color: '#475569',
-        margin: '0 4px'
-    };
-
-    const containerStyles = {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        padding: '8px 0'
-    };
-
-    const labelStyles = {
-        fontSize: '14px',
-        color: '#64748b',
-        fontWeight: '500'
     };
 
     // Facebook Icon SVG
@@ -73,23 +46,13 @@ const ShareToolbox = ({ url, title, description, image, className }) => {
     );
 
     return (
-        <div style={containerStyles} className={className}>
-            <span style={labelStyles}>Share:</span>
-            <div style={{ display: 'flex', gap: '8px' }}>
+        <div className={`share-toolbox ${className || ''}`}>
+            <span className="share-toolbox__label">Share:</span>
+            <div className="share-toolbox__buttons">
                 {/* Facebook Button */}
                 <button
                     onClick={shareOnFacebook}
-                    style={buttonStyles}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#1877f2';
-                        e.currentTarget.style.color = 'white';
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '#f1f5f9';
-                        e.currentTarget.style.color = '#475569';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                    }}
+                    className="share-btn share-btn--facebook"
                     aria-label="Share on Facebook"
                     title="Share on Facebook"
                 >
@@ -99,17 +62,7 @@ const ShareToolbox = ({ url, title, description, image, className }) => {
                 {/* LinkedIn Button */}
                 <button
                     onClick={shareOnLinkedIn}
-                    style={buttonStyles}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#0a66c2';
-                        e.currentTarget.style.color = 'white';
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '#f1f5f9';
-                        e.currentTarget.style.color = '#475569';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                    }}
+                    className="share-btn share-btn--linkedin"
                     aria-label="Share on LinkedIn"
                     title="Share on LinkedIn"
                 >
@@ -119,17 +72,7 @@ const ShareToolbox = ({ url, title, description, image, className }) => {
                 {/* Twitter Button */}
                 <button
                     onClick={shareOnTwitter}
-                    style={buttonStyles}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#000000';
-                        e.currentTarget.style.color = 'white';
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '#f1f5f9';
-                        e.currentTarget.style.color = '#475569';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                    }}
+                    className="share-btn share-btn--twitter"
                     aria-label="Share on Twitter/X"
                     title="Share on Twitter/X"
                 >

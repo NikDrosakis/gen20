@@ -1,0 +1,40 @@
+/* Breadcrumb (moved from App.css) */
+/*---------------------
+  Breadcrumb
+-----------------------*/
+.breadcrumb-option {
+    padding-top: 80px;
+    background: center;
+}
+
+.breadcrumb__text h2 {
+    color:var(--text);
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.breadcrumb__links a {
+    font-size: 26px;
+    font-weight: 900;
+    display: inline-block;
+    margin-right: 32px;
+    position: relative;
+    color: white;
+}
+.breadcrumb__links a:after {
+    position: absolute;
+    right: -22px;
+    top: -3px;
+    content: "/";
+    color: white;
+    font-size: 26px;
+}
+.breadcrumb__text {
+    background:#2d000057;
+}
+.breadcrumb__links span {
+    font-size: 32px;
+    font-weight: 900;
+    display: inline-block;
+    color: white;
+}

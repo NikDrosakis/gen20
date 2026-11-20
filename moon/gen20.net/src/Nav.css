@@ -1,263 +1,460 @@
+/* ============================================
+   NAV — WRAPPER (col-lg-10 inside header row)
+   ============================================ */
+.header .col-lg-10 {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0;
+}
+
 .header__nav__option {
-    text-align: left;
-}
-
-.header__nav__menu {
-    display: inline-block;
-}
-
-.header__nav__menu ul {
-    margin: 0;
-    padding: 0;
     display: flex;
-    flex-direction: row;
     align-items: center;
-    gap: 4px;
-    flex-wrap: wrap;
-}
-
-.header__nav__menu ul li {
-    list-style: none;
-    display: inline;
-    margin: 3px;
-    padding: 4px;
+    justify-content: flex-end;
+    gap: 8px;
     position: relative;
-}
-
-.header__nav__menu ul li.active a:after {
-    -webkit-transform: scale(1);
-    -ms-transform: scale(1);
-    transform: scale(1);
-}
-
-.header__nav__menu ul li:hover a:after {
-    -webkit-transform: scale(1);
-    -ms-transform: scale(1);
-    transform: scale(1);
-}
-
-.header__nav__menu ul li:hover .dropdown {
-    top: 34px;
-    opacity: 1;
-    visibility: visible;
-}
-
-.header__nav__menu ul li:last-child {
-    margin-right: 0;
-}
-
-.header__nav__menu ul li .dropdown {
-    position: absolute;
-    left: 0;
-    top: 60px;
-    width: 140px;
-    background: #ffffff;
-    text-align: left;
-    padding: 2px 0;
-    z-index: 9;
-    opacity: 0;
-    visibility: hidden;
-    -webkit-transition: all, 0.3s;
-    -o-transition: all, 0.3s;
-    transition: all, 0.3s;
-}
-
-.header__nav__menu ul li .dropdown li {
-    display: block;
-    margin-right: 0;
-}
-
-.header__nav__menu ul li .dropdown li a {
-    color: #111111;
-    padding: 8px 20px;
-    text-transform: capitalize;
-}
-
-.header__nav__menu ul li .dropdown li a:after {
-    display: none;
-}
-.header__nav__menu ul li:hover .dropdown {
-    top: 34px;
-    opacity: 1;
-    visibility: visible;
-}
-.header__nav__menu ul li a {
-    font-size: 1.5em;
-    font-family: "Josefin Sans", sans-serif;
-    position: relative;
-    font-stretch: condensed;
-    text-decoration: none;
-    color: var(--text, #333);
-}
-
-.header__nav__menu ul li a:after {
-    position: absolute;
-    left: 0;
-    bottom: 0;
     width: 100%;
-    height: 2px;
-    background: #ff0000;
-    content: "";
-    -webkit-transform: scale(0);
-    -ms-transform: scale(0);
-    transform: scale(0);
-    -webkit-transition: all, 0.3s;
-    -o-transition: all, 0.3s;
-    transition: all, 0.3s;
 }
 
-.header__nav__social {
-    display: inline-block;
-    position: relative;
-    padding-left: 20px;
-}
-
-.header__nav__social:before {
-    position: absolute;
-    left: 0;
-    top: 4px;
-    height: 13px;
-    width: 1px;
-    background: rgba(225, 225, 225, 0.2);
-    content: "";
-}
-
-.header__nav__social a {
-    color: var(--text, #333);
-    font-size: 15px;
-    margin-right: 18px;
-}
-
-.header__nav__social a:last-child {
-    margin-right: 0;
-}
-
-/* ✅ Default styles - horizontal */
-.header__nav__menu {
-    display: inline-block;
-}
-
-.header__nav__menu ul {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    margin: 0;
-    padding: 0;
-}
-
+/* ============================================
+   MOBILE TOGGLE (hamburger)
+   ============================================ */
 .mobile-menu-toggle {
     display: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
+    line-height: 1;
+    color: #1a1a1a;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
 }
 
-/* ✅ Responsive for screens under 600px - vertical */
-@media only screen and (max-width: 600px) {
+.mobile-menu-toggle:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+}
+
+.mobile-menu-toggle:focus-visible {
+    outline: 2px solid #0d6efd;
+    outline-offset: 2px;
+}
+
+/* ============================================
+   NAV MENU (desktop)
+   ============================================ */
+.header__nav__menu {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+}
+
+.header__nav__menu > ul {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 2px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.header__nav__menu > ul > li {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Top-level link */
+.header__nav__menu > ul > li > a,
+.header__nav__menu > ul > li > button.bare {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #1a1a1a;
+    text-decoration: none;
+    white-space: nowrap;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.header__nav__menu > ul > li > a:hover,
+.header__nav__menu > ul > li > button.bare:hover {
+    color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.08);
+}
+
+.header__nav__menu > ul > li > a:focus-visible,
+.header__nav__menu > ul > li > button.bare:focus-visible {
+    outline: 2px solid #0d6efd;
+    outline-offset: 2px;
+}
+
+/* Active state */
+.header__nav__menu > ul > li.active > a,
+.header__nav__menu > ul > li.active > button.bare {
+    color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.12);
+}
+
+/* ============================================
+   DROPDOWN SUBMENU
+   ============================================ */
+.header__nav__menu .dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 200px;
+    list-style: none;
+    margin: 0;
+    padding: 8px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    z-index: 1002;
+}
+
+.header__nav__menu > ul > li:hover > .dropdown,
+.header__nav__menu > ul > li:focus-within > .dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.header__nav__menu .dropdown li {
+    position: relative;
+    display: block;
+}
+
+.header__nav__menu .dropdown li a,
+.header__nav__menu .dropdown li button.bare {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a1a1a;
+    text-decoration: none;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.header__nav__menu .dropdown li a:hover,
+.header__nav__menu .dropdown li button.bare:hover {
+    background-color: rgba(13, 110, 253, 0.08);
+    color: #0d6efd;
+}
+
+.header__nav__menu .dropdown li.active > a {
+    color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.12);
+}
+
+/* Nested dropdown (2nd level) opens to the right */
+.header__nav__menu .dropdown .dropdown {
+    top: 0;
+    left: calc(100% + 6px);
+}
+
+/* ============================================
+   PROFILE AVATAR
+   ============================================ */
+.header__nav__menu .navicon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.header__nav__menu li > a:hover .navicon {
+    transform: scale(1.06);
+    border-color: #0d6efd;
+}
+
+/* Ensure profile link has no extra padding */
+.header__nav__menu > ul > li > a:has(> .navicon) {
+    padding: 4px;
+    border-radius: 50%;
+}
+
+/* ============================================
+   LANGUAGE / THEME ITEMS
+   ============================================ */
+.header__nav__menu > ul > li > .LanguageSelector,
+.header__nav__menu > ul > li > .ThemeToggle,
+.header__nav__menu > ul > li > select {
+    display: inline-flex;
+    align-items: center;
+    height: 38px;
+}
+
+/* If LanguageSelector/ThemeToggle render buttons, keep them compact */
+.header__nav__menu > ul > li > button:not(.bare) {
+    height: 38px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: transparent;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.header__nav__menu > ul > li > button:not(.bare):hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================
+   MOBILE DRAWER
+   ============================================ */
+@media (max-width: 991px) {
     .mobile-menu-toggle {
-        display: block;
-        background: none;
-        border: none;
-        font-size: 28px;
-        position: relative;
-        z-index: 1000;
-        cursor: pointer;
-        color: var(--text, #333);
+        display: inline-flex;
+        order: 2;
     }
 
     .header__nav__menu {
-        display: none;
-        position: absolute;
-        top: 100%;
+        position: fixed;
+        top: 0;
         right: 0;
-        background: var(--bg, #fff);
-        width: 220px;
-        border-radius: 8px;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-        padding: 15px;
-        z-index: 999;
-        border: 1px solid rgba(0,0,0,0.1);
+        height: 100vh;
+        width: min(340px, 88vw);
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        padding: 76px 20px 28px;
+        background: #ffffff;
+        box-shadow: -12px 0 40px rgba(0, 0, 0, 0.18);
+        transform: translateX(105%);
+        transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        z-index: 1100;
     }
 
     .header__nav__menu.active {
-        display: block;
+        transform: translateX(0);
     }
 
-    .header__nav__menu ul {
-        display: flex;
+    .header__nav__menu > ul {
         flex-direction: column;
         align-items: stretch;
-        gap: 5px;
-        margin: 0;
-        padding: 0;
+        justify-content: flex-start;
+        gap: 4px;
+        width: 100%;
     }
 
-    .header__nav__menu ul li {
+    .header__nav__menu > ul > li {
         display: block;
-        margin: 0;
-        padding: 6px 0;
-        border-bottom: 1px solid rgba(0,0,0,0.05);
+        width: 100%;
     }
 
-    .header__nav__menu ul li:last-child {
-        border-bottom: none;
-    }
-
-    .header__nav__menu ul li a {
-        display: block;
-        padding: 8px 10px;
-        font-size: 1em;
-    }
-
-    .header__nav__menu ul li a:after {
-        display: none;
-    }
-
-    .header__nav__option {
-        position: relative;
-    }
-
-    /* Make toggle button and nav options work together */
-    .header__nav__option {
+    .header__nav__menu > ul > li > a,
+    .header__nav__menu > ul > li > button.bare {
         display: flex;
-        align-items: center;
-        justify-content: flex-end;
+        width: 100%;
+        justify-content: flex-start;
+        padding: 14px 16px;
+        font-size: 16px;
+        border-radius: 10px;
     }
 
-    .header__nav__social {
+    /* Profile avatar in mobile: align nicely */
+    .header__nav__menu > ul > li > a:has(> .navicon) {
+        justify-content: flex-start;
+        gap: 10px;
+        padding: 10px 16px;
+        border-radius: 10px;
+    }
+
+    /* Dropdown becomes static accordion inside drawer */
+    .header__nav__menu .dropdown {
+        position: static;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        box-shadow: none;
+        border: none;
+        padding: 0 0 0 14px;
+        margin: 2px 0 6px;
+        min-width: 0;
+        background: transparent;
         display: none;
+    }
+
+    /* Show submenu when parent li is hovered/active on mobile?
+       Better: toggle via JS. For now show on .active parent */
+    .header__nav__menu > ul > li.active > .dropdown,
+    .header__nav__menu .dropdown li.active > .dropdown {
+        display: block;
+    }
+
+    .header__nav__menu .dropdown li a,
+    .header__nav__menu .dropdown li button.bare {
+        padding: 12px 14px;
+        font-size: 15px;
+    }
+
+    /* Dark overlay behind drawer */
+    .header__nav__option::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease, visibility 0.25s;
+        z-index: 1090;
+    }
+
+    /* Toggle overlay when menu open — add .menu-open on .header__nav__option or body */
+    .header__nav__option:has(.header__nav__menu.active)::before {
+        opacity: 1;
+        visibility: visible;
     }
 }
 
-/* Medium Device = 1200px */
-@media only screen and (min-width: 992px) and (max-width: 1199px) {
+/* ============================================
+   SMALL PHONES
+   ============================================ */
+@media (max-width: 575px) {
     .header__nav__menu {
-        margin-right: 25px;
+        width: 100vw;
+        padding: 68px 16px 24px;
     }
 
-    .header__nav__menu ul li {
-        margin-right: 25px;
+    .header__nav__menu > ul > li > a,
+    .header__nav__menu > ul > li > button.bare {
+        font-size: 16px;
+        padding: 13px 14px;
     }
 
-    .header__nav__social {
-        padding-left: 25px;
+    .header__nav__menu .navicon {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+/* ============================================
+   LOCK BODY SCROLL WHEN DRAWER OPEN (optional helper)
+   Add class .nav-open to <body> from JS
+   ============================================ */
+body.nav-open {
+    overflow: hidden;
+}
+
+/* ============================================
+   DARK MODE
+   ============================================ */
+@media (prefers-color-scheme: dark) {
+    .mobile-menu-toggle {
+        color: #e6e6e6;
     }
 
-    .counter__item::before {
-        display: none;
+    .mobile-menu-toggle:hover {
+        background-color: rgba(255, 255, 255, 0.08);
     }
 
-    .counter__content {
-        padding: 0px 145px 0 50px;
+    .header__nav__menu > ul > li > a,
+    .header__nav__menu > ul > li > button.bare {
+        color: #e6e6e6;
     }
 
-    .counter__item.second__item {
-        margin-top: -210px;
+    .header__nav__menu > ul > li > a:hover,
+    .header__nav__menu > ul > li > button.bare:hover {
+        color: #6ea8fe;
+        background-color: rgba(110, 168, 254, 0.12);
     }
 
-    .counter__item.four__item {
-        margin-top: -210px;
+    .header__nav__menu > ul > li.active > a,
+    .header__nav__menu > ul > li.active > button.bare {
+        color: #6ea8fe;
+        background-color: rgba(110, 168, 254, 0.16);
     }
 
-    .hero__slider.owl-carousel .owl-dots {
-        max-width: 930px !important;
+    .header__nav__menu .dropdown {
+        background: #161a20;
+        border-color: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .header__nav__menu .dropdown li a,
+    .header__nav__menu .dropdown li button.bare {
+        color: #e6e6e6;
+    }
+
+    .header__nav__menu .dropdown li a:hover,
+    .header__nav__menu .dropdown li button.bare:hover {
+        background-color: rgba(110, 168, 254, 0.12);
+        color: #6ea8fe;
+    }
+
+    .header__nav__menu .dropdown li.active > a {
+        color: #6ea8fe;
+        background-color: rgba(110, 168, 254, 0.16);
+    }
+
+    .header__nav__menu .navicon {
+        border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .header__nav__menu > ul > li > button:not(.bare) {
+        border-color: rgba(255, 255, 255, 0.12);
+        color: #e6e6e6;
+    }
+
+    .header__nav__menu > ul > li > button:not(.bare):hover {
+        background-color: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    @media (max-width: 991px) {
+        .header__nav__menu {
+            background: #0f1115;
+            box-shadow: -12px 0 40px rgba(0, 0, 0, 0.6);
+        }
+    }
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+    .header__nav__menu,
+    .header__nav__menu .dropdown,
+    .header__nav__menu > ul > li > a,
+    .header__nav__menu > ul > li > button.bare,
+    .mobile-menu-toggle,
+    .header__nav__option::before {
+        transition: none !important;
     }
 }

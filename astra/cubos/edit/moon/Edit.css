@@ -1,0 +1,16 @@
+.blog-details.spad {
+    padding-top: 60px;
+    padding-bottom: 60px;
+}
+
+.blog__details__content {
+    color: var(--text);
+}
+
+.blog__details__text [data-row="content"] {
+    font-size: 1.5em;
+}
+
+.blog__details__text .block-row {
+    margin-bottom: 16px;
+}

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import "./Quote.css";
 
 const Quote = ({ items: propItems }) => {
     const [quotes, setQuotes] = useState(propItems ?? []);

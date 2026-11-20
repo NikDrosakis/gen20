@@ -10,9 +10,9 @@ const getWebSocketUrl = () => {
     if (import.meta.env.PROD) {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const host = window.location.hostname;
-        return `${protocol}//${host}/ermis/v1/ws`;
+        return `${protocol}//${host}/god/v1/messaging/ws`;
     }
-    return 'ws://localhost:3010/ws';
+    return 'ws://localhost:3008/god/v1/messaging/ws';
 };
 
 const WS_URL = getWebSocketUrl();

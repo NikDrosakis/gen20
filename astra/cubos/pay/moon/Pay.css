@@ -1,0 +1,12 @@
+.pay-box {
+    padding: 20px;
+    border: 1px solid #ccc;
+}
+
+.pay-box button + button {
+    margin-left: 10px;
+}
+
+.pay-error {
+    color: red;
+}

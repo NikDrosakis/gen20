@@ -1,5 +1,6 @@
 import {useMemo, useEffect, useState} from 'react';
 import Nav from "./Nav";
+import "./Header.css";
 const Header = ({ lang }) => {
     return (
         <header className="header">
@@ -12,7 +13,7 @@ const Header = ({ lang }) => {
                             </a>
                         </div>
                     </div>
-                <Nav lang={lang} />
+                    <Nav lang={lang} />
                 </div>
                 <div id="mobile-menu-wrap"></div>
             </div>

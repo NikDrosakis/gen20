@@ -1,5 +1,6 @@
-import React, {useMemo, useEffect, useState} from 'react';
+import {useMemo, useEffect, useState} from 'react';
 import Nav from "./Nav";
+import "./Header.css";
 const Header = ({ lang }) => {
     return (
         <header className="header">

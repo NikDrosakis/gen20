@@ -15,7 +15,7 @@ DOC
 
 3. attems to create an endpoint list to manage
 
- create table in subsystems>ermis
+ create table in subsystems>god
 
  */
 trait Kronos {

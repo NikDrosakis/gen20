@@ -27,7 +27,7 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
         { id: 'slides', label: 'Slides', icon: '🎞️', path: '/admin/slides' },      // Film strip
         { id: 'languages', label: 'Languages', icon: '🗣️', path: '/admin/languages' }, // Ομιλία / Γλώσσα
         { id: 'analytics', label: 'Analytics', icon: '📊', path: '/admin/analytics' }, // Bar chart (πιο σαφές)
-        { id: 'setup', label: 'Settings', icon: '🛠️', path: '/admin/setup' },      // Εργαλεία αντί για γρανάζι
+        { id: 'settings', label: 'Settings', icon: '🛠️', path: '/admin/settings' },      // Εργαλεία αντί για γρανάζι
 
         // monetize και superadmin μόνο για gen20.net
         ...(isGen20Net ? [
@@ -65,14 +65,16 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
 
 
     const fetchUser =() => {
-        const userName = Cookies.get('GENNAME') || 'Admin';
-        const userRole = Cookies.get('GENROLE') || 'user';
+        const userId = Cookies.get('GENUID') || '1';
+        const userName = Cookies.get('GENNAME') || 'User';
+        const userRole = Cookies.get('GENROLE') || 'Admin';
         const userImg = Cookies.get('GENIMG') || '';
 
         setUser({
             name: userName,
             role: userRole,
-            img: userImg
+            img: userImg,
+            userId: userId
         });
     };
     
@@ -145,7 +147,7 @@ const NavAdmin = ({ currentPage, onNavigate }) => {
                                     </div>
                                     <div className="dropdown-divider"></div>
                                     <button className="admin-user-item"
-                                            onClick={() => window.location.href = '/admin/profile'}>
+                                            onClick={() => window.location.href = `/admin/user-edit?userId=${userId}`}>
                                         <span className="item-icon">👤</span>
                                         My Profile
                                     </button>

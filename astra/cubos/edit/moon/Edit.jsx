@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import EditButton from './EditButton';
 import NewButton from './NewButton';
+import './Edit.css';
 
 const API = '/api/v1/maria/q?key=';
 const escapeSql = (s = '') => String(s).replace(/'/g, "''");
@@ -65,7 +66,7 @@ export const Edit = ({ path }) => {
                         <div className="blog__details__content">
                             <div className="blog__details__text">
                                 {blocks.map((block) => (
-                                    <div key={block.id} style={{ marginBottom: 16 }}>
+                                    <div key={block.id} className="block-row">
                                         <div
                                             id={`block-${block.id}`}
                                             data-block-id={block.id}
@@ -91,3 +92,4 @@ export const Edit = ({ path }) => {
         </div>
     );
 };
+export default Edit;

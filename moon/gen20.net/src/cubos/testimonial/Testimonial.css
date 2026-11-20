@@ -9,7 +9,6 @@
 
 .section-title span {
     display: block;
-    font-size: 0.85rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: #9ca3af;
@@ -57,13 +56,11 @@
 
 .testimonial__author__text h5 {
     margin: 0;
-    font-size: 0.95rem;
     font-weight: 600;
     color: #111827;
 }
 
 .testimonial__author__text span {
-    font-size: 0.8rem;
     color: #6b7280;
 }
 

@@ -1,4 +1,5 @@
 import { useRef, useState, forwardRef, useEffect, useImperativeHandle } from "react";
+import "./VideoPlayer.css";
 
 const VideoPlayer = forwardRef(({ currentVideo, currentPoster }, ref) => {
     const videoRef = useRef(null);
@@ -99,9 +100,8 @@ const VideoPlayer = forwardRef(({ currentVideo, currentPoster }, ref) => {
     return (
         <>
             <div className="video-container">
-                <div style={{width: '100%', height: '520px', overflow: 'hidden'}}>
+                <div className="video-frame">
                     <video
-                        style={{width: '100%', height: '100%', objectFit: 'cover'}}
                         id="main-video"
                         className="custom-video"
                         ref={videoRef}
@@ -147,7 +147,7 @@ const VideoPlayer = forwardRef(({ currentVideo, currentPoster }, ref) => {
                     </select>
                     <button onClick={() => videoRef.current?.requestFullscreen()}>⛶</button>
 
-                    <div className="share-buttons" style={{marginLeft: 'auto', display: 'flex', gap: '8px'}}>
+                    <div className="share-buttons">
                         <a
                             href={`https://www.facebook.com/sharer/sharer.php?u=${window.location.origin}${currentVideo}`}
                             target="_blank"
@@ -182,57 +182,6 @@ const VideoPlayer = forwardRef(({ currentVideo, currentPoster }, ref) => {
                 </div>
             </div>
 
-            <style>{`
-            .share-buttons a {
-  transition: transform 0.2s;
-}
-
-.share-buttons a:hover {
-  transform: scale(1.2);
-}
-        .video-container {
-          flex: 3;
-          padding: 10px;
-          display: flex;
-          flex-direction: column;
-          justify-content: flex-start;
-          box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
-        }
-
-        .custom-video {
-          width: 100%;
-          height: auto;
-          max-height: 70vh;
-          border-radius: 10px;          
-          margin-bottom: 10px;
-          box-shadow: 0 0 12px rgb(179 168 168);
-        }
-
-        .video-controls {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex-wrap: wrap;
-          user-select: none;
-        }
-
-        .video-controls button,
-        .video-controls select,
-        .video-controls input[type="range"] {
-          cursor: pointer;
-        }
-
-        input[type="range"] {
-          flex-grow: 1;
-          margin: 0 10px;
-        }
-
-        input[type="range"]:last-of-type {
-          width: 80px;
-          flex-grow: 0;
-          margin: 0 0 0 10px;
-        }
-      `}</style>
         </>
     );
 });

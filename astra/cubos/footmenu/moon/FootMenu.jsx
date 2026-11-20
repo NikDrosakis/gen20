@@ -104,3 +104,4 @@ export const FootMenu = () => {
         </footer>
     );
 };
+export default FootMenu;

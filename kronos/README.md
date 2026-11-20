@@ -26,7 +26,7 @@ accessed in APY, python fastapi runs with uvicorn in venv
 1) Action.go, Actionplan.go 
 2) AI Training
 3) AI Gen
-4) WS Client connected (Ermis Server)
+4) WS Client connected (God Server)
 5) Manifest --> Messenger
 6) Maria 
 7) Security API REST standards

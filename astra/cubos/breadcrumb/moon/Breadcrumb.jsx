@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Cookies from 'js-cookie';
+import './Breadcrumb.css';
 
 // ✅ Static page titles
 const STATIC_PAGE_TITLES = {
@@ -67,13 +68,7 @@ export const Breadcrumb = ({ path }) => {
 
     if (loading) {
         return (
-            <div className="breadcrumb-option spad" style={{
-                backgroundImage: "url(/media/Sumūd.png)",
-                backgroundRepeat: "no-repeat",
-                backgroundSize: 'contain',
-                backgroundColor: '#f6efe978',
-                backgroundPosition: 'center'
-            }}>
+            <div className="breadcrumb-option spad">
                 <div className="container">
                     <div className="row">
                         <div className="col-lg-12 text-center">
@@ -91,34 +86,14 @@ export const Breadcrumb = ({ path }) => {
 
     return (
         <>
-            <div className="breadcrumb-option spad" style={{
-                backgroundImage: "url(/media/Sumūd.png)",
-                backgroundRepeat: "no-repeat",
-                backgroundSize: 'contain',
-                backgroundColor: '#f6efe978',
-                backgroundPosition: 'center'
-            }}>
+            <div className="breadcrumb-option spad">
             </div>
             <div className="container">
                 <div className="row">
-                    <Link style={{
-                        padding: "20px",
-                        color: "var(--text2)",
-                        marginLeft: '2%',
-                        fontSize: "1.2em",
-                        background: "var(--bg3)",
-                        textDecoration: "none"
-                    }} to="/book">
+                    <Link className="breadcrumb-link" to="/book">
                         {lang === 'el' ? 'Εισιτήρια' : 'Tickets'}
                     </Link>
-                    <Link style={{
-                        marginLeft: '2%',
-                        color: "var(--text2)",
-                        padding: "20px",
-                        fontSize: "1.2em",
-                        background: "var(--bg3)",
-                        textDecoration: "none"
-                    }} to="/publisher">
+                    <Link className="breadcrumb-link" to="/publisher">
                         {lang === 'el' ? 'Βιβλίο' : 'Book'}
                     </Link>
 
@@ -134,3 +109,4 @@ export const Breadcrumb = ({ path }) => {
         </>
     );
 };
+export default Breadcrumb;

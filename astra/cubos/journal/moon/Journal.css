@@ -1,0 +1,113 @@
+h3,
+h4,
+h5 {
+    margin: .5em 0;
+    font-weight: bold;
+}
+
+p {
+    margin: .5em 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.item {
+    background: var(--bg2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px;
+    margin: 15px 0;
+    box-shadow: var(--shadow);
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.item-media {
+    margin-bottom: 10px;
+}
+
+.item img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+.SmallImage,
+.SmallImageDetail,
+.SmallImageFacts {
+    font-size: 14px;
+}
+
+.LargeImage {
+    font-size: 18px;
+}
+
+.item-title {
+    font-size: 16px;
+}
+
+.item-subtitle {
+    font-size: 14px;
+}
+
+.item-date {
+    font-size: 12px;
+    opacity: .7;
+    margin-bottom: 5px;
+}
+
+.item-summary,
+.item-quote {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.item-facts {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.item-facts li {
+    background: var(--bg3);
+    border-radius: 4px;
+    padding: 5px;
+    margin-bottom: 5px;
+}
+
+.item-quote {
+    font-style: italic;
+    border-left: 3px solid var(--border);
+    padding-left: 10px;
+    margin: 10px 0;
+}
+
+.item-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.Gallery-img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+.item-recommendations {
+    padding-left: 20px;
+}
+
+.item-author {
+    font-size: 12px;
+    opacity: .75;
+    margin-top: 5px;
+}
+
+.Event {
+    background: var(--bg3);
+    border-left: 3px solid var(--primary);
+    padding: 10px;
+}

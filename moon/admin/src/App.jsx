@@ -177,7 +177,7 @@ const App = () => {
         else if (path === '/admin/doc') setCurrentPage('doc');
         else if (path === '/admin/classification') setCurrentPage('classification');
         else if (path === '/admin/monetize') setCurrentPage('monetize');
-        else if (path === '/admin/setup') setCurrentPage('setup');
+        else if (path === '/admin/settings') setCurrentPage('settings');
         else if (path === '/admin/languages') setCurrentPage('languages');
         else if (path === '/admin/media') setCurrentPage('media');
         else if (path === '/admin/slides') setCurrentPage('slides');
@@ -201,7 +201,7 @@ const App = () => {
             case 'analytics': window.location.href = '/admin/analytics'; break;
             case 'classification': window.location.href = '/admin/classification'; break;
             case 'monetize': window.location.href = '/admin/monetize'; break;
-            case 'setup': window.location.href = '/admin/setup'; break;
+            case 'settings': window.location.href = '/admin/settings'; break;
             case 'languages': window.location.href = '/admin/languages'; break;
             case 'media': window.location.href = '/admin/media'; break;
             case 'slides': window.location.href = '/admin/slides'; break;
@@ -236,7 +236,7 @@ const App = () => {
             case '/admin/analytics': return <AnalyticsDashboard navigateTo={navigateTo} />;
             case '/admin/classification': return <Classification navigateTo={navigateTo} />;
             case '/admin/monetize': return <Monetize navigateTo={navigateTo} />;
-            case '/admin/setup': return <Settings navigateTo={navigateTo} />;
+            case '/admin/settings': return <Settings navigateTo={navigateTo} />;
             case '/admin/languages': return <LangAdmin navigateTo={navigateTo} />;
             case '/admin/media': return <Media navigateTo={navigateTo} />;
             case '/admin/slides': return <SlidesAdmin navigateTo={navigateTo} />;

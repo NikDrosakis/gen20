@@ -1,7 +1,6 @@
-
-// /components/pages/Contact.jsx
-
+// /Contact.jsx
 import { useState } from "react";
+import useMail from './useMail';
 
 import {
     FaEnvelope,
@@ -21,6 +20,7 @@ import "./Contact.css";
 import { useG } from "./GContext";
 
 export default function Contact() {
+    const { send, loading, error, success, reset } = useMail();
     const { G } = useG();
     const settings = G?.set || {};
 
@@ -30,10 +30,6 @@ export default function Contact() {
         subject: "",
         message: ""
     });
-
-    const [isSubmitted, setIsSubmitted] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState("");
 
     // Contact information
     const contactInfo = [
@@ -91,39 +87,26 @@ export default function Contact() {
             [name]: value
         }));
 
-        setError("");
     };
 
     // Form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (isLoading) return;
-
-        setError("");
-        setIsSubmitted(false);
-
-        setIsLoading(true);
+        if (loading) return;
 
         try {
-            /*
-             * TODO:
-             * Connect to the actual Gen20 contact endpoint.
-             *
-             * No fake success response.
-             */
-
-            throw new Error(
-                "Η υπηρεσία αποστολής μηνυμάτων δεν έχει συνδεθεί ακόμη."
-            );
-
+            await send({
+                name: formData.name,
+                email: formData.email,
+                subject: formData.subject,
+                comment: formData.message,
+                fromName: settings.title || 'GEN20 Platform',
+            });
         } catch (err) {
-            setError(
-                err.message || "Παρουσιάστηκε σφάλμα κατά την αποστολή."
-            );
-        } finally {
-            setIsLoading(false);
+            console.error(err);
         }
+
     };
 
     return (
@@ -225,7 +208,7 @@ export default function Contact() {
 
                                 {/* Success */}
 
-                                {isSubmitted && (
+                                {success && (
                                     <div className="success-message">
                                         <FaCheckCircle />
                                         <div>
@@ -342,10 +325,10 @@ export default function Contact() {
                                     <button
                                         type="submit"
                                         className="submit-button"
-                                        disabled={isLoading}
+                                        disabled={loading}
                                     >
 
-                                        {isLoading ? (
+                                        {loading ? (
                                             <>
                                                 <span className="spinner" />
                                                 Αποστολή...

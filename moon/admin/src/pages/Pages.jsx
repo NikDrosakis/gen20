@@ -394,6 +394,43 @@ export default function Pages({ pageId, lockedPageId }) {
         []
     );
 
+    const handleDeletePage = useCallback(
+        (pageKey) => {
+            if (!window.confirm(`Διαγραφή σελίδας "${pageKey}" από moon_manifest.json;`)) return;
+
+            const remaining = Object.keys(manifest?.pages ?? {}).filter((k) => k !== pageKey);
+
+            // optimistic update — αφαίρεση του page chunk
+            setManifest((prev) => {
+                if (!prev?.pages?.[pageKey]) return prev;
+                const next = structuredClone(prev);
+                delete next.pages[pageKey];
+                next.generated = Date.now();
+                try {
+                    localStorage.setItem(MANIFEST_KEY, JSON.stringify(next));
+                    broadcastManifest(next);
+                } catch {}
+                return next;
+            });
+
+            // άλλαξε επιλεγμένη σελίδα αν σβήσαμε την τρέχουσα
+            setSelectedPageKey((prev) => (prev === pageKey ? remaining[0] ?? null : prev));
+
+            // persist via PHP (DomainFS delPageFS) — αφαίρεση chunk από moon_manifest.json
+            fetch(`${API_BASE}/api/v1/local/delPageFS`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ domain: currentDomain, page: pageKey }),
+            })
+                .then((res) => res.json())
+                .then((json) => {
+                    if (!json.success) console.warn('page delete failed:', json.error);
+                })
+                .catch((err) => console.warn('page delete failed:', err));
+        },
+        [manifest]
+    );
+
     const handleDropOnInstalled = (e) => {
         e.preventDefault();
         e.currentTarget.classList.remove('drag-over');
@@ -693,13 +730,24 @@ export default function Pages({ pageId, lockedPageId }) {
 
                             <div className="page-tabs">
                                 {pages.map((page) => (
-                                    <button
-                                        key={page.key}
-                                        className={`page-tab ${selectedPageKey === page.key ? 'active' : ''}`}
-                                        onClick={() => setSelectedPageKey(page.key)}
-                                    >
-                                        {page.name} <span className="page-tab__key">#{page.key}</span>
-                                    </button>
+                                    <div key={page.key} className="page-tab-row">
+                                        <button
+                                            type="button"
+                                            className={`page-tab ${selectedPageKey === page.key ? 'active' : ''}`}
+                                            onClick={() => setSelectedPageKey(page.key)}
+                                        >
+                                            {page.name} <span className="page-tab__key">#{page.key}</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="page-tab__delete"
+                                            title={`Delete page "${page.key}"`}
+                                            aria-label={`Delete page ${page.key}`}
+                                            onClick={() => handleDeletePage(page.key)}
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
                                 ))}
                             </div>
 

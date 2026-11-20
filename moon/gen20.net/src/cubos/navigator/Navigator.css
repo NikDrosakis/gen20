@@ -28,7 +28,6 @@
 
 .navigator__heading {
     margin: 0;
-    font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -62,7 +61,6 @@
 }
 
 .navigator__text span {
-    font-size: 0.8rem;
     color: #6b7280;
 }
 

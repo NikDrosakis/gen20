@@ -1,0 +1,17 @@
+/* Edit / blog details (moved from App.css) */
+.blog-details {
+    background: var(--bg);
+}
+
+.blog__details__text {
+    margin-bottom: 30px;
+}
+.blog__details__text p {
+    font-size: 18px;
+    line-height: 29px;
+    font-weight: 300;
+    margin-bottom: 20px;
+}
+.blog__details__text p:last-child {
+    margin-bottom: 0;
+}

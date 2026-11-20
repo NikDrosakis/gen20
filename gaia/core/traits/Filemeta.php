@@ -14,7 +14,7 @@ v.1 basic Trait, batch saving all files, changing all the style writing, having 
 
 
 @filemetacore.todo
-- connect to Ermis for auto-update each file
+- connect to God for auto-update each file
 - logging all load data
 - having sense
 

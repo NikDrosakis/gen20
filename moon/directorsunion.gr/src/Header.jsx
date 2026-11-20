@@ -1,96 +1,147 @@
+
 // /components/layout/Header.jsx
+
 import { useState, useEffect } from 'react';
-import Navigation from "./Navigation";
+import Navigation from './Navigation';
 import { useTheme } from './ThemeContext';
-import { FaFacebook } from 'react-icons/fa';
+import { FaFacebook, FaSun, FaMoon } from 'react-icons/fa';
 import './Header.css';
 import { useG } from './GContext';
 
 const Header = () => {
     const { G } = useG();
-    const [scrolled, setScrolled] = useState(false);
     const { theme, toggleTheme } = useTheme();
 
-    // ✅ Safe access
-    const logo = G?.set?.logo;
-    const bg = G?.set?.bg;
-    const facebookPageUrl = G?.set?.facebook || 'https://facebook.com';
+    const [scrolled, setScrolled] = useState(false);
 
-    // ✅ Throttled scroll listener
+    // Safe settings access
+    const settings = G?.set || {};
+
+    const logo = settings.logo || '';
+    const bg = settings.bg || '';
+    const title = settings.title || '';
+    const facebookPageUrl = settings.facebook || 'https://facebook.com';
+
+    // Scroll listener
     useEffect(() => {
         let ticking = false;
+        let frameId = null;
+
         const handleScroll = () => {
-            if (!ticking) {
-                window.requestAnimationFrame(() => {
-                    setScrolled(prev => {
-                        const next = window.scrollY > 50;
-                        return prev === next ? prev : next;
-                    });
-                    ticking = false;
-                });
-                ticking = true;
+            if (ticking) return;
+
+            ticking = true;
+
+            frameId = window.requestAnimationFrame(() => {
+                setScrolled(window.scrollY > 50);
+                ticking = false;
+            });
+        };
+
+        // Initial state
+        setScrolled(window.scrollY > 50);
+
+        window.addEventListener('scroll', handleScroll, {
+            passive: true
+        });
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+
+            if (frameId !== null) {
+                window.cancelAnimationFrame(frameId);
             }
         };
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
     return (
         <>
-        <div className="profile-section">
-            <div
-                className={`profile-container ${bg ? 'has-background' : ''}`}
-                style={bg ? {
-                    backgroundImage: `
-                linear-gradient(
-                    rgba(20, 20, 38, 0.30),
-                    rgba(20, 20, 38, 0.40)
-                ),
-                url("/media/${bg}")
-            `
-                } : undefined}
-            >
-                {/* Avatar */}
-                {logo && (
-                    <div className="avatar-container">
-                        <img
-                            src={`/media/${logo}`}
-                            alt="Logo"
-                            className="avatar"
-                        />
+            {/* Profile Header */}
+            <div className="profile-section">
+                <div
+                    className={`profile-container ${bg ? 'has-background' : ''}`}
+                    style={bg ? {
+                        backgroundImage: `
+                            linear-gradient(
+                                rgba(20, 20, 38, 0.30),
+                                rgba(20, 20, 38, 0.40)
+                            ),
+                            url("/media/${bg}")
+                        `
+                    } : undefined}
+                >
+                    {/* Avatar */}
+                    {logo && (
+                        <div className="avatar-container">
+                            <img
+                                src={`/media/${logo}`}
+                                alt={`${title || 'Organization'} logo`}
+                                className="avatar"
+                            />
+                        </div>
+                    )}
+
+                    {/* Organization Info */}
+                    <div className="org-info">
+                        {title && (
+                            <h1 className="org-name">
+                                {title}
+                            </h1>
+                        )}
                     </div>
+
+                    <Navigation />
+                </div>
+            </div>
+
+            {/* Sticky Header on Scroll */}
+            <div
+                className={`sticky-header ${scrolled ? 'visible' : ''}`}
+            >
+                {logo && (
+                    <img
+                        src={`/media/${logo}`}
+                        alt={`${title || 'Organization'} logo`}
+                        className="sticky-logo"
+                    />
                 )}
 
-                {/* Organization Info */}
-                <div className="org-info">
-                    <h1 className="org-name">{G.set.title}</h1>
+                {title && (
+                    <span className="sticky-title">
+                        {title}
+                    </span>
+                )}
+
+                <div className="social-follow">
+                    <a
+                        href={facebookPageUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="sticky-follow-btn"
+                        aria-label="Ακολουθήστε μας στο Facebook"
+                    >
+                        <FaFacebook style={{ marginRight: '5px' }} />
+                        Ακολουθήστε
+                    </a>
                 </div>
 
-                <Navigation/>
+                {/* Theme Toggle */}
+                <button
+                    type="button"
+                    className="theme-toggle"
+                    onClick={toggleTheme}
+                    aria-label={
+                        theme === 'dark'
+                            ? 'Switch to light theme'
+                            : 'Switch to dark theme'
+                    }
+                    title="Change theme"
+                >
+                    {theme === 'dark' ? <FaSun /> : <FaMoon />}
+                </button>
             </div>
-        </div>
-
-
-    {/* Sticky Header on Scroll */
-    }
-    <div className={`sticky-header ${scrolled ? 'visible' : ''}`}>
-        <img src="/logo0.png" alt="Logo" className="sticky-logo"/>
-        <span className="sticky-title">Ένωση Σκηνοθετών Δημιουργών</span>
-        <div className="social-follow">
-            <a
-                href={facebookPageUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="sticky-follow-btn"
-                aria-label="Ακολουθήστε μας στο Facebook"
-            >
-                <FaFacebook style={{marginRight: '5px'}}/> Ακολουθήστε
-            </a>
-        </div>
-    </div>
-</>
-)
-    ;
+        </>
+    );
 };
 
 export default Header;

@@ -33,7 +33,6 @@ if (!defined('TEMPLATE')) {
     define('SERVERNAME',$_SERVER['SERVER_NAME']);
     define('HTTP_HOST',$_SERVER['HTTP_HOST']);
     define('REFERER',$_SERVER['HTTPS']=='on' ? 'https://' : 'http://'); //http or https
-    define('ERMIS_ROOT',GSROOT.'ermis/');
     define('KRONOS_ROOT',GSROOT.'kronos/');
     define('MARS_ROOT',GSROOT.'mars/');
     @define('CUBO_ROOT',GAIAROOT.'cubos/');

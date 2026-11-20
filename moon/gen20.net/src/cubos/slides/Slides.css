@@ -109,7 +109,6 @@
 
 .slides-counter {
     color: white;
-    font-size: 14px;
     font-weight: bold;
     background: rgba(0, 0, 0, 0.5);
     padding: 6px 12px;
@@ -177,7 +176,6 @@
     right: 0;
     background: rgba(0, 0, 0, 0.6);
     color: white;
-    font-size: 9px;
     padding: 2px 4px;
     text-align: center;
     white-space: nowrap;
@@ -250,17 +248,14 @@
 
     .slides-btn {
         padding: 6px 12px;
-        font-size: 14px;
     }
 
     .slides-caption {
-        font-size: 12px;
         padding: 6px 12px;
         bottom: 10px;
     }
 
     .slides-counter {
-        font-size: 12px;
     }
 }
 

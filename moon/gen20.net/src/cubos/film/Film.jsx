@@ -162,3 +162,4 @@ Ten years as a stage actor, director and playwright, he has recently published t
         </div>
     );
 };
+export default Film;

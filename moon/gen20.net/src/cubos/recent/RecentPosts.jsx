@@ -1,4 +1,5 @@
 import React from 'react';
+import './RecentPosts.css';
 
 function RecentPosts({ posts = [] }) {
     return (

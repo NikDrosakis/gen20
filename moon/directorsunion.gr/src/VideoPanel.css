@@ -210,3 +210,32 @@
         font-size: 1rem;
     }
 }
+
+/* Responsive fix */
+@media (max-width: 1024px) {
+    .video-panel-container {
+        float: none;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        clear: both;
+    }
+
+    .video-panel-hero,
+    .video-main,
+    .video-wrapper {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .video-thumbnails {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .thumbnail-item {
+        max-width: 80%;
+    }
+}

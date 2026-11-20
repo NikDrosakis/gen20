@@ -4,7 +4,7 @@ use Exception;
 
 /**
  Action Gaia is the beginning of Action
- Basic Difference with nodejs ermis.core.Action is that php gaia.core.Action calling endpoints
+ Basic Difference with the legacy Node.js Action is that the PHP gaia.core.Action calls endpoints
 
 
 
@@ -13,7 +13,7 @@ use Exception;
  Running Web Socket Server for RealTime Actions; WServer(server,app,exeActions);
 
 --> uses Maria, Messenger
---> runs in systemsid ermis
+--> runs in systemsid god
  TODO utilize ci/cd process (through Github) example in the end
  TODO utilize the power of event driven kafka logic
  TODO utilize the power of unit testing
@@ -100,7 +100,7 @@ that's the return format
             if ($result) {
                 //upgrades or downgrades action based on result
                 $this->updateStatus($record, $this->actionStatus['ALPHA_RUNNING_READY'], 'Action completed', $exeTime);
-                //send message to ermis
+                //send message to god
             //   $this->connectToWebSocket();
               //  $payload = $this->createWSPayload(json_encode($result));
                // $this->sendMessage($payload);
@@ -168,7 +168,7 @@ that's the return format
             if ($result) {
                 //upgrades or downgrades action based on result
                 $this->updateStatus($record, $this->actionStatus['ALPHA_RUNNING_READY'], 'Action completed', $exeTime);
-                //send message to ermis
+                //send message to god
             //   $this->connectToWebSocket();
               //  $payload = $this->createWSPayload(json_encode($result));
                // $this->sendMessage($payload);
@@ -511,7 +511,7 @@ protected function buildRoute(array $rec): bool
             $routes = include $routerPath;
             if ($routes) {
                 return "✓  {$rec['grpName']} routed.\n";
-                $routeMappings = $this->scanRoutes($routes, "/ermis/v1/{$rec['grpName']}");
+                $routeMappings = $this->scanRoutes($routes, "/apy/v1/{$rec['grpName']}");
                 return !empty($routeMappings);
             } else {
                 return "✗  Error: No valid router exported from {$routerPath}\n";

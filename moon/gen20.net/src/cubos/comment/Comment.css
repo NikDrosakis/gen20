@@ -17,7 +17,6 @@
     background: var(--bg-secondary, #f0f0f0);
     padding: 2px 10px;
     border-radius: 20px;
-    font-size: 0.85rem;
     font-weight: normal;
 }
 
@@ -56,7 +55,6 @@
     background: var(--bg-secondary, #f0f0f0);
     padding: 8px 12px;
     border-radius: 8px 8px 0 0;
-    font-size: 0.85rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -68,7 +66,6 @@
     border: none;
     cursor: pointer;
     color: #ff4444;
-    font-size: 0.8rem;
 }
 
 .comment-input {
@@ -77,7 +74,6 @@
     border: 1px solid var(--border-color, #ddd);
     border-radius: 8px;
     font-family: inherit;
-    font-size: 0.95rem;
     resize: vertical;
     background: var(--bg-primary, white);
     color: var(--text-primary, #333);
@@ -149,7 +145,6 @@
 }
 
 .comment-date {
-    font-size: 0.75rem;
     color: var(--text-secondary, #999);
 }
 
@@ -170,7 +165,6 @@
     border: none;
     color: #3b82f6;
     cursor: pointer;
-    font-size: 0.85rem;
     padding: 0;
     transition: opacity 0.2s;
 }

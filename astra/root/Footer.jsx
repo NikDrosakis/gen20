@@ -1,4 +1,4 @@
-import React from "react";
+import "./Footer.css";
 
 const Footer = () => {
     return (
@@ -103,8 +103,7 @@ const Footer = () => {
                             <div className="footer__option__item">
                                 <h5>Newsletter</h5>
                                 <p>
-                                    Videoprah is an award-winning, full-service production company
-                                    specializing.
+                                    GEN20 is an independet platform, created by Genia20.
                                 </p>
                                 <form action="#">
                                     <input type="text" placeholder="Email"/>

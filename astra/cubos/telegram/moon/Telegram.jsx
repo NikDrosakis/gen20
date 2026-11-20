@@ -1,3 +1,5 @@
+import "./Telegram.css";
+
 const Telegram = () => {
     return (
         <div className="container spad">

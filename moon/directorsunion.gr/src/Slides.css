@@ -264,3 +264,25 @@
         height: 35px;
     }
 }
+
+/* Responsive fix */
+@media (max-width: 1024px) {
+    .slides-container {
+        float: none;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        clear: both;
+    }
+
+    .slides-viewer {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .slides-image {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+}

@@ -6,7 +6,6 @@ use Core\Traits\Url;
 use Core\Traits\Meta;
 use Core\Traits\Manifest;
 use Core\Traits\Head;
-use Core\Traits\Ermis;
 use Core\Traits\Lang;
 use Core\Traits\Tree;
 use Core\Traits\Form;
@@ -27,7 +26,7 @@ use Core\Traits\Doc;
 use Core\Cubo\Book;
 
 class CuboInstance extends Gaia {
-    use Doc, System, Url, Meta, Manifest, Head, Ermis, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Media, Filemeta, My, CuboAdmin, CuboPublic, Book, Share, Sketch;
+    use Doc, System, Url, Meta, Manifest, Head, Lang, Tree, Form, Domain, Kronos, WS, Action, Template, Media, Filemeta, My, CuboAdmin, CuboPublic, Book, Share, Sketch;
 
     public function __construct() {
         parent::__construct();

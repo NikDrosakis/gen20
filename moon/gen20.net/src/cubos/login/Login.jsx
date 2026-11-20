@@ -4,7 +4,7 @@ import { useTheme } from '../../ThemeContext';
 import './Login.css';
 
 const Login = () => {
-    const { theme, toggleTheme } = useTheme();
+    const { darkMode } = useTheme();
     const emailRef = useRef();
     const passRef = useRef();
     const forgotRef = useRef();
@@ -29,7 +29,7 @@ const Login = () => {
                 window.google.accounts.id.renderButton(
                     document.getElementById('glogin'),
                     {
-                        theme: theme === 'dark' ? 'filled_black' : 'outline',
+                        theme: darkMode ? 'filled_black' : 'outline',
                         size: 'large',
                         width: '100%'
                     }
@@ -40,7 +40,7 @@ const Login = () => {
         return () => {
             script.remove();
         };
-    }, [theme]);
+    }, [darkMode]);
 
     const handleLogin = async () => {
         const email = emailRef.current.value;

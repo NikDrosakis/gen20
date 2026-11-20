@@ -1,5 +1,6 @@
 // cubo Search.jsx
 import { useState, useEffect } from "react";
+import "./Search.css";
 
 export default function Search({ onSearch, initialValue = "" }) {
     const [searchTerm, setSearchTerm] = useState(initialValue);

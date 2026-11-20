@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "./Pay.css";
 
 const Pay = ({ selectedShow, quantity = 1, payerDetails }) => {
     const [contact, setContact] = useState(null);
@@ -67,7 +68,7 @@ const Pay = ({ selectedShow, quantity = 1, payerDetails }) => {
     };
 
     return (
-        <div style={{ padding: "20px", border: "1px solid #ccc" }}>
+        <div className="pay-box">
             <h3>Oxygen API Test Section</h3>
             <button onClick={createContact} disabled={loading}>
                 Create Contact
@@ -75,7 +76,6 @@ const Pay = ({ selectedShow, quantity = 1, payerDetails }) => {
             <button
                 onClick={createInvoice}
                 disabled={loading || !contact}
-                style={{ marginLeft: "10px" }}
             >
                 Create Invoice
             </button>
@@ -95,7 +95,7 @@ const Pay = ({ selectedShow, quantity = 1, payerDetails }) => {
             )}
 
             {error && (
-                <div style={{ color: "red" }}>
+                <div className="pay-error">
                     <strong>Error:</strong> {error}
                 </div>
             )}

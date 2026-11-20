@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../../ThemeContext';
+import './Audioplayer.css';
 
 export const Audioplayer = ({ tracks = [] }) => {
     const { theme } = useTheme();
@@ -143,3 +144,4 @@ export const Audioplayer = ({ tracks = [] }) => {
         </div>
     );
 };
+export default Audioplayer;

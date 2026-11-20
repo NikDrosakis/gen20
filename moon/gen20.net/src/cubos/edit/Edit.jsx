@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import EditButton from './EditButton';
 import NewButton from './NewButton';
+import './Edit.css';
 
 const API = '/api/v1/maria/q?key=';
 const escapeSql = (s = '') => String(s).replace(/'/g, "''");
@@ -91,3 +92,4 @@ export const Edit = ({ path }) => {
         </div>
     );
 };
+export default Edit;

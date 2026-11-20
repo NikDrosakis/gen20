@@ -256,3 +256,4 @@ export const Diary = () => {
         </>
     );
 };
+export default Diary;
