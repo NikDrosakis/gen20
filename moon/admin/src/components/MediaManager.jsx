@@ -1,39 +1,28 @@
 // components/MediaManager.jsx
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import FolderNavigation from './FolderNavigation';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import MediaGallery from './MediaGallery';
 import ImagePreview from './ImagePreview';
 import Pagination from './Pagination';
 
-const MediaManager = () => {
+const MediaManager = ({ onSelectMedia }) => {
     const [files, setFiles] = useState([]);
-    const [subdirectories, setSubdirectories] = useState([]);
-    const [currentFolder, setCurrentFolder] = useState('');
     const [selectedImage, setSelectedImage] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, total: 0, limit: 20 });
+    const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, total: 0, limit: 40 });
     const [mediaInfo, setMediaInfo] = useState({
         basefolder: '',
         urlfolder: '',
-        parentFolder: '',
-        folderName: '',
-        canGoUp: false
     });
 
     // Refs
-    const isInitialMount = useRef(true);
     const abortControllerRef = useRef(null);
     const isLoadingRef = useRef(false);
-    const lastLoadedFolderRef = useRef('');
-    const lastLoadedPageRef = useRef(1);
-    const filesCacheRef = useRef(new Map()); // Cache for files arrays
-    const MEDIA_ROOT = `/var/www/gs/media/${window.location.hostname}`;
-    const SITE_URL = `https://${window.location.hostname}/`;
+    const lastLoadedPageRef = useRef(0);
+    const filesCacheRef = useRef(new Map());
     const API_BASE = '/api/v1/local';
 
-    const loadMedia = useCallback(async (folder, page = 1, limit = 20, force = false) => {
-
-        if (!force && lastLoadedFolderRef.current === folder && lastLoadedPageRef.current === page) return;
+    const loadMedia = useCallback(async (page = 1, limit = 40, force = false) => {
+        if (!force && lastLoadedPageRef.current === page) return;
         if (isLoadingRef.current && !force) return;
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -46,48 +35,22 @@ const MediaManager = () => {
         setLoading(true);
 
         try {
-            let url = `${API_BASE}/getMedia?page=${page}&limit=${limit}`;
-            if (folder) {
-                url += `&folder=${encodeURIComponent(folder)}`;
-            }
-
-            const response = await fetch(url, {
-                signal: abortController.signal
-            });
+            const url = `${API_BASE}/getMedia?page=${page}&limit=${limit}`;
+            const response = await fetch(url, { signal: abortController.signal });
             const result = await response.json();
-console.log(result);
+
             if (result.success && result.data) {
-                lastLoadedFolderRef.current = folder;
                 lastLoadedPageRef.current = page;
 
-                const cacheKey = `${folder}_${page}_${limit}`;
-                const cachedFiles = filesCacheRef.current.get(cacheKey);
+                const cacheKey = `${page}_${limit}`;
 
-                // FIX: Only update if files actually changed
                 const newFiles = result.data.files || [];
-                const filesChanged = !cachedFiles ||
-                    cachedFiles.length !== newFiles.length ||
-                    cachedFiles.some((f, i) => f !== newFiles[i]);
-                // FIX: Build correct urlfolder
-                const baseUrl = `https://${window.location.hostname}`;
+                setFiles(newFiles);
+                filesCacheRef.current.set(cacheKey, newFiles);
 
-                if (filesChanged) {
-                    setFiles(newFiles);
-                    filesCacheRef.current.set(cacheKey, newFiles);
-                }
-                let relativePath = folder.replace(MEDIA_ROOT, '');
-                if (!relativePath.startsWith('/')) {
-                    relativePath = '/' + relativePath;
-                }
-                setSubdirectories(result.data.subdirectories || []);
-                const correctUrlfolder = result.data.urlfolder;
                 setMediaInfo({
                     basefolder: result.data.basefolder || '',
-                    urlfolder: correctUrlfolder,
-                    parentFolder: result.data.parentFolder || '',
-                    folderName: result.data.folderName || '',
-                    canGoUp: result.data.canGoUp || false,
-                    total: result.data.total || 0
+                    urlfolder: result.data.urlfolder,
                 });
                 setPagination({
                     currentPage: result.data.page || page,
@@ -95,8 +58,6 @@ console.log(result);
                     total: result.data.total || 0,
                     limit: limit
                 });
-                setCurrentFolder(result.data.currentFolder || folder);
-               ;
             }
         } catch (error) {
             if (error.name !== 'AbortError') {
@@ -106,26 +67,20 @@ console.log(result);
             setLoading(false);
             isLoadingRef.current = false;
         }
-    }, [API_BASE, SITE_URL, MEDIA_ROOT]);
-
-    const handleFolderChange = useCallback((folderPath) => {
-        setCurrentFolder(folderPath);
-        localStorage.setItem('current_media_folder', folderPath);
-        loadMedia(folderPath, 1, 20);
-    }, [loadMedia]);
+    }, [API_BASE]);
 
     const handleSelectMedia = useCallback((filename) => {
         const selectedMedia = {
             filename: filename,
             url: `${mediaInfo.urlfolder}${filename}`,
-            folder: currentFolder,
             timestamp: Date.now()
         };
         localStorage.setItem('selected_media', JSON.stringify(selectedMedia));
         window.dispatchEvent(new CustomEvent('mediaSelected', { detail: selectedMedia }));
+        if (onSelectMedia) onSelectMedia(selectedMedia);
         console.log(`Selected: ${filename}`);
         setSelectedImage(null);
-    }, [mediaInfo.urlfolder, currentFolder]);
+    }, [mediaInfo.urlfolder, onSelectMedia]);
 
     const handleDeleteMedia = useCallback(async (filename) => {
         if (!confirm(`Are you sure you want to delete "${filename}"?`)) return;
@@ -135,8 +90,7 @@ console.log(result);
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    filename: filename,
-                    folder: currentFolder
+                    filename: filename
                 })
             });
             const result = await response.json();
@@ -144,86 +98,46 @@ console.log(result);
             if (result.error) {
                 alert(`❌ ${result.error}`);
             } else {
-                // Clear cache
-                const cacheKey = `${currentFolder}_${pagination.currentPage}_${pagination.limit}`;
+                const cacheKey = `${pagination.currentPage}_${pagination.limit}`;
                 filesCacheRef.current.delete(cacheKey);
-
-                // Απλά φόρτωσε ξανά τα media
-                loadMedia(currentFolder, pagination.currentPage, pagination.limit,true);
-
-                // Ενημέρωση με notification αντί για alert
+                loadMedia(pagination.currentPage, pagination.limit, true);
                 console.log('✅ File deleted successfully!');
             }
         } catch (error) {
             console.error('Error deleting media:', error);
             alert('❌ Delete failed: ' + error.message);
         }
-    }, [currentFolder, loadMedia, pagination.currentPage, pagination.limit]);
-    const handlePageChange = useCallback((page) => {
-        loadMedia(currentFolder, page, pagination.limit);
-    }, [loadMedia, currentFolder, pagination.limit]);
-
-    // components/media/MediaManager.jsx
-    const handleRefresh = useCallback(async (folder) => {
-        // Clear cache for this folder
-        const cacheKey = `${folder}_${pagination.currentPage}_${pagination.limit}`;
-        filesCacheRef.current.delete(cacheKey);
-        // Force reload
-        await loadMedia(folder, pagination.currentPage, pagination.limit,true);
     }, [loadMedia, pagination.currentPage, pagination.limit]);
 
-//refresh after upload
+    const handlePageChange = useCallback((page) => {
+        loadMedia(page, pagination.limit);
+    }, [loadMedia, pagination.limit]);
+
+    const handleRefresh = useCallback(async () => {
+        const cacheKey = `${pagination.currentPage}_${pagination.limit}`;
+        filesCacheRef.current.delete(cacheKey);
+        await loadMedia(pagination.currentPage, pagination.limit, true);
+    }, [loadMedia, pagination.currentPage, pagination.limit]);
+
+    // refresh after upload
     useEffect(() => {
-        const handler = () => handleRefresh(currentFolder);
+        const handler = () => handleRefresh();
         window.addEventListener('mediaUploaded', handler);
         return () => window.removeEventListener('mediaUploaded', handler);
-    }, [currentFolder, handleRefresh]);
-
-    // Clear cache when folder changes
-    useEffect(() => {
-        if (!isInitialMount.current) {
-            filesCacheRef.current.clear();
-        }
-    }, [currentFolder]);
+    }, [handleRefresh]);
 
     // Initial load
     useEffect(() => {
-        if (isInitialMount.current) {
-            const savedFolder = localStorage.getItem('current_media_folder') || MEDIA_ROOT;
-            setCurrentFolder(savedFolder);
-            loadMedia(savedFolder, 1, 20);
-            isInitialMount.current = false;
-        }
-
+        loadMedia(1, 40);
         return () => {
             if (abortControllerRef.current) {
                 abortControllerRef.current.abort();
             }
         };
-    }, [MEDIA_ROOT, loadMedia]);
+    }, [loadMedia]);
 
-    console.log('[MediaManager] State:', {
-        files,
-        filesCount: files.length,
-        currentFolder,
-        mediaInfo
-    });
-    console.log('[MediaManager] Render branch:', {
-        loading,
-        filesCount: files.length,
-        willRenderGallery: !loading
-    });
     return (
         <div className="media-manager-content">
-            <FolderNavigation
-                currentFolder={currentFolder}
-                subdirectories={subdirectories}
-                mediaInfo={mediaInfo}
-                MEDIA_ROOT={MEDIA_ROOT}
-                onFolderChange={handleFolderChange}
-                onRefresh={handleRefresh}
-            />
-
             {loading ? (
                 <div className="loading-spinner">
                     <div className="spinner"></div>
@@ -231,11 +145,20 @@ console.log(result);
                 </div>
             ) : (
                 <>
+                    {pagination.totalPages > 1 && (
+                        <Pagination
+                            currentPage={pagination.currentPage}
+                            totalPages={pagination.totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    )}
+
                     <MediaGallery
                         files={files}
                         selectedImage={selectedImage}
                         mediaInfo={mediaInfo}
                         onImageClick={setSelectedImage}
+                        onDelete={handleDeleteMedia}
                         onDragStart={(e, filename, url) => {
                             e.dataTransfer.setData('text/plain', JSON.stringify({
                                 filename: filename,
@@ -250,16 +173,8 @@ console.log(result);
                             filename={selectedImage}
                             mediaInfo={mediaInfo}
                             onClose={() => setSelectedImage(null)}
-                            onSelect={() => handleSelectMedia(selectedImage)}
+                            onSelect={onSelectMedia ? () => handleSelectMedia(selectedImage) : null}
                             onDelete={() => handleDeleteMedia(selectedImage)}
-                        />
-                    )}
-
-                    {pagination.totalPages > 1 && (
-                        <Pagination
-                            currentPage={pagination.currentPage}
-                            totalPages={pagination.totalPages}
-                            onPageChange={handlePageChange}
                         />
                     )}
                 </>

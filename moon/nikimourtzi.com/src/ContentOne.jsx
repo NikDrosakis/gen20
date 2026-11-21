@@ -10,8 +10,9 @@ import ContentComment from "./ContentComment";
 
 const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
 
-export default function ContentOne({ initialContent, allPosts = [], lang = 'el' }) {
-    const { name } = useParams();
+export default function ContentOne({ initialContent, allPosts = [], lang = 'el', name: propName }) {
+    const { name: routeName } = useParams();
+    const name = propName || routeName;
     const [content, setContent] = useState(initialContent || null);
     const [loading, setLoading] = useState(!initialContent);
     const [error, setError] = useState(null);
@@ -211,7 +212,7 @@ export default function ContentOne({ initialContent, allPosts = [], lang = 'el' 
     const getImageSrc = (img) => {
         if (!img) return "/assets/hero.png";
         if (img.startsWith("http")) return img;
-        return `/media/blog/${img}`;
+        return `/media/${img}`;
     };
 
     return (
@@ -227,7 +228,7 @@ export default function ContentOne({ initialContent, allPosts = [], lang = 'el' 
                 <meta property="og:title" content={currentTitle}/>
                 <meta property="og:description"
                       content={(currentExcerpt || currentDescription || '').substring(0, 160)}/>
-                <meta property="og:image" content={`https://nikimourtzi.com/media/blog/${content.img}`}/>
+                <meta property="og:image" content={`https://nikimourtzi.com/media/${content.img}`}/>
                 <meta property="og:image:alt" content={currentTitle}/>
                 <meta property="og:image:width" content="968"/>
                 <meta property="og:image:height" content="504"/>

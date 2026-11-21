@@ -1,28 +1,21 @@
 // App.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import Navbar from "./components/NavAdmin";
-import SlidesAdmin from "./components/SlidesAdmin";
-import Home from "./pages/Home";
-import AnalyticsDashboard from './pages/AnalyticsDashboard';
-import UserArchiveAdmin from "./pages/UserArchiveAdmin";
-import UserOneAdmin from "./pages/UserOneAdmin";
-import Classification from "./pages/Classification";
-import Links from "./pages/Links";
-import ContentArchiveAdmin from "./pages/ContentArchiveAdmin";
-import ContentOneAdmin from "./pages/ContentOneAdmin";
-import Monetize from "./pages/Monetize";
-import LangAdmin from "./pages/LangAdmin";
-import SuperAdmin from "./pages/SuperAdmin";
 import { MessagingProvider, useMessaging } from './MessagingContext';
-import MemberFormAdmin from "./pages/MemberFormAdmin";
-import Settings from "./pages/Settings";
-import Pages from "./pages/Pages";
-import Media from "./pages/Media";
-import Doc from "./pages/Doc";
 import { useG } from './GContext';
+import { useManifest } from './ManifestContext';
 import ChatBox from './ChatBox';
 import ChatList from './ChatList';
 import Cookies from 'js-cookie';
+
+// Lazy registry: pages/*.jsx (+ SlidesAdmin που είναι στο components/)
+const pages = import.meta.glob("./pages/*.jsx");
+const REGISTRY = {};
+for (const [path, loader] of Object.entries(pages)) {
+    const name = path.split("/").pop().replace(/\.jsx$/, "");
+    REGISTRY[name] = lazy(loader);
+}
+REGISTRY["SlidesAdmin"] = lazy(() => import("./components/SlidesAdmin"));
 
 function MessagingDebug() {
     const { connection, messages, sendSystem } = useMessaging();
@@ -106,6 +99,7 @@ const App = () => {
     const [loading, setLoading] = useState(true);
     const [editId, setEditId] = useState(null);
     const { G, loading: configLoading, error } = useG();
+    const { manifest } = useManifest();
     const [showSetup, setShowSetup] = useState(false);
     const [setupChecked, setSetupChecked] = useState(false);
 // Στο component, μετά το activeChats:
@@ -221,33 +215,44 @@ const App = () => {
         const userId = searchParams.get('userId');
         const path = window.location.pathname;
 
-        // ✅ ΕΔΩ ΕΠΙΣΤΡΕΦΟΥΜΕ ΤΑ COMPONENTS (ΧΩΡΙΣ setState)
+        // route key + props (routing logic) — manifest κάνει key → component
+        let key;
+        const props = { navigateTo };
+
         if (path === '/admin/content') {
-            if (id) return <ContentOneAdmin navigateTo={navigateTo} contentId={id} isNew={false} />;
-            else if (isNew) return <ContentOneAdmin navigateTo={navigateTo} isNew={true} />;
-            else return <ContentArchiveAdmin navigateTo={navigateTo} />;
+            if (id) { key = 'contentOne'; props.contentId = id; props.isNew = false; }
+            else if (isNew) { key = 'contentOne'; props.isNew = true; }
+            else key = 'content';
+        }
+        else if (path === '/admin/user-edit' && userId) { key = 'userOne'; props.userId = userId; props.isNew = false; }
+        else if (path === '/admin/user-new') { key = 'userOne'; props.isNew = true; }
+        else {
+            const map = {
+                '/admin': 'home',
+                '/admin/pages': 'pages',
+                '/admin/users': 'users',
+                '/admin/analytics': 'analytics',
+                '/admin/doc': 'doc',
+                '/admin/classification': 'classification',
+                '/admin/monetize': 'monetize',
+                '/admin/settings': 'settings',
+                '/admin/languages': 'languages',
+                '/admin/media': 'media',
+                '/admin/slides': 'slides',
+                '/admin/links': 'links',
+                '/admin/members': 'members',
+                '/admin/superadmin': 'superadmin',
+            };
+            key = map[path] || 'home';
         }
 
-        if (path === '/admin/user-edit' && userId) return <UserOneAdmin navigateTo={navigateTo} userId={userId} isNew={false} />;
-        if (path === '/admin/user-new') return <UserOneAdmin navigateTo={navigateTo} isNew={true} />;
-        if (path === '/admin/users') return <UserArchiveAdmin navigateTo={navigateTo} />;
+        const PAGES = manifest?.pages || {};
+        const pageDef = PAGES[key] || PAGES.notFound;
+        const Comp = pageDef ? REGISTRY[pageDef.page] : null;
 
-        switch(path) {
-            case '/admin/analytics': return <AnalyticsDashboard navigateTo={navigateTo} />;
-            case '/admin/classification': return <Classification navigateTo={navigateTo} />;
-            case '/admin/monetize': return <Monetize navigateTo={navigateTo} />;
-            case '/admin/settings': return <Settings navigateTo={navigateTo} />;
-            case '/admin/languages': return <LangAdmin navigateTo={navigateTo} />;
-            case '/admin/media': return <Media navigateTo={navigateTo} />;
-            case '/admin/slides': return <SlidesAdmin navigateTo={navigateTo} />;
-            case '/admin/links': return <Links navigateTo={navigateTo} />;
-            case '/admin/doc': return <Doc navigateTo={navigateTo} />;
-            case '/admin/members': return <MemberFormAdmin navigateTo={navigateTo} />;
-            case '/admin/superadmin': return <SuperAdmin navigateTo={navigateTo} />;
-            case '/admin/pages': return <Pages navigateTo={navigateTo} />; // ✅ ΕΔΩ
-            case '/admin':
-            default: return <Home navigateTo={navigateTo} />;
-        }
+        return Comp
+            ? <Suspense fallback={<div style={{ padding: 24 }}>Loading…</div>}><Comp {...props} /></Suspense>
+            : <div style={{ padding: 24 }}>Page not found: {key}</div>;
     };
     if (loading) {
         return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>;

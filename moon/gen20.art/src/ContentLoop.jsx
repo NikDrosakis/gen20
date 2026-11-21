@@ -243,6 +243,7 @@ function ContentLoopView({
 // ============================================================
 export default function ContentLoop({
                                         classificationid,
+                                        name,
                                         limit = 50,
                                         perPage = 9,
                                         postBase = "",
@@ -257,7 +258,12 @@ export default function ContentLoop({
         setLoading(true);
 
         const filters = ["c.status = 1", "c.type = 'post'"];
-        if (classificationid) filters.push(`c.classificationid = ${parseInt(classificationid, 10)}`);
+        if (classificationid) {
+            filters.push(`c.classificationid = ${parseInt(classificationid, 10)}`);
+        } else if (name) {
+            const cn = esc(name);
+            filters.push(`c.classificationid = (SELECT id FROM ${publicdb}.classification WHERE name = '${cn}' LIMIT 1)`);
+        }
         if (searchTerm) {
             const s = esc(searchTerm);
             filters.push(`(c.title LIKE '%${s}%' OR c.excerpt LIKE '%${s}%')`);
@@ -285,7 +291,7 @@ console.log(query);
             .finally(() => { if (!ctrl.signal.aborted) setLoading(false); });
 
         return () => ctrl.abort();
-    }, [classificationid, limit, searchTerm]);
+    }, [classificationid, name, limit, searchTerm]);
 
     return (
         <ContentLoopView

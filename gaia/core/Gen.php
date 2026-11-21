@@ -18,7 +18,6 @@ use Core\Traits\DomainHost;
 use Core\Traits\Kronos;
 use Core\Traits\Sketch;
 use Core\Traits\WS;
-use Core\Traits\Action;
 use Core\Traits\Template;
 use Core\Traits\Media;
 use Core\Traits\Filemeta;
@@ -37,7 +36,7 @@ wordpress integrated
 magento integrated
 */
 class Gen extends Gaia {
-use  Url, System,Meta, Manifest, Head, Lang, Tree, Form, DomainZone,DomainFS,DomainDB,DomainHost,Kronos, Sketch,WS, Action, Template, Media, Filemeta, My, CuboAdmin, CuboPublic, Template,Book;
+use  Url, System,Meta, Manifest, Head, Lang, Tree, Form, DomainZone,DomainFS,DomainDB,DomainHost,Kronos, Sketch,WS, Template, Media, Filemeta, My, CuboAdmin, CuboPublic, Template,Book;
 
 protected $database;
 protected $layout_selected;

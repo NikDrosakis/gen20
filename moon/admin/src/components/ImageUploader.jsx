@@ -5,7 +5,6 @@ const ImageUploader = ({
                            value,
                            onChange,
                            identifier,      // Can be postName, userId, or any unique identifier
-                           folder = 'blog', // Folder under media (blog, avatars, media, etc.)
                            basePath = '/media/', // Base URL path
                            placeholder = 'filename.jpg',
                            label = 'Image path',
@@ -31,7 +30,7 @@ const ImageUploader = ({
         if (!imgPath) return '';
         if (imgPath.startsWith('http')) return imgPath;
         if (imgPath.startsWith('/')) return imgPath;
-        return `${basePath}${folder}/${imgPath}`;
+        return `${basePath}${imgPath}`;
     };
 
     // Download external image API call
@@ -46,8 +45,7 @@ const ImageUploader = ({
                 },
                 body: JSON.stringify({
                     imageUrl: url,
-                    postName: name || `temp_${Date.now()}`,
-                    subfolder: folder
+                    postName: name || `temp_${Date.now()}`
                 })
             });
 
@@ -163,7 +161,7 @@ const ImageUploader = ({
                     placeholder={placeholder}
                 />
                 <small className="image-uploader-hint">
-                    {hint} Full path: {basePath}{folder}/
+                    {hint} Full path: {basePath}
                 </small>
             </div>
 

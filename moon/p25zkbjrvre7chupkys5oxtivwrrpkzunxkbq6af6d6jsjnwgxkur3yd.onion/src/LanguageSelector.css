@@ -1,9 +1,0 @@
-/* LanguageSelector.css */
-.language-select {
-    padding: 6px 15px;
-    margin-left: 14px;
-    border: none;
-    background: var(--bg);
-    color: var(--text);
-    cursor: pointer;
-}

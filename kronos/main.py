@@ -42,7 +42,7 @@ def log(message, level=logging.INFO, **extra):
 
 from services.deepseek.routes import router as deepseek_route
 from services.gaia.routes import router as gaia_route
-from services.sketch.routes import router as sketch_route
+from cubos.sketch.routes import router as sketch_route
 
 
 # --------------------------------------------------

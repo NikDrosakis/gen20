@@ -20,7 +20,6 @@ const MediaToolbox = ({ onSelect, onClose, selectedValue }) => {
                 initialUrl={activeTab === 'url_image' ? (localStorage.getItem('temp_content_url') || '') : ''}
                 value={selectedValue}
                 onChange={onSelect}
-                folder="blog" // ή όποιο folder θέλεις
             />
         ),
         google_drive: <GoogleDrive onSelectMedia={onSelect} />,

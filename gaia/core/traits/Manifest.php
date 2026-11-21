@@ -255,48 +255,7 @@ protected function manifestFromDB(string $query, $params = []): ?string {
     return yaml_emit($extendedRow);
 }
 
-/**
-Parent Actiongrp creating manifest files from DB
-*/
- protected function manifestFileActiongrpFromDB(string $name): void{
-     $manifest= $this->manifestActiongrpFromDB($name);
-     //parse to get the filename
-     $yaml_array= yaml_parse($manifest);
-     $filename= array_key_first($yaml_array);
-     $filePath = ADMIN_ROOT.'manifest/'.$filename.'.yml';
-     //save to file
-     file_put_contents($filePath, $manifest);
-     echo "YAML file saved to $filePath.";
- }
 
- protected function manifestActiongrpFromDB(string $name): ?string{
-    // Execute the query
-    $table= "actiongrp";
-    $actiongrp =$this->db->f("select * from $table where name=?", [$name]);
-     if ($actiongrp) {
-    // Get the column format (comments) for the table
-        $colFormat = $this->db->colFormat($table);
-        $grsExtended=$this->extendColumnFormat($actiongrp, $colFormat);
-      //  $actionColumnsFormat = $this->db->colFormat("action");
-    if ($grsExtended) {
-        $actions = $this->db->fa("SELECT * FROM gen_admin.action WHERE actiongrpid=?", [$actiongrp['id']]);
-        // Add actions to the action group array
-        $grsExtended['actions'] = array_values($actions);
-    } else {
-        echo "No action group found with the specified name.";
-    }
-$result=[];
-    $name = $actiongrp['name'] ?? $actiongrp['id'];
-    // Process the results by extending the column format (reversing the transformations)
-    $result[$name.'_'.$table] = $grsExtended;
-
-    // Convert the array to YAML format
-    return yaml_emit($result);
-       } else {
-            echo "No action group found with the specified name.";
-            return null; // Return null if no action group is found
-        }
- }
-
+ 
 
 }

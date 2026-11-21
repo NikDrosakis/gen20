@@ -3,5 +3,5 @@
   "module": "kronos",
   "language": "python",
   "aggregator": "aggregator.py",
-  "cubos": []
+  "cubos": ["bio", "blog", "booksoup", "clinvar", "openlibrary", "poetanote", "sketch"]
 }

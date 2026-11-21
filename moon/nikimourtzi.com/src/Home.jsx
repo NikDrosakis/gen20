@@ -10,13 +10,13 @@ export default function Home() {
                 <meta property="og:url" content="https://nikimourtzi.com/" />
                 <meta property="og:title" content="Niki Mourtzi | Bioinformatics & Genomics Researcher" />
                 <meta property="og:description" content="Επίσημη ιστοσελίδα της Δρ. Νίκης Μούρτζη – Ερευνήτρια Βιοπληροφορικής και Γονιδιωματικής." />
-                <meta property="og:image" content="https://nikimourtzi.com/assets/niki.png" />
+                <meta property="og:image" content="https://nikimourtzi.com/media/niki.png" />
                 <meta property="og:locale" content="el_GR" />
 
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content="Niki Mourtzi | Bioinformatics Researcher" />
                 <meta name="twitter:description" content="Επίσημη ιστοσελίδα της Δρ. Νίκης Μούρτζη – Ερευνήτρια Βιοπληροφορικής και Γονιδιωματικής." />
-                <meta name="twitter:image" content="https://nikimourtzi.com/assets/niki.png" />
+                <meta name="twitter:image" content="https://nikimourtzi.com/media/niki.png" />
             </Helmet>
         <div className="cv-page-container">
             <div className="centered-container">
@@ -31,7 +31,7 @@ export default function Home() {
                         </div>
 
                         <div className="hero-image">
-                            <img src="/assets/niki.png" alt="Niki Mourtzi"/>
+                            <img src="/media/niki.png" alt="Niki Mourtzi"/>
                         </div>
                     </header>
 

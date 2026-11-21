@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 const ImageFromUrl = (ζ) => {
     const [urlImage, setUrlImage] = useState({ url: '', caption: '' });
     const [uploading, setUploading] = useState(false);
-    const currentFolder = localStorage.getItem('current_media_folder') || '';
 
     const handleUrlUpload = async () => {
         if (!urlImage.url) {
@@ -19,8 +18,7 @@ const ImageFromUrl = (ζ) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     url: urlImage.url,
-                    caption: urlImage.caption,
-                    folder: currentFolder
+                    caption: urlImage.caption
                 })
             });
             const result = await response.json();

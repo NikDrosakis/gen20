@@ -9,7 +9,7 @@ export default function Research() {
                         From genomic variation to systems-level disease understanding
                     </p>
                     <div className="contact-image-container"><img alt="Bioinformatics Research Illustration"
-                                                                  className="contact-image" src="/media/blog/asset_4.png"/>
+                                                                  className="contact-image" src="/media/asset_4.png"/>
                     </div>
 
                 </div>

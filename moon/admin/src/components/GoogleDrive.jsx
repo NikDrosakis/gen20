@@ -9,14 +9,9 @@ const GoogleDrive = ({ onSelectMedia }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [downloading, setDownloading] = useState(false);
     const [accessToken, setAccessToken] = useState(null);
-    const [currentFolder, setCurrentFolder] = useState('');
     const CLIENT_ID = '390020636315-u0mpt8dp97jcfb9pbqv87fj4odifrl23.apps.googleusercontent.com';
     const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
 
-    useEffect(() => {
-        const folder = localStorage.getItem('current_media_folder') || '';
-        setCurrentFolder(folder);
-    }, []);
     // Restore token from sessionStorage on mount
     useEffect(() => {
         const savedToken = sessionStorage.getItem('google_drive_token');
@@ -144,12 +139,6 @@ const GoogleDrive = ({ onSelectMedia }) => {
 
     const downloadAndImport = async (file) => {
         if (!accessToken) return;
-        const targetFolder = currentFolder || localStorage.getItem('current_media_folder');
-
-        if (!targetFolder) {
-            alert('⚠️ Δεν έχει επιλεγεί φάκελος. Πήγαινε στο Media Manager και διάλεξε φάκελο πρώτα.');
-            return;
-        }
 
         setDownloading(true);
         try {
@@ -163,7 +152,6 @@ const GoogleDrive = ({ onSelectMedia }) => {
 
             const formData = new FormData();
             formData.append('upload_image', blob, file.name);
-            formData.append('folder', targetFolder);
             formData.append('caption', `Imported from Google Drive: ${file.name}`);
 
             const uploadResponse = await fetch(`${window.location.origin}/api/v1/local/uploadFile`, {
@@ -173,7 +161,6 @@ const GoogleDrive = ({ onSelectMedia }) => {
 
             const result = await uploadResponse.json();
             console.log('[GoogleDrive Import] Upload result:', result);
-            console.log('[GoogleDrive Import] Folder:', targetFolder);
 
             if (result.success === true) {
                 alert(`Successfully imported: ${file.name}`);

@@ -1,223 +1,147 @@
-// Nav.jsx
-import React, { useMemo, useEffect, useState } from 'react';
-import { Link } from "react-router-dom";
-import Cookies from 'js-cookie';
+// src/Nav.jsx
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import Cookies from "js-cookie";
 import LanguageSelector from "./LanguageSelector";
 import ThemeToggle from "./ThemeToggle";
-import Whatsapp from "./Whatsapp";
+import { useG } from "./GContext";
+import { useManifest } from "./ManifestContext";
 import "./Nav.css";
 
-const Navigation = ({ lang }) => {
-    const path = window.location.pathname.split('/')[1] || 'home';
+// --- helpers (παίρνουν PAGES ως όρισμα, όχι module-scope) ---
+
+const inMenu = (key, PAGES) =>
+    key !== "notFound" && !key.includes("*") && PAGES[key].menu !== false;
+
+const findParent = (key, keys) => {
+    const parts = key.split("/");
+    while (parts.length > 1) {
+        parts.pop();
+        const p = parts.join("/");
+        if (keys.has(p)) return p;
+    }
+    return null;
+};
+
+const bySort = (a, b, PAGES) =>
+    (PAGES[a.key].sort ?? 0) - (PAGES[b.key].sort ?? 0);
+
+const buildMenu = (PAGES, HOME) => {
+    const keys = Object.keys(PAGES).filter((k) => inMenu(k, PAGES));
+    const set = new Set(keys);
+    const nodes = {};
+
+    keys.forEach((key) => {
+        const page = PAGES[key];
+        nodes[key] = {
+            key,
+            label: page.label || page.title || key,
+            path: key === HOME ? "/" : `/${key}`,
+            children: [],
+        };
+    });
+
+    const roots = [];
+    keys.forEach((key) => {
+        const parent = findParent(key, set);
+        (parent ? nodes[parent].children : roots).push(nodes[key]);
+    });
+
+    const sortTree = (list) => {
+        list.sort((a, b) => bySort(a, b, PAGES));
+        list.forEach((n) => sortTree(n.children));
+    };
+    sortTree(roots);
+    return roots;
+};
+
+const isActive = (item, activeKey) =>
+    item.key === activeKey || item.children.some((c) => isActive(c, activeKey));
+
+export default function Nav() {
+    const { pathname } = useLocation();
+    const { G } = useG();
+    const { manifest } = useManifest();
+
+    const lang = G?.lang || Cookies.get("lang") || "el";
+
+    const PAGES = manifest?.pages || {};
+    const HOME = Object.keys(PAGES)[0];
+    const activeKey = pathname.split("/").filter(Boolean).join("/") || HOME;
+
     const [menuOpen, setMenuOpen] = useState(false);
-    const [activeKey, setActiveKey] = useState(path);
-    const [menuItems, setMenuItems] = useState([]);
-    const [loading, setLoading] = useState(true);
 
-    const publicdb = "gen_" + window.location.hostname.replace(/\./g, '');
-    const userid = Cookies.get('GENUID');
-    const myimg = Cookies.get('GENIMG');
-    const myname = Cookies.get('GENNAME');
-    const myrole = Cookies.get('GENROLE');
+    const userid = Cookies.get("GENUID");
+    const myimg = Cookies.get("GENIMG");
+    const myname = Cookies.get("GENNAME");
+    const myrole = Cookies.get("GENROLE");
+    const isAdmin = (myrole === "admin" || myrole === "1") && !!userid;
 
-    // Check if user is admin (FIXED: role can be 'admin' or '1')
-    const isAdmin = (myrole === 'admin' || myrole === '1') && !!userid;
+    // χτίσιμο μενού όταν αλλάξει το manifest
+    const MENU = useMemo(() => buildMenu(PAGES, HOME), [manifest]);
 
-    // ✅ Fetch ALL menu items from database (pages with status=1)
+    // κλείνει το mobile menu σε κάθε αλλαγή σελίδας
     useEffect(() => {
-        const fetchMenuItems = async () => {
-            try {
-                // ✅ Include id and parent fields
-                const response = await fetch(`/api/v1/maria/fa?q=select id, name, parent, type, title from ${publicdb}.content where type="page" order by sort asc`);
-                const data = await response.json();
-
-                if (data.success && data.data) {
-                    const items = data.data.map(page => ({
-                        id: page.id,                    // ✅ Store the ID
-                        key: page.name,
-                        label: page.title || page.name,
-                        path: `/${page.name}`,
-                        type: page.type,
-                        parent: page.parent || 0        // ✅ parent=0 for root items
-                    }));
-                    setMenuItems(items);
-                }
-            } catch (error) {
-                console.error('Error fetching menu items:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchMenuItems();
-    }, [publicdb]);
-
-    // ✅ Build hierarchical menu structure using ID references
-    const buildMenuHierarchy = (items) => {
-        const itemMap = {};
-        const rootItems = [];
-
-        // First pass: create map of all items by ID
-        items.forEach(item => {
-            itemMap[item.id] = { ...item, children: [] };
-        });
-
-        // Second pass: build hierarchy based on parent ID
-        items.forEach(item => {
-            if (item.parent !== 0 && itemMap[item.parent]) {
-                // This is a child item - add to parent's children
-                itemMap[item.parent].children.push(itemMap[item.id]);
-            } else if (item.parent === 0) {
-                // This is a root item (parent=0)
-                rootItems.push(itemMap[item.id]);
-            }
-        });
-
-        return rootItems;
-    };
-
-    // ✅ Determine if a menu item or any of its children is active
-    const isActiveOrChildActive = (item, activeKey) => {
-        if (item.key === activeKey) return true;
-        if (item.children) {
-            return item.children.some(child => child.key === activeKey);
-        }
-        return false;
-    };
-
-    useEffect(() => {
-        const handleScroll = () => {
-            if (menuOpen) {
-                setMenuOpen(false);
-            }
-        };
-        window.addEventListener("scroll", handleScroll);
-        return () => {
-            window.removeEventListener("scroll", handleScroll);
-        };
-    }, [menuOpen]);
-
-    const handleClick = (key) => {
-        setActiveKey(key);
-        // Close mobile menu on click
         setMenuOpen(false);
-    };
+    }, [pathname]);
+
+    // κλείνει στο scroll
+    useEffect(() => {
+        if (!menuOpen) return;
+        const close = () => setMenuOpen(false);
+        window.addEventListener("scroll", close);
+        return () => window.removeEventListener("scroll", close);
+    }, [menuOpen]);
 
     const handleLogout = async () => {
         try {
-            const res = await fetch(`/api/v1/local/logout`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+            const res = await fetch("/api/v1/local/logout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
             });
             const json = await res.json();
 
             if (json.success) {
-                Cookies.del('GENUID');
-                Cookies.del('GENIMG');
-                Cookies.del('GENNAME');
-                Cookies.del('GENROLE');
-                window.location.href = '/';
+                ["GENUID", "GENIMG", "GENNAME", "GENROLE"].forEach((c) =>
+                    Cookies.remove(c, { path: "/" })
+                );
+                window.location.href = "/";
             } else {
-                alert('Logout failed: ' + (json.data?.error || 'Unknown error'));
+                alert("Logout failed: " + (json.data?.error || "Unknown error"));
             }
         } catch (e) {
-            alert('Logout error: ' + e.message);
+            alert("Logout error: " + e.message);
         }
     };
 
-    // ✅ Recursive function to render menu items with dropdown support
-    const renderMenuItem = (item) => {
-        const hasChildren = item.children && item.children.length > 0;
-        const isActive = isActiveOrChildActive(item, activeKey);
+    const renderItem = (item) => {
+        const active = isActive(item, activeKey);
 
-        // Handle special cases (login/logout)
-        if (userid && item.key === 'login') {
+        if (userid && item.key === "login") {
             return (
-                <li key={item.id} className={isActive ? 'active' : ''}>
+                <li key={item.key} className={active ? "active" : ""}>
                     <button className="bare" onClick={handleLogout}>
-                        {lang === 'el' ? 'Αποσύνδεση' : 'Logout'}
+                        {lang === "el" ? "Αποσύνδεση" : "Logout"}
                     </button>
                 </li>
             );
         }
 
         return (
-            <li key={item.id} className={isActive ? 'active' : ''}>
-                <Link to={item.path} onClick={() => handleClick(item.key)}>
-                    {item.label}
-                </Link>
-                {/* ✅ Render dropdown if item has children */}
-                {hasChildren && (
-                    <ul className="dropdown">
-                        {item.children.map(child => renderMenuItem(child))}
-                    </ul>
+            <li key={item.key} className={active ? "active" : ""}>
+                <Link to={item.path}>{item.label}</Link>
+                {item.children.length > 0 && (
+                    <ul className="dropdown">{item.children.map(renderItem)}</ul>
                 )}
             </li>
         );
     };
 
-    // ✅ Build the menu hierarchy
-    const menuHierarchy = useMemo(() => {
-        if (menuItems.length === 0) return [];
-        return buildMenuHierarchy(menuItems);
-    }, [menuItems]);
-
-    // ✅ Render special items (admin, profile, language, theme, whatsapp)
-    const renderSpecialItems = () => {
-        const specialItems = [];
-
-        // Admin dashboard
-        if (isAdmin) {
-            specialItems.push(
-                <li key="admin" className={activeKey === 'admin' ? 'active' : ''}>
-                    <Link to="/admin/page" onClick={() => handleClick('admin')}>
-                        📊 DASHBOARD
-                    </Link>
-                </li>
-            );
-        }
-
-        // User profile icon
-        if (userid) {
-            specialItems.push(
-                <li key="profile">
-                    <a href={`/profile?name=${myname}`}>
-                        <img
-                            className="navicon"
-                            src={`${window.location.origin}/media/${myimg}`}
-                            alt="Profile"
-                            onError={(e) => {
-                                e.target.src = '/assets/default-avatar.png';
-                            }}
-                        />
-                    </a>
-                </li>
-            );
-        }
-
-        // Language selector
-        specialItems.push(
-            <li key="language"><LanguageSelector currentLang={lang} /></li>
-        );
-
-        // Theme toggle
-        specialItems.push(
-            <li key="theme"><ThemeToggle /></li>
-        );
-
-        // WhatsApp button
-        specialItems.push(
-            <li key="whatsapp"><Whatsapp /></li>
-        );
-
-        return specialItems;
-    };
-
-    if (loading) {
-        return <div className="menu-loading">Loading menu...</div>;
-    }
+    const menu = useMemo(
+        () => MENU.map(renderItem),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [MENU, activeKey, userid, lang]
+    );
 
     return (
         <div className="col-lg-10">
@@ -225,23 +149,47 @@ const Navigation = ({ lang }) => {
                 <button
                     id="mobileMenuToggle"
                     className="mobile-menu-toggle"
-                    onClick={() => setMenuOpen(prev => !prev)}
+                    onClick={() => setMenuOpen((prev) => !prev)}
                     aria-label="Toggle Menu"
                 >
                     &#9776;
                 </button>
-                <nav className={`header__nav__menu ${menuOpen ? 'active' : ''}`}>
-                    <ul>
-                        {/* Render all menu items with dropdown support */}
-                        {menuHierarchy.map(item => renderMenuItem(item))}
 
-                        {/* Render special items */}
-                        {renderSpecialItems()}
+                <nav className={`header__nav__menu ${menuOpen ? "active" : ""}`}>
+                    <ul>
+                        {menu}
+
+                        {isAdmin && (
+                            <li key="admin">
+                                <a href="/admin/page">📊 Admin Panel</a>
+                            </li>
+                        )}
+
+                        {userid && (
+                            <li key="profile">
+                                <Link to={`/profile?name=${encodeURIComponent(myname || "")}`}>
+                                    <img
+                                        className="navicon"
+                                        src={`${window.location.origin}/media/${myimg}`}
+                                        alt="Profile"
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = "/assets/default-avatar.png";
+                                        }}
+                                    />
+                                </Link>
+                            </li>
+                        )}
+
+                        <li key="language">
+                            <LanguageSelector currentLang={lang} />
+                        </li>
+                        <li key="theme">
+                            <ThemeToggle />
+                        </li>
                     </ul>
                 </nav>
             </div>
         </div>
     );
-};
-
-export default Navigation;
+}

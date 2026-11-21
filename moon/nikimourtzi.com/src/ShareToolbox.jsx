@@ -5,7 +5,7 @@ const ShareToolbox = ({ url, title, description, image, className }) => {
     const shareUrl = url || window.location.href;
     const shareTitle = title || document.title || 'Check this out';
     const shareDescription = description || '';
-    const shareImage = image || 'https://nikimourtzi.com/assets/niki.png';
+    const shareImage = image || 'https://nikimourtzi.com/media/niki.png';
 console.log(shareUrl,shareTitle,shareDescription,shareImage);
     const shareOnFacebook = () => {
         // Add cache-busting parameter

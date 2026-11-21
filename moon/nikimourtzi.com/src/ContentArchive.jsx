@@ -147,7 +147,7 @@ export default function ContentArchive({ posts, featuredPosts, loading, error, s
                                 {post.img && (
                                     <div className="featured-image">
                                         <img
-                                            src={`/media/blog/${post.img}`}
+                                            src={`/media/${post.img}`}
                                             alt={getPostTitle(post)}
                                         />
                                         <div className="featured-badge">
@@ -197,7 +197,7 @@ export default function ContentArchive({ posts, featuredPosts, loading, error, s
                         <div key={post.id} className="featured-card">
                             <div className="featured-card-image">
                                 <img
-                                    src={`/media/blog/${post.img}`}
+                                    src={`/media/${post.img}`}
                                     alt={getPostTitle(post)}
                                 />
                             </div>
@@ -231,7 +231,7 @@ export default function ContentArchive({ posts, featuredPosts, loading, error, s
                                 {post.img && (
                                     <div className="post-image">
                                         <img
-                                            src={`/media/blog/${post.img}`}
+                                            src={`/media/${post.img}`}
                                             alt={getPostTitle(post)}
                                         />
                                         <span className="post-category-badge">{getCategoryTitle(post)}</span>

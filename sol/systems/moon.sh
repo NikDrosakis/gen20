@@ -167,18 +167,81 @@ EOF
 {"domain":"$domain","generated":$ts,"cubos":[]}
 EOF
 
-    # data/<domain>/moon_manifest.json (μόνο Home page, default contentLoop classificationid 1)
+    # data/<domain>/moon_manifest.json (default: Home + Login + Contact)
     cat > "$MOON_REPO_ROOT/data/$domain/moon_manifest.json" <<EOF
 {
     "site": {"id": "$domain", "defaultLanguage": "el", "languages": ["el", "en"]},
     "pages": {
-        "home": {"title": "Αρχική", "m": [], "sl": [{"contentLoop": {"classificationid": "1"}}], "h": []}
+        "home":    {"title": "Αρχική",     "m": [], "sl": [{"contentLoop": {"classificationid": "1"}}], "h": []},
+        "login":   {"title": "Σύνδεση",    "m": [{"cubo": "login"}]},
+        "contact": {"title": "Επικοινωνία", "m": [{"cubo": "contact"}]}
     },
     "generated": $ts
 }
 EOF
 
+    # media/<domain>/thumbs (thumbs folder, dros:dros + write)
+    mkdir -p "$MOON_REPO_ROOT/media/$domain/thumbs"
+    chown dros:dros "$MOON_REPO_ROOT/media/$domain/thumbs" 2>/dev/null || true
+    chmod 775 "$MOON_REPO_ROOT/media/$domain/thumbs"
+
     moon_log "INFO" "default files created (.env, moonlist.json, moon_manifest.json)"
+}
+
+# Επιδιορθώνει/ξαναδημιουργεί τα default files (manifest/moonlist/.env) ΜΟΝΟ αν λείπουν.
+# Δεν αγγίζει fs/db/nginx — για domain που έχασε το moon_manifest.json χωρίς να ξανατρέξει moon domain.
+moon_manifest() {
+    local domain="${1:-}"
+    [[ -n $domain ]] || { moon_err "usage: moon manifest <domain>"; return 1; }
+
+    local data_dir="$MOON_REPO_ROOT/data/$domain"
+    local manifest="$data_dir/moon_manifest.json"
+    local moonlist="$data_dir/moonlist.json"
+    local envfile="$MOON_ROOT/$domain/.env"
+    local ts
+    ts=$(date +%s)
+    local created=0
+
+    mkdir -p "$data_dir"
+
+    if [[ ! -f $manifest ]]; then
+        cat > "$manifest" <<EOF
+{
+    "site": {"id": "$domain", "defaultLanguage": "el", "languages": ["el", "en"]},
+    "pages": {
+        "home":    {"title": "Αρχική",     "m": [], "sl": [{"contentLoop": {"classificationid": "1"}}], "h": []},
+        "login":   {"title": "Σύνδεση",    "m": [{"cubo": "login"}]},
+        "contact": {"title": "Επικοινωνία", "m": [{"cubo": "contact"}]}
+    },
+    "generated": $ts
+}
+EOF
+        moon_log "INFO" "manifest created: $manifest"
+        created=1
+    else
+        moon_log "WARN" "manifest exists: $manifest"
+    fi
+
+    if [[ ! -f $moonlist ]]; then
+        printf '{"domain":"%s","generated":%s,"cubos":[]}\n' "$domain" "$ts" > "$moonlist"
+        moon_log "INFO" "moonlist created: $moonlist"
+        created=1
+    fi
+
+    if [[ ! -f $envfile ]]; then
+        mkdir -p "$MOON_ROOT/$domain"
+        cat > "$envfile" <<EOF
+MOON_HOST="$domain"
+VITE_HTTP_API="https://$domain/api/v1/"
+VITE_HTTP_APY="https://$domain/apy/v1/"
+VITE_HTTP_CUBO="https://$domain/cubos/"
+VITE_HTTP="https://$domain/"
+EOF
+        moon_log "INFO" ".env created: $envfile"
+        created=1
+    fi
+
+    [[ $created -eq 1 ]] || moon_log "INFO" "nothing to do (all default files present)"
 }
 
 moon_create_filesystem() {
@@ -700,6 +763,7 @@ moon_help()  {
         '  moon fs    <domain> [template]' \
         '' \
         'Other:' \
+        '  moon manifest <domain>         recreate default manifest/moonlist/.env (if missing)' \
         '  moon list' \
         '  moon about' \
         '  moon help'
@@ -722,6 +786,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         nginx)     moon_nginx     "$@" ;;
         db)        moon_db        "$@" ;;
         fs)        moon_fs        "$@" ;;
+        manifest)  moon_manifest  "$@" ;;
         list)      moon_list      "$@" ;;
         about|esti) moon_about    "$@" ;;
         help|*)    moon_help      "$@" ;;

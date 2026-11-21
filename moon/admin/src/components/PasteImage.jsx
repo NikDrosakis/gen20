@@ -102,10 +102,7 @@ const PasteImage = ({ onSelectMedia }) => {
             const formData = new FormData();
             formData.append('upload_image', pasteImage, fileName);
             const domain = window.location.hostname;
-            const savedFolder = localStorage.getItem('current_media_folder') || '';
-            const folder = savedFolder || `/var/www/gs/media/${domain}`;
             formData.append('domain', domain);
-            formData.append('folder', savedFolder);
 
             const response = await fetch('/api/v1/local/uploadFile', {
                 method: 'POST',

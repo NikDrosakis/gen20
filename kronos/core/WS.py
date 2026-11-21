@@ -8,26 +8,18 @@ class WSClient:
         self.websocket = None
 
     async def connect(self):
-        """Establish WebSocket connection."""
-        try:
-            self.websocket = await websockets.connect(self.uri)
-            print(f"Connected to {self.uri}")
-            print(f"WebSocket state: {self.websocket.state}")  # Check connection state
-        except Exception as e:
-            print(f"Error connecting to WebSocket server: {e}")
+        """Establish WebSocket connection (raises on failure)."""
+        self.websocket = await websockets.connect(self.uri)
+        print(f"Connected to {self.uri}")
+        print(f"WebSocket state: {self.websocket.state}")  # Check connection state
 
     async def receive_message(self):
-        """Receive a message from the WebSocket server."""
+        """Receive a message from the WebSocket server (raises on failure)."""
         if self.websocket is None:
-            print("WebSocket is not connected.")
-            return
-        try:
-            message = await self.websocket.recv()
-            print(f"Message received: {message}")
-            return json.loads(message)
-        except Exception as e:
-            print(f"Error receiving message: {e}")
-            return None
+            raise ConnectionError("WebSocket is not connected.")
+        message = await self.websocket.recv()
+        print(f"Message received: {message}")
+        return json.loads(message)
 
     async def close(self):
         """Close the WebSocket connection."""

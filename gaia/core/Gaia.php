@@ -131,8 +131,6 @@ public $pages;
 public $pagetable;
 public $postid;
 public $greekMonths;
-public $deepseekApiKey;
-public $deepseekApiUrl;
 
     public function __construct() {
 	require "_config.php";
@@ -144,8 +142,6 @@ public $deepseekApiUrl;
     $this->redis=new Gredis("1");
     //apcu instanatiate
    // $this->apc=new GAPCU();
- //   $this->deepseekApiKey='sk-3e3fa15ea336406183a300498ad717dd';
-  //  $this->deepseekApiUrl = 'https://api.deepseek.com/v1/chat/completions';
     $this->me = isset($_COOKIE['GENUID']) ? (int)$_COOKIE['GENUID'] : 0;
     //$this->my=[];
     //    if ($this->loggedin) {
@@ -174,195 +170,13 @@ public $deepseekApiUrl;
    // $this->pagelist = $this->db->flist("SELECT id, name FROM {$this->publicdb}.page");
     //$this->subparent = $this->db->flist("SELECT name,parent FROM {$this->publicdb}.page");
     // Setup exception handler to catch errors in the child classes
-  //      set_exception_handler([$this, 'handleError']);
     // Handle requests (delegated to child classes)
         $this->handleRequest();
     }
 
 	abstract protected function handleRequest();
 
-// Method to handle exceptions and log AI suggestions
-    public function handleError($exception) {
-        // Get the error details
-        $errorFile = $exception->getFile();
-        $errorLine = $exception->getLine();
-        $errorMessage = $exception->getMessage();
-        $errorCode = $exception->getCode();
 
-        // Extract the first stack trace entry (root cause)
-        $trace = $exception->getTrace();
-        $rootTrace = isset($trace[0]) ? "{$trace[0]['file']} (Line {$trace[0]['line']})" : "N/A";
-
-        // Extract method name from trace (Assuming $trace is the debug backtrace)
-        $methodName = isset($trace[0]['function']) ? $trace[0]['function'] : 'N/A';
-        // Get method context via cat and help
-        $catOutput = $this->cat($methodName);
-        $helpOutput = $this->help($methodName);
-
-        // Prepare AI prompt with focused error handling context
-        $ERROR_INPUT = json_encode([
-            'role' => 'user',
-            'content' => "Error handling focus. Analyze following error and provide precise, not empty lines, brief suggestion for resolving it. Error Message: $errorMessage Method: $methodName File: $errorFile | Line: $errorLine Cat Output: $catOutput Help Output: $helpOutput"
-        ]);
-
-        // Log the error message (no full stack trace)
-        $logMessage = "[ERROR] $errorMessage (Code: $errorCode)\n";
-        $logMessage .= "Method: $methodName\n";
-        $logMessage .= "File: $errorFile | Line: $errorLine\n";
-        $logMessage .= "Root Cause: $rootTrace\n";
-        $logMessage .= "Cat Output: $catOutput\n";  // Adding cat method output to the error message
-        $logMessage .= "Help Output: $helpOutput\n";  // Adding help method output to the error message
-        $logMessage .= "\n";
-
-        // Log to gen.log file
-        //file_put_contents("/var/www/gs/log/gen.log", $logMessage, FILE_APPEND);
-
-        // Send request to DeepSeek API with the full error context as a JSON payload
-        $payloadArray = [
-            "model" => "deepseek-chat",
-            "messages" => [
-                [
-                    "role" => "user",
-                    "content" => $ERROR_INPUT
-                ]
-            ],
-            "max_tokens" => 50,
-            "temperature" => 0.5
-        ];
-
-        $PAYLOAD = json_encode($payloadArray, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        //$PAYLOAD = '{"model": "deepseek-chat", "messages": [{"role": "user", "content": "' . addslashes($ERROR_INPUT) . '"}],'max_tokens':50,'temperature':0.5 }';
-        $escapedPayload = escapeshellarg($PAYLOAD);
-        $escapedAPIUrl = $this->is['DEEPSEEK_API_URL'];
-        $escapedApiKey = $this->is['DEEPSEEK_API_KEY'];
-        // Ensure the response is captured correctly in the same process
-
-        $COMMAND = "curl -s -X POST $escapedAPIUrl -H 'Content-Type: application/json' -H 'Authorization: Bearer $escapedApiKey' -d $escapedPayload";
-        $RESPONSE = shell_exec($COMMAND);
-        // Remove control characters (ASCII codes 0 - 31) from the string
-        $cleanedResponse = preg_replace('/[\x00-\x1F\x7F]/', '', $RESPONSE);
-        // Now attempt to decode the cleaned response
-        $decodedResponse = json_decode($cleanedResponse, true);
-
-        // Check if the decoding was successful
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            echo "JSON decoding error: " . json_last_error_msg();
-        } else {
-            // Extract the AI suggestion if decoding is successful
-            if (isset($decodedResponse['choices'][0]['message']['content'])) {
-                $AI_SUGGESTION = $decodedResponse['choices'][0]['message']['content'];
-            } else {
-                echo "Error: Expected keys not found in the response.";
-            }
-        }
-        // Extract AI suggestion from the response
-       # $AI_SUGGESTION = json_decode($RESPONSE, true)['choices'][0]['message']['content'];
-// Extract token count
-$inputTokens = mb_strlen($PAYLOAD); // Rough estimation
-$outputTokens = isset($decodedResponse['usage']['total_tokens']) ? $decodedResponse['usage']['total_tokens'] - $inputTokens : 0;
-$totalTokens = $inputTokens + $outputTokens;
-
-        // Log & display AI suggestion
-        if (empty($AI_SUGGESTION)) {
-            $aiSuggestionMessage = "💡 AI Suggestion: No suggestion returned or failed to parse response.\n";
-        } else {
-            $aiSuggestionMessage = "💡 AI Suggestion: $AI_SUGGESTION  | Input: $inputTokens | Output: $outputTokens | Total: $totalTokens\n";
-        }
-        //File_put_contents("/var/www/gs/log/gen.log", $aiSuggestionMessage, FILE_APPEND);
-        // Show error in CLI &  Display suggestion on CLI
-        echo $logMessage.$aiSuggestionMessage;
-   }
-
-/**
- * Get AI suggestion (can be used for other purposes too)
- */
-public function suggest(array $context, array $additionalData = []): ?string
-{
-    try {
-        $payload = [
-            'model' => 'deepseek-chat',
-            'messages' => [
-                [
-                    'role' => 'system',
-                    'content' => 'You are a senior PHP developer analyzing errors.'
-                ],
-                [
-                    'role' => 'user',
-                    'content' => json_encode([
-                        'error_context' => $context,
-                        'debug_data' => $additionalData,
-                        'request' => 'Provide concise solution (max 3 bullet points)'
-                    ])
-                ]
-            ],
-            'max_tokens' => 50,
-            'temperature' => 0.5
-        ];
-
-        // Debug: Print out the payload for validation
-        //error_log("Payload: " . json_encode($payload));
-
-        $cacheKey = "suggest_" . md5(json_encode($payload));
-
-        if ($cachedResponse = $this->redis->get($cacheKey)) {
-            return json_decode($cachedResponse, true)['choices'][0]['message']['content'] ?? null;
-        }
-
-        // Send the API request
-        $response = $this->makeApiRequest(
-            $this->is['DEEPSEEK_API_URL'],
-            $payload,
-            $this->is['DEEPSEEK_API_KEY']
-        );
-
-        if ($response['http_code'] !== 200) {
-            error_log("DeepSeek API error: HTTP " . $response['http_code']);
-            return null;
-        }
-
-        if (isset($response['choices'][0]['message']['content'])) {
-            // Cache the response for future use
-            $this->redis->set($cacheKey, json_encode($response));
-            return $response['choices'][0]['message']['content'];
-        }
-
-        return null;
-    } catch (\Exception $e) {
-        error_log("AI suggestion failed: " . $e->getMessage());
-        return null;
-    }
-}
-
-/**
- * Reusable API request method
- */
-protected function makeApiRequest(string $url, array $payload, string $apiKey=''): array
-{
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-        CURLOPT_URL => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST => true,
-        CURLOPT_HTTPHEADER => [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . $apiKey
-        ],
-        CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_SLASHES),
-        CURLOPT_TIMEOUT => 30
-    ]);
-
-    $response = curl_exec($ch);
-    if (curl_errno($ch)) {
-        throw new \RuntimeException('API request failed: ' . curl_error($ch));
-    }
-
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    if ($httpCode !== 200) {
-        throw new \RuntimeException("API returned HTTP $httpCode: " . $response);
-    }
-
-    return json_decode($response, true) ?? [];
-}
 
     protected function isCuboRequest(): bool {
         return $this->SYSTEM=== 'cubos';

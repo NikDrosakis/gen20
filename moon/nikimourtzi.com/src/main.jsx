@@ -1,15 +1,20 @@
 // /main.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { RouterProvider } from "react-router-dom";
-import { router } from "./router";
+import { BrowserRouter } from "react-router-dom";
 import { HelmetProvider } from 'react-helmet-async';
-import { GProvider } from "./GContext";
+import { GProvider } from './GContext';
+import { ManifestProvider } from './ManifestContext';
+import App from './App';
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-    <HelmetProvider>
+    <BrowserRouter>
         <GProvider>
-        <RouterProvider router={router} />
+            <ManifestProvider>
+                <HelmetProvider>
+                    <App />
+                </HelmetProvider>
+            </ManifestProvider>
         </GProvider>
-    </HelmetProvider>
+    </BrowserRouter>
 );

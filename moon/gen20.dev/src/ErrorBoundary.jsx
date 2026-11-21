@@ -1,5 +1,6 @@
 // /components/ErrorBoundary.jsx
 import React from "react";
+import "./ErrorBoundary.css";
 
 class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -17,8 +18,11 @@ class ErrorBoundary extends React.Component {
 
     render() {
         if (this.state.hasError) {
+            if (this.props.fallback) {
+                return this.props.fallback(this.state.error);
+            }
             return (
-                <div className="container text-center" style={{ padding: "4rem 2rem" }}>
+                <div className="container text-center error-boundary">
                     <h1>Something went wrong</h1>
                     <p>Please refresh the page or contact support if the issue persists.</p>
                     <button onClick={() => window.location.reload()}>Refresh Page</button>

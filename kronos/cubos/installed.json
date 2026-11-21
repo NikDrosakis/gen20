@@ -1,5 +1,13 @@
 {
   "version": 1,
-  "updated": "2026-11-09T00:00:00Z",
-  "cubos": {}
+  "updated": "2026-11-21T00:00:00Z",
+  "cubos": {
+    "bio": "installed",
+    "blog": "installed",
+    "booksoup": "installed",
+    "clinvar": "installed",
+    "openlibrary": "installed",
+    "poetanote": "installed",
+    "sketch": "installed"
+  }
 }

@@ -6,18 +6,7 @@ const GenerateMedia = ({ onSelectMedia }) => {
     const [generating, setGenerating] = useState(false);
     const [generatedImage, setGeneratedImage] = useState(null);
     const [error, setError] = useState('');
-    const [currentFolder, setCurrentFolder] = useState('');
 
-    useEffect(() => {
-        const sync = () => setCurrentFolder(localStorage.getItem('current_media_folder') || '');
-        sync();
-        window.addEventListener('folderChanged', sync);
-        window.addEventListener('storage', sync);
-        return () => {
-            window.removeEventListener('folderChanged', sync);
-            window.removeEventListener('storage', sync);
-        };
-    }, []);
     const handleGenerate = async () => {
         if (!prompt.trim()) {
             setError('Please enter a description');
@@ -29,14 +18,11 @@ const GenerateMedia = ({ onSelectMedia }) => {
         setGeneratedImage(null);
 
         try {
-            const targetFolder = currentFolder || localStorage.getItem('current_media_folder');
-
             const response = await fetch('/api/v1/local/generateImg', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: prompt.trim(),
-                    folder: targetFolder
+                    prompt: prompt.trim()
                 })
             });
 

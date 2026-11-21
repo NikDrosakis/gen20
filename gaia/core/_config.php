@@ -62,8 +62,6 @@ if (!defined('TEMPLATE')) {
     define('URL_FILE',basename($_SERVER['PHP_SELF']));
     define('IMG',"/media/");
     define ('TEMPLATESURI',PUBLIC_ROOT_WEB."templates/");
-    define ('DEEPSEEK_API_URL',"https://api.deepseek.com/v1/chat/completions");
-    define ('DEEPSEEK_API_KEY',"sk-6f9b9c7c2f88482db3d4c2a367e0da0b");
 
     //this
     $this->time = time();

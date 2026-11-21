@@ -27,9 +27,11 @@ const ImagePreview = ({ filename, mediaInfo, onClose, onSelect, onDelete }) => {
                 </div>
 
                 <div className="preview-actions">
-                    <button className="btn-primary" onClick={() => onSelect(filename)}>
-                        ✓ Select This Image
-                    </button>
+                    {onSelect && (
+                        <button className="btn-primary" onClick={() => onSelect(filename)}>
+                            ✓ Select This Image
+                        </button>
+                    )}
                     <button className="btn-danger" onClick={() => onDelete(filename)}>
                         🗑 Delete
                     </button>

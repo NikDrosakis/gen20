@@ -4,7 +4,11 @@
 
 build() {
     local domain="${1:-}"
-    [[ -z $domain ]] && { printf 'Usage: build <domain>\n' >&2; return 1; }
+    if [[ -z $domain ]]; then
+        printf 'Usage: build <domain>\n\nAvailable moons:\n' >&2
+        find "$SOL_ROOT/moon" -mindepth 1 -maxdepth 1 -type d -printf '  %f\n' 2>/dev/null | sort >&2
+        return 1
+    fi
 
     domain="${domain#moon/}"
     local build_dir="$SOL_ROOT/moon/$domain"

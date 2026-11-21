@@ -2,124 +2,124 @@
 import React, { useState, useEffect } from 'react';
 import "./UploadImage.css";
 
-const UploadImage = ({ onUploadComplete, currentFolder: propCurrentFolder }) => {
+const UploadImage = ({ onUploadComplete }) => {
     const [uploading, setUploading] = useState(false);
-    const [currentFolder, setCurrentFolder] = useState('');
     const [caption, setCaption] = useState('');
-    const [selectedFile, setSelectedFile] = useState(null);
-    const [preview, setPreview] = useState(null);
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [previews, setPreviews] = useState([]);
 
     useEffect(() => {
-        const folder = propCurrentFolder || localStorage.getItem('current_media_folder') || '';
-        setCurrentFolder(folder);
-    }, [propCurrentFolder]);
-
-    useEffect(() => {
-        if (!selectedFile) {
-            setPreview(null);
+        if (selectedFiles.length === 0) {
+            setPreviews([]);
             return;
         }
-        const objectUrl = URL.createObjectURL(selectedFile);
-        setPreview(objectUrl);
-        return () => URL.revokeObjectURL(objectUrl);
-    }, [selectedFile]);
+        const urls = selectedFiles.map((f) => URL.createObjectURL(f));
+        setPreviews(urls);
+        return () => urls.forEach((u) => URL.revokeObjectURL(u));
+    }, [selectedFiles]);
 
     const handleFileSelect = (e) => {
-        const file = e.target.files[0];
-        if (file && file.type.startsWith('image/')) {
-            setSelectedFile(file);
-        } else {
-            alert('Please select an image file');
+        const files = Array.from(e.target.files || []);
+        const images = files.filter((f) => f.type.startsWith('image/'));
+        if (images.length === 0) {
+            alert('Please select image files');
             e.target.value = '';
+            return;
         }
+        setSelectedFiles(images);
     };
 
-
-// components/media/UploadImage.jsx
     const handleUpload = async (event) => {
         event.preventDefault();
 
-        if (!selectedFile) {
-            alert('Please select a file');
-            return;
-        }
-
-        if (!currentFolder) {
-            alert('No folder selected');
+        if (selectedFiles.length === 0) {
+            alert('Please select files');
             return;
         }
 
         setUploading(true);
 
-        try {
-            const formData = new FormData();
-            formData.append('upload_image', selectedFile);
-            formData.append('folder', currentFolder);
-            if (caption) {
-                formData.append('caption', caption);
-            }
+        let successCount = 0;
+        const errors = [];
 
-            // NO Content-Type header - browser handles it
-            const response = await fetch('/api/v1/local/uploadFile', {  // CHANGE THIS
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-            console.log('Upload response:', result);
-
-            if (result.success === true) {
-                alert('File uploaded successfully!');
-                setSelectedFile(null);
-                setCaption('');
-                setPreview(null);
-                const fileInput = document.querySelector('input[type="file"]');
-                if (fileInput) fileInput.value = '';
-
-                if (onUploadComplete) {
-                    onUploadComplete();
+        for (const file of selectedFiles) {
+            try {
+                const formData = new FormData();
+                formData.append('upload_image', file);
+                if (caption) {
+                    formData.append('caption', caption);
                 }
-                window.dispatchEvent(new CustomEvent('mediaUploaded'));
-            } else {
-                alert(result.error || 'Upload failed');
+
+                // NO Content-Type header - browser handles it
+                const response = await fetch('/api/v1/local/uploadFile', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                console.log('Upload response:', file.name, result);
+
+                if (result.success === true) {
+                    successCount++;
+                } else {
+                    errors.push(`${file.name}: ${result.error || 'failed'}`);
+                }
+            } catch (error) {
+                console.error('Error uploading file:', file.name, error);
+                errors.push(`${file.name}: ${error.message}`);
             }
-        } catch (error) {
-            console.error('Error uploading file:', error);
-            alert('Upload failed: ' + error.message);
-        } finally {
-            setUploading(false);
         }
+
+        if (successCount > 0) {
+            alert(`${successCount} file(s) uploaded successfully${errors.length ? `, ${errors.length} failed` : ''}`);
+            setSelectedFiles([]);
+            setCaption('');
+            setPreviews([]);
+            const fileInput = document.querySelector('input[type="file"]');
+            if (fileInput) fileInput.value = '';
+
+            if (onUploadComplete) {
+                onUploadComplete();
+            }
+            window.dispatchEvent(new CustomEvent('mediaUploaded'));
+        } else {
+            alert('Upload failed: ' + errors.join('; '));
+        }
+
+        setUploading(false);
     };
 
     return (
         <div className="upload-container">
             <form onSubmit={handleUpload}>
                 <div className="form-group">
-                    <label>Upload to folder:</label>
-                    <div className="current-folder-badge">
-                        📁 {currentFolder || 'No folder selected'}
-                    </div>
-                </div>
-
-                <div className="form-group">
-                    <label>Select Image:</label>
+                    <label>Select Images (multiple):</label>
                     <input
                         type="file"
                         accept="image/*"
+                        multiple
                         onChange={handleFileSelect}
-                        required
                         className="file-input"
                     />
+                    {selectedFiles.length > 0 && (
+                        <small className="image-uploader-hint">
+                            {selectedFiles.length} file(s) selected
+                        </small>
+                    )}
                 </div>
 
-                {preview && (
-                    <div className="image-preview">
-                        <img src={preview} alt="Preview" />
+                {previews.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                        {previews.map((url, i) => (
+                            <div key={i} style={{ width: 80, height: 80, overflow: 'hidden', borderRadius: 6, border: '1px solid #ddd' }}>
+                                <img src={url} alt={`Preview ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </div>
+                        ))}
                     </div>
                 )}
 
                 <div className="form-group">
-                    <label>Caption (optional):</label>
+                    <label>Caption (optional, applies to all):</label>
                     <input
                         type="text"
                         value={caption}
@@ -132,9 +132,11 @@ const UploadImage = ({ onUploadComplete, currentFolder: propCurrentFolder }) => 
                 <button
                     type="submit"
                     className="btn-primary"
-                    disabled={uploading || !selectedFile}
+                    disabled={uploading || selectedFiles.length === 0}
                 >
-                    {uploading ? '📤 Uploading...' : '📤 Upload Image'}
+                    {uploading
+                        ? '📤 Uploading...'
+                        : `📤 Upload ${selectedFiles.length > 0 ? selectedFiles.length + ' ' : ''}Image${selectedFiles.length === 1 ? '' : 's'}`}
                 </button>
             </form>
         </div>

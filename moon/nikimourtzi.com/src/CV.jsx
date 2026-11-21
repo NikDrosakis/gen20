@@ -14,7 +14,7 @@ export default function CV() {
 
                 <section className="cv-section">
                     <div className="contact-image-container"><img alt="Bioinformatics Research Illustration"
-                                                                  className="contact-image" src="/media/blog/asset_2.png"/>
+                                                                  className="contact-image" src="/media/asset_2.png"/>
                     </div>
                     <h2>🎓 Education</h2>
                     {cv.education.map((edu, index) => (

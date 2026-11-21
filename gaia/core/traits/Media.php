@@ -192,41 +192,7 @@ if($imageUrl!=null){
        return $data['results'] ?? [];
    }
 
-  protected function updateImgs2() {
-      $metadataRecords = $this->db->flist("SELECT id, meta FROM gen_admin.actiongrp WHERE img IS NULL");
-
-      if (empty($metadataRecords)) {
-          echo "No metadata records found for image fetching.\n";
-          return;
-      }
-
-      foreach ($metadataRecords as $recordID => $recordMeta) {
-          $postId = $recordID;
-          if ($recordMeta === null) continue;
-
-          $tags = explode(',', $recordMeta);
-          $images = $this->fetchImages($tags);
-
-          if (empty($images)) {
-              echo "No images found for metadata tags: " . implode(', ', $tags) . "\n";
-              continue;
-          }
-
-          foreach ($images as $image) {
-              $imageId = $image['id'];
-              $imageUrl = $image['urls']['full'];
-              $localFilePath = MEDIA_ROOT . $imageId . '.jpg';
-
-              if ($imageUrl) {
-                  file_put_contents($localFilePath, file_get_contents($imageUrl));
-                  $this->db->q("UPDATE actiongrp SET img = ? WHERE id = ?", [MEDIA_URL . basename($localFilePath), $postId]);
-                  echo "Image saved and resource updated: {$localFilePath}\n";
-                  break; // Save only one image per record
-              }
-          }
-      }
-  }
-
+  
 
 // Core/Traits/Media.php - modified generateImg
 // Core/Traits/Media.php
@@ -393,17 +359,18 @@ public function uploadFile($params = null) {
     }
 
     $file = $_FILES['upload_image'] ?? null;
-    $uploadDir = $_POST['folder'] ?? $params['folder'] ?? MEDIA_ROOT;
+    $uploadDir = MEDIA_ROOT;
 
     // Create directory if not exists
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0777, true);
     }
 
-    $filename = basename($file['name']);
+    $filename = $this->sanitizeFilename(basename($file['name']));
     $uploadFile = rtrim($uploadDir, '/') . '/' . $filename;
 
     if (move_uploaded_file($file['tmp_name'], $uploadFile)) {
+        $this->makeThumbForFile($uploadFile);
         return [
             'success' => true,
             'data' => [
@@ -661,6 +628,79 @@ protected function getMedia(array $get = []): array {
         return preg_replace('/[^a-zA-Z0-9-_\.]/', '', $filename);
     }
 
+    /**
+     * Δημιουργεί το thumb: σώζει το full στο media/ και μια ΜΙΚΡΟΤΕΡΗ (resized) έκδοση στο thumbs/.
+     * Αν το resize αποτύχει (π.χ. μη-εικόνα), κάνει copy ως fallback.
+     */
+    protected function makeThumbForFile($file, $maxDim = 300) {
+        if (!is_file($file)) return false;
+        $thumbsDir = rtrim(MEDIA_ROOT, '/') . '/thumbs';
+        if (!is_dir($thumbsDir)) mkdir($thumbsDir, 0775, true);
+        $thumb = $thumbsDir . '/' . basename($file);
+        if (file_exists($thumb)) return false;
+        if ($this->resizeImage($file, $thumb, $maxDim)) return true;
+        return copy($file, $thumb); // fallback: μη-εικόνα ή αποτυχία resize
+    }
+
+    /**
+     * Batch: σκανάρει το MEDIA_ROOT και φτιάχνει τα thumbs.
+     */
+    protected function makeThumbs(array $params = []): array {
+        $maxDim = (int)($params['maxDim'] ?? 300);
+        $dir = rtrim(MEDIA_ROOT, '/');
+        $thumbsDir = $dir . '/thumbs';
+        if (!is_dir($thumbsDir)) mkdir($thumbsDir, 0775, true);
+        $made = 0;
+        foreach (glob($dir . '/*') ?: [] as $file) {
+            if (!is_file($file)) continue;
+            if ($this->makeThumbForFile($file, $maxDim)) $made++;
+        }
+        return ['success' => true, 'made' => $made, 'maxDim' => $maxDim];
+    }
+
+    /**
+     * Resize εικόνας με GD (μικρότερη έκδοση, διατηρώντας aspect ratio).
+     */
+    protected function resizeImage($srcPath, $dstPath, $maxDim = 300) {
+        $info = @getimagesize($srcPath);
+        if (!$info) return false;
+        $w = (int)$info[0];
+        $h = (int)$info[1];
+        if ($w <= 0 || $h <= 0) return false;
+        $mime = $info['mime'] ?? '';
+
+        switch ($mime) {
+            case 'image/jpeg': $src = @imagecreatefromjpeg($srcPath); break;
+            case 'image/png':  $src = @imagecreatefrompng($srcPath); break;
+            case 'image/webp': $src = @imagecreatefromwebp($srcPath); break;
+            case 'image/gif':  $src = @imagecreatefromgif($srcPath); break;
+            default: return false;
+        }
+        if (!$src) return false;
+
+        $scale = min(1, $maxDim / max($w, $h));
+        $nw = max(1, (int)round($w * $scale));
+        $nh = max(1, (int)round($h * $scale));
+
+        $dst = imagecreatetruecolor($nw, $nh);
+        if ($mime === 'image/png' || $mime === 'image/webp') {
+            imagealphablending($dst, false);
+            imagesavealpha($dst, true);
+        }
+        imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
+
+        switch ($mime) {
+            case 'image/jpeg': $ok = imagejpeg($dst, $dstPath, 85); break;
+            case 'image/png':  $ok = imagepng($dst, $dstPath, 8); break;
+            case 'image/webp': $ok = imagewebp($dst, $dstPath, 85); break;
+            case 'image/gif':  $ok = imagegif($dst, $dstPath); break;
+            default: $ok = false;
+        }
+        imagedestroy($src);
+        imagedestroy($dst);
+        return $ok && file_exists($dstPath);
+    }
+
 
 protected function updateCuboImg($table = '',$name = '') {
 $cubo = is_array($current_cubo) ? $current_cubo['key'] : $current_cubo;
@@ -738,9 +778,9 @@ protected function downloadExternalImage(array $params=[]):array {
     $filename = $safePostName . '_' . time() . '.' . $extension;
 
     // NOW create directory and path (after $filename is defined)
-    $uploadDir = "/var/www/gs/media/{$hostname}/{$subfolder}/";
+    $uploadDir = "/var/www/gs/media/{$hostname}/";
     $localPath = $uploadDir . $filename;
-    $localUrl = "/media/nikimourtzi.com/{$subfolder}/{$filename}";
+    $localUrl = "/media/{$hostname}/{$filename}";
 
     if (!is_dir($uploadDir)) {
         $oldUmask = umask(0);
