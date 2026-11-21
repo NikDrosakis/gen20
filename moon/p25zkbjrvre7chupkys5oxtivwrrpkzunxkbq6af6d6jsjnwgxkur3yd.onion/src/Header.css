@@ -1,0 +1,28 @@
+/* Header.css */
+.header {
+    width: 100%;
+    background: var(--bg);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header a {
+    color: var(--text);
+}
+
+.header__logo a {
+    display: inline-block;
+}
+
+.header__logo img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+@media (max-width: 600px) {
+    .header__logo {
+        width: 27vw;
+        padding: 8px 10px;
+        box-sizing: border-box;
+    }
+}

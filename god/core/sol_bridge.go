@@ -1,10 +1,12 @@
 package core
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -18,18 +20,29 @@ import (
 
 var (
 	solActions = map[string]time.Duration{ // whitelist + timeout
-		"build":   15 * time.Minute,
-		"install": 15 * time.Minute,
-		"status":  10 * time.Second,
+		"build":    15 * time.Minute,
+		"install":  15 * time.Minute,
+		"status":   10 * time.Second,
+		"domain":   30 * time.Minute, // moon domain <arg>: fs + db + nginx + dns + ssl
+		"internal": 30 * time.Minute, // moon internal <arg>: fs + db + nginx (no dns/ssl)
+		"tor":      30 * time.Minute, // moon tor: fs + db + tor hidden service
 	}
 	solArgRe    = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9._-]{0,251}[a-zA-Z0-9])?$`) // domain ή cubo (επιτρέπει κεφαλαία, π.χ. sliderBG)
 	solUpgrader = websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}
 )
 
+// SolResult είναι το αποτέλεσμα μίας εντολής προς τον sol daemon.
+type SolResult struct {
+	Status string `json:"status"`
+	Msg    string `json:"msg"`
+	Code   int    `json:"code"`
+}
+
 type pendingCmd struct {
 	client *Client
 	conn   *websocket.Conn
 	timer  *time.Timer
+	ch     chan SolResult // για HTTP callers (Run) — nil για WS clients
 }
 
 type SolBridge struct {
@@ -50,6 +63,9 @@ func newID() string {
 }
 
 func (b *SolBridge) reply(c *Client, id, status, msg string, code int) {
+	if c == nil {
+		return
+	}
 	defer func() { recover() }() // το Send μπορεί να έχει κλείσει αν έφυγε ο client
 	out, _ := json.Marshal(map[string]any{
 		"type": "sol.event", "id": id, "status": status, "msg": msg, "code": code,
@@ -117,8 +133,59 @@ func (b *SolBridge) finish(id, status, msg string, code int) {
 	if p == nil {
 		return
 	}
-	p.timer.Stop()
-	b.reply(p.client, id, status, msg, code)
+	if p.timer != nil {
+		p.timer.Stop()
+	}
+	if p.client != nil {
+		b.reply(p.client, id, status, msg, code)
+	}
+	if p.ch != nil {
+		select {
+		case p.ch <- SolResult{Status: status, Msg: msg, Code: code}:
+		default:
+		}
+	}
+}
+
+// Run στέλνει μία εντολή στον sol daemon και μπλοκάρει μέχρι την απάντηση
+// (ή μέχρι το ctx να ακυρωθεί). Χρησιμοποιείται από HTTP handlers (π.χ.
+// createDomain) που δεν έχουν WebSocket Client.
+func (b *SolBridge) Run(ctx context.Context, action, arg string) (SolResult, error) {
+	timeout, ok := solActions[action]
+	if !ok {
+		return SolResult{}, fmt.Errorf("invalid action: %s", action)
+	}
+	if arg == "" || !solArgRe.MatchString(arg) {
+		return SolResult{}, fmt.Errorf("invalid arg: %s", arg)
+	}
+
+	id := newID()
+	b.mu.Lock()
+	conn := b.conn
+	if conn == nil {
+		b.mu.Unlock()
+		return SolResult{}, fmt.Errorf("sol offline")
+	}
+	p := &pendingCmd{conn: conn, ch: make(chan SolResult, 1)}
+	p.timer = time.AfterFunc(timeout, func() { b.finish(id, "error", "timeout", 124) })
+	b.pending[id] = p
+	b.mu.Unlock()
+
+	line, _ := json.Marshal(map[string]string{"id": id, "action": action, "arg": arg, "domain": ""})
+	b.wmu.Lock()
+	err := conn.WriteMessage(websocket.TextMessage, line)
+	b.wmu.Unlock()
+	if err != nil {
+		b.finish(id, "error", "sol write failed", 502)
+	}
+
+	select {
+	case res := <-p.ch:
+		return res, nil
+	case <-ctx.Done():
+		b.finish(id, "error", "canceled", 499)
+		return SolResult{}, ctx.Err()
+	}
 }
 
 func (b *SolBridge) Register(router *gin.Engine) {

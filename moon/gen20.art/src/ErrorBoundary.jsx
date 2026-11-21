@@ -1,4 +1,4 @@
-// /ErrorBoundary.jsx
+// /components/ErrorBoundary.jsx
 import React from "react";
 
 class ErrorBoundary extends React.Component {
@@ -17,6 +17,9 @@ class ErrorBoundary extends React.Component {
 
     render() {
         if (this.state.hasError) {
+            if (this.props.fallback) {
+                return this.props.fallback(this.state.error);
+            }
             return (
                 <div className="container text-center" style={{ padding: "4rem 2rem" }}>
                     <h1>Something went wrong</h1>

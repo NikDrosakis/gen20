@@ -22,11 +22,13 @@ export default function App() {
     const segments = uri.split("/");
     const key = uri || FIRST;
 
-    // content detail: <section>/<slug> → section page με ContentOne στο main
+    // Routing: first level = classification/page, second level = ContentOne (post).
     // (ContentOne διαβάζει μόνο του το slug από το URL)
-    let page = PAGES[key];
-    if (!page && segments.length >= 2 && PAGES[segments[0]]) {
-        page = { ...PAGES[segments[0]], m: [{ contentOne: {} }] };
+    let page;
+    if (segments.length >= 2) {
+        page = { ...(PAGES[segments[0]] || {}), m: [{ contentOne: {} }] };
+    } else {
+        page = PAGES[key] || PAGES.notFound;
     }
     page = page || PAGES.notFound;
 

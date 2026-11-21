@@ -1,0 +1,16 @@
+/* Area.css */
+.gen-area {
+    min-width: 0;
+}
+
+.gen-area-sl,
+.gen-area-sr {
+    flex: 0 0 20%;
+    min-width: 0;
+}
+
+.gen-area-m {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+}

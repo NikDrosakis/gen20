@@ -32,6 +32,11 @@ _sol_complete() {
             mapfile -t COMPREPLY < <(compgen -W 'esti' -- "$cur")
             return 0
             ;;
+        build|postbuild|moon_delete)
+            # Λίστα υπαρχόντων moons (domains) από moon/
+            mapfile -t COMPREPLY < <(compgen -W "$(find "$SOL_ROOT/moon" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null | sort)" -- "$cur")
+            return 0
+            ;;
     esac
 
     # Δεύτερη λέξη: verbs από functions + <noun>_*.sh

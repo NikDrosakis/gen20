@@ -16,7 +16,7 @@ function ContentLoopView({
                              error,
                              searchTerm,
                              onSearch,
-                             postBase = "/post",
+                             postBase = "",
                              perPage = 9,
                          }) {
     const [bookmarked, setBookmarked] = useState([]);
@@ -41,6 +41,9 @@ function ContentLoopView({
         if (img.startsWith("http")) return img;
         return `/media/${img}`;
     };
+
+    // :classification.name/:post.name (first level = classification, second = post)
+    const postHref = (post) => `/${post.category_name}/${post.name}`;
 
     const toggleBookmark = (id) =>
         setBookmarked((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -143,7 +146,7 @@ function ContentLoopView({
                                         <span>📖 {Math.ceil((post.description?.length || 0) / 1000) || 5} min read</span>
                                         <span>👩‍🔬 {getAuthorName(post)}</span>
                                     </div>
-                                    <Link to={`${postBase}/${post.name}`} className="read-more-featured">
+                                    <Link to={postHref(post)} className="read-more-featured">
                                         Read full article →
                                     </Link>
                                 </div>
@@ -160,7 +163,7 @@ function ContentLoopView({
                                 <span className="featured-category-small">{getCategoryTitle(post)}</span>
                                 <h3>{post.title}</h3>
                                 <p>{(post.excerpt || post.description || "").substring(0, 100)}...</p>
-                                <Link to={`${postBase}/${post.name}`} className="read-more-link">Read article →</Link>
+                                <Link to={postHref(post)} className="read-more-link">Read article →</Link>
                             </div>
                         </div>
                     ))}
@@ -204,7 +207,7 @@ function ContentLoopView({
                                         <div className="author-avatar">👩</div>
                                         <span>{getAuthorName(post)}</span>
                                     </div>
-                                    <Link to={`${postBase}/${post.name}`} className="read-more-link">Διάβασε →</Link>
+                                    <Link to={postHref(post)} className="read-more-link">Διάβασε →</Link>
                                 </div>
                             </div>
                         </article>
@@ -242,7 +245,7 @@ export default function ContentLoop({
                                         classificationid,
                                         limit = 50,
                                         perPage = 9,
-                                        postBase = "/post",
+                                        postBase = "",
                                     }) {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -263,7 +266,8 @@ export default function ContentLoop({
         const query = `SELECT c.id, c.name, c.title, c.excerpt, c.description, c.img, c.created,
                               c.view_count, c.classificationid, c.userid,
                               u.name as author_name, u.firstname as author_firstname,
-                              u.lastname as author_lastname, ct.title as category_title
+                              u.lastname as author_lastname, ct.title as category_title,
+                              ct.name as category_name
                        FROM ${publicdb}.content c
                             LEFT JOIN ${publicdb}.user u ON c.userid = u.id
                             LEFT JOIN ${publicdb}.classification ct ON c.classificationid = ct.id

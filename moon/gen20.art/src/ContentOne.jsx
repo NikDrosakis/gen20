@@ -1,6 +1,6 @@
 // ContentOne.jsx
 import { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import ShareToolbox from "./ShareToolbox";
 import "./ContentOne.css";
 import { Helmet } from 'react-helmet-async';
@@ -52,8 +52,9 @@ export default function ContentOne({
                                        lang = 'el',
                                        name: nameProp,
                                    }) {
-    const { name: nameFromParams } = useParams();
-    const name = nameProp || nameFromParams;
+    const { pathname } = useLocation();
+    const name = nameProp || pathname.split("/").filter(Boolean).pop();
+    const firstLevelName = pathname.split("/").filter(Boolean)[0] || "";
 
     const { G } = useG();
 
@@ -363,10 +364,14 @@ export default function ContentOne({
                         <span className="current">{currentTitle}</span>
                     </div>
 
-                    {/* Back to Blog */}
+                    {/* Back to first-level (classification/page) */}
                     <div className="back-to-blog-top">
-                        <Link to={routes.blog} className="back-link">
-                            {t('back_to_articles')}
+                        <Link
+                            to="#"
+                            onClick={(e) => { e.preventDefault(); window.history.back(); }}
+                            className="back-link"
+                        >
+                            ← Back to {firstLevelName}
                         </Link>
                     </div>
 

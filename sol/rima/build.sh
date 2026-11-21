@@ -10,6 +10,20 @@ build() {
     local build_dir="$SOL_ROOT/moon/$domain"
     [[ -d $build_dir ]] || { printf '❌ not found: %s\n' "$build_dir" >&2; return 1; }
 
+    # ASK TO MOON DOMAIN: πάρε maria (db) + status από gen_admin.domain (για το postbuild)
+    local maria="" dstatus=""
+    local env_file="$SOL_ROOT/.env"
+    if [[ -f $env_file ]] && command -v mariadb >/dev/null 2>&1; then
+        read -r maria dstatus < <(
+            set -a; source "$env_file"; set +a
+            mariadb -N -B -u"${DB_USER:-root}" -p"${DB_PASS:-}" -h"${DB_HOST:-localhost}" \
+                -D "${DB_ADMIN:-gen_admin}" \
+                -e "SELECT IFNULL(maria,''), status FROM domain WHERE name='$domain' LIMIT 1;" 2>/dev/null
+        )
+    fi
+    [[ -n $maria && $maria != NULL ]] || maria="gen_${domain//[.-]/}"
+    printf '📦 moon: %s | db: %s | status: %s\n' "$domain" "${maria:-?}" "${dstatus:-?}"
+
     cd "$build_dir" || return 1
 
     local attempt=0
@@ -28,6 +42,15 @@ build() {
 
         if [[ $rc -eq 0 ]]; then
             printf '✅ build OK\n'
+
+            # EXECUTE postbuild.sh (social share metadata + sitemap/feed/rss από content status=2)
+            local postbuild="$SOL_ROOT/sol/acta/postbuild.sh"
+            if [[ -x $postbuild ]]; then
+                "$postbuild" "$domain" "$maria" || printf '⚠️ postbuild failed\n' >&2
+            else
+                printf '⚠️ postbuild.sh not found: %s\n' "$postbuild" >&2
+            fi
+
             rm -f "$tmp"
             return 0
         fi

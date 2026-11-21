@@ -6,6 +6,7 @@ import { HelmetProvider } from "react-helmet-async";
 
 import { GProvider } from "./GContext";
 import { ThemeProvider } from "./ThemeContext";
+import { ManifestProvider } from "./ManifestContext";
 
 import App from "./App";
 import ErrorBoundary from "./ErrorBoundary";
@@ -17,11 +18,13 @@ ReactDOM.createRoot(
         <BrowserRouter>
         <ErrorBoundary>
             <GProvider>
-                <HelmetProvider>
-                    <ThemeProvider>
-                        <App />
-                    </ThemeProvider>
-                </HelmetProvider>
+                <ManifestProvider>
+                    <HelmetProvider>
+                        <ThemeProvider>
+                            <App />
+                        </ThemeProvider>
+                    </HelmetProvider>
+                </ManifestProvider>
             </GProvider>
         </ErrorBoundary>
         </BrowserRouter>

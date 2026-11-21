@@ -6,7 +6,7 @@ import (
 )
 
 // Register καταχωρεί όλα τα /god/v1/* endpoints.
-func Register(router *gin.Engine) {
+func Register(router *gin.Engine, hub *Hub) {
     v1 := router.Group("/god/v1")
 
     // nginx
@@ -33,7 +33,7 @@ v1.POST("/hosts/shared", saveShared)
     v1.POST("/ssl/action", sslAction)
  v1.GET("/ssl/list", sslList)
     // domain setup
-    v1.POST("/setup/domain", createDomain)
+    v1.POST("/setup/domain", hub.createDomain)
 
 }
 

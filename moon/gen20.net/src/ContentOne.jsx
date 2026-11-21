@@ -42,6 +42,7 @@ export default function ContentOne({
                                    }) {
     const { pathname } = useLocation();
     const name = nameProp || (id ? null : pathname.split("/").filter(Boolean).pop());
+    const firstLevelName = pathname.split("/").filter(Boolean)[0] || "";
 
     const { G } = useG();
 
@@ -296,7 +297,13 @@ export default function ContentOne({
                     </div>
 
                     <div className="back-to-blog-top">
-                        <Link to={routes.blog} className="back-link">{t("back_to_articles")}</Link>
+                        <Link
+                            to="#"
+                            onClick={(e) => { e.preventDefault(); window.history.back(); }}
+                            className="back-link"
+                        >
+                            ← Back to {firstLevelName}
+                        </Link>
                     </div>
 
                     <div className="article-hero-split">

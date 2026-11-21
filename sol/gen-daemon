@@ -304,8 +304,31 @@ process_sol_command() {
                 status="error"; msg="build failed"; code=1
             fi
             ;;
-        status)
-            status="ok"; msg="sol daemon running (PID $$)"
+        domain)
+            log "SOL CMD: domain $arg"
+            if "$GEN_BIN" moon domain "$arg" 2>&1; then
+                status="ok"; msg="domain $arg provisioned"
+            else
+                status="error"; msg="domain creation failed"; code=1
+            fi
+            ;;
+        internal)
+            log "SOL CMD: internal $arg"
+            if "$GEN_BIN" moon internal "$arg" 2>&1; then
+                status="ok"; msg="internal domain $arg provisioned"
+            else
+                status="error"; msg="internal domain creation failed"; code=1
+            fi
+            ;;
+        tor)
+            log "SOL CMD: tor"
+            local onion
+            onion=$("$GEN_BIN" moon tor 2>&1 | tail -n1)
+            if [[ -n "$onion" && "$onion" == *.onion ]]; then
+                status="ok"; msg="$onion"
+            else
+                status="error"; msg="tor creation failed"; code=1
+            fi
             ;;
         *)
             status="error"; msg="unknown action: $action"; code=400

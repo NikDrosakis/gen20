@@ -149,6 +149,10 @@ if [[ $- == *i* ]]; then
 
 
     PROMPT_COMMAND="_sol_prompt"
+
+    # TAB completion (nouns/verbs + moons για build/postbuild/moon_delete)
+    complete -D -F _sol_complete -o bashdefault -o default 2>/dev/null
+
     # --------------------------------------------------
     # Aliases για γρήγορη πλοήγηση
     # (cd, ls είναι κρατημένα — δεν τα αγγίζουμε)

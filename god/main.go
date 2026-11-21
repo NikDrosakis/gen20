@@ -286,6 +286,9 @@ hub.Sol = core.NewSolBridge()
 	// 9. Core routes (WebSocket, κ.λπ.)
 	core.RegisterRoutes(router, hub)
 
+	// 9b. Admin/system routes (hosts, bind, ssl, domain setup)
+	core.Register(router, hub)
+
 	// 10. Cubos routes (chat, κ.λπ.)
 	cubos.RegisterAll(router, hub, couch)
 

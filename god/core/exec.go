@@ -6,18 +6,18 @@ import (
     "os"
     "os/exec"
     "time"
-"path/filepath"
+
     "github.com/gin-gonic/gin"
 )
-
-const addScript = "/var/www/gs/sun/com/domain/add.sh"
 
 type createDomainReq struct {
     Domain string `json:"domain"`
     Type   string `json:"type"`
 }
 
-func createDomain(c *gin.Context) {
+// createDomain δημιουργεί νέο domain μέσω της SOL αρχιτεκτονικής:
+// god → SolBridge (websocket) → sol/gen-daemon → gen.sh moon <…>.
+func (h *Hub) createDomain(c *gin.Context) {
     var req createDomainReq
     if err := c.ShouldBindJSON(&req); err != nil {
         fail(c, 400, "invalid request")
@@ -31,92 +31,61 @@ func createDomain(c *gin.Context) {
         req.Type = "public"
     }
 
-    // Validation ανά τύπο
+    // Αντιστοίχιση τύπου → SOL action.
+    action := ""
+    arg := req.Domain
     switch req.Type {
-    case "public", "internal", "tor":
-        // ok
+    case "public":
+        action = "domain"
+    case "internal":
+        action = "internal"
+    case "tor":
+        action = "tor"
     default:
         fail(c, 400, "invalid type: must be public, internal or tor")
         return
     }
 
-    if _, err := os.Stat(addScript); err != nil {
-        fail(c, 500, "add.sh not found: "+addScript)
+    if h == nil || h.Sol == nil {
+        fail(c, 503, "sol bridge unavailable")
         return
     }
 
-    // Το add.sh περιμένει: --type X domain
-    args := []string{"--type", req.Type, req.Domain}
-
-    ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Minute)
+    ctx, cancel := context.WithTimeout(c.Request.Context(), solActions[action])
     defer cancel()
 
-    cmd := exec.CommandContext(ctx, "/bin/bash", addScript)
-    cmd.Args = append(cmd.Args, args...)
-    cmd.Dir = "/var/www/gs/cli/com/domain"
-    cmd.Env = append(os.Environ(),
-        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/.nvm/versions/node/v22.12.0/bin",
-        "HOME=/root",
-    )
-
-    var stdout, stderr bytes.Buffer
-    cmd.Stdout = &stdout
-    cmd.Stderr = &stderr
-
-    err := cmd.Run()
-    exitCode := 0
+    res, err := h.Sol.Run(ctx, action, arg)
     if err != nil {
-        if ee, ok := err.(*exec.ExitError); ok {
-            exitCode = ee.ExitCode()
-        } else {
-            fail(c, 500, "exec failed: "+err.Error())
-            return
-        }
+        fail(c, 503, err.Error())
+        return
     }
 
-// ✅ Fix ownership του νέου domain
-    domainPath := filepath.Join("/var/www/gs/public", req.Domain)
-    if _, err := os.Stat(domainPath); err == nil {
-        fixOwnershipDir(domainPath)
+    // Για tor, ο moon tor παράγει ο ίδιος το πραγματικό .onion
+    // και το επιστρέφει ως msg. Για public/internal, το ζητούμενο
+    // domain είναι και το πραγματικό.
+    actual := req.Domain
+    if req.Type == "tor" && res.Status == "ok" {
+        actual = res.Msg
     }
-    // Το add.sh γράφει logs + JSON στο τέλος.
-    // Παίρνουμε μόνο το τελευταίο {...} block.
-    resultJSON := extractLastJSON(stdout.String())
 
-    if resultJSON == nil {
-        // Δεν βρήκαμε JSON — επέστρεψε raw output για debugging
+    if res.Status != "ok" {
         c.JSON(200, gin.H{
-            "success":   exitCode == 0,
-            "exit_code": exitCode,
-            "stdout":    stdout.String(),
-            "stderr":    stderr.String(),
-            "error":     "no JSON in output",
+            "success": false,
+            "domain":  req.Domain,
+            "type":    req.Type,
+            "error":   res.Msg,
+            "code":    res.Code,
         })
         return
     }
 
-    // Επέστρεψε το JSON του add.sh αυτούσιο
-    c.Data(200, "application/json", resultJSON)
-}
-
-// extractLastJSON βρίσκει το τελευταίο {...} block στο output.
-func extractLastJSON(s string) []byte {
-    end := -1
-    depth := 0
-    for i := len(s) - 1; i >= 0; i-- {
-        if s[i] == '}' {
-            if depth == 0 {
-                end = i
-            }
-            depth++
-        } else if s[i] == '{' {
-            depth--
-            if depth == 0 && end != -1 {
-                return []byte(s[i : end+1])
-            }
-        }
-    }
-    return nil
+    c.JSON(200, gin.H{
+        "success":       true,
+        "domain":        req.Domain,
+        "actual_domain": actual,
+        "type":          req.Type,
+        "message":       res.Msg,
+    })
 }
 
 var allowlist = map[string]bool{

@@ -5,10 +5,15 @@
 # SOL:        gen moon <verb> [args...]
 
 # --------------------------------------------------
-# Load .env
+# Repo root + Load .env
 # --------------------------------------------------
 
-MOON_ENV="${MOON_ENV:-$SOL_ROOT/.env}"
+# Repo root (/var/www/gs) — υπολογίζεται από τη θέση του moon.sh. Το .env ορίζει
+# SOL_ROOT=/var/www/gs/sol (το install dir του SOL), που θα έσπαγε τα MOON_*
+# paths — γι' αυτό χρησιμοποιούμε MOON_REPO_ROOT και όχι $SOL_ROOT.
+MOON_REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+
+MOON_ENV="${MOON_ENV:-$MOON_REPO_ROOT/.env}"
 if [[ -f $MOON_ENV ]]; then
     set -a
     # shellcheck source=/dev/null
@@ -20,24 +25,27 @@ fi
 # Paths (defaults αν δεν υπάρχουν στο .env)
 # --------------------------------------------------
 
-MOON_ROOT="${MOON_ROOT:-${SOL_ROOT:-/var/www/gs}/moon}"
-MOON_LOG="${MOON_LOG:-${SOL_ROOT:-/var/www/gs}/data/gen20.net/moon.txt}"
+MOON_ROOT="${MOON_ROOT:-$MOON_REPO_ROOT/moon}"
+MOON_LOG="${MOON_LOG:-$MOON_REPO_ROOT/data/gen20.net/moon.txt}"
 
 MOON_TEMPLATE_DIR="${MOON_TEMPLATE_DIR:-$MOON_ROOT/admin/templates}"
 MOON_DEFAULT_TEMPLATE="${MOON_DEFAULT_TEMPLATE:-default}"
 
 MOON_NGINX_DIR="${MOON_NGINX_DIR:-/etc/nginx/conf.d}"
-MOON_NGINX_SHARED="${MOON_NGINX_SHARED:-${SOL_ROOT:-/var/www/gs}/astra/aether.conf}"
+MOON_NGINX_SHARED="${MOON_NGINX_SHARED:-$MOON_REPO_ROOT/astra/aether.conf}"
 MOON_NGINX_LOG_DIR="${MOON_NGINX_LOG_DIR:-/var/log/nginx}"
 
 MOON_BIND_ZONES="${MOON_BIND_ZONES:-/etc/bind/zones}"
 MOON_BIND_CONF="${MOON_BIND_CONF:-/etc/bind/named.conf.remote}"
 
 MOON_DB_NAME_PREFIX="${MOON_DB_NAME_PREFIX:-gen_}"
-MOON_TEMPLATE_SQL="${MOON_TEMPLATE_SQL:-${SOL_ROOT:-/var/www/gs}/astra/template.sql}"
+MOON_TEMPLATE_SQL="${MOON_TEMPLATE_SQL:-$MOON_REPO_ROOT/astra/moon.sql}"
 
 MOON_TOR_DIR="${MOON_TOR_DIR:-/var/lib/tor}"
 MOON_TORRC="${MOON_TORRC:-/etc/tor/torrc}"
+
+# External server IP για DNS A/PTR records (default: GEN20 primary)
+SERVERIP="${SERVERIP:-135.181.219.173}"
 
 mkdir -p "$(dirname "$MOON_LOG")"
 
@@ -136,6 +144,43 @@ moon_validate() {
 # --------------------------------------------------
 # Filesystem (Vite + template)
 # --------------------------------------------------
+
+# Δημιουργεί το default site config για νέο domain:
+#   .env (MOON_HOST), data/<domain>/moonlist.json (κενό), data/<domain>/moon_manifest.json (μόνο Home)
+moon_create_default_files() {
+    local domain="$1"
+    local ts
+    ts=$(date +%s)
+
+    # .env με MOON_HOST
+    cat > "$MOON_ROOT/$domain/.env" <<EOF
+MOON_HOST="$domain"
+VITE_HTTP_API="https://$domain/api/v1/"
+VITE_HTTP_APY="https://$domain/apy/v1/"
+VITE_HTTP_CUBO="https://$domain/cubos/"
+VITE_HTTP="https://$domain/"
+EOF
+
+    # data/<domain>/moonlist.json (κενό cubos)
+    mkdir -p "$MOON_REPO_ROOT/data/$domain"
+    cat > "$MOON_REPO_ROOT/data/$domain/moonlist.json" <<EOF
+{"domain":"$domain","generated":$ts,"cubos":[]}
+EOF
+
+    # data/<domain>/moon_manifest.json (μόνο Home page, default contentLoop classificationid 1)
+    cat > "$MOON_REPO_ROOT/data/$domain/moon_manifest.json" <<EOF
+{
+    "site": {"id": "$domain", "defaultLanguage": "el", "languages": ["el", "en"]},
+    "pages": {
+        "home": {"title": "Αρχική", "m": [], "sl": [{"contentLoop": {"classificationid": "1"}}], "h": []}
+    },
+    "generated": $ts
+}
+EOF
+
+    moon_log "INFO" "default files created (.env, moonlist.json, moon_manifest.json)"
+}
+
 moon_create_filesystem() {
     local domain="$1"
     local template="${2:-$MOON_DEFAULT_TEMPLATE}"
@@ -167,16 +212,16 @@ moon_create_filesystem() {
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-helmet-async": "^2.0.0",
-    "react-router-dom": "^7.0.0",
-    "react-icons": "^5.0.0",
-    "js-cookie": "^3.0.0"
+    "js-cookie": "^3.0.8",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-helmet-async": "^3.0.0",
+    "react-icons": "^5.6.0",
+    "react-router-dom": "^7.18.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.0",
-    "vite": "^6.0.0"
+    "@vitejs/plugin-react": "^6.0.2",
+    "vite": "^8.1.0"
   },
   "packageManager": "yarn@4.14.1"
 }
@@ -197,6 +242,9 @@ EOF
             return 1
         }
     fi
+
+    # default site config (.env + data/<domain>/moonlist.json + moon_manifest.json)
+    moon_create_default_files "$domain" || moon_log "WARN" "default files failed"
 
     # build
     yarn build || moon_log "WARN" "yarn build failed"
@@ -430,9 +478,10 @@ moon_create_tor() {
     [[ -f $MOON_TORRC ]] || { moon_err "torrc missing: $MOON_TORRC"; return 1; }
 
     if grep -q "HiddenServiceDir $svc_dir" "$MOON_TORRC" 2>/dev/null; then
-        moon_log "WARN" "tor service exists: $domain"
+        moon_log "WARN" "tor service exists: $domain" >&2
         if [[ -f "$svc_dir/hostname" ]]; then
-            cat "$svc_dir/hostname"
+            tr -d '\n\r' < "$svc_dir/hostname"
+            printf '\n'
             return 0
         fi
         return 1
@@ -445,13 +494,14 @@ moon_create_tor() {
         echo "HiddenServicePort 80 127.0.0.1:${port}"
     } >> "$MOON_TORRC"
 
+    moon_log "INFO" "restarting tor" >&2
     systemctl restart tor || { moon_err "tor restart failed"; return 1; }
     sleep 3
 
     if [[ -f "$svc_dir/hostname" ]]; then
         local onion
         onion=$(tr -d '\n\r' < "$svc_dir/hostname")
-        moon_log "INFO" "tor created: $onion"
+        moon_log "INFO" "tor created: $onion" >&2
         printf '%s\n' "$onion"
         return 0
     fi
@@ -532,25 +582,48 @@ moon_domain() {
     moon_log "INFO" "moon domain done: https://$domain"
 }
 
+moon_internal() {
+    local domain="${1:-}"
+
+    [[ -n $domain ]] || { moon_err "usage: moon internal <name>"; return 1; }
+
+    moon_require_root || return 1
+    moon_validate "$domain" "internal" || return 1
+
+    moon_log "INFO" "moon internal: $domain"
+
+    moon_create_filesystem "$domain" || { moon_err "fs failed"; return 1; }
+    moon_create_database   "$domain" || moon_log "WARN" "db failed"
+    moon_create_nginx      "$domain" 80 || { moon_err "nginx failed"; return 1; }
+    moon_db_entry          "$domain" "$domain" "$domain"
+
+    moon_log "INFO" "moon internal done: http://$domain"
+}
+
 moon_tor() {
     local template="${1:-$MOON_DEFAULT_TEMPLATE}"
-    local domain
-    domain=$(moon_generate_onion)
+    local label onion
 
     moon_require_root || return 1
 
-    moon_log "INFO" "moon tor: $domain"
+    # 1. Φτιάξε πρώτα το tor hidden service — το ΠΡΑΓΜΑΤΙΚΟ .onion
+    #    ορίζει το domain για filesystem/db/nginx (ώστε να είναι συνεπή).
+    label=$(moon_generate_onion)
+    moon_log "INFO" "moon tor: creating hidden service"
 
-    moon_create_filesystem "$domain" "$template" || { moon_err "fs failed"; return 1; }
-    moon_create_database   "$domain" || moon_log "WARN" "db failed"
-
-    local onion
-    onion=$(moon_create_tor "$domain" "${TOR_PORT:-80}") || {
+    onion=$(moon_create_tor "$label" "${TOR_PORT:-80}") || {
         moon_err "tor failed"
         return 1
     }
+    onion="${onion//$'\n'/}"
+    onion="${onion//$'\r'/}"
+    [[ "$onion" == *.onion ]] || { moon_err "invalid onion: $onion"; return 1; }
 
-    moon_db_entry "$domain" "$onion" "tor"
+    # 2. Provision με το πραγματικό onion ως domain.
+    moon_create_filesystem "$onion" "$template" || { moon_err "fs failed"; return 1; }
+    moon_create_database   "$onion" || moon_log "WARN" "db failed"
+    moon_create_nginx      "$onion" 80 || moon_log "WARN" "nginx failed"
+    moon_db_entry          "$onion" "$onion" "tor"
 
     moon_log "INFO" "moon tor done: http://$onion"
     printf '%s\n' "$onion"
@@ -616,6 +689,7 @@ moon_help()  {
         'Modes:' \
         '  moon localhost [port]          create localhost (default port 3000)' \
         '  moon domain <name> [template]  full domain (nginx + dns + ssl)' \
+        '  moon internal <name>           internal domain (nginx, no dns/ssl)' \
         '  moon tor [template]            generate .onion hidden service' \
         '' \
         'Extras:' \
@@ -641,6 +715,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     case "$verb" in
         localhost) moon_localhost "$@" ;;
         domain)    moon_domain    "$@" ;;
+        internal)  moon_internal  "$@" ;;
         tor)       moon_tor       "$@" ;;
         ssl)       moon_ssl       "$@" ;;
         dns)       moon_dns       "$@" ;;
