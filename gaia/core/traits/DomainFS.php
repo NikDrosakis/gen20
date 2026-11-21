@@ -264,6 +264,62 @@ protected function getPublicFolders() {
     }
 
     /**
+     * verifyToken — επαληθεύει το HMAC token που παράγει η mintToken (mirror της).
+     * Διαβάζει το token από `Authorization: Bearer <token>` (ή `X-Api-Token` header)
+     * και επιστρέφει τα decoded claims, ή false αν είναι άκυρο/ληγμένο.
+     * Χρησιμοποιεί το ίδιο GOD_SHARED_SECRET (/var/www/gs/god/.env) και τον ίδιο
+     * base64url + hash_hmac('sha256') σχηματισμό — timing-safe σύγκριση με hash_equals.
+     */
+    protected function verifyToken($token = null) {
+        if ($token === null) {
+            $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+            if ($auth !== '') {
+                $token = preg_replace('/^Bearer\s+/i', '', $auth);
+            }
+            if (empty($token)) {
+                $token = $_SERVER['HTTP_X_API_TOKEN'] ?? '';
+            }
+        }
+
+        if (empty($token) || !is_string($token) || !str_contains($token, '.')) {
+            return false;
+        }
+
+        [$b64, $sig] = explode('.', $token, 2);
+        $payload = base64_decode(strtr($b64, '-_', '+/'));
+        if ($payload === false || $sig === '' || !str_contains($payload, '|')) {
+            return false;
+        }
+
+        $env = @file_get_contents('/var/www/gs/god/.env');
+        if (!is_string($env) || !preg_match('/^GOD_SHARED_SECRET=(.+)$/m', $env, $m)) {
+            return false;
+        }
+        $secret = trim($m[1]);
+
+        if (!hash_equals(hash_hmac('sha256', $payload, $secret), $sig)) {
+            return false;
+        }
+
+        $parts = explode('|', $payload);
+        if (count($parts) < 4) {
+            return false;
+        }
+        [$domain, $uid, $role, $exp] = $parts;
+
+        if ((int)$exp < time()) {
+            return false;
+        }
+
+        return [
+            'domain' => $domain,
+            'uid'    => (int)$uid,
+            'role'   => $role,
+            'exp'    => (int)$exp,
+        ];
+    }
+
+    /**
      * Build filesystem structure for a domain in gaia/public/DOMAIN
      */
     protected function addFS($domainName): array {

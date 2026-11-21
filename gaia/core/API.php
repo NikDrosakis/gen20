@@ -246,6 +246,31 @@ protected function parseRequest() {
 public function response(){
     $request = $this->parseRequest();
 
+    // Token auth guard — ενεργοποιείται με glob `API_AUTH=1` στο gen_admin.globs.
+    // Όταν είναι ON, όλα τα endpoints απαιτούν έγκυρο Bearer token (από mintToken),
+    // εκτός από τα public (login/signup/mintToken/reset κ.λπ.) — βλ. isPublicApiCall().
+    if (!$this->isPublicApiCall() && $this->apiAuthEnabled()) {
+        $claims = $this->verifyToken();
+        if ($claims === false) {
+            $status = 401;
+            $status_message = 'Unauthorized';
+            header("HTTP/2 $status $status_message");
+            header("Content-Type: application/json; charset=UTF-8");
+            return [
+                "status" => $status,
+                "success" => false,
+                "code" => 'UNAUTHORIZED',
+                "data" => [],
+                "error" => 'Invalid or missing API token',
+                "status_message" => $status_message,
+                "method" => $this->method,
+                "resource" => $this->resource,
+                "id" => $this->id,
+                "request" => $request
+            ];
+        }
+    }
+
     // Initialize default values
     $status = 200;
     $status_message = 'OK';
@@ -289,6 +314,30 @@ public function response(){
 
     return $response;
 }
+
+    /**
+     * apiAuthEnabled — επιστρέφει true όταν η token προστασία είναι ενεργοποιημένη
+     * μέσω gen_admin.globs (API_AUTH=1). Off by default, ώστε να μην σπάσουν τα
+     * υπάρχοντα calls μέχρι να περάσεις tokens στον frontend.
+     */
+    protected function apiAuthEnabled(): bool {
+        $val = is_array($this->is) ? ($this->is['API_AUTH'] ?? null) : null;
+        return $val !== null && $val !== '' && $val !== '0' && strtolower((string)$val) !== 'false';
+    }
+
+    /**
+     * isPublicApiCall — endpoints που ΔΕΝ χρειάζονται token (auth + mint + reset).
+     */
+    protected function isPublicApiCall(): bool {
+        if (empty($this->resource)) {
+            return true; // welcome
+        }
+        $public = [
+            'mintToken', 'login', 'signup', 'signupGoogle', 'validate',
+            'nameNotExist', 'requestReset', 'resetPass', 'validateResetToken',
+        ];
+        return in_array($this->id, $public, true);
+    }
 
 protected function exportThis(): array {
     $reflection = new \ReflectionClass($this);
